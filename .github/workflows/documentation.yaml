@@ -23,4 +23,4 @@ jobs:
           fail-on-diff: "true"
 
       - if: failure()
-        run: cat README.md
+        run: cat ${{ matrix.module }}/README.md
