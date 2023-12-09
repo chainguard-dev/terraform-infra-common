@@ -1,2 +1,2 @@
-# terraform-infra-common-staging
-Staging repository for chainguard-dev/terraform-infra-common so we don't accidentally exfill mono
+# terraform-cloudrun-glue
+A repository containing a collection of "glue" modules for encapsulating common Cloud Run patterns.
