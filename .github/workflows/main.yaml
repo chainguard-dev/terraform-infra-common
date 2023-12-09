@@ -1,0 +1,21 @@
+name: Validate, Lint and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-and-validate:
+    name: "Terraform fmt and validate"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2.0.3
+
+      - run: terraform fmt -check
+
+      - run: |
+          terraform init
+          terraform validate
