@@ -6,18 +6,27 @@ This module provisions a regionalizied Broker abstraction akin to the Knative
 events is something like this:
 
 ```hcl
+// Create a network with several regional subnets
+module "networking" {
+  source = "chainguard-dev/glue/cloudrun//networking"
+
+  name       = "my-networking"
+  project_id = var.project_id
+  regions    = [...]
+}
+
 // Create the Broker abstraction.
 module "cloudevent-broker" {
   source = "chainguard-dev/glue/cloudrun//cloudevent-broker"
 
   name       = "my-broker"
   project_id = var.project_id
-  regions    = local.region-to-networking
+  regions    = module.networking.regional-networks
 }
 
 // Authorize the "foo" service account to publish events.
 module "foo-emits-events" {
-  for_each = local.region-to-networking
+  for_each = module.networking.regional-networks
 
   source = "chainguard-dev/glue/cloudrun//authorize-private-service"
 
@@ -31,7 +40,7 @@ module "foo-emits-events" {
 // Run a cloud run service as the "foo" service account, and pass in the address
 // of the regional ingress endpoint.
 resource "google_cloud_run_v2_service" "foo-service" {
-  for_each = local.region-to-networking
+  for_each = module.networking.regional-networks
 
   project  = var.project_id
   name     = "foo"
@@ -62,9 +71,6 @@ resource "google_cloud_run_v2_service" "foo-service" {
     }
   }
 }
-
-// TODO(mattmoor): Put together an example showing how to set up
-// local.region-to-networking with the appropriate pieces.
 ```
 
 <!-- BEGIN_TF_DOCS -->

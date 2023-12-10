@@ -6,18 +6,27 @@ is captured by the sibling `cloudevent-broker` module.  The intended usage of
 this module for consuming events is something like this:
 
 ```hcl
+// Create a network with several regional subnets
+module "networking" {
+  source = "chainguard-dev/glue/cloudrun//networking"
+
+  name       = "my-networking"
+  project_id = var.project_id
+  regions    = [...]
+}
+
 // Create the Broker abstraction.
 module "cloudevent-broker" {
   source = "chainguard-dev/glue/cloudrun//cloudevent-broker"
 
   name       = "my-broker"
   project_id = var.project_id
-  regions    = local.region-to-networking
+  regions    = module.networking.regional-networks
 }
 
 // Run a cloud run service "bar" to consume events from the Broker above.
 resource "google_cloud_run_v2_service" "bar-service" {
-  for_each = local.region-to-networking
+  for_each = module.networking.regional-networks
 
   project  = var.project_id
   name     = "bar"
@@ -49,7 +58,7 @@ resource "google_cloud_run_v2_service" "bar-service" {
 // Set up regionalized triggers to deliver filtered events from our regionalized
 // brokers to our regionalized consumer services.
 module "cloudevent-trigger" {
-  for_each = var.regions
+  for_each = module.networking.regional-networks
 
   source = "chainguard-dev/glue/cloudrun//cloudevent-trigger"
 
