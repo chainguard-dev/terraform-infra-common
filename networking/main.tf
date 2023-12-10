@@ -7,6 +7,15 @@ resource "google_compute_network" "this" {
   delete_default_routes_on_create = true
 }
 
+// Create a default route to the Internet.
+resource "google_compute_route" "egress-inet" {
+  name    = var.name
+  network = google_compute_network.this.name
+
+  dest_range       = "0.0.0.0/0"
+  next_hop_gateway = "default-internet-gateway"
+}
+
 // Create regional subnets in each of the specified regions,
 // which we will use to operate Cloud Run services.
 resource "google_compute_subnetwork" "regional" {
