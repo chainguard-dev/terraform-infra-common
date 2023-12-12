@@ -10,7 +10,7 @@ require (
 	gocloud.dev v0.35.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	golang.org/x/oauth2 v0.15.0
-	google.golang.org/api v0.152.0
+	google.golang.org/api v0.153.0
 	knative.dev/pkg v0.0.0-20231204120332-9386ad6703ee
 )
 
