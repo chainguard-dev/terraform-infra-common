@@ -13,6 +13,7 @@ jobs:
         - authorize-private-service
         - cloudevent-broker
         - cloudevent-trigger
+        - cloudevent-recorder
         - networking
 
     steps:
