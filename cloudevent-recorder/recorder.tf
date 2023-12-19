@@ -120,3 +120,8 @@ module "triggers" {
     name   = google_cloud_run_v2_service.recorder-service[each.value.region].name
   }
 }
+
+module "recorder-dashboard" {
+  source       = "../dashboard/service"
+  service_name = var.name
+}

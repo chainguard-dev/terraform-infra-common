@@ -62,6 +62,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_recorder-dashboard"></a> [recorder-dashboard](#module\_recorder-dashboard) | ../dashboard/service | n/a |
 | <a name="module_triggers"></a> [triggers](#module\_triggers) | ../cloudevent-trigger | n/a |
 
 ## Resources

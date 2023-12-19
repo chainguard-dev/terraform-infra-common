@@ -88,7 +88,9 @@ No requirements.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_ingress-dashboard"></a> [ingress-dashboard](#module\_ingress-dashboard) | ../dashboard/service | n/a |
 
 ## Resources
 
