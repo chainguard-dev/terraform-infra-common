@@ -58,12 +58,12 @@ resource "google_monitoring_dashboard" "dashboard" {
     gridLayout = {
       columns = 3
       widgets = [
-        module.logs.tile,
-        module.cpu_utilization.tile,
-        module.memory_utilization.tile,
-        module.startup_latency.tile,
-        module.sent_bytes.tile,
-        module.received_bytes.tile,
+        module.logs.widget,
+        module.cpu_utilization.widget,
+        module.memory_utilization.widget,
+        module.startup_latency.widget,
+        module.sent_bytes.widget,
+        module.received_bytes.widget,
       ]
     }
   })

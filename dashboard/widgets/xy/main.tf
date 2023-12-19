@@ -9,7 +9,7 @@ variable "secondary_align" { default = "ALIGN_NONE" }
 variable "secondary_reduce" { default = "REDUCE_NONE" }
 
 // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart
-output "tile" {
+output "widget" {
   value = {
     title = var.title
     xyChart = {
