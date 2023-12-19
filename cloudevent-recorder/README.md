@@ -62,6 +62,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard/service | n/a |
 | <a name="module_triggers"></a> [triggers](#module\_triggers) | ../cloudevent-trigger | n/a |
 
 ## Resources
