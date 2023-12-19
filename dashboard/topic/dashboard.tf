@@ -4,7 +4,7 @@ module "received-events" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/push_request_count\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.topic_prefix}.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}.*\")",
   ]
   group_by_fields = ["resource.label.\"subscription_id\""]
   primary_align   = "ALIGN_MEAN"
@@ -17,7 +17,7 @@ module "oldest-unacked" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/oldest_unacked_message_age\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.topic_prefix}.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}.*\")",
   ]
   group_by_fields = ["resource.label.\"subscription_id\""]
   primary_align   = "ALIGN_MAX"
@@ -30,7 +30,7 @@ module "undelivered" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.topic_prefix}.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}.*\")",
   ]
   group_by_fields = ["resource.label.\"subscription_id\""]
   primary_align   = "ALIGN_MAX"
@@ -43,7 +43,7 @@ module "push-latency" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/push_request_latencies\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.topic_prefix}.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}.*\")",
   ]
   group_by_fields = ["resource.label.\"subscription_id\""]
 }
@@ -52,7 +52,7 @@ resource "google_monitoring_dashboard" "dashboard" {
   project = var.project_id
 
   dashboard_json = jsonencode({
-    displayName = "Topic: ${var.topic_prefix}",
+    displayName = "Subscriptions: ${var.subscription_prefix}",
     gridLayout = {
       columns = 3,
       widgets = [

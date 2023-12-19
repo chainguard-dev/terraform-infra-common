@@ -30,7 +30,7 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_alert_policies"></a> [alert\_policies](#input\_alert\_policies) | n/a | <pre>map(object({<br>    id = string<br>  }))</pre> | `{}` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
-| <a name="input_topic_prefix"></a> [topic\_prefix](#input\_topic\_prefix) | n/a | `string` | n/a | yes |
+| <a name="input_subscription_prefix"></a> [subscription\_prefix](#input\_subscription\_prefix) | n/a | `string` | n/a | yes |
 
 ## Outputs
 
