@@ -83,5 +83,5 @@ resource "google_cloud_run_v2_service" "this" {
 
 module "ingress-dashboard" {
   source       = "../dashboard/service"
-  service_name = google_cloud_run_v2_service.this[0].name
+  service_name = var.name
 }

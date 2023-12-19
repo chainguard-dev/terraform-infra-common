@@ -123,5 +123,5 @@ module "triggers" {
 
 module "recorder-dashboard" {
   source       = "../dashboard/service"
-  service_name = google_cloud_run_v2_service.recorder-service[0].name
+  service_name = var.name
 }
