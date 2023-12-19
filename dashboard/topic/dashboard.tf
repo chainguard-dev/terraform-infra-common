@@ -49,8 +49,6 @@ module "push-latency" {
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
-  project = var.project_id
-
   dashboard_json = jsonencode({
     displayName = "Subscriptions: ${var.subscription_prefix}",
     gridLayout = {
@@ -64,13 +62,3 @@ resource "google_monitoring_dashboard" "dashboard" {
     }
   })
 }
-
-locals {
-  parts        = split("/", resource.google_monitoring_dashboard.dashboard.id)
-  dashboard_id = local.parts[length(local.parts) - 1]
-}
-
-output "url" {
-  value = "https://console.cloud.google.com/monitoring/dashboards/builder/${local.dashboard_id};duration=P1D?project=${var.project_id}"
-}
-

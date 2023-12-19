@@ -1,9 +1,4 @@
-variable "project_id" { type = string }
-variable "service_name" { type = string }
-
-variable "alert_policies" {
-  type = map(object({
-    id = string
-  }))
-  default = {}
+variable "service_name" {
+  description = "Name of the service(s) to monitor"
+  type        = string
 }

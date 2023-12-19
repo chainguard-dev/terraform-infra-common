@@ -13,7 +13,6 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_alert"></a> [alert](#module\_alert) | ../tiles/alert | n/a |
 | <a name="module_cpu_utilization"></a> [cpu\_utilization](#module\_cpu\_utilization) | ../tiles/xy | n/a |
 | <a name="module_incoming_latency"></a> [incoming\_latency](#module\_incoming\_latency) | ../tiles/latency | n/a |
 | <a name="module_instance_count"></a> [instance\_count](#module\_instance\_count) | ../tiles/xy | n/a |
@@ -34,13 +33,9 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_alert_policies"></a> [alert\_policies](#input\_alert\_policies) | n/a | <pre>map(object({<br>    id = string<br>  }))</pre> | `{}` | no |
-| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
-| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | n/a | `string` | n/a | yes |
+| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of the service(s) to monitor | `string` | n/a | yes |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_url"></a> [url](#output\_url) | n/a |
+No outputs.
 <!-- END_TF_DOCS -->

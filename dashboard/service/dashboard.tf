@@ -1,13 +1,4 @@
-locals {
-  common_filter = ["resource.type=\"cloud_run_revision\""]
-}
-
-module "alert" {
-  for_each   = var.alert_policies
-  source     = "../tiles/alert"
-  title      = "Alert: ${each.key}"
-  alert_name = each.value.id
-}
+locals { common_filter = ["resource.type=\"cloud_run_revision\""] }
 
 module "logs" {
   source = "../tiles/logs"
@@ -83,8 +74,6 @@ module "received_bytes" {
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
-  project = var.project_id
-
   dashboard_json = jsonencode({
     displayName = "Cloud Run Service: ${var.service_name}"
     dashboardFilters = [{
@@ -95,29 +84,17 @@ resource "google_monitoring_dashboard" "dashboard" {
     //  https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#GridLayout
     gridLayout = {
       columns = 3
-      widgets = concat(
-        [for k in sort(keys(var.alert_policies)) : module.alert[k].tile],
-        [
-          module.logs.tile,
-          module.request_count.tile,
-          module.incoming_latency.tile,
-          module.instance_count.tile,
-          module.cpu_utilization.tile,
-          module.memory_utilization.tile,
-          module.startup_latency.tile,
-          module.sent_bytes.tile,
-          module.received_bytes.tile,
-        ],
-      )
+      widgets = [
+        module.logs.tile,
+        module.request_count.tile,
+        module.incoming_latency.tile,
+        module.instance_count.tile,
+        module.cpu_utilization.tile,
+        module.memory_utilization.tile,
+        module.startup_latency.tile,
+        module.sent_bytes.tile,
+        module.received_bytes.tile,
+      ]
     }
   })
-}
-
-locals {
-  parts        = split("/", resource.google_monitoring_dashboard.dashboard.id)
-  dashboard_id = local.parts[length(local.parts) - 1]
-}
-
-output "url" {
-  value = "https://console.cloud.google.com/monitoring/dashboards/builder/${local.dashboard_id};duration=P1D?project=${var.project_id}"
 }

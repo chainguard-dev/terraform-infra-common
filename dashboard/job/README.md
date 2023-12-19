@@ -13,7 +13,6 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_alert"></a> [alert](#module\_alert) | ../tiles/alert | n/a |
 | <a name="module_cpu_utilization"></a> [cpu\_utilization](#module\_cpu\_utilization) | ../tiles/xy | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../tiles/logs | n/a |
 | <a name="module_memory_utilization"></a> [memory\_utilization](#module\_memory\_utilization) | ../tiles/xy | n/a |
@@ -31,13 +30,9 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_alert_policies"></a> [alert\_policies](#input\_alert\_policies) | n/a | <pre>map(object({<br>    id = string<br>  }))</pre> | `{}` | no |
-| <a name="input_job_name"></a> [job\_name](#input\_job\_name) | n/a | `string` | n/a | yes |
-| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
+| <a name="input_job_name"></a> [job\_name](#input\_job\_name) | Name of the job(s) to monitor | `string` | n/a | yes |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_url"></a> [url](#output\_url) | n/a |
+No outputs.
 <!-- END_TF_DOCS -->

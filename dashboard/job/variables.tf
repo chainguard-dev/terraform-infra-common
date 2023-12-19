@@ -1,9 +1,5 @@
-variable "project_id" { type = string }
-variable "job_name" { type = string }
-
-variable "alert_policies" {
-  type = map(object({
-    id = string
-  }))
-  default = {}
+variable "job_name" {
+  description = "Name of the job(s) to monitor"
+  type        = string
 }
+
