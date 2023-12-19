@@ -90,11 +90,12 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard/topic | n/a |
+| <a name="module_ingress-dashboard"></a> [ingress-dashboard](#module\_ingress-dashboard) | ../dashboard/service | n/a |
 | <a name="module_oldest-unacked"></a> [oldest-unacked](#module\_oldest-unacked) | ../dashboard/tiles/xy | n/a |
 | <a name="module_push-latency"></a> [push-latency](#module\_push-latency) | ../dashboard/tiles/latency | n/a |
 | <a name="module_received-events"></a> [received-events](#module\_received-events) | ../dashboard/tiles/xy | n/a |
 | <a name="module_sent-events"></a> [sent-events](#module\_sent-events) | ../dashboard/tiles/xy | n/a |
+| <a name="module_topic-dashboard"></a> [topic-dashboard](#module\_topic-dashboard) | ../dashboard/topic | n/a |
 | <a name="module_undelivered"></a> [undelivered](#module\_undelivered) | ../dashboard/tiles/xy | n/a |
 
 ## Resources
