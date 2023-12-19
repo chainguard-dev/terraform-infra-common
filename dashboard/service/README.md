@@ -1,3 +1,42 @@
+# `dashboard/service`
+
+This module provisions a Google Cloud Monitoring dashboard for a regionalized Cloud Run service.
+
+It assumes the service has the same name in all regions.
+
+```hcl
+// Create a network with several regional subnets
+module "networking" {
+  source = "chainguard-dev/glue/cloudrun//networking"
+
+  name       = "my-networking"
+  project_id = var.project_id
+  regions    = [...]
+}
+
+// Run a regionalized cloud run service "frontend" to serve requests.
+resource "google_cloud_run_v2_service" "frontend" {
+  for_each = module.networking.regional-networks
+  name     = "frontend"
+
+  //...
+  template {
+    //...
+    containers {
+      image = "..."
+    }
+  }
+}
+
+// Set up a dashboard for a regionalized service named "frontend".
+module "service-dashboard" {
+  source       = "chainguard-dev/glue/cloudrun//dashboard/service"
+  service_name = "frontend"
+}
+```
+
+The dashboard it creates includes widgets for service logs, request count, latency (p50,p95,p99), instance count grouped by revision, CPU and memory utilization, startup latency, and sent/received bytes.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
