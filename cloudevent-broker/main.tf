@@ -13,3 +13,9 @@ resource "google_pubsub_topic" "this" {
   // TODO: Tune this and/or make it configurable?
   message_retention_duration = "600s"
 }
+
+module "dashboard" {
+  source       = "../dashboard/topic"
+  project_id   = var.project_id
+  topic_prefix = var.name
+}
