@@ -91,12 +91,6 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_ingress-dashboard"></a> [ingress-dashboard](#module\_ingress-dashboard) | ../dashboard/service | n/a |
-| <a name="module_oldest-unacked"></a> [oldest-unacked](#module\_oldest-unacked) | ../dashboard/tiles/xy | n/a |
-| <a name="module_push-latency"></a> [push-latency](#module\_push-latency) | ../dashboard/tiles/latency | n/a |
-| <a name="module_received-events"></a> [received-events](#module\_received-events) | ../dashboard/tiles/xy | n/a |
-| <a name="module_sent-events"></a> [sent-events](#module\_sent-events) | ../dashboard/tiles/xy | n/a |
-| <a name="module_topic-dashboard"></a> [topic-dashboard](#module\_topic-dashboard) | ../dashboard/topic | n/a |
-| <a name="module_undelivered"></a> [undelivered](#module\_undelivered) | ../dashboard/tiles/xy | n/a |
 
 ## Resources
 
@@ -104,7 +98,6 @@ No requirements.
 |------|------|
 | [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service) | resource |
-| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [google_pubsub_topic_iam_binding.ingress-publishes-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
