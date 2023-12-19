@@ -121,7 +121,7 @@ module "triggers" {
   }
 }
 
-module "dashboard" {
+module "recorder-dashboard" {
   source       = "../dashboard/service"
   project_id   = var.project_id
   service_name = google_cloud_run_v2_service.recorder-service.name

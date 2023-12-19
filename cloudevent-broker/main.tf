@@ -14,7 +14,7 @@ resource "google_pubsub_topic" "this" {
   message_retention_duration = "600s"
 }
 
-module "dashboard" {
+module "topic-dashboard" {
   source       = "../dashboard/topic"
   project_id   = var.project_id
   topic_prefix = var.name
