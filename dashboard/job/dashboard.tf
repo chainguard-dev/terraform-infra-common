@@ -1,13 +1,13 @@
 locals { common_filter = ["resource.type=\"cloud_run_job\""] }
 
 module "logs" {
-  source = "../tiles/logs"
+  source = "../widgets/logs"
   title  = "Service Logs"
   filter = local.common_filter
 }
 
 module "cpu_utilization" {
-  source         = "../tiles/xy"
+  source         = "../widgets/xy"
   title          = "CPU utilization"
   filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/cpu/utilizations\""])
   primary_align  = "ALIGN_DELTA"
@@ -15,7 +15,7 @@ module "cpu_utilization" {
 }
 
 module "memory_utilization" {
-  source         = "../tiles/xy"
+  source         = "../widgets/xy"
   title          = "Memory utilization"
   filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/memory/utilizations\""])
   primary_align  = "ALIGN_DELTA"
@@ -23,7 +23,7 @@ module "memory_utilization" {
 }
 
 module "startup_latency" {
-  source         = "../tiles/xy"
+  source         = "../widgets/xy"
   title          = "Startup latency"
   filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/startup_latencies\""])
   primary_align  = "ALIGN_DELTA"
@@ -31,7 +31,7 @@ module "startup_latency" {
 }
 
 module "sent_bytes" {
-  source         = "../tiles/xy"
+  source         = "../widgets/xy"
   title          = "Sent bytes"
   filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/network/sent_bytes_count\""])
   primary_align  = "ALIGN_MEAN"
@@ -39,7 +39,7 @@ module "sent_bytes" {
 }
 
 module "received_bytes" {
-  source         = "../tiles/xy"
+  source         = "../widgets/xy"
   title          = "Received bytes"
   filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/network/received_bytes_count\""])
   primary_align  = "ALIGN_MEAN"
