@@ -1,3 +1,32 @@
+# `dashboard/job`
+
+This module provisions a Google Cloud Monitoring dashboard for a Cloud Run job.
+
+It assumes the service has the same name in all regions.
+
+```hcl
+// Run a cloud run job named "sync" to perform some work.
+resource "google_cloud_run_v2_job" "sync" {
+  name     = "sync"
+
+  //...
+  template {
+    //...
+    containers {
+      image = "..."
+    }
+  }
+}
+
+// Set up a dashboard for a regionalized job named "sync".
+module "job-dashboard" {
+  source       = "chainguard-dev/glue/cloudrun//dashboard/job"
+  service_name = google_cloud_run_v2_job.name
+}
+```
+
+The dashboard it creates includes widgets for job logs, CPU and memory utilization, startup latency, and sent/received bytes.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
