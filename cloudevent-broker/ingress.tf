@@ -83,6 +83,5 @@ resource "google_cloud_run_v2_service" "this" {
 
 module "ingress-dashboard" {
   source       = "../dashboard/service"
-  project_id   = var.project_id
   service_name = google_cloud_run_v2_service.this.name
 }
