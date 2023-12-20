@@ -36,10 +36,10 @@ module "foo-emits-events" {
 
   retention-period = 30 // keep around 30 days worth of event data
 
-   types = {
-     "com.example.foo": file("${path.module}/foo.schema.json"),
-     "com.example.bar": file("${path.module}/bar.schema.json"),
-   }
+  types = {
+    "com.example.foo": file("${path.module}/foo.schema.json"),
+    "com.example.bar": file("${path.module}/bar.schema.json"),
+  }
 }
 ```
 
