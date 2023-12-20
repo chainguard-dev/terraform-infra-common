@@ -1,9 +1,15 @@
+resource "random_string" "suffix" {
+  length  = 4
+  upper   = false
+  special = false
+}
+
 // Create a special DNS zone attached to the network in which
 // we will operate our services that reroutes *.run.app to records
 // that we control.
 resource "google_dns_managed_zone" "cloud-run-internal" {
   project     = var.project_id
-  name        = "cloud-run-internal"
+  name        = "cloud-run-internal-${random_string.suffix.result}"
   dns_name    = "run.app."
   description = "This reroutes run.app requests to private.googleapis.com"
 
@@ -32,7 +38,7 @@ resource "google_dns_record_set" "cloud-run-cname" {
 // to records that we control.
 resource "google_dns_managed_zone" "private-google-apis" {
   project     = var.project_id
-  name        = "private-google-apis"
+  name        = "private-google-apis-${random_string.suffix.result}"
   dns_name    = "private.googleapis.com."
   description = "This maps DNS for private.googleapis.com"
 
