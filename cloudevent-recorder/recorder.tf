@@ -99,7 +99,7 @@ resource "google_cloud_run_v2_service" "recorder-service" {
 }
 
 resource "random_id" "trigger-suffix" {
-  for_each    = local.regional-types
+  for_each    = var.types
   byte_length = 2
 }
 
@@ -109,7 +109,7 @@ module "triggers" {
 
   source = "../cloudevent-trigger"
 
-  name       = "${var.name}-${random_id.trigger-suffix[each.key].hex}"
+  name       = "${var.name}-${random_id.trigger-suffix[each.value.type].hex}"
   project_id = var.project_id
   broker     = var.broker[each.value.region]
   filter     = { "type" : each.value.type }
@@ -122,6 +122,10 @@ module "triggers" {
 }
 
 module "recorder-dashboard" {
-  source       = "../dashboard/service"
+  source       = "../dashboard/cloudevent-receiver"
   service_name = var.name
+
+  triggers = {
+    for type in var.types : "type: ${each.key}" => "${var.name}-${random_id.trigger-suffix[each.value.type].hex}"
+  }
 }
