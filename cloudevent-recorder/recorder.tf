@@ -126,6 +126,6 @@ module "recorder-dashboard" {
   service_name = var.name
 
   triggers = {
-    for type in var.types : "type: ${each.key}" => "${var.name}-${random_id.trigger-suffix[each.value.type].hex}"
+    for type in var.types : "type: ${type}" => "${var.name}-${random_id.trigger-suffix[type].hex}"
   }
 }
