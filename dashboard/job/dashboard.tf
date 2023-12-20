@@ -1,49 +1,23 @@
-locals { common_filter = ["resource.type=\"cloud_run_job\""] }
-
 module "logs" {
-  source = "../widgets/logs"
-  title  = "Service Logs"
-  filter = local.common_filter
+  source = "../sections/logs"
+  title  = "Job Logs"
+  filter = ["resource.type=\"cloud_run_job\""]
 }
 
-module "cpu_utilization" {
-  source         = "../widgets/xy"
-  title          = "CPU utilization"
-  filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/cpu/utilizations\""])
-  primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_MEAN"
+module "resources" {
+  source = "../sections/resources"
+  title  = "Resources"
+  filter = ["resource.type=\"cloud_run_job\""]
 }
 
-module "memory_utilization" {
-  source         = "../widgets/xy"
-  title          = "Memory utilization"
-  filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/memory/utilizations\""])
-  primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_MEAN"
-}
+module "width" { source = "../sections/width" }
 
-module "startup_latency" {
-  source         = "../widgets/xy"
-  title          = "Startup latency"
-  filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/startup_latencies\""])
-  primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_MEAN"
-}
-
-module "sent_bytes" {
-  source         = "../widgets/xy"
-  title          = "Sent bytes"
-  filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/network/sent_bytes_count\""])
-  primary_align  = "ALIGN_MEAN"
-  primary_reduce = "REDUCE_NONE"
-}
-
-module "received_bytes" {
-  source         = "../widgets/xy"
-  title          = "Received bytes"
-  filter         = concat(local.common_filter, ["metric.type=\"run.googleapis.com/container/network/received_bytes_count\""])
-  primary_align  = "ALIGN_MEAN"
-  primary_reduce = "REDUCE_NONE"
+module "layout" {
+  source   = "../sections/layout"
+  sections = [
+    module.logs.section,
+    module.resources.section,
+  ]
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
@@ -54,17 +28,11 @@ resource "google_monitoring_dashboard" "dashboard" {
       stringValue = var.job_name
       labelKey    = "job_name"
     }]
-    //  https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#GridLayout
-    gridLayout = {
-      columns = 3
-      widgets = [
-        module.logs.widget,
-        module.cpu_utilization.widget,
-        module.memory_utilization.widget,
-        module.startup_latency.widget,
-        module.sent_bytes.widget,
-        module.received_bytes.widget,
-      ]
+
+    // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
+    mosaicLayout = {
+      columns = module.width.size
+      tiles   = module.layout.tiles,
     }
   })
 }
