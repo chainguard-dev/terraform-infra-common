@@ -81,7 +81,55 @@ resource "google_cloud_run_v2_service" "this" {
   }
 }
 
-module "ingress-dashboard" {
-  source       = "../dashboard/service"
-  service_name = var.name
+module "topic" {
+  source       = "../dashboard/sections/topic"
+  title        = "Broker Events"
+  topic_prefix = var.name
+}
+
+module "logs" {
+  source = "../dashboard/sections/logs"
+  title  = "Service Logs"
+  filter = ["resource.type=\"cloud_run_revision\""]
+}
+
+module "http" {
+  source = "../dashboard/sections/http"
+  title  = "HTTP"
+  filter = ["resource.type=\"cloud_run_revision\""]
+}
+
+module "resources" {
+  source = "../dashboard/sections/resources"
+  title  = "Resources"
+  filter = ["resource.type=\"cloud_run_revision\""]
+}
+
+module "width" { source = "../dashboard/sections/width" }
+
+module "layout" {
+  source   = "../dashboard/sections/layout"
+  sections = [
+    module.topic.section,
+    module.logs.section,
+    module.http.section,
+    module.resources.section,
+  ]
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  dashboard_json = jsonencode({
+    displayName = "Cloud Events Broker Ingress: ${var.name}"
+    dashboardFilters = [{
+      filterType  = "RESOURCE_LABEL"
+      stringValue = var.name
+      labelKey    = "service_name"
+    }]
+
+    // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
+    mosaicLayout = {
+      columns = module.width.size
+      tiles   = module.layout.tiles,
+    }
+  })
 }
