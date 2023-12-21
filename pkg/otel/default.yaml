@@ -5,7 +5,8 @@ receivers:
       - job_name: "localhost"
         scrape_interval: 10s
         static_configs:
-        - targets: ["localhost:9090"]
+        # TODO: make this configurable
+        - targets: ["localhost:2112"]
         metric_relabel_configs:
           - source_labels: [ __name__ ]
             regex: '^prometheus_.*'

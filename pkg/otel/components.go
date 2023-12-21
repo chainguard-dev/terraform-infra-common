@@ -30,7 +30,6 @@ import (
 var (
 	//go:embed default.yaml
 	defaultConfig string
-
 	// fileprovider parses a YAML config file, and envprovider enables env var substitution
 	// inside the same file.
 	configProviders = makeConfigProviderMap(fileprovider.New(), envprovider.New())
@@ -48,7 +47,7 @@ func StartCollectorAsync(ctx context.Context) (shutdown func(), runErr chan erro
 		err := collector.Run(ctx)
 		errChan <- err
 	}()
-	return collector.Shutdown, nil, <-errChan
+	return collector.Shutdown, errChan, nil
 }
 
 func NewCollector() (*otelcol.Collector, error) {
@@ -65,7 +64,7 @@ func NewCollectorWithConfig(configYAML string) (*otelcol.Collector, error) {
 	if err != nil {
 		return nil, err
 	}
-	if configYAML != "" {
+	if configYAML == "" {
 		configYAML = defaultConfig
 	}
 	if err := os.WriteFile(configFile.Name(), []byte(configYAML), 0644); err != nil {
