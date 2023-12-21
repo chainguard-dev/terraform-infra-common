@@ -120,6 +120,10 @@ module "layout" {
 resource "google_monitoring_dashboard" "dashboard" {
   dashboard_json = jsonencode({
     displayName = "Cloud Events Broker Ingress: ${var.name}"
+    labels = {
+      "service" : ""
+      "eventing" : ""
+    }
     dashboardFilters = [{
       filterType  = "RESOURCE_LABEL"
       stringValue = var.name
