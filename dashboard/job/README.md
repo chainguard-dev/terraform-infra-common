@@ -58,6 +58,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_job_name"></a> [job\_name](#input\_job\_name) | Name of the job(s) to monitor | `string` | n/a | yes |
+| <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard. | `map` | `{}` | no |
 
 ## Outputs
 

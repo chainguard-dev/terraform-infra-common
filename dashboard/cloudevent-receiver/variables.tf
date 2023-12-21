@@ -3,6 +3,11 @@ variable "service_name" {
   type        = string
 }
 
+variable "labels" {
+  description = "Additional labels to apply to the dashboard."
+  default     = {}
+}
+
 variable "triggers" {
   description = "A mapping from a descriptive name to a subscription name prefix."
   type        = map(string)

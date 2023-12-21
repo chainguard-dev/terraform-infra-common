@@ -3,3 +3,7 @@ variable "job_name" {
   type        = string
 }
 
+variable "labels" {
+  description = "Additional labels to apply to the dashboard."
+  default     = {}
+}

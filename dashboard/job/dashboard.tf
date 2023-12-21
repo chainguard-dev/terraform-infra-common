@@ -23,6 +23,9 @@ module "layout" {
 resource "google_monitoring_dashboard" "dashboard" {
   dashboard_json = jsonencode({
     displayName = "Cloud Run Job: ${var.job_name}"
+    labels = merge({
+      "job" : ""
+    }, var.labels)
     dashboardFilters = [{
       filterType  = "RESOURCE_LABEL"
       stringValue = var.job_name
