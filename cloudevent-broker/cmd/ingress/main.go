@@ -10,7 +10,6 @@ import (
 	"log"
 	"time"
 
-	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/pubsub"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/kelseyhightower/envconfig"
@@ -44,11 +43,7 @@ func main() {
 		log.Fatalf("failed to create CE client, %v", err)
 	}
 
-	projectID, err := metadata.ProjectID()
-	if err != nil {
-		log.Fatalf("failed to get project ID, %v", err)
-	}
-	psc, err := pubsub.NewClient(ctx, projectID, option.WithTokenSource(google.ComputeTokenSource("")))
+	psc, err := pubsub.NewClient(ctx, pubsub.DetectProjectID, option.WithTokenSource(google.ComputeTokenSource("")))
 	if err != nil {
 		log.Fatalf("failed to create pubsub client, %v", err)
 	}
