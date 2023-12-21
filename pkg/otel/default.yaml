@@ -50,11 +50,6 @@ processors:
 
 exporters:
   googlemanagedprometheus:
-    sending_queue:
-      # Having multiple consumers cause out-of-order time series,
-      # which GMP doesn't like. Since we are scraping a single host
-      # we shouldn't need too many consumers anyway.
-      num_consumers: 1
 
 extensions:
   health_check:
