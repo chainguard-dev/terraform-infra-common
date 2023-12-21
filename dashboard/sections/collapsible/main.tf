@@ -3,7 +3,7 @@ variable "tiles" {}
 variable "collapsed" { default = false }
 
 locals {
-  start_row = min([for s in var.tiles : s.yPos]...)
+  start_row = length(var.tiles) == 0 ? 0 : min([for s in var.tiles : s.yPos]...)
 }
 
 module "width" { source = "../width" }
