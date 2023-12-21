@@ -8,12 +8,12 @@
 // The main function to use is StartCollectorAsync, which starts the
 // collector asynchronously,
 //
-//     shutdown, runErr, err := otel.StartCollectorAsync(ctx)
-//     if err != nil {
-// 	      // handle errors
-//     }
-// 	   defer shutdown()
-//     // ... optionally wait for runErr and process it.
+//	    shutdown, runErr, err := otel.StartCollectorAsync(ctx)
+//	    if err != nil {
+//		      // handle errors
+//	    }
+//		   defer shutdown()
+//	    // ... optionally wait for runErr and process it.
 //
 // The prometheus endpoint is expected to be serving at localhost:9090/metrics.
 package otel
