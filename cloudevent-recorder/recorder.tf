@@ -125,6 +125,10 @@ module "recorder-dashboard" {
   source       = "../dashboard/cloudevent-receiver"
   service_name = var.name
 
+  labels = {
+    for type, schema in var.types : replace(type, ".", "_") => ""
+  }
+
   triggers = {
     for type, schema in var.types : "type: ${type}" => "${var.name}-${random_id.trigger-suffix[type].hex}"
   }
