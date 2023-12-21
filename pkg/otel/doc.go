@@ -1,5 +1,3 @@
-package otel
-
 // package otel provides an OpenTelemetry Collector with components
 // suitable to be used on Cloud Run.
 //
@@ -18,3 +16,4 @@ package otel
 //     // ... optionally wait for runErr and process it.
 //
 // The prometheus endpoint is expected to be serving at localhost:9090/metrics.
+package otel
