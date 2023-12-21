@@ -52,6 +52,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_alerts"></a> [alerts](#module\_alerts) | ../sections/alerts | n/a |
 | <a name="module_http"></a> [http](#module\_http) | ../sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../sections/logs | n/a |
@@ -68,6 +69,7 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_alert"></a> [alert](#input\_alert) | Alerting policies to add to the dashboard. | `string` | `""` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard. | `map` | `{}` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of the service(s) to monitor | `string` | n/a | yes |
 

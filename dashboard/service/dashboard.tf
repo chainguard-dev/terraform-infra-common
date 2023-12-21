@@ -16,15 +16,24 @@ module "resources" {
   filter = ["resource.type=\"cloud_run_revision\""]
 }
 
+module "alerts" {
+  source = "../sections/alerts"
+  alert  = var.alert
+  title  = "Alert"
+}
+
 module "width" { source = "../sections/width" }
 
 module "layout" {
-  source   = "../sections/layout"
-  sections = [
-    module.logs.section,
-    module.http.section,
-    module.resources.section,
-  ]
+  source = "../sections/layout"
+  sections = concat(
+    var.alert == "" ? [] : [module.alerts.section],
+    [
+      module.logs.section,
+      module.http.section,
+      module.resources.section,
+    ]
+  )
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
