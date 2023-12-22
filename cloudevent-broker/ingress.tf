@@ -100,9 +100,10 @@ module "logs" {
 }
 
 module "http" {
-  source = "../dashboard/sections/http"
-  title  = "HTTP"
-  filter = ["resource.type=\"cloud_run_revision\""]
+  source       = "../dashboard/sections/http"
+  title        = "HTTP"
+  filter       = ["resource.type=\"cloud_run_revision\""]
+  service_name = var.name
 }
 
 module "resources" {
