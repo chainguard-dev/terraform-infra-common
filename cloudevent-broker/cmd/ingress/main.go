@@ -26,9 +26,8 @@ const (
 )
 
 type envConfig struct {
-	Port    int    `envconfig:"PORT" default:"8080" required:"true"`
-	Project string `envconfig:"PROJECT_ID" required:"true"`
-	Topic   string `envconfig:"PUBSUB_TOPIC" required:"true"`
+	Port  int    `envconfig:"PORT" default:"8080" required:"true"`
+	Topic string `envconfig:"PUBSUB_TOPIC" required:"true"`
 }
 
 func main() {
@@ -44,7 +43,7 @@ func main() {
 		log.Fatalf("failed to create CE client, %v", err)
 	}
 
-	psc, err := pubsub.NewClient(ctx, env.Project, option.WithTokenSource(google.ComputeTokenSource("")))
+	psc, err := pubsub.NewClient(ctx, pubsub.DetectProjectID, option.WithTokenSource(google.ComputeTokenSource("")))
 	if err != nil {
 		log.Fatalf("failed to create pubsub client, %v", err)
 	}

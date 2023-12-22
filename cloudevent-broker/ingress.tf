@@ -70,10 +70,6 @@ resource "google_cloud_run_v2_service" "this" {
       image = cosign_sign.this.signed_ref
 
       env {
-        name  = "PROJECT_ID"
-        value = var.project_id
-      }
-      env {
         name  = "PUBSUB_TOPIC"
         value = google_pubsub_topic.this[each.key].name
       }
@@ -108,7 +104,7 @@ module "resources" {
 module "width" { source = "../dashboard/sections/width" }
 
 module "layout" {
-  source   = "../dashboard/sections/layout"
+  source = "../dashboard/sections/layout"
   sections = [
     module.topic.section,
     module.logs.section,
