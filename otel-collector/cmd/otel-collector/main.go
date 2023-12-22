@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 )
 
 func main() {
@@ -19,8 +20,6 @@ func main() {
 	if _, err := os.Stat(configPath); err != nil {
 		log.Fatalf("error checking config.yaml: %v", err)
 	}
-
-	log.Printf("config.yaml found at %s", configPath)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -36,13 +35,22 @@ func main() {
 
 	// Start a server that serves /quitquitquit on port 31415
 	mux := http.NewServeMux()
-	srv := &http.Server{Addr: ":31415", Handler: mux}
+	srv := &http.Server{
+		Addr:              ":31415",
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Minute,
+	}
 	mux.HandleFunc("/quitquitquit", func(w http.ResponseWriter, r *http.Request) {
-		go srv.Shutdown(ctx)
 		cancel()
+		if err := srv.Shutdown(context.Background()); err != nil {
+			log.Fatalf("failed to shutdown: %v", err)
+		}
 	})
-	go srv.ListenAndServe()
-
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
 	if err := cmd.Wait(); err != nil {
 		log.Fatal(err)
 	}
