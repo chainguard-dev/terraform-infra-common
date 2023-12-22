@@ -24,6 +24,9 @@ resource "ko_build" "recorder-image" {
 
 resource "cosign_sign" "recorder-image" {
   image = ko_build.recorder-image.image_ref
+
+  # Only keep the latest signature.
+  conflict = "REPLACE"
 }
 
 resource "ko_build" "logrotate-image" {
@@ -34,6 +37,16 @@ resource "ko_build" "logrotate-image" {
 
 resource "cosign_sign" "logrotate-image" {
   image = ko_build.logrotate-image.image_ref
+
+  # Only keep the latest signature.
+  conflict = "REPLACE"
+}
+
+module "otel-collector" {
+  source = "../otel-collector"
+
+  project_id      = var.project_id
+  service_account = google_service_account.recorder.email
 }
 
 resource "google_cloud_run_v2_service" "recorder-service" {
@@ -91,6 +104,7 @@ resource "google_cloud_run_v2_service" "recorder-service" {
         mount_path = "/logs"
       }
     }
+    containers { image = module.otel-collector.image }
     volumes {
       name = "logs"
       empty_dir {}
