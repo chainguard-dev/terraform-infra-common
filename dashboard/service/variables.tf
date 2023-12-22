@@ -7,3 +7,10 @@ variable "labels" {
   description = "Additional labels to apply to the dashboard."
   default     = {}
 }
+
+variable "alert" {
+  description = "Alerting policies to add to the dashboard."
+  type        = string
+  default     = ""
+}
+
