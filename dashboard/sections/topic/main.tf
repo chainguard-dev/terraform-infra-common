@@ -53,8 +53,8 @@ module "received-events" {
     "resource.label.\"subscription_id\"",
     "metric.label.\"response_class\""
   ]
-  primary_align   = "ALIGN_MEAN"
-  primary_reduce  = "REDUCE_NONE"
+  primary_align  = "ALIGN_MEAN"
+  primary_reduce = "REDUCE_NONE"
 }
 
 module "push-latency" {
@@ -95,41 +95,41 @@ locals {
     height = local.unit,
     width  = local.unit,
     widget = module.sent-events.widget,
-  },
-  {
-    yPos   = 0,
-    xPos   = local.col[1],
-    height = local.unit,
-    width  = local.unit,
-    widget = module.send-latency.widget,
-  },
-  {
-    yPos   = 0,
-    xPos   = local.col[2],
-    height = local.unit,
-    width  = local.unit,
-    widget = module.topic-oldest-unacked.widget,
-  },
-  {
-    yPos   = local.unit,
-    xPos   = local.col[0],
-    height = local.unit,
-    width  = local.unit,
-    widget = module.received-events.widget,
-  },
-  {
-    yPos   = local.unit,
-    xPos   = local.col[1],
-    height = local.unit,
-    width  = local.unit,
-    widget = module.push-latency.widget,
-  },
-  {
-    yPos   = local.unit,
-    xPos   = local.col[2],
-    height = local.unit,
-    width  = local.unit,
-    widget = module.oldest-unacked.widget,
+    },
+    {
+      yPos   = 0,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.send-latency.widget,
+    },
+    {
+      yPos   = 0,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.topic-oldest-unacked.widget,
+    },
+    {
+      yPos   = local.unit,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.received-events.widget,
+    },
+    {
+      yPos   = local.unit,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.push-latency.widget,
+    },
+    {
+      yPos   = local.unit,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.oldest-unacked.widget,
   }]
 }
 
