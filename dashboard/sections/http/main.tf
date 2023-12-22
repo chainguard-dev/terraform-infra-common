@@ -27,14 +27,6 @@ locals {
   gmp_filter = [for f in var.filter : f if !strcontains(f, "resource.type")]
 }
 
-output "gmp_filter" {
-  value = local.gmp_filter
-}
-
-output "var_filter" {
-  value = var.filter
-}
-
 // TODO(mattmoor): output HTTP charts.
 module "outbound_request_count" {
   source = "../../widgets/xy"
