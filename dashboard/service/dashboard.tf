@@ -20,7 +20,7 @@ module "alerts" {
   for_each = toset(var.alerts)
 
   source = "../sections/alerts"
-  alert  = ech.key
+  alert  = each.key
   title  = "Alert"
 }
 
