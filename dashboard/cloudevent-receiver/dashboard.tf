@@ -14,9 +14,10 @@ module "logs" {
 }
 
 module "http" {
-  source = "../sections/http"
-  title  = "HTTP"
-  filter = ["resource.type=\"cloud_run_revision\""]
+  source       = "../sections/http"
+  title        = "HTTP"
+  filter       = ["resource.type=\"cloud_run_revision\""]
+  service_name = var.service_name
 }
 
 module "resources" {
@@ -28,14 +29,14 @@ module "resources" {
 module "width" { source = "../sections/width" }
 
 module "layout" {
-  source   = "../sections/layout"
+  source = "../sections/layout"
   sections = concat([
     for key in sort(keys(var.triggers)) : module.subscription[key].section
-  ],
-  [
-    module.logs.section,
-    module.http.section,
-    module.resources.section,
+    ],
+    [
+      module.logs.section,
+      module.http.section,
+      module.resources.section,
   ])
 }
 

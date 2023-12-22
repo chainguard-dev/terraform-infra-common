@@ -13,7 +13,7 @@ module "resources" {
 module "width" { source = "../sections/width" }
 
 module "layout" {
-  source   = "../sections/layout"
+  source = "../sections/layout"
   sections = [
     module.logs.section,
     module.resources.section,
