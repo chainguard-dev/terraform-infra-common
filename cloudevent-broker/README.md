@@ -93,6 +93,7 @@ No requirements.
 | <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
+| <a name="module_otel-collector"></a> [otel-collector](#module\_otel-collector) | ../otel-collector | n/a |
 | <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
 | <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
