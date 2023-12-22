@@ -11,6 +11,13 @@ module "http" {
   service_name = var.service_name
 }
 
+module "grpc" {
+  source            = "../sections/grpc"
+  title             = "GRPC"
+  filter            = []
+  grpc_service_name = var.grpc_service_name
+}
+
 module "resources" {
   source = "../sections/resources"
   title  = "Resources"
@@ -34,6 +41,7 @@ module "layout" {
     [
       module.logs.section,
       module.http.section,
+      module.grpc.section,
       module.resources.section,
     ]
   )
