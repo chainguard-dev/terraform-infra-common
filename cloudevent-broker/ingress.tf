@@ -36,6 +36,13 @@ resource "cosign_sign" "this" {
   conflict = "REPLACE"
 }
 
+module "otel-collector" {
+  source = "../otel-collector"
+
+  project_id      = var.project_id
+  service_account = google_service_account.this.email
+}
+
 resource "google_cloud_run_v2_service" "this" {
   for_each = var.regions
 
@@ -69,11 +76,14 @@ resource "google_cloud_run_v2_service" "this" {
     containers {
       image = cosign_sign.this.signed_ref
 
+      ports { container_port = 8080 }
+
       env {
         name  = "PUBSUB_TOPIC"
         value = google_pubsub_topic.this[each.key].name
       }
     }
+    containers { image = module.otel-collector.image }
   }
 }
 
