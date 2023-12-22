@@ -8,9 +8,9 @@ variable "labels" {
   default     = {}
 }
 
-variable "alert" {
+variable "alerts" {
   description = "Alerting policies to add to the dashboard."
-  type        = string
-  default     = ""
+  type        = list(string)
+  default     = []
 }
 

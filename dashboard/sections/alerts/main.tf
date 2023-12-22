@@ -6,7 +6,7 @@ module "width" { source = "../width" }
 
 module "alert" {
   source     = "../../widgets/alert"
-  title      = "Alert"
+  title      = var.title
   alert_name = var.alert
 }
 
@@ -25,8 +25,8 @@ module "collapsible" {
 
   // If no alert is defined, this is an empty collapsed section.
   title     = var.title
-  tiles     = var.alert == "" ? [] : local.tiles
-  collapsed = var.collapsed || var.alert == ""
+  tiles     = local.tiles
+  collapsed = var.collapsed
 }
 
 output "section" {

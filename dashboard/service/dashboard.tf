@@ -17,8 +17,10 @@ module "resources" {
 }
 
 module "alerts" {
+  for_each = toset(var.alerts)
+
   source = "../sections/alerts"
-  alert  = var.alert
+  alert  = ech.key
   title  = "Alert"
 }
 
@@ -27,7 +29,7 @@ module "width" { source = "../sections/width" }
 module "layout" {
   source = "../sections/layout"
   sections = concat(
-    var.alert == "" ? [] : [module.alerts.section],
+    [for x in var.alerts : module.alerts[x].section],
     [
       module.logs.section,
       module.http.section,
