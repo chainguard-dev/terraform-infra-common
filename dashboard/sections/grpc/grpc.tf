@@ -36,37 +36,6 @@ module "incoming_latency" {
   ]
 }
 
-module "outbound_request_count" {
-  source = "../../widgets/xy"
-  title  = "Request count"
-  filter = concat(var.filter, [
-    "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
-    "metric.label.grpc_service=monitoring.regex.full_match(\"${var.grpc_service_name}.*\")",
-  ])
-  group_by_fields = [
-    "metric.label.\"grpc_service\"",
-    "metric.label.\"grpc_method\"",
-    "metric.label.\"grpc_code\""
-  ]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
-}
-
-module "outbound_latency" {
-  source = "../../widgets/latency"
-  title  = "Incoming request latency"
-  filter = concat(var.filter, [
-    "metric.type=\"prometheus.googleapis.com/grpc_server_handling_seconds/histogram\"",
-    "metric.label.\"grpc_service\"=monitoring.regex.full_match(\"chainguard.datastore.*\")",
-  ])
-  group_by_fields = [
-    "metric.label.\"grpc_service\"",
-    "metric.label.\"grpc_method\"",
-  ]
-}
-
 locals {
   columns = 2
   unit    = module.width.size / local.columns
