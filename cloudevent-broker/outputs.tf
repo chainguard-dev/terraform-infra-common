@@ -1,5 +1,5 @@
 output "ingress" {
-  depends_on  = [google_cloud_run_v2_service.this]
+  depends_on  = [module.this]
   description = "An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events."
   value = {
     name = var.name

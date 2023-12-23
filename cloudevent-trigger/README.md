@@ -24,33 +24,21 @@ module "cloudevent-broker" {
   regions    = module.networking.regional-networks
 }
 
-// Run a cloud run service "bar" to consume events from the Broker above.
-resource "google_cloud_run_v2_service" "bar-service" {
-  for_each = module.networking.regional-networks
+module "bar-service" {
+  source = "chainguard-dev/glue/cloudrun//regional-go-service"
 
-  project  = var.project_id
-  name     = "bar"
-  location = each.key
-  // This service should only be called by our Pub/Sub
-  // subscription, so flag it as internal only.
-  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  project_id = var.project_id
+  name       = "bar"
+  regions    = module.networking.regional-networks
 
-  launch_stage = "BETA"
-
-  template {
-    vpc_access {
-      network_interfaces {
-        network    = each.value.network
-        subnetwork = each.value.subnet
+  service_account = google_service_account.bar.email
+  containers = {
+    "foo" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/foo"
       }
-      // Configure the appropriate egress setting here.
-      egress = "PRIVATE_RANGES_ONLY"
-    }
-
-    service_account = google_service_account.bar.email
-
-    containers {
-      image = "..."
+      ports = [{ container_port = 8080 }]
     }
   }
 }

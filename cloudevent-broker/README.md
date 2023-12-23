@@ -39,35 +39,25 @@ module "foo-emits-events" {
 
 // Run a cloud run service as the "foo" service account, and pass in the address
 // of the regional ingress endpoint.
-resource "google_cloud_run_v2_service" "foo-service" {
-  for_each = module.networking.regional-networks
+module "foo-service" {
+  source = "chainguard-dev/glue/cloudrun//regional-go-service"
 
-  project  = var.project_id
-  name     = "foo"
-  location = each.key
+  project_id = var.project_id
+  name       = "foo"
+  regions    = module.networking.regional-networks
 
-  launch_stage = "BETA"
-
-  template {
-    vpc_access {
-      network_interfaces {
-        network    = each.value.network
-        subnetwork = each.value.subnet
+  service_account = google_service_account.foo.email
+  containers = {
+    "foo" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/foo"
       }
-      // Egress through VPC so we can talk to the private ingress endpoint.
-      egress = "PRIVATE_RANGES_ONLY"
-    }
-
-    service_account = google_service_account.foo.email
-
-    containers {
-      image = "..."
-
-      // Pass the resolved regional URI to the service in this region.
-      env {
-        name  = "EVENT_INGRESS_URL"
-        value = module.foo-emits-events[each.key].uri
-      }
+      ports = [{ container_port = 8080 }]
+      regional-env = [{
+        name  = "PUBSUB_TOPIC"
+        value = { for k, v in module.foo-emits-events : k => v.uri }
+      }]
     }
   }
 }
@@ -82,9 +72,7 @@ No requirements.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
-| <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 
 ## Modules
 
@@ -93,8 +81,8 @@ No requirements.
 | <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
-| <a name="module_otel-collector"></a> [otel-collector](#module\_otel-collector) | ../otel-collector | n/a |
 | <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
+| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 | <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
 
@@ -102,13 +90,10 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
-| [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service) | resource |
 | [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [google_pubsub_topic_iam_binding.ingress-publishes-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
-| [ko_build.this](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 
 ## Inputs
 

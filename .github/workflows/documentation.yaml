@@ -14,6 +14,7 @@ jobs:
         - cloudevent-broker
         - cloudevent-trigger
         - cloudevent-recorder
+        - regional-go-service
         - otel-collector
         - networking
         - dashboard/service
