@@ -8,6 +8,8 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
@@ -16,7 +18,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
-	"knative.dev/pkg/signals"
 
 	cgpubsub "github.com/chainguard-dev/terraform-cloudrun-glue/pkg/pubsub"
 )
@@ -32,7 +33,8 @@ type envConfig struct {
 }
 
 func main() {
-	ctx := signals.NewContext()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {

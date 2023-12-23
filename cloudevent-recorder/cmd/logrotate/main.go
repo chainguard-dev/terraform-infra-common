@@ -6,12 +6,14 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
 	"log"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/chainguard-dev/terraform-cloudrun-glue/pkg/rotate"
 	"github.com/kelseyhightower/envconfig"
-	"knative.dev/pkg/signals"
 )
 
 type rotateConfig struct {
@@ -28,7 +30,9 @@ func main() {
 
 	uploader := rotate.NewUploader(rc.LogPath, rc.Bucket, rc.FlushInterval)
 
-	if err := uploader.Run(signals.NewContext()); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	if err := uploader.Run(ctx); err != nil {
 		log.Fatalf("Failed to run the uploader: %v", err)
 	}
 }

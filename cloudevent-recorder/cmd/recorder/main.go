@@ -9,11 +9,11 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/kelseyhightower/envconfig"
-	"knative.dev/pkg/signals"
 )
 
 type envConfig struct {
@@ -26,7 +26,8 @@ func main() {
 	if err := envconfig.Process("", &env); err != nil {
 		log.Panicf("failed to process env var: %s", err)
 	}
-	ctx := signals.NewContext()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {

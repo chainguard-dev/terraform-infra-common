@@ -3,6 +3,7 @@ module github.com/chainguard-dev/terraform-cloudrun-glue
 go 1.21.1
 
 require (
+	cloud.google.com/go/compute/metadata v0.2.3
 	cloud.google.com/go/pubsub v1.33.0
 	github.com/cloudevents/sdk-go/v2 v2.14.0
 	github.com/google/go-cmp v0.6.0
@@ -11,13 +12,11 @@ require (
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	golang.org/x/oauth2 v0.15.0
 	google.golang.org/api v0.154.0
-	knative.dev/pkg v0.0.0-20231204120332-9386ad6703ee
 )
 
 require (
 	cloud.google.com/go v0.110.10 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/storage v1.35.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -39,6 +38,7 @@ require (
 	go.opentelemetry.io/otel v1.21.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
+	go.uber.org/goleak v1.2.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
