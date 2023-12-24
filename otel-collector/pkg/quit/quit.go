@@ -12,7 +12,7 @@ import (
 )
 
 // Quit explicitly manages the lifecycle of the otel-collector sidecar. When a Job is
-// injected with an Istio sidecar, which is an always-on container, such Job
+// injected with an otel-collector sidecar, which is an always-on container, such Job
 // will never complete.
 //
 // This utility function sends a POST to otel-collector sidecar's /quitquitquit endpoint.
