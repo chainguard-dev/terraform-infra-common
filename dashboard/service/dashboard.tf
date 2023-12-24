@@ -15,7 +15,7 @@ module "grpc" {
   source            = "../sections/grpc"
   title             = "GRPC"
   filter            = []
-  grpc_service_name = var.grpc_service_name
+  service_name      = var.service_name
 }
 
 module "resources" {
