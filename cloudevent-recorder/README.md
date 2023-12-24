@@ -52,27 +52,21 @@ No requirements.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
-| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
-| <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_otel-collector"></a> [otel-collector](#module\_otel-collector) | ../otel-collector | n/a |
 | <a name="module_recorder-dashboard"></a> [recorder-dashboard](#module\_recorder-dashboard) | ../dashboard/cloudevent-receiver | n/a |
+| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 | <a name="module_triggers"></a> [triggers](#module\_triggers) | ../cloudevent-trigger | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [cosign_sign.logrotate-image](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
-| [cosign_sign.recorder-image](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
-| [google-beta_google_cloud_run_v2_service.recorder-service](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_service) | resource |
 | [google_bigquery_data_transfer_config.import-job](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_data_transfer_config) | resource |
 | [google_bigquery_dataset.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset) | resource |
 | [google_bigquery_table.types](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_table) | resource |
@@ -84,8 +78,6 @@ No requirements.
 | [google_storage_bucket.recorder](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket) | resource |
 | [google_storage_bucket_iam_member.import-reads-from-gcs-buckets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_member) | resource |
 | [google_storage_bucket_iam_member.recorder-writes-to-gcs-buckets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_member) | resource |
-| [ko_build.logrotate-image](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
-| [ko_build.recorder-image](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 | [random_id.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_id.trigger-suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |

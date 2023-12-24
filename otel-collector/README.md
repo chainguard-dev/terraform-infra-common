@@ -27,6 +27,9 @@ resource "google_cloud_run_v2_service" "this" {
 }
 ```
 
+This module is automatically invoked by the
+[`regional-go-service`](../regional-go-service/README.md) module.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

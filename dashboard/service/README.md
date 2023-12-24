@@ -15,15 +15,21 @@ module "networking" {
 }
 
 // Run a regionalized cloud run service "frontend" to serve requests.
-resource "google_cloud_run_v2_service" "frontend" {
-  for_each = module.networking.regional-networks
-  name     = "frontend"
+module "frontend" {
+  source = "chainguard-dev/glue/cloudrun//regional-go-service"
 
-  //...
-  template {
-    //...
-    containers {
-      image = "..."
+  project_id = var.project_id
+  name       = "frontend"
+  regions    = module.networking.regional-networks
+
+  service_account = google_service_account.frontend.email
+  containers = {
+    "frontend" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/frontend"
+      }
+      ports = [{ container_port = 8080 }]
     }
   }
 }
