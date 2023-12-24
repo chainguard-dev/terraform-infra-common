@@ -8,6 +8,8 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
@@ -16,7 +18,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
-	"knative.dev/pkg/signals"
 
 	cgpubsub "github.com/chainguard-dev/terraform-cloudrun-glue/pkg/pubsub"
 )
@@ -32,25 +33,26 @@ type envConfig struct {
 }
 
 func main() {
-	ctx := signals.NewContext()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
-		log.Fatalf("failed to process env var: %s", err)
+		log.Panicf("failed to process env var: %s", err)
 	}
 
 	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {
-		log.Fatalf("failed to create CE client, %v", err)
+		log.Panicf("failed to create CE client, %v", err)
 	}
 
 	projectID, err := metadata.ProjectID()
 	if err != nil {
-		log.Fatalf("failed to get project ID, %v", err)
+		log.Panicf("failed to get project ID, %v", err)
 	}
 	psc, err := pubsub.NewClient(ctx, projectID, option.WithTokenSource(google.ComputeTokenSource("")))
 	if err != nil {
-		log.Fatalf("failed to create pubsub client, %v", err)
+		log.Panicf("failed to create pubsub client, %v", err)
 	}
 
 	topic := psc.Topic(env.Topic)
@@ -62,6 +64,6 @@ func main() {
 			log.Printf("failed to forward event: %v\n%v", err, event)
 		}
 	}); err != nil {
-		log.Panic(err)
+		log.Panicf("failed to start receiver, %v", err)
 	}
 }
