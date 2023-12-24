@@ -15,15 +15,21 @@ module "networking" {
 }
 
 // Run a regionalized cloud run service "receiver" to handle events.
-resource "google_cloud_run_v2_service" "receiver" {
-  for_each = module.networking.regional-networks
-  name     = "receiver"
+module "receiver" {
+  source = "chainguard-dev/glue/cloudrun//regional-go-service"
 
-  //...
-  template {
-    //...
-    containers {
-      image = "..."
+  project_id = var.project_id
+  name       = "receiver"
+  regions    = module.networking.regional-networks
+
+  service_account = google_service_account.receiver.email
+  containers = {
+    "receiver" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/receiver"
+      }
+      ports = [{ container_port = 8080 }]
     }
   }
 }

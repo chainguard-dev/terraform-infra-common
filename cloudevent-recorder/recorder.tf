@@ -16,100 +16,52 @@ resource "google_storage_bucket_iam_member" "recorder-writes-to-gcs-buckets" {
   member = "serviceAccount:${google_service_account.recorder.email}"
 }
 
-resource "ko_build" "recorder-image" {
-  base_image  = "cgr.dev/chainguard/static:latest-glibc"
-  importpath  = "./cmd/recorder"
-  working_dir = path.module
-}
+module "this" {
+  source     = "../regional-go-service"
+  project_id = var.project_id
+  name       = var.name
+  regions    = var.regions
 
-resource "cosign_sign" "recorder-image" {
-  image = ko_build.recorder-image.image_ref
-
-  # Only keep the latest signature.
-  conflict = "REPLACE"
-}
-
-resource "ko_build" "logrotate-image" {
-  base_image  = "cgr.dev/chainguard/static:latest-glibc"
-  importpath  = "./cmd/logrotate"
-  working_dir = path.module
-}
-
-resource "cosign_sign" "logrotate-image" {
-  image = ko_build.logrotate-image.image_ref
-
-  # Only keep the latest signature.
-  conflict = "REPLACE"
-}
-
-module "otel-collector" {
-  source = "../otel-collector"
-
-  project_id      = var.project_id
   service_account = google_service_account.recorder.email
-}
-
-resource "google_cloud_run_v2_service" "recorder-service" {
-  for_each = var.regions
-
-  provider = google-beta # For empty_dir
-  project  = var.project_id
-  name     = var.name
-  location = each.key
-  // This service should only be called by our Pub/Sub
-  // subscription, so flag it as internal only.
-  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
-
-  launch_stage = "BETA"
-
-  template {
-    vpc_access {
-      network_interfaces {
-        network    = each.value.network
-        subnetwork = each.value.subnet
+  containers = {
+    "recorder" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/recorder"
       }
-      egress = "ALL_TRAFFIC" // This should not egress
-    }
-
-    service_account = google_service_account.recorder.email
-    containers {
-      image = cosign_sign.recorder-image.signed_ref
-
-      ports {
-        container_port = 8080
-      }
-
-      env {
+      ports = [{ container_port = 8080 }]
+      env = [{
         name  = "LOG_PATH"
         value = "/logs"
-      }
-      volume_mounts {
+      }]
+      volume_mounts = [{
         name       = "logs"
         mount_path = "/logs"
-      }
+      }]
     }
-    containers {
-      image = cosign_sign.logrotate-image.signed_ref
-
-      env {
+    "logrotate" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/logrotate"
+      }
+      env = [{
+        name  = "LOG_PATH"
+        value = "/logs"
+      }]
+      regional-env = [{
         name  = "BUCKET"
-        value = google_storage_bucket.recorder[each.key].url
-      }
-      env {
-        name  = "LOG_PATH"
-        value = "/logs"
-      }
-      volume_mounts {
+        value = { for k, v in google_storage_bucket.recorder : k => v.url }
+      }]
+      volume_mounts = [{
         name       = "logs"
         mount_path = "/logs"
-      }
-    }
-    containers { image = module.otel-collector.image }
-    volumes {
-      name = "logs"
-      empty_dir {}
+      }]
     }
   }
+  volumes = [{
+    name      = "logs"
+    empty_dir = {}
+  }]
 }
 
 resource "random_id" "trigger-suffix" {
@@ -128,10 +80,10 @@ module "triggers" {
   broker     = var.broker[each.value.region]
   filter     = { "type" : each.value.type }
 
-  depends_on = [google_cloud_run_v2_service.recorder-service]
+  depends_on = [module.this]
   private-service = {
     region = each.value.region
-    name   = google_cloud_run_v2_service.recorder-service[each.value.region].name
+    name   = var.name
   }
 }
 
@@ -139,9 +91,7 @@ module "recorder-dashboard" {
   source       = "../dashboard/cloudevent-receiver"
   service_name = var.name
 
-  labels = {
-    for type, schema in var.types : replace(type, ".", "_") => ""
-  }
+  labels = { for type, schema in var.types : replace(type, ".", "_") => "" }
 
   triggers = {
     for type, schema in var.types : "type: ${type}" => "${var.name}-${random_id.trigger-suffix[type].hex}"
