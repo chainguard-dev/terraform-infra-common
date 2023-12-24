@@ -39,6 +39,7 @@ variable "containers" {
       working_dir = string
       importpath  = string
     })
+    args = optional(list(string), [])
     ports = optional(list(object({
       name           = optional(string, "h2c")
       container_port = number
