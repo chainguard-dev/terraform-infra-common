@@ -41,7 +41,7 @@ variable "containers" {
     })
     args = optional(list(string), [])
     ports = optional(list(object({
-      name           = optional(string, "h2c")
+      name           = optional(string, "http1")
       container_port = number
     })), [])
     env = optional(list(object({
