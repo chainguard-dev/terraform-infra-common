@@ -42,6 +42,6 @@ func main() {
 		filename := filepath.Join(dir, event.ID())
 		return os.WriteFile(filename, event.Data(), 0600)
 	}); err != nil {
-		log.Panic(err)
+		log.Panicf("failed to start event receiver, %v", err)
 	}
 }

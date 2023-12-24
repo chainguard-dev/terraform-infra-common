@@ -25,7 +25,7 @@ type rotateConfig struct {
 func main() {
 	var rc rotateConfig
 	if err := envconfig.Process("", &rc); err != nil {
-		log.Fatalf("Error processing environment: %v", err)
+		log.Panicf("Error processing environment: %v", err)
 	}
 
 	uploader := rotate.NewUploader(rc.LogPath, rc.Bucket, rc.FlushInterval)
@@ -33,6 +33,6 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 	if err := uploader.Run(ctx); err != nil {
-		log.Fatalf("Failed to run the uploader: %v", err)
+		log.Panicf("Failed to run the uploader: %v", err)
 	}
 }
