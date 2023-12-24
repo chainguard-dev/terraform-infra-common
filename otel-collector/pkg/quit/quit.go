@@ -24,7 +24,7 @@ func Quit() {
 		if i > 1 {
 			time.Sleep(1 * time.Second)
 		}
-		_, err := http.Post("http://localhost:31415/quitquitquit", "application/json", bytes.NewBuffer(nil))
+		_, err := http.Post("http://localhost:31415/quitquitquit", "application/json", nil)
 		if err == nil {
 			log.Println("successfully POST /quitquitquit to otel-collector sidecar")
 			return
