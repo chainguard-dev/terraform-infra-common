@@ -44,9 +44,21 @@ variable "containers" {
       name           = optional(string, "http1")
       container_port = number
     })), [])
+    resources = optional(object({
+      limits = object({
+        cpu    = string
+        memory = string
+      })
+    }), null)
     env = optional(list(object({
       name  = string
-      value = string
+      value = optional(string)
+      value_source = optional(object({
+        secret_key_ref = object({
+          secret  = string
+          version = string
+        })
+      }), null)
     })), [])
     regional-env = optional(list(object({
       name  = string
