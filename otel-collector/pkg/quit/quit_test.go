@@ -9,6 +9,6 @@ import (
 )
 
 var (
-	_ = context.AfterFunc(context.TODO(), QuitPort(12345))
-	_ = context.AfterFunc(context.TODO(), Quit())
+	_ = context.AfterFunc(context.TODO(), Sidecar(12345))
+	_ = context.AfterFunc(context.TODO(), OtelSidecar())
 )
