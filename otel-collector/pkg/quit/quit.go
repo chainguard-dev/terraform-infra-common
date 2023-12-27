@@ -6,29 +6,46 @@ SPDX-License-Identifier: Apache-2.0
 package quit
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 )
 
-// Quit explicitly manages the lifecycle of the otel-collector sidecar. When a Job is
+const (
+	OtelSidecarPort = 31415
+)
+
+// QuitPort explicitly manages the lifecycle of the otel-collector sidecar. When a Job is
 // injected with an otel-collector sidecar, which is an always-on container, such Job
 // will never complete.
 //
 // This utility function sends a POST to otel-collector sidecar's /quitquitquit endpoint.
 // Jobs can use this to terminate the sidecar upon completion.
-func Quit() {
-	var err error
-	for i := 0; i < 5; i++ {
-		if i > 1 {
-			time.Sleep(1 * time.Second)
+func QuitPort(port int) func() {
+	return func() {
+		var err error
+		var resp *http.Response
+		for i := 0; i < 5; i++ {
+			if i > 1 {
+				time.Sleep(1 * time.Second)
+			}
+			resp, err := http.Post(fmt.Sprintf("http://localhost:%d/quitquitquit", port), "application/json", nil)
+			// if err is nil and resp is OK
+			if err == nil && resp.StatusCode == http.StatusOK {
+				log.Println("successfully POST /quitquitquit to otel-collector sidecar")
+				return
+			}
 		}
-		_, err = http.Post("http://localhost:31415/quitquitquit", "application/json", nil)
-		if err == nil {
-			log.Println("successfully POST /quitquitquit to otel-collector sidecar")
-			return
+		code := 0
+		if resp != nil {
+			code = resp.StatusCode
 		}
+		// This can happen because we don't always run the otel-collector sidecar.
+		log.Printf("cannot POST /quitquitquit to the otel-collector sidecar: err=%v, code=%d", err, code)
 	}
-	// This can happen because we don't always run the otel-collector sidecar.
-	log.Printf("cannot POST /quitquitquit to the otel-collector sidecar: %v", err)
+}
+
+func Quit() func() {
+	return QuitPort(OtelSidecarPort)
 }
