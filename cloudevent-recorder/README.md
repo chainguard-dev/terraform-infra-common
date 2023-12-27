@@ -9,7 +9,7 @@ intended usage of this module for publishing events is something like this:
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/glue/cloudrun//networking"
+  source = "chainguard-dev/common/infra//networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -18,7 +18,7 @@ module "networking" {
 
 // Create the Broker abstraction.
 module "cloudevent-broker" {
-  source = "chainguard-dev/glue/cloudrun//cloudevent-broker"
+  source = "chainguard-dev/common/infra//cloudevent-broker"
 
   name       = "my-broker"
   project_id = var.project_id
@@ -27,7 +27,7 @@ module "cloudevent-broker" {
 
 // Record cloudevents of type com.example.foo and com.example.bar
 module "foo-emits-events" {
-  source = "chainguard-dev/glue/cloudrun//cloudevent-recorder"
+  source = "chainguard-dev/common/infra//cloudevent-recorder"
 
   name       = "my-recorder"
   project_id = var.project_id

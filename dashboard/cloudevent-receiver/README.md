@@ -7,7 +7,7 @@ It assumes the service has the same name in all regions.
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/glue/cloudrun//networking"
+  source = "chainguard-dev/common/infra//networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -16,7 +16,7 @@ module "networking" {
 
 // Run a regionalized cloud run service "receiver" to handle events.
 module "receiver" {
-  source = "chainguard-dev/glue/cloudrun//regional-go-service"
+  source = "chainguard-dev/common/infra//regional-go-service"
 
   project_id = var.project_id
   name       = "receiver"
@@ -37,7 +37,7 @@ module "receiver" {
 module "cloudevent-trigger" {
   for_each = module.networking.regional-networks
 
-  source = "chainguard-dev/glue/cloudrun//cloudevent-trigger"
+  source = "chainguard-dev/common/infra//cloudevent-trigger"
 
   name       = "my-trigger"
   project_id = var.project_id
@@ -53,7 +53,7 @@ module "cloudevent-trigger" {
 
 // Set up a dashboard for a regionalized event handler named "receiver".
 module "receiver-dashboard" {
-  source       = "chainguard-dev/glue/cloudrun//dashboard/cloudevent-receiver"
+  source       = "chainguard-dev/common/infra//dashboard/cloudevent-receiver"
   service_name = "receiver"
 
   triggers = {

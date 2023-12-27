@@ -19,7 +19,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
-	cgpubsub "github.com/chainguard-dev/terraform-cloudrun-glue/pkg/pubsub"
+	cgpubsub "github.com/chainguard-dev/terraform-infra-common/pkg/pubsub"
 )
 
 const (

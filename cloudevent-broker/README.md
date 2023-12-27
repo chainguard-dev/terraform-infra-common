@@ -8,7 +8,7 @@ events is something like this:
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/glue/cloudrun//networking"
+  source = "chainguard-dev/common/infra//networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -17,7 +17,7 @@ module "networking" {
 
 // Create the Broker abstraction.
 module "cloudevent-broker" {
-  source = "chainguard-dev/glue/cloudrun//cloudevent-broker"
+  source = "chainguard-dev/common/infra//cloudevent-broker"
 
   name       = "my-broker"
   project_id = var.project_id
@@ -28,7 +28,7 @@ module "cloudevent-broker" {
 module "foo-emits-events" {
   for_each = module.networking.regional-networks
 
-  source = "chainguard-dev/glue/cloudrun//authorize-private-service"
+  source = "chainguard-dev/common/infra//authorize-private-service"
 
   project_id = var.project_id
   region     = each.key
@@ -40,7 +40,7 @@ module "foo-emits-events" {
 // Run a cloud run service as the "foo" service account, and pass in the address
 // of the regional ingress endpoint.
 module "foo-service" {
-  source = "chainguard-dev/glue/cloudrun//regional-go-service"
+  source = "chainguard-dev/common/infra//regional-go-service"
 
   project_id = var.project_id
   name       = "foo"

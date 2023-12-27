@@ -8,7 +8,7 @@ this module for consuming events is something like this:
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/glue/cloudrun//networking"
+  source = "chainguard-dev/common/infra//networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -17,7 +17,7 @@ module "networking" {
 
 // Create the Broker abstraction.
 module "cloudevent-broker" {
-  source = "chainguard-dev/glue/cloudrun//cloudevent-broker"
+  source = "chainguard-dev/common/infra//cloudevent-broker"
 
   name       = "my-broker"
   project_id = var.project_id
@@ -25,7 +25,7 @@ module "cloudevent-broker" {
 }
 
 module "bar-service" {
-  source = "chainguard-dev/glue/cloudrun//regional-go-service"
+  source = "chainguard-dev/common/infra//regional-go-service"
 
   project_id = var.project_id
   name       = "bar"
@@ -48,7 +48,7 @@ module "bar-service" {
 module "cloudevent-trigger" {
   for_each = module.networking.regional-networks
 
-  source = "chainguard-dev/glue/cloudrun//cloudevent-trigger"
+  source = "chainguard-dev/common/infra//cloudevent-trigger"
 
   name       = "bar"
   project_id = var.project_id

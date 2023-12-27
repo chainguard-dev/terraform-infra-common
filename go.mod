@@ -1,4 +1,4 @@
-module github.com/chainguard-dev/terraform-cloudrun-glue
+module github.com/chainguard-dev/terraform-infra-common
 
 go 1.21.1
 

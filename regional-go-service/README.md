@@ -7,7 +7,7 @@ service can be seen here:
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/glue/cloudrun//networking"
+  source = "chainguard-dev/common/infra//networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -15,7 +15,7 @@ module "networking" {
 }
 
 module "foo-service" {
-  source = "chainguard-dev/glue/cloudrun//regional-go-service"
+  source = "chainguard-dev/common/infra//regional-go-service"
 
   project_id = var.project_id
   name       = "foo"

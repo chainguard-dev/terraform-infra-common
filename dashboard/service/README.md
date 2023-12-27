@@ -7,7 +7,7 @@ It assumes the service has the same name in all regions.
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/glue/cloudrun//networking"
+  source = "chainguard-dev/common/infra//networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -16,7 +16,7 @@ module "networking" {
 
 // Run a regionalized cloud run service "frontend" to serve requests.
 module "frontend" {
-  source = "chainguard-dev/glue/cloudrun//regional-go-service"
+  source = "chainguard-dev/common/infra//regional-go-service"
 
   project_id = var.project_id
   name       = "frontend"
@@ -36,7 +36,7 @@ module "frontend" {
 
 // Set up a dashboard for a regionalized service named "frontend".
 module "service-dashboard" {
-  source       = "chainguard-dev/glue/cloudrun//dashboard/service"
+  source       = "chainguard-dev/common/infra//dashboard/service"
   service_name = "frontend"
 }
 ```
