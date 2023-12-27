@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/chainguard-dev/terraform-cloudrun-glue/pkg/rotate"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/rotate"
 	"github.com/kelseyhightower/envconfig"
 )
 

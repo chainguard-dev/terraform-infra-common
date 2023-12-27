@@ -20,7 +20,7 @@ resource "google_cloud_run_v2_job" "sync" {
 
 // Set up a dashboard for a regionalized job named "sync".
 module "job-dashboard" {
-  source       = "chainguard-dev/glue/cloudrun//dashboard/job"
+  source       = "chainguard-dev/common/infra//dashboard/job"
   service_name = google_cloud_run_v2_job.name
 }
 ```
