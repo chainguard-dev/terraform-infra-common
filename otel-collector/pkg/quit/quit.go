@@ -33,7 +33,7 @@ func Sidecar(port int) func() {
 			resp, err := http.Post(fmt.Sprintf("http://localhost:%d/quitquitquit", port), "application/json", nil)
 			// if err is nil and resp is OK
 			if err == nil && resp.StatusCode == http.StatusOK {
-				log.Println("successfully POST /quitquitquit to otel-collector sidecar")
+				log.Println("successfully POST /quitquitquit to sidecar")
 				return
 			}
 		}
@@ -42,7 +42,7 @@ func Sidecar(port int) func() {
 			code = resp.StatusCode
 		}
 		// This can happen because we don't always run the otel-collector sidecar.
-		log.Printf("cannot POST /quitquitquit to the otel-collector sidecar: err=%v, code=%d", err, code)
+		log.Printf("cannot POST /quitquitquit to the sidecar: err=%v, code=%d", err, code)
 	}
 }
 
