@@ -12,4 +12,8 @@ resource "google_pubsub_topic" "this" {
 
   // TODO: Tune this and/or make it configurable?
   message_retention_duration = "600s"
+
+  message_storage_policy {
+    allowed_persistence_regions = [each.key]
+  }
 }
