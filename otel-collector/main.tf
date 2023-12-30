@@ -11,8 +11,14 @@ resource "google_project_iam_member" "metrics-writer" {
   member  = "serviceAccount:${var.service_account}"
 }
 
+// Verify the base image using the supplied policy.
+data "cosign_verify" "base_image" {
+  image  = var.otel_collector_image
+  policy = var.otel_collector_policy
+}
+
 resource "ko_build" "otel-image" {
-  base_image  = var.otel_collector_image
+  base_image  = data.cosign_verify.base_image.verified_ref
   importpath  = "./cmd/otel-collector"
   working_dir = path.module
 }
