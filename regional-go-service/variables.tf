@@ -36,6 +36,24 @@ variable "containers" {
   type = map(object({
     source = object({
       base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc")
+      base_policy = optional(string, <<EOF
+apiVersion: policy.sigstore.dev/v1beta1
+kind: ClusterImagePolicy
+metadata:
+  name: base-policy
+spec:
+  images:
+    - glob: "**"
+  authorities:
+    - keyless:
+        url: https://fulcio.sigstore.dev
+        identities:
+          - issuer: https://token.actions.githubusercontent.com
+            subject: https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main
+      ctlog:
+        url: https://rekor.sigstore.dev
+EOF
+)
       working_dir = string
       importpath  = string
     })

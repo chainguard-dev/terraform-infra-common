@@ -54,12 +54,14 @@ No modules.
 | [cosign_sign.otel-image](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [ko_build.otel-image](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
+| [cosign_verify.base_image](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/data-sources/verify) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | The otel collector image to use as a base. | `string` | `"cgr.dev/chainguard/opentelemetry-collector-contrib:latest"` | no |
+| <a name="input_otel_collector_policy"></a> [otel\_collector\_policy](#input\_otel\_collector\_policy) | The otel collector image to use as a base. | `string` | `"apiVersion: policy.sigstore.dev/v1beta1\nkind: ClusterImagePolicy\nmetadata:\n  name: base-policy\nspec:\n  images:\n    - glob: \"**\"\n  authorities:\n    - keyless:\n        url: https://fulcio.sigstore.devn        identities:\n          - issuer: https://token.actions.githubusercontent.comn            subject: https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/mainn      ctlog:\n        url: https://rekor.sigstore.devn"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which the collector will run. | `string` | n/a | yes |
 

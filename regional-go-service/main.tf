@@ -5,10 +5,17 @@ terraform {
   }
 }
 
+// Verify the base image using the supplied policy.
+data "cosign_verify" "base_image" {
+  for_each = var.containers
+  image    = each.value.source.base_image
+  policy   = each.value.source.base_policy
+}
+
 // Build each of the application images from source.
 resource "ko_build" "this" {
   for_each    = var.containers
-  base_image  = each.value.source.base_image
+  base_image  = data.cosign_verify.base_image[each.key].verified_ref
   working_dir = each.value.source.working_dir
   importpath  = each.value.source.importpath
 }
