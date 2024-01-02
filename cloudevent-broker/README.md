@@ -55,7 +55,7 @@ module "foo-service" {
       }
       ports = [{ container_port = 8080 }]
       regional-env = [{
-        name  = "PUBSUB_TOPIC"
+        name  = "EVENT_INGRESS_URI"
         value = { for k, v in module.foo-emits-events : k => v.uri }
       }]
     }
