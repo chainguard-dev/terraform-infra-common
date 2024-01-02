@@ -36,47 +36,48 @@ resource "google_service_account" "import-identity" {
   display_name = "BigQuery import identity"
 }
 
-// Grant the import identity permission to manipulate the dataset's tables.
-resource "google_bigquery_table_iam_member" "import-writes-to-tables" {
+// Only the DTS import identity should ever write to our dataset's tables.
+resource "google_bigquery_table_iam_binding" "import-writes-to-tables" {
   for_each = var.types
 
   project    = var.project_id
   dataset_id = google_bigquery_dataset.this.dataset_id
   table_id   = google_bigquery_table.types[each.key].table_id
   role       = "roles/bigquery.admin"
-  member     = "serviceAccount:${google_service_account.import-identity.email}"
+  members    = ["serviceAccount:${google_service_account.import-identity.email}"]
 }
 
-// Grant the import identity permission to read the event data from
-// the regional GCS buckets.
-resource "google_storage_bucket_iam_member" "import-reads-from-gcs-buckets" {
+// The BigQuery Data Transfer Service jobs are the only things that should
+// be reading from these buckets.
+resource "google_storage_bucket_iam_binding" "import-reads-from-gcs-buckets" {
   for_each = var.regions
 
-  bucket = google_storage_bucket.recorder[each.key].name
-  role   = "roles/storage.objectViewer"
-  member = "serviceAccount:${google_service_account.import-identity.email}"
+  bucket  = google_storage_bucket.recorder[each.key].name
+  role    = "roles/storage.objectViewer"
+  members = ["serviceAccount:${google_service_account.import-identity.email}"]
 }
 
-// Grant the BQ DTS service account for this project permission to assume
-// the identity we are assigning to the DTS job.
-resource "google_service_account_iam_member" "bq-dts-assumes-import-identity" {
+// The BQ DTS service account for this project is the only identity that should
+// be able to create tokens as the identity we are assigning to the DTS job.
+resource "google_service_account_iam_binding" "bq-dts-assumes-import-identity" {
   service_account_id = google_service_account.import-identity.name
   role               = "roles/iam.serviceAccountShortTermTokenMinter"
-  member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com"
+  members            = ["serviceAccount:service-${data.google_project.project.number}@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com"]
 }
 
-// Only users that can "act as" the service account can set the service account on a transfer job.
-resource "google_service_account_iam_member" "provisioner-acts-as-import-identity" {
+// The only identity that should be authorized to "act as" the import identity
+// is the release automation that applies these terraform modules.
+resource "google_service_account_iam_binding" "provisioner-acts-as-import-identity" {
   service_account_id = google_service_account.import-identity.name
   role               = "roles/iam.serviceAccountUser"
-  member             = var.provisioner
+  members            = [var.provisioner]
 }
 
 // Create a BQ DTS job for each of the regions x types pulling from the appropriate buckets and paths.
 resource "google_bigquery_data_transfer_config" "import-job" {
   for_each = local.regional-types
 
-  depends_on = [google_service_account_iam_member.provisioner-acts-as-import-identity]
+  depends_on = [google_service_account_iam_binding.provisioner-acts-as-import-identity]
 
   project              = var.project_id
   display_name         = "${var.name}-${each.key}"

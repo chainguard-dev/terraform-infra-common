@@ -7,13 +7,14 @@ resource "google_service_account" "recorder" {
   description  = "Dedicated service account for our recorder service."
 }
 
-// Grant the recorder service account permission to write to the regional GCS buckets.
-resource "google_storage_bucket_iam_member" "recorder-writes-to-gcs-buckets" {
+// The recorder service account is the only identity that should be writing
+// to the regional GCS buckets.
+resource "google_storage_bucket_iam_binding" "recorder-writes-to-gcs-buckets" {
   for_each = var.regions
 
-  bucket = google_storage_bucket.recorder[each.key].name
-  role   = "roles/storage.admin"
-  member = "serviceAccount:${google_service_account.recorder.email}"
+  bucket  = google_storage_bucket.recorder[each.key].name
+  role    = "roles/storage.admin"
+  members = ["serviceAccount:${google_service_account.recorder.email}"]
 }
 
 module "this" {
