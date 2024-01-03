@@ -1,13 +1,14 @@
 # `dashboard/service`
 
-This module provisions a Google Cloud Monitoring dashboard for a regionalized Cloud Run service.
+This module provisions a Google Cloud Monitoring dashboard for a regionalized
+Cloud Run service.
 
 It assumes the service has the same name in all regions.
 
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/common/infra//networking"
+  source = "chainguard-dev/common/infra//modules/networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -16,7 +17,7 @@ module "networking" {
 
 // Run a regionalized cloud run service "frontend" to serve requests.
 module "frontend" {
-  source = "chainguard-dev/common/infra//regional-go-service"
+  source = "chainguard-dev/common/infra//modules/regional-go-service"
 
   project_id = var.project_id
   name       = "frontend"
@@ -36,12 +37,14 @@ module "frontend" {
 
 // Set up a dashboard for a regionalized service named "frontend".
 module "service-dashboard" {
-  source       = "chainguard-dev/common/infra//dashboard/service"
+  source       = "chainguard-dev/common/infra//modules/dashboard/service"
   service_name = "frontend"
 }
 ```
 
-The dashboard it creates includes widgets for service logs, request count, latency (p50,p95,p99), instance count grouped by revision, CPU and memory utilization, startup latency, and sent/received bytes.
+The dashboard it creates includes widgets for service logs, request count,
+latency (p50,p95,p99), instance count grouped by revision, CPU and memory
+utilization, startup latency, and sent/received bytes.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

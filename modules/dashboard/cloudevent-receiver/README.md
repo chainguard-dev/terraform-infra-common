@@ -1,13 +1,15 @@
 # `dashboard/cloudevent-receiver`
 
-This module provisions a Google Cloud Monitoring dashboard for a regionalized Cloud Run service that receives Cloud Events from one or more `cloudevent-trigger`.
+This module provisions a Google Cloud Monitoring dashboard for a regionalized
+Cloud Run service that receives Cloud Events from one or more
+`cloudevent-trigger`.
 
 It assumes the service has the same name in all regions.
 
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/common/infra//networking"
+  source = "chainguard-dev/common/infra//modules/networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -16,7 +18,7 @@ module "networking" {
 
 // Run a regionalized cloud run service "receiver" to handle events.
 module "receiver" {
-  source = "chainguard-dev/common/infra//regional-go-service"
+  source = "chainguard-dev/common/infra//modules/regional-go-service"
 
   project_id = var.project_id
   name       = "receiver"
@@ -37,7 +39,7 @@ module "receiver" {
 module "cloudevent-trigger" {
   for_each = module.networking.regional-networks
 
-  source = "chainguard-dev/common/infra//cloudevent-trigger"
+  source = "chainguard-dev/common/infra//modules/cloudevent-trigger"
 
   name       = "my-trigger"
   project_id = var.project_id
@@ -53,7 +55,7 @@ module "cloudevent-trigger" {
 
 // Set up a dashboard for a regionalized event handler named "receiver".
 module "receiver-dashboard" {
-  source       = "chainguard-dev/common/infra//dashboard/cloudevent-receiver"
+  source       = "chainguard-dev/common/infra//modules/dashboard/cloudevent-receiver"
   service_name = "receiver"
 
   triggers = {
@@ -62,7 +64,9 @@ module "receiver-dashboard" {
 }
 ```
 
-The dashboard it creates includes widgets for service logs, request count, latency (p50,p95,p99), instance count grouped by revision, CPU and memory utilization, startup latency, and sent/received bytes.
+The dashboard it creates includes widgets for service logs, request count,
+latency (p50,p95,p99), instance count grouped by revision, CPU and memory
+utilization, startup latency, and sent/received bytes.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

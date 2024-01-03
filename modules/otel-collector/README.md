@@ -6,7 +6,7 @@ to write those metrics (so it's impossible to forget):
 
 ```
 module "otel-collector" {
-  source = "chainguard-dev/common/infra//otel-collector"
+  source = "chainguard-dev/common/infra//modules/otel-collector"
 
   project_id      = var.project_id
   service_account = google_service_account.this.email

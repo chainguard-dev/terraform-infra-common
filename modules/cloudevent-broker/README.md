@@ -1,14 +1,14 @@
 # `cloudevent-broker`
 
 This module provisions a regionalizied Broker abstraction akin to the Knative
-"Broker" concept.  The dual "Trigger" concept is captured by the sibling
-`cloudevent-trigger` module.  The intended usage of this module for publishing
+"Broker" concept. The dual "Trigger" concept is captured by the sibling
+`cloudevent-trigger` module. The intended usage of this module for publishing
 events is something like this:
 
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/common/infra//networking"
+  source = "chainguard-dev/common/infra//modules/networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -17,7 +17,7 @@ module "networking" {
 
 // Create the Broker abstraction.
 module "cloudevent-broker" {
-  source = "chainguard-dev/common/infra//cloudevent-broker"
+  source = "chainguard-dev/common/infra//modules/cloudevent-broker"
 
   name       = "my-broker"
   project_id = var.project_id
@@ -28,7 +28,7 @@ module "cloudevent-broker" {
 module "foo-emits-events" {
   for_each = module.networking.regional-networks
 
-  source = "chainguard-dev/common/infra//authorize-private-service"
+  source = "chainguard-dev/common/infra//modules/authorize-private-service"
 
   project_id = var.project_id
   region     = each.key
@@ -40,7 +40,7 @@ module "foo-emits-events" {
 // Run a cloud run service as the "foo" service account, and pass in the address
 // of the regional ingress endpoint.
 module "foo-service" {
-  source = "chainguard-dev/common/infra//regional-go-service"
+  source = "chainguard-dev/common/infra//modules/regional-go-service"
 
   project_id = var.project_id
   name       = "foo"

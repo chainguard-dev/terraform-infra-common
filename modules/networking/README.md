@@ -1,7 +1,8 @@
 # `networking`
 
 This module sets up GCP networking suitable for operating Cloud Run services
-utilizing the preview [Direct VPC egress](https://cloud.google.com/run/docs/configuring/vpc-direct-vpc)
+utilizing the preview
+[Direct VPC egress](https://cloud.google.com/run/docs/configuring/vpc-direct-vpc)
 feature to talk to other "internal ingress" Cloud Run services, and access other
 GCP resources that live within or are accessible via the provisioned network.
 The intended usage of this module:
@@ -9,7 +10,7 @@ The intended usage of this module:
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/common/infra//networking"
+  source = "chainguard-dev/common/infra//modules/networking"
 
   name       = "my-networking"
   project_id = var.project_id
