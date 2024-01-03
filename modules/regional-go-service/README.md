@@ -1,13 +1,13 @@
 # `regional-go-service`
 
-This module provisions a regionalizied Go Cloud Run service.  The Go code is
-built and signed using the `ko` and `cosign` providers.  The simplest example
+This module provisions a regionalizied Go Cloud Run service. The Go code is
+built and signed using the `ko` and `cosign` providers. The simplest example
 service can be seen here:
 
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
-  source = "chainguard-dev/common/infra//networking"
+  source = "chainguard-dev/common/infra//modules/networking"
 
   name       = "my-networking"
   project_id = var.project_id
@@ -15,7 +15,7 @@ module "networking" {
 }
 
 module "foo-service" {
-  source = "chainguard-dev/common/infra//regional-go-service"
+  source = "chainguard-dev/common/infra//modules/regional-go-service"
 
   project_id = var.project_id
   name       = "foo"
@@ -36,21 +36,25 @@ module "foo-service" {
 
 The module is intended to encapsulate Chainguard best practices around deploying
 Cloud Run services including:
+
 - More secure default for ingress
 - More secure default for egress
-- Intentionally not exposing a `uri` output (use [`authorize-private-service`](../authorize-private-service/README.md))
+- Intentionally not exposing a `uri` output (use
+  [`authorize-private-service`](../authorize-private-service/README.md))
 - Requiring a service-account name to run as (so as not to use the default
-compute service account!)
+  compute service account!)
 - Running an `otel-collector` sidecar container that can collect and publish
-telemetry data from out services (for use with the dashboard modules).
+  telemetry data from out services (for use with the dashboard modules).
 
 For the most part, we have tried to expose a roughly compatible shape to the
 cloud run v2 service itself, with two primary changes:
+
 1. Instead of an `image` string we take a `source` object to feed to `ko_build`,
 2. In addition to `env` we support `regional-env`, where the value is a map from
-region to regional value.  This can be used to pass different environment values
-to services based on the region they are running in (e.g. `cloudevent-broker`
-ingress endpoint or another regionalized service's localized URI).
+   region to regional value. This can be used to pass different environment
+   values to services based on the region they are running in (e.g.
+   `cloudevent-broker` ingress endpoint or another regionalized service's
+   localized URI).
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

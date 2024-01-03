@@ -20,12 +20,13 @@ resource "google_cloud_run_v2_job" "sync" {
 
 // Set up a dashboard for a regionalized job named "sync".
 module "job-dashboard" {
-  source       = "chainguard-dev/common/infra//dashboard/job"
+  source       = "chainguard-dev/common/infra//modules/dashboard/job"
   service_name = google_cloud_run_v2_job.name
 }
 ```
 
-The dashboard it creates includes widgets for job logs, CPU and memory utilization, startup latency, and sent/received bytes.
+The dashboard it creates includes widgets for job logs, CPU and memory
+utilization, startup latency, and sent/received bytes.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
