@@ -77,4 +77,8 @@ resource "google_pubsub_subscription" "this" {
       write_metadata = true
     }
   }
+
+  expiration_policy {
+    ttl = "" // This does not expire.
+  }
 }
