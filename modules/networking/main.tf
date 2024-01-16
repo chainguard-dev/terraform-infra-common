@@ -20,7 +20,7 @@ resource "google_compute_route" "egress-inet" {
 // which we will use to operate Cloud Run services.
 resource "google_compute_subnetwork" "regional" {
   for_each = {
-    for region in var.regions : region => 1 + index(var.regions, region)
+    for region in var.regions : region => index(var.regions, region)
   }
 
   name = "${var.name}-${each.key}"
@@ -30,5 +30,5 @@ resource "google_compute_subnetwork" "regional" {
 
   network       = google_compute_network.this.id
   region        = each.key
-  ip_cidr_range = cidrsubnet(var.cidr, 8, each.value)
+  ip_cidr_range = cidrsubnet(var.cidr, 8, var.netnum_offset + each.value)
 }
