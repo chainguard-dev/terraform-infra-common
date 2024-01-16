@@ -8,5 +8,6 @@ for d in `find . -name '*.tf' -exec dirname {} \; | sort | uniq`; do
     terraform-docs markdown table \
         --output-file README.md \
         --output-mode inject \
+        --lockfile=false \
         $d
 done
