@@ -12,10 +12,10 @@ module "http" {
 }
 
 module "grpc" {
-  source            = "../sections/grpc"
-  title             = "GRPC"
-  filter            = []
-  service_name      = var.service_name
+  source       = "../sections/grpc"
+  title        = "GRPC"
+  filter       = []
+  service_name = var.service_name
 }
 
 module "resources" {

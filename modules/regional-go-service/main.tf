@@ -82,7 +82,7 @@ resource "google_cloud_run_v2_service" "this" {
               for_each = env.value.value_source != null ? { "" : env.value.value_source } : {}
               content {
                 secret_key_ref {
-                  secret = value_source.value.secret_key_ref.secret
+                  secret  = value_source.value.secret_key_ref.secret
                   version = value_source.value.secret_key_ref.version
                 }
               }
