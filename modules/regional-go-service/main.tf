@@ -32,6 +32,9 @@ module "otel-collector" {
 resource "google_cloud_run_v2_service" "this" {
   for_each = var.regions
 
+  // We won't be able to deploy if the service account doesn't have access to the network.
+  depends_on = [google_compute_subnetwork_iam_member.member]
+
   provider = google-beta # For empty_dir
   project  = var.project_id
   name     = var.name
