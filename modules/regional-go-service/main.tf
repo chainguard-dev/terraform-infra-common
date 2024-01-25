@@ -155,3 +155,17 @@ resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthent
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+// Grant service account access to use subnet. This is typically granted with roles/run.serviceAgent,
+// but that role does not necessarily grant access if the network resides in another project.
+// See https://cloud.google.com/run/docs/configuring/vpc-direct-vpc#direct-vpc-service for more details.
+resource "google_compute_subnetwork_iam_member" "member" {
+  for_each = var.regions
+
+  // If not set, provider project should be used.
+  project    = var.network_project
+  region     = each.key
+  subnetwork = each.value.subnet
+  role       = "roles/compute.networkUser"
+  member     = "serviceAccount:${var.service_account}"
+}
