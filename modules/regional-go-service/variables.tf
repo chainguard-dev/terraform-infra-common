@@ -88,9 +88,3 @@ variable "volumes" {
   }))
   default = []
 }
-
-variable "network_project" {
-  description = "(optional) The project in which the network and subnetworks reside."
-  type        = string
-  default     = null
-}
