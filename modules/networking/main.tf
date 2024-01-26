@@ -7,6 +7,31 @@ resource "google_compute_network" "this" {
   delete_default_routes_on_create = true
 }
 
+// Create the global address that will be used to peer the network.
+// See https://cloud.google.com/vpc/docs/configure-private-services-access#terraform
+resource "google_compute_global_address" "nw-peer" {
+  count = var.create_servicenetworking_peer ? 1 : 0
+
+  name = "${var.name}-peer"
+  // If not set, provider project should be used.
+  project = var.project_id
+  network = google_compute_network.this.id
+
+  address_type  = "INTERNAL"
+  purpose       = "VPC_PEERING"
+  prefix_length = 16
+}
+
+// Create the peering connection.
+// See https://cloud.google.com/vpc/docs/configure-private-services-access#terraform
+resource "google_service_networking_connection" "nw-peer-connect" {
+  count = var.create_servicenetworking_peer ? 1 : 0
+
+  network                 = google_compute_network.this.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.nw-peer.name]
+}
+
 // Create a default route to the Internet.
 resource "google_compute_route" "egress-inet" {
   name    = var.name

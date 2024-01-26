@@ -24,3 +24,9 @@ variable "netnum_offset" {
   }
   description = "cidrsubnet netnum offset for the subnet. See https://developer.hashicorp.com/terraform/language/functions/cidrsubnet for more details"
 }
+
+variable "create_servicenetworking_peer" {
+  type        = bool
+  description = "Whether to create a GCP service networking connection for the network. This should be disabled if the network is already peered with GCP private service networking."
+  default     = true
+}
