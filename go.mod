@@ -1,6 +1,6 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.21.1
+go 1.21.6
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
