@@ -83,7 +83,6 @@ No requirements.
 | [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google-beta_google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_service) | resource |
 | [google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
-| [google_compute_subnetwork_iam_member.member](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork_iam_member) | resource |
 | [ko_build.this](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 
 ## Inputs
@@ -94,7 +93,6 @@ No requirements.
 | <a name="input_egress"></a> [egress](#input\_egress) | The egress mode for the service.  Must be one of ALL\_TRAFFIC, or PRIVATE\_RANGES\_ONLY. Egress traffic is routed through the regional VPC network from var.regions. | `string` | `"ALL_TRAFFIC"` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | The ingress mode for the service.  Must be one of INGRESS\_TRAFFIC\_ALL, INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER, or INGRESS\_TRAFFIC\_INTERNAL\_ONLY. | `string` | `"INGRESS_TRAFFIC_INTERNAL_ONLY"` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
-| <a name="input_network_project"></a> [network\_project](#input\_network\_project) | (optional) The project in which the network and subnetworks reside. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A pub/sub topic and ingress service (publishing to the respective topic) will be created in each region, with the ingress service configured to egress all traffic via the specified subnetwork. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which to run the service. | `string` | n/a | yes |
