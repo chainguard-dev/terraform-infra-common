@@ -144,7 +144,7 @@ resource "google_cloud_run_v2_service" "this" {
 // When the service is behind a load balancer, then it is publicly exposed and responsible
 // for handling its own authentication.
 resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthenticated" {
-  for_each = var.ingress == "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER" ? var.regions : {}
+  for_each = var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" ? var.regions : {}
 
   // Ensure that the service exists before attempting to expose things publicly.
   depends_on = [google_cloud_run_v2_service.this]
