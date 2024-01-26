@@ -17,7 +17,7 @@ resource "google_dns_managed_zone" "cloud-run-internal" {
 
   private_visibility_config {
     networks {
-      network_url = google_compute_network.this.id
+      network_url = local.network
     }
   }
 }
@@ -46,7 +46,7 @@ resource "google_dns_managed_zone" "private-google-apis" {
 
   private_visibility_config {
     networks {
-      network_url = google_compute_network.this.id
+      network_url = local.network
     }
   }
 }
