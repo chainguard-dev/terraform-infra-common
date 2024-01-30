@@ -16,7 +16,7 @@ require (
 	gocloud.dev v0.36.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	golang.org/x/oauth2 v0.16.0
-	google.golang.org/api v0.159.0
+	google.golang.org/api v0.160.0
 )
 
 require (
