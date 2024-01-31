@@ -68,6 +68,11 @@ variable "containers" {
       name       = string
       mount_path = string
     })), [])
+    scaling = optional(object({
+      min_instances      = optional(number)
+      max_instances      = optional(number)
+      concurrency_target = optional(number)
+    }), null)
   }))
 }
 
