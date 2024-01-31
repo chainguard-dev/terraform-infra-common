@@ -36,6 +36,7 @@ module "startup_latency" {
   filter         = concat(var.filter, ["metric.type=\"run.googleapis.com/container/startup_latencies\""])
   primary_align  = "ALIGN_DELTA"
   primary_reduce = "REDUCE_MEAN"
+  plot_type      = "STACKED_BAR"
 }
 
 module "sent_bytes" {
