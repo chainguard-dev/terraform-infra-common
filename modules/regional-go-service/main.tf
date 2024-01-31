@@ -41,6 +41,11 @@ resource "google_cloud_run_v2_service" "this" {
   launch_stage = "BETA" // Needed for vpc_access below
 
   template {
+    scaling {
+      min_instance_count = var.scaling.min_instances
+      max_instance_count = var.scaling.max_instances
+    }
+    max_instance_request_concurrency = var.scaling.max_instance_request_concurrency
     vpc_access {
       network_interfaces {
         network    = each.value.network
@@ -50,7 +55,6 @@ resource "google_cloud_run_v2_service" "this" {
       // TODO(mattmoor): When direct VPC egress supports network tags
       // for NAT egress, then we should incorporate those here.
     }
-
     service_account = var.service_account
     dynamic "containers" {
       for_each = var.containers

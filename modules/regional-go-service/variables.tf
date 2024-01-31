@@ -71,6 +71,16 @@ variable "containers" {
   }))
 }
 
+variable "scaling" {
+  description = "The scaling configuration for the service."
+  type = object({
+    min_instances                    = optional(number, 0)
+    max_instances                    = optional(number, 100)
+    max_instance_request_concurrency = optional(number)
+  })
+  default = {}
+}
+
 variable "volumes" {
   description = "The volumes to make available to the containers in the service for mounting."
   type = list(object({
