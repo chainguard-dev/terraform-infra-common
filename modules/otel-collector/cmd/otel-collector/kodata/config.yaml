@@ -67,6 +67,9 @@ service:
       # We don't want to see scraper startup logging every
       # cold start.
       level: "error"
+      # Stack trace is less useful and break lines.
+      disable_stacktrace: true
+
   extensions: [health_check]
   pipelines:
     metrics:
