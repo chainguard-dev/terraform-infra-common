@@ -2,6 +2,7 @@ name: Validate terraform
 
 on:
   pull_request:
+    branches: [ 'main' ]
 
 jobs:
   validate:
@@ -25,10 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
-      - run: |
+      - working-directory: modules/${{ matrix.module }}
+        run: |
           terraform init
           terraform validate
-        working-directory: modules/${{ matrix.module }}
 
   conclusion:
     permissions:
