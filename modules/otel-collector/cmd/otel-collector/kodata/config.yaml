@@ -3,7 +3,7 @@ receivers:
     config:
       scrape_configs:
       - job_name: "localhost"
-        scrape_interval: 30s
+        scrape_interval: 10s
         static_configs:
         # TODO: make this configurable
         - targets: ["localhost:2112"]
@@ -52,7 +52,6 @@ processors:
 
 exporters:
   googlemanagedprometheus:
-    untyped_double_export: true
     sending_queue:
       enabled: true
       # we are handling metrics for a single pod, no need to have
@@ -65,7 +64,6 @@ extensions:
 service:
   telemetry:
     logs:
-      encoding: "json"
       # We don't want to see scraper startup logging every
       # cold start.
       level: "error"
