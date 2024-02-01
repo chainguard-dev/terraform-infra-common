@@ -95,6 +95,10 @@ module "recorder-dashboard" {
   labels = { for type, schema in var.types : replace(type, ".", "_") => "" }
 
   triggers = {
-    for type, schema in var.types : "type: ${type}" => "${var.name}-${random_id.trigger-suffix[type].hex}"
+    for type, schema in var.types : "type: ${type}" => {
+      subscription_prefix   = "${var.name}-${random_id.trigger-suffix[type].hex}"
+      alert_threshold       = schema.alert_threshold
+      notification_channels = schema.notification_channels
+    }
   }
 }
