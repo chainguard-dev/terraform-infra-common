@@ -4,7 +4,9 @@ module "subscription" {
   source = "../sections/subscription"
   title  = "Events ${each.key}"
 
-  subscription_prefix = each.value
+  subscription_prefix   = each.value
+  alert_threshold       = var.alert_threshold
+  notification_channels = var.notification_channels
 }
 
 module "logs" {
