@@ -16,8 +16,8 @@ locals {
   tiles = [{
     yPos   = 0
     xPos   = 0,
-    height = module.width.size,
-    width  = module.width.size / 4,
+    height = module.width.size / 4,
+    width  = module.width.size,
     widget = module.errgrp.widget,
   }]
 }
