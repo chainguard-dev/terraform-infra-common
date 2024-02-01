@@ -40,6 +40,11 @@ variable "broker" {
 }
 
 variable "types" {
-  type        = map(string)
-  description = "A map from cloudevent types to the BigQuery schema associated with them."
+  description = "A map from cloudevent types to the BigQuery schema associated with them, as well as an alert threshold and a list of notification channels"
+
+  type = map(object({
+    schema                = string
+    alert_threshold       = optional(number, 50000)
+    notification_channels = optional(list(string), [])
+  }))
 }
