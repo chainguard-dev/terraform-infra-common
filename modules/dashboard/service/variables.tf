@@ -9,9 +9,9 @@ variable "labels" {
 }
 
 variable "alerts" {
-  description = "Alerting policies to add to the dashboard."
-  type        = list(string)
-  default     = []
+  description = "A mapping from alerting policy names to the alert ids to add to the dashboard."
+  type        = map(string)
+  default     = {}
 }
 
 variable "project_id" {
