@@ -1,10 +1,10 @@
-name: Generate terraform docs
+name: Validate terraform
 
 on:
   pull_request:
 
 jobs:
-  docs:
+  validate:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -24,22 +24,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      - uses: terraform-docs/gh-actions@f6d59f89a280fa0a3febf55ef68f146784b20ba0 # v1.0.0
-        with:
-          working-dir: modules/${{ matrix.module }}
-          output-file: README.md
-          output-method: inject
-          fail-on-diff: "true"
-
-      - if: failure()
-        run: cat modules/${{ matrix.module }}/README.md
+      - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
+      - run: |
+          terraform init
+          terraform validate
+        working-directory: modules/${{ matrix.module }}
 
   conclusion:
     permissions:
       actions: read
 
-    needs: docs
+    needs: validate
     runs-on: ubuntu-latest
     if: always()
     steps:
