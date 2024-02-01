@@ -101,8 +101,9 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard. | `map` | `{}` | no |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The notification channels to use for the alerting policy. | `list(string)` | `[]` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of the service(s) to monitor | `string` | n/a | yes |
-| <a name="input_triggers"></a> [triggers](#input\_triggers) | A mapping from a descriptive name to a subscription name prefix. | `map(string)` | n/a | yes |
+| <a name="input_triggers"></a> [triggers](#input\_triggers) | A mapping from a descriptive name to a subscription name prefix and an alert threshold | <pre>map(object({<br>    subscription_prefix = string<br>    alert_threshold     = optional(number, 50000)<br>  }))</pre> | n/a | yes |
 
 ## Outputs
 

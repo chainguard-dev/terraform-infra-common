@@ -9,14 +9,11 @@ variable "labels" {
 }
 
 variable "triggers" {
-  description = "A mapping from a descriptive name to a subscription name prefix."
-  type        = map(string)
-}
-
-variable "alert_threshold" {
-  description = "The threshold for the alerting policy."
-  type        = number
-  default     = 50000
+  description = "A mapping from a descriptive name to a subscription name prefix and an alert threshold"
+  type = map(object({
+    subscription_prefix = string
+    alert_threshold     = optional(number, 50000)
+  }))
 }
 
 variable "notification_channels" {

@@ -1,8 +1,15 @@
 variable "title" { type = string }
 variable "subscription_prefix" { type = string }
 variable "collapsed" { default = false }
-variable "notification_channels" { type = list(string) }
-variable "alert_threshold" { type = number }
+variable "notification_channels" {
+  type    = list(string)
+  default = []
+}
+variable "alert_threshold" {
+  type    = number
+  default = 50000
+}
+
 
 module "width" { source = "../width" }
 
@@ -32,12 +39,11 @@ resource "google_monitoring_alert_policy" "pubsub_unacked_messages" {
       threshold_value = var.alert_threshold
     }
 
-    display_name = "Pubsub Subscription ${var.subscription_prefix}: Unacked messages above ${var.alert_threshold}"
+    display_name = "${var.title}: Unacked messages above ${var.alert_threshold}"
   }
-  display_name = "Pubsub Subscription ${var.subscription_prefix}: Unacked messages above ${var.alert_threshold}"
+  display_name = "${var.title}: Unacked messages above ${var.alert_threshold}"
 
   enabled = "true"
-  # project = var.project_id
 
   notification_channels = var.notification_channels
 }
@@ -101,7 +107,7 @@ locals {
       yPos   = 0,
       xPos   = local.col[0],
       height = local.unit,
-      width  = local.unit * 3,
+      width  = local.width,
       widget = module.unacked-messages-alert.widget,
     },
     {
