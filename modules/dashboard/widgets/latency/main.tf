@@ -1,7 +1,10 @@
 variable "title" { type = string }
 variable "group_by_fields" { default = [] }
 variable "filter" { type = list(string) }
-variable "band" { type = number, default = 99 }
+variable "band" {
+  type    = number
+  default = 99
+}
 
 // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart
 output "widget" {

@@ -1,3 +1,10 @@
+module "errgrp" {
+  source       = "../sections/errgrp"
+  title        = "Service Error Reporting"
+  project_id   = var.project_id
+  service_name = var.service_name
+}
+
 module "logs" {
   source = "../sections/logs"
   title  = "Service Logs"
@@ -39,6 +46,7 @@ module "layout" {
   sections = concat(
     [for x in var.alerts : module.alerts[x].section],
     [
+      module.errgrp.section,
       module.logs.section,
       module.http.section,
       module.grpc.section,
