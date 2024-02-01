@@ -62,6 +62,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_alerts"></a> [alerts](#module\_alerts) | ../sections/alerts | n/a |
+| <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
 | <a name="module_grpc"></a> [grpc](#module\_grpc) | ../sections/grpc | n/a |
 | <a name="module_http"></a> [http](#module\_http) | ../sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../sections/layout | n/a |
@@ -81,6 +82,7 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_alerts"></a> [alerts](#input\_alerts) | Alerting policies to add to the dashboard. | `list(string)` | `[]` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard. | `map` | `{}` | no |
+| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | ID of the GCP project | `string` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of the service(s) to monitor | `string` | n/a | yes |
 
 ## Outputs
