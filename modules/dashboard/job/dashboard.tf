@@ -5,9 +5,10 @@ module "logs" {
 }
 
 module "resources" {
-  source = "../sections/resources"
-  title  = "Resources"
-  filter = ["resource.type=\"cloud_run_job\""]
+  source        = "../sections/resources"
+  title         = "Resources"
+  filter        = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${var.job_name}\""]
+  cloudrun_name = var.job_name
 }
 
 module "width" { source = "../sections/width" }

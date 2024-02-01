@@ -26,9 +26,11 @@ module "grpc" {
 }
 
 module "resources" {
-  source = "../sections/resources"
-  title  = "Resources"
-  filter = ["resource.type=\"cloud_run_revision\""]
+  source                = "../sections/resources"
+  title                 = "Resources"
+  filter                = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.service_name}\""]
+  cloudrun_name         = var.service_name
+  notification_channels = var.notification_channels
 }
 
 module "alerts" {
