@@ -107,7 +107,7 @@ locals {
       yPos   = 0,
       xPos   = local.col[0],
       height = local.unit,
-      width  = local.width,
+      width  = module.width.size,
       widget = module.unacked-messages-alert.widget,
     },
     {
