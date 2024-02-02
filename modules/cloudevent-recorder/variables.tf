@@ -39,8 +39,14 @@ variable "broker" {
   description = "A map from each of the input region names to the name of the Broker topic in that region."
 }
 
+variable "notification_channels" {
+  description = "List of notification channels to alert (for service-level issues)."
+  type        = list(string)
+  default     = []
+}
+
 variable "types" {
-  description = "A map from cloudevent types to the BigQuery schema associated with them, as well as an alert threshold and a list of notification channels"
+  description = "A map from cloudevent types to the BigQuery schema associated with them, as well as an alert threshold and a list of notification channels (for subscription-level issues)."
 
   type = map(object({
     schema                = string
