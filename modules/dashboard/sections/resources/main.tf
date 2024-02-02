@@ -84,7 +84,6 @@ resource "google_monitoring_alert_policy" "oom" {
 
     condition_matched_log {
       filter = "${join(" AND ", var.filter)} AND logName:\"run.googleapis.com%2Fvarlog%2Fsystem\" AND severity=ERROR AND textPayload:\"Consider increasing the memory limit\""
-
     }
   }
 
@@ -105,51 +104,50 @@ locals {
     yPos   = 0,
     xPos   = local.col[0],
     height = local.unit,
-    width  = local.unit,
-    widget = module.cpu_utilization.widget,
+    width  = module.width.size,
+    widget = module.oom_alert.widget,
     },
     {
-      yPos   = 0,
+      yPos   = local.unit,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.cpu_utilization.widget,
+    },
+    {
+      yPos   = local.unit,
       xPos   = local.col[1],
       height = local.unit,
       width  = local.unit,
       widget = module.memory_utilization.widget,
     },
     {
-      yPos   = 0,
+      yPos   = local.unit,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
       widget = module.instance_count.widget,
     },
     {
-      yPos   = local.unit,
+      yPos   = local.unit * 2,
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
       widget = module.startup_latency.widget,
     },
     {
-      yPos   = local.unit,
+      yPos   = local.unit * 2,
       xPos   = local.col[1],
       height = local.unit,
       width  = local.unit,
       widget = module.sent_bytes.widget,
     },
     {
-      yPos   = local.unit,
+      yPos   = local.unit * 2,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
       widget = module.received_bytes.widget,
-    },
-    {
-      yPos   = local.unit * 2,
-      xPos   = local.col[0],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.oom_alert.widget,
-
   }]
 }
 
