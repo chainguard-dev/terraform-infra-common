@@ -15,7 +15,7 @@ resource "google_bigquery_table" "types" {
   project    = var.project_id
   dataset_id = google_bigquery_dataset.this.dataset_id
   table_id   = replace(each.key, ".", "_")
-  schema     = each.value
+  schema     = each.value.schema
 
   require_partition_filter = false
 
