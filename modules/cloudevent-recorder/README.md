@@ -36,9 +36,15 @@ module "foo-emits-events" {
 
   retention-period = 30 // keep around 30 days worth of event data
 
+  provisioner = "user:sally@chainguard.dev"
+
   types = {
-    "com.example.foo": file("${path.module}/foo.schema.json"),
-    "com.example.bar": file("${path.module}/bar.schema.json"),
+    "com.example.foo": {
+      schema = file("${path.module}/foo.schema.json")
+    }
+    "com.example.bar": {
+      schema = file("${path.module}/bar.schema.json")
+    }
   }
 }
 ```
