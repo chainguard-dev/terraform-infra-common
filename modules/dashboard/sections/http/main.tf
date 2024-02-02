@@ -48,7 +48,10 @@ module "outbound_request_count" {
 module "outbound_request_latency" {
   source = "../../widgets/latency"
   title  = "Outbound request latency"
-  filter = concat(local.gmp_filter, ["metric.type=\"prometheus.googleapis.com/http_client_request_duration_seconds/histogram\""])
+  filter = concat(local.gmp_filter, [
+    "metric.type=\"prometheus.googleapis.com/http_client_request_duration_seconds/histogram\"",
+    "metric.label.service_name=\"${var.service_name}\"",
+  ])
 }
 
 locals {
