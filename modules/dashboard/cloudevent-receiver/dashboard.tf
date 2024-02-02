@@ -27,20 +27,22 @@ module "resources" {
   title         = "Resources"
   filter        = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.service_name}\""]
   cloudrun_name = var.service_name
+
+  notification_channels = var.notification_channels
 }
 
 module "width" { source = "../sections/width" }
 
 module "layout" {
   source = "../sections/layout"
-  sections = concat([
-    for key in sort(keys(var.triggers)) : module.subscription[key].section
-    ],
+  sections = concat(
+    [for key in sort(keys(var.triggers)) : module.subscription[key].section],
     [
       module.logs.section,
       module.http.section,
       module.resources.section,
-  ])
+    ],
+  )
 }
 
 resource "google_monitoring_dashboard" "dashboard" {

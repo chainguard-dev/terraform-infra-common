@@ -67,6 +67,8 @@ module "resources" {
   title         = "Resources"
   filter        = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.name}\""]
   cloudrun_name = var.name
+
+  notification_channels = var.notification_channels
 }
 
 module "width" { source = "../dashboard/sections/width" }
