@@ -63,9 +63,10 @@ module "http" {
 }
 
 module "resources" {
-  source = "../dashboard/sections/resources"
-  title  = "Resources"
-  filter = ["resource.type=\"cloud_run_revision\""]
+  source        = "../dashboard/sections/resources"
+  title         = "Resources"
+  filter        = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.name}\""]
+  cloudrun_name = var.name
 }
 
 module "width" { source = "../dashboard/sections/width" }

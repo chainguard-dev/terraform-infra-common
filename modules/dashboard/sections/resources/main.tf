@@ -1,6 +1,11 @@
 variable "title" { type = string }
 variable "filter" { type = list(string) }
+variable "cloudrun_name" { type = string }
 variable "collapsed" { default = false }
+variable "notification_channels" {
+  type    = list(string)
+  default = []
+}
 
 module "width" { source = "../width" }
 
@@ -55,6 +60,38 @@ module "received_bytes" {
   primary_reduce = "REDUCE_NONE"
 }
 
+module "oom_alert" {
+  source     = "../../widgets/alert"
+  title      = google_monitoring_alert_policy.oom.display_name
+  alert_name = google_monitoring_alert_policy.oom.name
+}
+
+resource "google_monitoring_alert_policy" "oom" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+
+    notification_rate_limit {
+      period = "86400s" // re-alert once a day if condition still valid.
+    }
+  }
+
+  display_name = "${var.cloudrun_name} OOM Alert"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "${var.cloudrun_name} OOM Alert"
+
+    condition_matched_log {
+      filter = "${join(" AND ", var.filter)} AND logName:\"run.googleapis.com%2Fvarlog%2Fsystem\" AND severity=ERROR AND textPayload:\"Consider increasing the memory limit\""
+    }
+  }
+
+  enabled = "true"
+
+  notification_channels = var.notification_channels
+}
+
 locals {
   columns = 3
   unit    = module.width.size / local.columns
@@ -67,39 +104,46 @@ locals {
     yPos   = 0,
     xPos   = local.col[0],
     height = local.unit,
-    width  = local.unit,
-    widget = module.cpu_utilization.widget,
-    },
-    {
-      yPos   = 0,
-      xPos   = local.col[1],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.memory_utilization.widget,
-    },
-    {
-      yPos   = 0,
-      xPos   = local.col[2],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.instance_count.widget,
+    width  = module.width.size,
+    widget = module.oom_alert.widget,
     },
     {
       yPos   = local.unit,
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
-      widget = module.startup_latency.widget,
+      widget = module.cpu_utilization.widget,
     },
     {
       yPos   = local.unit,
       xPos   = local.col[1],
       height = local.unit,
       width  = local.unit,
-      widget = module.sent_bytes.widget,
+      widget = module.memory_utilization.widget,
     },
     {
       yPos   = local.unit,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.instance_count.widget,
+    },
+    {
+      yPos   = local.unit * 2,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.startup_latency.widget,
+    },
+    {
+      yPos   = local.unit * 2,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.sent_bytes.widget,
+    },
+    {
+      yPos   = local.unit * 2,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
