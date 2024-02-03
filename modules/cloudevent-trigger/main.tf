@@ -78,6 +78,11 @@ resource "google_pubsub_subscription" "this" {
     }
   }
 
+  dead_letter_policy {
+    dead_letter_topic     = var.dead_letter_policy.dead_letter_topic
+    max_delivery_attempts = var.dead_letter_policy.max_delivery_attempts
+  }
+
   expiration_policy {
     ttl = "" // This does not expire.
   }
