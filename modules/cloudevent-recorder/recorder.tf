@@ -91,6 +91,7 @@ module "triggers" {
 module "recorder-dashboard" {
   source       = "../dashboard/cloudevent-receiver"
   service_name = var.name
+  project_id = var.project_id
 
   labels = { for type, schema in var.types : replace(type, ".", "_") => "" }
 
