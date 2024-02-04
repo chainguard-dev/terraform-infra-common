@@ -97,7 +97,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_broker"></a> [broker](#input\_broker) | The name of the pubsub topic we are using as a broker. | `string` | n/a | yes |
-| <a name="input_dead_letter_policy"></a> [dead\_letter\_policy](#input\_dead\_letter\_policy) | The dead letter policy for the subscription. | <pre>object({<br>    dead_letter_topic     = string<br>    max_delivery_attempts = number<br>  })</pre> | <pre>{<br>  "dead_letter_topic": null,<br>  "max_delivery_attempts": 3<br>}</pre> | no |
+| <a name="input_dead_letter_policy"></a> [dead\_letter\_policy](#input\_dead\_letter\_policy) | The dead letter policy for the subscription. | <pre>object({<br>    dead_letter_topic     = optional(string, null)<br>    max_delivery_attempts = optional(number, 3)<br>  })</pre> | <pre>{<br>  "dead_letter_topic": null,<br>  "max_delivery_attempts": 3<br>}</pre> | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | A Knative Trigger-style filter over the cloud event attributes. | `map(string)` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_private-service"></a> [private-service](#input\_private-service) | The private cloud run service that is subscribing to these events. | <pre>object({<br>    name   = string<br>    region = string<br>  })</pre> | n/a | yes |
