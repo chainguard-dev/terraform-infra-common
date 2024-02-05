@@ -97,6 +97,8 @@ module "recorder-dashboard" {
 
   notification_channels = var.notification_channels
 
+  alerts = { for k in local.regional-types : "BQ DTS ${var.name} ${k}" => google_monitoring_alert_policy.bq_dts[k].id }
+
   triggers = {
     for type, schema in var.types : "type: ${type}" => {
       subscription_prefix   = "${var.name}-${random_id.trigger-suffix[type].hex}"
