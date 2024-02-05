@@ -23,15 +23,3 @@ variable "private-service" {
     region = string
   })
 }
-
-variable "dead_letter_policy" {
-  description = "The dead letter policy for the subscription."
-  type = object({
-    dead_letter_topic     = optional(string, null)
-    max_delivery_attempts = optional(number, 3)
-  })
-  default = {
-    dead_letter_topic     = null
-    max_delivery_attempts = 3
-  }
-}
