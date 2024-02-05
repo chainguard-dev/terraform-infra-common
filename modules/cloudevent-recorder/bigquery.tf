@@ -99,3 +99,45 @@ resource "google_bigquery_data_transfer_config" "import-job" {
     delete_source_files             = false
   }
 }
+
+// Alert when no successful run in 30min, it should be successful every 15min
+resource "google_monitoring_alert_policy" "bq_dts" {
+  // Close after 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  dynamic "conditions" {
+    for_each = local.regional-types
+    iterator = time
+
+    content {
+      condition_absent {
+        aggregations {
+          alignment_period     = "1800s"
+          cross_series_reducer = "REDUCE_MAX"
+          per_series_aligner   = "ALIGN_MAX"
+        }
+
+        duration = "1800s"
+        // config_id is the last value in the name, separated by '/'
+        filter = "resource.type = \"bigquery_dts_config\" AND metric.type = \"bigquerydatatransfer.googleapis.com/transfer_config/completed_runs\" AND (metric.labels.completion_state = \"SUCCEEDED\" AND metric.labels.run_cause = \"AUTO_SCHEDULE\") AND resource.labels.config_id = \"${element(reverse(split("/", google_bigquery_data_transfer_config.import-job[item.key].name)), 0)}\""
+
+        trigger {
+          count = "1"
+        }
+      }
+
+      display_name = "BQ DTS Scheduled Success Runs for ${var.name} ${item.key}"
+    }
+  }
+
+  display_name = "BQ DTS Scheduled Success Runs for ${var.name}"
+
+  enabled = "true"
+  project = var.project_id
+
+  notification_channels = var.notification_channels
+}

@@ -27,3 +27,9 @@ variable "notification_channels" {
   type        = list(string)
   default     = []
 }
+
+variable "alerts" {
+  description = "A mapping from alerting policy names to the alert ids to add to the dashboard."
+  type        = map(string)
+  default     = {}
+}
