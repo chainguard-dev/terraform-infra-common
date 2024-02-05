@@ -78,7 +78,18 @@ resource "google_pubsub_subscription" "this" {
     }
   }
 
-  expiration_policy {
-    ttl = "" // This does not expire.
+  dynamic "expiration_policy" {
+    for_each = [var.expiration_policy]
+    content {
+      ttl = expiration_policy.value.ttl
+    }
+  }
+
+  dynamic "retry_policy" {
+    for_each = [var.retry_policy]
+    content {
+      minimum_backoff = retry_policy.value.minimum_backoff
+      maximum_backoff = retry_policy.value.maximum_backoff
+    }
   }
 }

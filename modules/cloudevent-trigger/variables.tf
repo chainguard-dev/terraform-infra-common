@@ -23,3 +23,22 @@ variable "private-service" {
     region = string
   })
 }
+
+variable "expiration_policy" {
+  description = "The expiration policy for the subscription."
+  type = object({
+    ttl = optional(string, null)
+  })
+  default = {
+    ttl = "" // This does not expire.
+  }
+}
+
+variable "retry_policy" {
+  description = "The retry policy for the subscription."
+  type = object({
+    minimum_backoff = optional(string, null)
+    maximum_backoff = optional(string, null)
+  })
+  default = null
+}

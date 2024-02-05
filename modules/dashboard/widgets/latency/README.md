@@ -19,6 +19,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_band"></a> [band](#input\_band) | n/a | `number` | `99` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | n/a | yes |
 | <a name="input_group_by_fields"></a> [group\_by\_fields](#input\_group\_by\_fields) | n/a | `list` | `[]` | no |
 | <a name="input_title"></a> [title](#input\_title) | n/a | `string` | n/a | yes |
