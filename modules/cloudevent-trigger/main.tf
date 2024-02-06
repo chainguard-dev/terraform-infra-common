@@ -48,6 +48,22 @@ locals {
   ]
 }
 
+resource "google_pubsub_topic" "dead-letter" {
+  name = "${var.name}-dlq-${random_string.suffix.result}"
+
+  message_storage_policy {
+    allowed_persistence_regions = [var.private-service.region]
+  }
+}
+
+// Grant the pubsub service account the ability to send to the dead-letter topic.
+resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter" {
+  topic = google_pubsub_topic.dead-letter.name
+
+  role    = "roles/pubsub.publisher"
+  members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
+}
+
 // Configure the subscription to deliver the events matching our filter to this service
 // using the above identity to authorize the delivery..
 resource "google_pubsub_subscription" "this" {
@@ -81,4 +97,17 @@ resource "google_pubsub_subscription" "this" {
   expiration_policy {
     ttl = "" // This does not expire.
   }
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.dead-letter.id
+    max_delivery_attempts = var.max_delivery_attempts
+  }
+}
+
+// Grant the pubsub service account the ability to Acknowledge messages on this "this" subscription.
+resource "google_pubsub_subscription_iam_binding" "allow-pubsub-to-ack" {
+  subscription = google_pubsub_subscription.this.name
+
+  role    = "roles/pubsub.subscriber"
+  members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
 }

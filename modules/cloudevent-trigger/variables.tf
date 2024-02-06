@@ -23,3 +23,9 @@ variable "private-service" {
     region = string
   })
 }
+
+variable "max_delivery_attempts" {
+  description = "The maximum number of delivery attempts for any event."
+  type        = number
+  default     = 5
+}
