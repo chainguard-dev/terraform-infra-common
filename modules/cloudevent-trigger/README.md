@@ -110,5 +110,5 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_dead-letter-topic"></a> [dead-letter-topic](#output\_dead-letter-topic) | The name of the dead-letter topic, which is used to store events that could not be delivered. |
+| <a name="output_dead-letter-broker"></a> [dead-letter-broker](#output\_dead-letter-broker) | The name of the dead-letter topic, which is used to store events that could not be delivered. |
 <!-- END_TF_DOCS -->
