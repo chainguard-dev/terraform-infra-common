@@ -111,7 +111,7 @@ resource "google_monitoring_alert_policy" "bq_dts" {
 
   dynamic "conditions" {
     for_each = local.regional-types
-    iterator = time
+    iterator = item
 
     content {
       condition_absent {
