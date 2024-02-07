@@ -36,11 +36,15 @@ processors:
   # automatically detect Cloud Run resource metadata
   resourcedetection:
     detectors: [env, gcp]
-    timeout: 2s
-    override: false
 
   resource:
     attributes:
+    # Add instance_id as a resource attribute, so to avoid race conditions
+    # between multiple otel sidecar instance uploading overlapping time series
+    # to the same buckets.
+    - key: service.instance.id
+      from_attribute: faas.id
+      action: upsert
     # The `gcp` resourcedetection processor sets `faas.name` to the name of the
     # Cloud Run service or the Cloud Run job.
     - from_attribute: faas.name
@@ -69,6 +73,7 @@ service:
       level: "error"
       # Stack trace is less useful and break lines.
       disable_stacktrace: true
+      encoding: json
 
   extensions: [health_check]
   pipelines:
