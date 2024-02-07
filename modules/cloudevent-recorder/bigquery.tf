@@ -111,7 +111,6 @@ resource "google_monitoring_alert_policy" "bq_dts" {
 
   dynamic "conditions" {
     for_each = local.regional-types
-    iterator = item
 
     content {
       condition_absent {
@@ -123,14 +122,14 @@ resource "google_monitoring_alert_policy" "bq_dts" {
 
         duration = "1800s"
         // config_id is the last value in the name, separated by '/'
-        filter = "resource.type = \"bigquery_dts_config\" AND metric.type = \"bigquerydatatransfer.googleapis.com/transfer_config/completed_runs\" AND (metric.labels.completion_state = \"SUCCEEDED\" AND metric.labels.run_cause = \"AUTO_SCHEDULE\") AND resource.labels.config_id = \"${element(reverse(split("/", google_bigquery_data_transfer_config.import-job[item.key].name)), 0)}\""
+        filter = "resource.type = \"bigquery_dts_config\" AND metric.type = \"bigquerydatatransfer.googleapis.com/transfer_config/completed_runs\" AND (metric.labels.completion_state = \"SUCCEEDED\" AND metric.labels.run_cause = \"AUTO_SCHEDULE\") AND resource.labels.config_id = \"${element(reverse(split("/", google_bigquery_data_transfer_config.import-job[conditions.key].name)), 0)}\""
 
         trigger {
           count = "1"
         }
       }
 
-      display_name = "BQ DTS Scheduled Success Runs for ${var.name} ${item.key}"
+      display_name = "BQ DTS Scheduled Success Runs for ${var.name} ${conditions.key}"
     }
   }
 
