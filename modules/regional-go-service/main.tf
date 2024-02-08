@@ -56,7 +56,7 @@ resource "google_cloud_run_v2_service" "this" {
       // for NAT egress, then we should incorporate those here.
     }
     service_account = var.service_account
-    timeout         = var.request_timeout
+    timeout         = "${var.request_timeout_seconds}s"
     dynamic "containers" {
       for_each = var.containers
       content {
