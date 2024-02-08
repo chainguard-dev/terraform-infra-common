@@ -98,3 +98,10 @@ variable "volumes" {
   }))
   default = []
 }
+
+// https://cloud.google.com/run/docs/configuring/request-timeout
+variable "request_timeout_seconds" {
+  description = "The timeout for requests to the service, in seconds."
+  type        = number
+  default     = 300
+}
