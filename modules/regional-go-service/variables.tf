@@ -44,12 +44,22 @@ variable "containers" {
       name           = optional(string, "http1")
       container_port = number
     })), [])
-    resources = optional(object({
-      limits = object({
-        cpu    = string
-        memory = string
-      })
-    }), null)
+    resources = optional(
+      object(
+        {
+          limits = optional(object(
+            {
+              cpu    = string
+              memory = string
+            }
+          ), null)
+          cpu_idle = optional(bool, true)
+        }
+      ),
+      {
+        cpu_idle = true
+      }
+    )
     env = optional(list(object({
       name  = string
       value = optional(string)
