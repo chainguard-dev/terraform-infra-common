@@ -74,7 +74,8 @@ resource "google_cloud_run_v2_service" "this" {
         dynamic "resources" {
           for_each = containers.value.resources != null ? { "" : containers.value.resources } : {}
           content {
-            limits = resources.value.limits
+            limits   = resources.value.limits
+            cpu_idle = resources.value.cpu_idle
           }
         }
 

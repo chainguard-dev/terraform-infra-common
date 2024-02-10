@@ -45,11 +45,14 @@ variable "containers" {
       container_port = number
     })), [])
     resources = optional(object({
-      limits = object({
+      limits = optional(object({
         cpu    = string
         memory = string
-      })
-    }), null)
+      }), null)
+      cpu_idle = optional(bool, true)
+      }), {
+      cpu_idle = true
+    })
     env = optional(list(object({
       name  = string
       value = optional(string)
@@ -105,3 +108,4 @@ variable "request_timeout_seconds" {
   type        = number
   default     = 300
 }
+
