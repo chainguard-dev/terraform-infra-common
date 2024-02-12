@@ -67,13 +67,9 @@ module "oom_alert" {
 }
 
 resource "google_monitoring_alert_policy" "oom" {
-  # In the absence of data, incident will auto-close in 7 days
+  # In the absence of data, incident will auto-close after an hour
   alert_strategy {
-    auto_close = "604800s"
-
-    notification_rate_limit {
-      period = "86400s" // re-alert once a day if condition still valid.
-    }
+    auto_close = "3600s"
   }
 
   display_name = "${var.cloudrun_name} OOM Alert"
