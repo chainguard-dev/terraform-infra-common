@@ -12,3 +12,9 @@ variable "project_id" {
   description = "ID of the GCP project"
   type        = string
 }
+
+variable "notification_channels" {
+  description = "List of notification channels to alert."
+  type        = list(string)
+  default     = []
+}

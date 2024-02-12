@@ -1,6 +1,6 @@
 module "errgrp" {
   source       = "../sections/errgrp"
-  title        = "Service Error Reporting"
+  title        = "Job Error Reporting"
   project_id   = var.project_id
   service_name = var.job_name
 }
@@ -12,10 +12,11 @@ module "logs" {
 }
 
 module "resources" {
-  source        = "../sections/resources"
-  title         = "Resources"
-  filter        = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${var.job_name}\""]
-  cloudrun_name = var.job_name
+  source                = "../sections/resources"
+  title                 = "Resources"
+  filter                = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${var.job_name}\""]
+  cloudrun_name         = var.job_name
+  notification_channels = var.notification_channels
 }
 
 module "width" { source = "../sections/width" }
