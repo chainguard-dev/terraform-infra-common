@@ -1,3 +1,10 @@
+module "errgrp" {
+  source       = "../sections/errgrp"
+  title        = "Service Error Reporting"
+  project_id   = var.project_id
+  service_name = var.job_name
+}
+
 module "logs" {
   source = "../sections/logs"
   title  = "Job Logs"
@@ -16,6 +23,7 @@ module "width" { source = "../sections/width" }
 module "layout" {
   source = "../sections/layout"
   sections = [
+    module.errgrp.section,
     module.logs.section,
     module.resources.section,
   ]

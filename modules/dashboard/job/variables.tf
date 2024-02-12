@@ -7,3 +7,8 @@ variable "labels" {
   description = "Additional labels to apply to the dashboard."
   default     = {}
 }
+
+variable "project_id" {
+  description = "ID of the GCP project"
+  type        = string
+}
