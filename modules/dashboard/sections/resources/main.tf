@@ -76,6 +76,10 @@ resource "google_monitoring_alert_policy" "oom" {
     }
   }
 
+  notification_rate_limit {
+    period = "3600s" // re-alert once an hour if condition still valid.
+  }
+
   display_name = "${var.cloudrun_name} OOM Alert"
   combiner     = "OR"
 
