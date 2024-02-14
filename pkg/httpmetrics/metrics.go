@@ -75,7 +75,7 @@ var (
 			Name: "http_request_duration_seconds",
 			Help: "A histogram of latencies for requests.",
 			// TODO: tweak bucket values based on real usage.
-			Buckets: []float64{.25, .5, 1, 2.5, 5, 10},
+			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
 		},
 		[]string{"handler", "method", "service_name", "configuration_name", "revision_name"},
 	)
