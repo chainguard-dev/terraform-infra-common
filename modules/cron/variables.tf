@@ -71,6 +71,18 @@ variable "timeout" {
   description = "The maximum amount of time in seconds to allow the job to run."
 }
 
+variable "cpu" {
+  type        = string
+  default     = "1000m"
+  description = "The CPU limit for the job."
+}
+
+variable "memory" {
+  type        = string
+  default     = "512Mi"
+  description = "The memory limit for the job."
+}
+
 variable "vpc_access" {
   default = null
   type = object({

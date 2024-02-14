@@ -49,6 +49,13 @@ resource "google_cloud_run_v2_job" "job" {
       containers {
         image = ko_build.image.image_ref
 
+        resources {
+          limits = {
+            cpu    = var.cpu
+            memory = var.memory
+          }
+        }
+
         dynamic "env" {
           for_each = var.env
           content {
