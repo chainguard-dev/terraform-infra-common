@@ -123,5 +123,4 @@ resource "google_cloud_scheduler_job" "cron" {
       service_account_email = google_service_account.delivery.email
     }
   }
-
 }
