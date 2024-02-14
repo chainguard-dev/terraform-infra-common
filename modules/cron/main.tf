@@ -21,6 +21,20 @@ resource "google_project_service" "cloudscheduler" {
   disable_on_destroy = false
 }
 
+module "audit-cronjob-serviceaccount" {
+  source = "../audit-serviceaccount"
+
+  project_id      = var.project_id
+  service-account = var.service_account
+
+  # The absence of authorized identities here means that
+  # nothing is authorized to act as this service account.
+  # Note: Cloud Run's usage doesn't show up in the
+  # audit logs.
+
+  # TODO(mattmoor): plumb through notification channels.
+}
+
 locals {
   repo = var.repository != "" ? var.repository : "gcr.io/${var.project_id}/${var.name}"
 }
@@ -128,6 +142,20 @@ resource "google_service_account" "delivery" {
   project      = var.project_id
   account_id   = "${var.name}-dlv"
   display_name = "Dedicated service account for invoking ${google_cloud_run_v2_job.job.name}."
+}
+
+module "audit-delivery-serviceaccount" {
+  source = "../audit-serviceaccount"
+
+  project_id      = var.project_id
+  service-account = google_service_account.delivery.email
+
+  # The absence of authorized identities here means that
+  # nothing is authorized to act as this service account.
+  # Note: Cloud Scheduler's usage doesn't show up in the
+  # audit logs.
+
+  # TODO(mattmoor): plumb through notification channels.
 }
 
 resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {

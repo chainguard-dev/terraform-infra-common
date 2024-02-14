@@ -5,6 +5,19 @@ terraform {
   }
 }
 
+module "audit-serviceaccount" {
+  source = "../audit-serviceaccount"
+
+  project_id      = var.project_id
+  service-account = var.service_account
+
+  # The absence of authorized identities here means that
+  # nothing is authorized to act as this service account.
+  # Note: Cloud Run's usage doesn't show up in the audit logs.
+
+  # TODO(mattmoor): plumb through notification channels.
+}
+
 // Build each of the application images from source.
 resource "ko_build" "this" {
   for_each    = var.containers
