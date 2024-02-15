@@ -4,22 +4,24 @@ resource "google_secret_manager_secret" "this" {
   replication {
     auto {}
   }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 // Only the service account as which the service runs should have access to the secret.
-resource "google_secret_manager_secret_iam_binding" "authorize-access" {
+resource "google_secret_manager_secret_iam_binding" "authorize-service-access" {
   secret_id = google_secret_manager_secret.this.id
   role      = "roles/secretmanager.secretAccessor"
   members   = ["serviceAccount:${var.service-account}"]
 }
 
-// Load the specified data into the secret.
-resource "google_secret_manager_secret_version" "data" {
-  secret      = google_secret_manager_secret.this.name
-  secret_data = var.data
-  // Keep older versions of the secret, so that services can pin to specific versions,
-  // but still roll back in the event of an issue.
-  deletion_policy = "ABANDON"
+// Authorize the specified identity to add new secret values.
+resource "google_secret_manager_secret_iam_binding" "authorize-version-adder" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.this.secret_id
+  role      = "roles/secretmanager.secretVersionAdder"
+  members   = [var.authorized-adder]
 }
 
 // Get a project number for this project ID.
@@ -39,11 +41,11 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
     }
   }
 
-  display_name = "Abnormal ConfigMap Access: ${var.name}"
+  display_name = "Abnormal Secret Access: ${var.name}"
   combiner     = "OR"
 
   conditions {
-    display_name = "Abnormal ConfigMap Access: ${var.name}"
+    display_name = "Abnormal Secret Access: ${var.name}"
 
     condition_matched_log {
       filter = <<EOT
@@ -54,12 +56,6 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
       -(
         protoPayload.authenticationInfo.principalEmail="${var.service-account}"
         protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
-      )
-
-      -- Ignore the identity as which we set this up.
-      -(
-        protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
-        protoPayload.methodName=("google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.GetSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.EnableSecretVersion")
       )
       EOT
     }
