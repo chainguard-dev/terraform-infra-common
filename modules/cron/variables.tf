@@ -97,3 +97,27 @@ variable "vpc_access" {
   })
   description = "The VPC to send egress to. For more information, visit https://cloud.google.com/run/docs/configuring/vpc-direct-vpc"
 }
+
+variable "volumes" {
+  description = "The volumes to make available to the container in the job for mounting."
+  type = list(object({
+    name = string
+    secret = optional(object({
+      secret = string
+      items = list(object({
+        version = string
+        path    = string
+      }))
+    }))
+  }))
+  default = []
+}
+
+variable "volume_mounts" {
+  description = "The volume mounts to mount the volumes to the container in the job."
+  type = list(object({
+    name       = string
+    mount_path = string
+  }))
+  default = []
+}

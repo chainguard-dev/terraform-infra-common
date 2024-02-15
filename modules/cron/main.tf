@@ -46,6 +46,26 @@ resource "google_cloud_run_v2_job" "job" {
       service_account       = var.service_account
       max_retries           = var.max_retries
       timeout               = var.timeout
+      dynamic "volumes" {
+        for_each = var.volumes
+        content {
+          name = volumes.value.name
+
+          dynamic "secret" {
+            for_each = volumes.value.secret != null ? { "" : volumes.value.secret } : {}
+            content {
+              secret = secret.value.secret
+              dynamic "items" {
+                for_each = secret.value.items
+                content {
+                  version = items.value.version
+                  path    = items.value.path
+                }
+              }
+            }
+          }
+        }
+      }
       containers {
         image = ko_build.image.image_ref
 
@@ -74,6 +94,14 @@ resource "google_cloud_run_v2_job" "job" {
                 version = "latest"
               }
             }
+          }
+        }
+
+        dynamic "volume_mounts" {
+          for_each = var.volume_mounts
+          content {
+            name       = volume_mounts.value.name
+            mount_path = volume_mounts.value.mount_path
           }
         }
       }
