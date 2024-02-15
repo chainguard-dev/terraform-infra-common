@@ -22,6 +22,9 @@ resource "google_secret_manager_secret_version" "data" {
   deletion_policy = "ABANDON"
 }
 
+// Get a project number for this project ID.
+data "google_project" "project" { project_id = var.project_id }
+
 // Create an alert policy to notify if the secret is accessed by an unauthorized entity.
 resource "google_monitoring_alert_policy" "anomalous-secret-access" {
   # In the absence of data, incident will auto-close after an hour
@@ -42,7 +45,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
     condition_matched_log {
       filter = <<EOT
       protoPayload.serviceName="secretmanager.googleapis.com"
-      protoPayload.request.name: "${google_secret_manager_secret.this.id}/"
+      protoPayload.request.name: ("projects/${var.project_id}/secrets/${var.name}/" OR "projects/${data.google_project.project.number}/secrets/${var.name}/")
       -(
         protoPayload.authenticationInfo.principalEmail="${var.service-account}"
         protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
