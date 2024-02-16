@@ -48,7 +48,10 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
     condition_matched_log {
       filter = <<EOT
       protoPayload.serviceName="secretmanager.googleapis.com"
-      protoPayload.request.name: ("projects/${var.project_id}/secrets/${var.name}/" OR "projects/${data.google_project.project.number}/secrets/${var.name}/")
+      (
+        protoPayload.request.name: ("projects/${var.project_id}/secrets/${var.name}/" OR "projects/${data.google_project.project.number}/secrets/${var.name}/") OR
+        protoPayload.request.parent=("projects/${var.project_id}/secrets/${var.name}" OR "projects/${data.google_project.project.number}/secrets/${var.name}")
+      )
 
       -- Ignore the identity that is intended to access this.
       -(
