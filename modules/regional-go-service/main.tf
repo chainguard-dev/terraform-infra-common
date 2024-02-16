@@ -59,6 +59,7 @@ resource "google_cloud_run_v2_service" "this" {
       max_instance_count = var.scaling.max_instances
     }
     max_instance_request_concurrency = var.scaling.max_instance_request_concurrency
+    execution_environment            = var.execution_environment
     vpc_access {
       network_interfaces {
         network    = each.value.network
@@ -153,6 +154,30 @@ resource "google_cloud_run_v2_service" "this" {
           for_each = volumes.value.empty_dir != null ? { "" : volumes.value.empty_dir } : {}
           content {
             medium = empty_dir.value.medium
+          }
+        }
+      }
+    }
+
+    // Regional volumes
+    dynamic "volumes" {
+      for_each = var.regional-volumes
+      content {
+        name = volumes.value.name
+
+        dynamic "gcs" {
+          for_each = length(volumes.value.gcs) > 0 ? { "" : volumes.value.gcs[each.key] } : {}
+          content {
+            bucket    = gcs.value.bucket
+            read_only = gcs.value.read_only
+          }
+        }
+        dynamic "nfs" {
+          for_each = length(volumes.value.nfs) > 0 ? { "" : volumes.value.nfs[each.key] } : {}
+          content {
+            server    = nfs.value.server
+            path      = nfs.value.path
+            read_only = nfs.value.read_only
           }
         }
       }
