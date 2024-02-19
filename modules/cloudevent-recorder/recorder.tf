@@ -2,6 +2,9 @@
 resource "google_service_account" "recorder" {
   project = var.project_id
 
+  # This GSA doesn't need it's own audit rule because it is used in conjunction
+  # with regional-go-service, which has a built-in audit rule.
+
   account_id   = var.name
   display_name = "Cloudevents recorder"
   description  = "Dedicated service account for our recorder service."

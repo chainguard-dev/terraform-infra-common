@@ -3,6 +3,9 @@
 resource "google_service_account" "this" {
   project = var.project_id
 
+  # This GSA doesn't need it's own audit rule because it is used in conjunction
+  # with regional-go-service, which has a built-in audit rule.
+
   account_id   = var.name
   display_name = "Broker Ingress"
   description  = "A dedicated identity for the ${var.name} broker ingress to operate as."
