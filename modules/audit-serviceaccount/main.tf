@@ -1,4 +1,4 @@
-resource "google_monitoring_alert_policy" "this" {
+resource "google_monitoring_alert_policy" "generate-access-token" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -8,11 +8,11 @@ resource "google_monitoring_alert_policy" "this" {
     }
   }
 
-  display_name = "Abnormal GSA Access: ${var.service-account}"
+  display_name = "Abnormal Access Token Generation: ${var.service-account}"
   combiner     = "OR"
 
   conditions {
-    display_name = "Abnormal GSA Access"
+    display_name = "Access Token Generation"
 
     condition_matched_log {
       filter = <<EOT
@@ -26,6 +26,25 @@ resource "google_monitoring_alert_policy" "this" {
       EOT
     }
   }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "private-key-generated" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Private Key Created: ${var.service-account}"
+  combiner     = "OR"
 
   conditions {
     display_name = "Private Key Created"
