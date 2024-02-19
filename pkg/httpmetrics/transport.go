@@ -35,7 +35,7 @@ var (
 		prometheus.HistogramOpts{
 			Name:    "http_client_request_duration_seconds",
 			Help:    "The duration of HTTP requests",
-			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10},
+			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
 		},
 		[]string{"code", "method", "host", "service_name", "configuration_name", "revision_name", "ce_type"},
 	)
