@@ -160,6 +160,57 @@ resource "google_cloud_run_v2_service" "this" {
   }
 }
 
+// Get a project number for this project ID.
+data "google_project" "project" { project_id = var.project_id }
+
+// What identity is deploying this?
+data "google_client_openid_userinfo" "me" {}
+
+// Create an alert policy to notify if the service is accessed by an unauthorized entity.
+resource "google_monitoring_alert_policy" "anomalous-secret-access" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Abnormal Service Access: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Abnormal Service Access: ${var.name}"
+
+    condition_matched_log {
+      filter = <<EOT
+      protoPayload.serviceName="run.googleapis.com"
+      protoPayload.resourceName=("${join("\" OR \"", [
+        for region in keys(var.regions) : "projects/${var.project_id}/locations/${region}/services/${var.name}"
+      ])}")
+
+      -- Allow CI to reconcile services and IAM policies.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
+        protoPayload.methodName=("${join("\" OR \"", [
+          "google.cloud.run.v2.Services.GetService",
+          "google.cloud.run.v2.Services.GetIamPolicy",
+          "google.cloud.run.v2.Services.UpdateService",
+          "google.cloud.run.v2.Services.SetIamPolicy",
+        ])}")
+      )
+      EOT
+    }
+  }
+
+  # TODO(mattmoor): Enable notifications once this stabilizes.
+  # notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
 // When the service is behind a load balancer, then it is publicly exposed and responsible
 // for handling its own authentication.
 resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthenticated" {
