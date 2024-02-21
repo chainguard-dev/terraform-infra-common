@@ -27,9 +27,6 @@ resource "google_secret_manager_secret_iam_binding" "authorize-version-adder" {
 // Get a project number for this project ID.
 data "google_project" "project" { project_id = var.project_id }
 
-// What identity is deploying this?
-data "google_client_openid_userinfo" "me" {}
-
 // Create an alert policy to notify if the secret is accessed by an unauthorized entity.
 resource "google_monitoring_alert_policy" "anomalous-secret-access" {
   # In the absence of data, incident will auto-close after an hour
