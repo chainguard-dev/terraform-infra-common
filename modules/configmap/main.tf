@@ -62,7 +62,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
       -- Ignore the identity as which we set this up.
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
-        protoPayload.methodName=("google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.GetSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.EnableSecretVersion")
+        protoPayload.methodName=("google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.AddSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.GetSecretVersion" OR "google.cloud.secretmanager.v1.SecretManagerService.EnableSecretVersion")
       )
       EOT
     }
