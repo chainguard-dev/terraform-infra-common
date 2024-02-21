@@ -180,3 +180,57 @@ resource "google_cloud_scheduler_job" "cron" {
     }
   }
 }
+
+// Get a project number for this project ID.
+data "google_project" "project" { project_id = var.project_id }
+
+// What identity is deploying this?
+data "google_client_openid_userinfo" "me" {}
+
+// Create an alert policy to notify if the job is accessed by an unauthorized entity.
+resource "google_monitoring_alert_policy" "anomalous-job-access" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Abnormal CronJob Access: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Abnormal CronJob Access: ${var.name}"
+
+    condition_matched_log {
+      filter = <<EOT
+      logName="projects/prod-enforce-fabc/logs/cloudaudit.googleapis.com%2Fdata_access"
+      protoPayload.serviceName="run.googleapis.com"
+      protoPayload.resourceName=("${join("\" OR \"", [
+        "namespaces/${var.project_id}/jobs/${var.name}-cron",
+        "projects/${var.project_id}/locations/${var.region}/jobs/${var.name}-cron",
+      ])}")
+
+      -- Allow CI to reconcile jobs and their IAM policies.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
+        protoPayload.methodName=("google.cloud.run.v2.Jobs.GetJob" OR "google.cloud.run.v2.Jobs.UpdateJob" OR "google.cloud.run.v2.Jobs.GetIamPolicy" OR "google.cloud.run.v2.Jobs.SetIamPolicy")
+      )
+
+      -- Allow the delivery service account to run the job.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${google_service_account.delivery.email}"
+        protoPayload.methodName="google.cloud.run.v1.Jobs.RunJob"
+      )
+      EOT
+    }
+  }
+
+  # TODO(mattmoor): Enable notifications once this stabilizes.
+  # notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
