@@ -167,7 +167,7 @@ data "google_project" "project" { project_id = var.project_id }
 data "google_client_openid_userinfo" "me" {}
 
 // Create an alert policy to notify if the service is accessed by an unauthorized entity.
-resource "google_monitoring_alert_policy" "anomalous-secret-access" {
+resource "google_monitoring_alert_policy" "anomalous-service-access" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -194,7 +194,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
         for region in keys(var.regions) : "projects/${var.project_id}/locations/${region}/services/${var.name}"
       ]))}")
 
-      -- Allow CI to reconcile services and IAM policies.
+      -- Allow CI to reconcile services and their IAM policies.
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
         protoPayload.methodName=("${join("\" OR \"", [
