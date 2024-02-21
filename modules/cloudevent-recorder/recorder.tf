@@ -66,6 +66,8 @@ module "this" {
     name      = "logs"
     empty_dir = {}
   }]
+
+  notification_channels = var.notification_channels
 }
 
 resource "random_id" "trigger-suffix" {
@@ -89,12 +91,14 @@ module "triggers" {
     region = each.value.region
     name   = var.name
   }
+
+  notification_channels = var.notification_channels
 }
 
 module "recorder-dashboard" {
   source       = "../dashboard/cloudevent-receiver"
   service_name = var.name
-  project_id = var.project_id
+  project_id   = var.project_id
 
   labels = { for type, schema in var.types : replace(type, ".", "_") => "" }
 

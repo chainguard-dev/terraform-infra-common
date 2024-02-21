@@ -20,5 +20,4 @@ variable "service-account" {
 variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)
-  default     = []
 }

@@ -44,6 +44,8 @@ module "this" {
       }]
     }
   }
+
+  notification_channels = var.notification_channels
 }
 
 module "topic" {

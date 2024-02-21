@@ -15,7 +15,7 @@ module "audit-serviceaccount" {
   # nothing is authorized to act as this service account.
   # Note: Cloud Run's usage doesn't show up in the audit logs.
 
-  # TODO(mattmoor): plumb through notification channels.
+  notification_channels = var.notification_channels
 }
 
 // Build each of the application images from source.

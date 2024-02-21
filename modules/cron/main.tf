@@ -32,7 +32,7 @@ module "audit-cronjob-serviceaccount" {
   # Note: Cloud Run's usage doesn't show up in the
   # audit logs.
 
-  # TODO(mattmoor): plumb through notification channels.
+  notification_channels = var.notification_channels
 }
 
 locals {

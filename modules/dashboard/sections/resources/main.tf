@@ -3,8 +3,7 @@ variable "filter" { type = list(string) }
 variable "cloudrun_name" { type = string }
 variable "collapsed" { default = false }
 variable "notification_channels" {
-  type    = list(string)
-  default = []
+  type = list(string)
 }
 
 module "width" { source = "../width" }

@@ -41,7 +41,7 @@ module "audit-trigger-serviceaccount" {
   # Note: Cloud Pub/Sub's usage doesn't show up in the
   # audit logs.
 
-  # TODO(mattmoor): plumb through notification channels.
+  notification_channels = var.notification_channels
 }
 
 // Authorize this service account to invoke the private service receiving

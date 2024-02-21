@@ -64,7 +64,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_allowed_principal_regex"></a> [allowed\_principal\_regex](#input\_allowed\_principal\_regex) | A regular expression to match allowed principals. | `string` | `""` | no |
 | <a name="input_allowed_principals"></a> [allowed\_principals](#input\_allowed\_principals) | The list of principals authorized to assume this identity. | `list(string)` | `[]` | no |
-| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when this policy fires. | `list(string)` | `[]` | no |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when this policy fires. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | The email of the service account being audited. | `string` | n/a | yes |
 

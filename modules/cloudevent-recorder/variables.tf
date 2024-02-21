@@ -42,7 +42,6 @@ variable "broker" {
 variable "notification_channels" {
   description = "List of notification channels to alert (for service-level issues)."
   type        = list(string)
-  default     = []
 }
 
 variable "types" {
