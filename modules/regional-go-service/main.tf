@@ -185,10 +185,14 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
 
     condition_matched_log {
       filter = <<EOT
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fdata_access"
       protoPayload.serviceName="run.googleapis.com"
-      protoPayload.resourceName=("${join("\" OR \"", [
+      protoPayload.resourceName=("${join("\" OR \"", concat([
+        "namespaces/${var.project_id}/services/${var.name}"
+      ],
+      [
         for region in keys(var.regions) : "projects/${var.project_id}/locations/${region}/services/${var.name}"
-      ])}")
+      ]))}")
 
       -- Allow CI to reconcile services and IAM policies.
       -(
