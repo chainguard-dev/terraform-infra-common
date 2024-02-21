@@ -91,6 +91,23 @@ variable "scaling" {
   default = {}
 }
 
+variable "regional-volumes" {
+  description = "The volumes to make available to the containers in the service for mounting."
+  type = list(object({
+    name = string
+    gcs = optional(map(object({
+      bucket    = string
+      read_only = optional(bool, true)
+    })), {})
+    nfs = optional(map(object({
+      server    = string
+      path      = string
+      read_only = optional(bool, true)
+    })), {})
+  }))
+  default = []
+}
+
 variable "volumes" {
   description = "The volumes to make available to the containers in the service for mounting."
   type = list(object({
@@ -119,4 +136,14 @@ variable "request_timeout_seconds" {
 variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
+}
+
+variable "execution_environment" {
+  description = "The execution environment for the service"
+  type        = string
+  default     = "EXECUTION_ENVIRONMENT_GEN1"
+  validation {
+    error_message = "Must be EXECUTION_ENVIRONMENT_GEN1 or EXECUTION_ENVIRONMENT_GEN2. Got ${var.execution_environment}"
+    condition     = var.execution_environment == "EXECUTION_ENVIRONMENT_GEN1" || var.execution_environment == "EXECUTION_ENVIRONMENT_GEN2"
+  }
 }
