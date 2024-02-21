@@ -155,7 +155,7 @@ module "audit-delivery-serviceaccount" {
   # Note: Cloud Scheduler's usage doesn't show up in the
   # audit logs.
 
-  # TODO(mattmoor): plumb through notification channels.
+  notification_channels = var.notification_channels
 }
 
 resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {

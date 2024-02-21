@@ -57,6 +57,8 @@ module "this" {
       }
     }
   }
+
+  notification_channels = var.notification_channels
 }
 
 data "google_cloud_run_v2_service" "this" {
