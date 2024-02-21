@@ -2,8 +2,7 @@ variable "title" { type = string }
 variable "subscription_prefix" { type = string }
 variable "collapsed" { default = false }
 variable "notification_channels" {
-  type    = list(string)
-  default = []
+  type = list(string)
 }
 variable "alert_threshold" {
   type    = number

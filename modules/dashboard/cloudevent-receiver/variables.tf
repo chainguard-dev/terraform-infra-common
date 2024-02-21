@@ -25,7 +25,6 @@ variable "project_id" {
 variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
-  default     = []
 }
 
 variable "alerts" {

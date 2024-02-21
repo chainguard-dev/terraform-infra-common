@@ -84,7 +84,7 @@ module "audit-import-serviceaccount" {
   # Note: BigQuery DTS's usage doesn't show up in the
   # audit logs.
 
-  # TODO(mattmoor): plumb through notification channels.
+  notification_channels = var.notification_channels
 }
 
 // Create a BQ DTS job for each of the regions x types pulling from the appropriate buckets and paths.

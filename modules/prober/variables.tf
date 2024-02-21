@@ -96,7 +96,6 @@ variable "alert_description" {
 }
 
 variable "notification_channels" {
-  type        = list(string)
-  default     = []
   description = "A list of notification channels to send alerts to."
+  type        = list(string)
 }

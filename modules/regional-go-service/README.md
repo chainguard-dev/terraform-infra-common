@@ -94,6 +94,7 @@ No requirements.
 | <a name="input_egress"></a> [egress](#input\_egress) | The egress mode for the service.  Must be one of ALL\_TRAFFIC, or PRIVATE\_RANGES\_ONLY. Egress traffic is routed through the regional VPC network from var.regions. | `string` | `"ALL_TRAFFIC"` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | The ingress mode for the service.  Must be one of INGRESS\_TRAFFIC\_ALL, INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER, or INGRESS\_TRAFFIC\_INTERNAL\_ONLY. | `string` | `"INGRESS_TRAFFIC_INTERNAL_ONLY"` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A pub/sub topic and ingress service (publishing to the respective topic) will be created in each region, with the ingress service configured to egress all traffic via the specified subnetwork. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_request_timeout_seconds"></a> [request\_timeout\_seconds](#input\_request\_timeout\_seconds) | The timeout for requests to the service, in seconds. | `number` | `300` | no |

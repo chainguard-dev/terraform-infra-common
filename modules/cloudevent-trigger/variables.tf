@@ -29,3 +29,8 @@ variable "max_delivery_attempts" {
   type        = number
   default     = 5
 }
+
+variable "notification_channels" {
+  description = "List of notification channels to alert."
+  type        = list(string)
+}

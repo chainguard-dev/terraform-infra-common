@@ -22,5 +22,4 @@ variable "allowed_principal_regex" {
 variable "notification_channels" {
   description = "The list of notification channels to alert when this policy fires."
   type        = list(string)
-  default     = []
 }

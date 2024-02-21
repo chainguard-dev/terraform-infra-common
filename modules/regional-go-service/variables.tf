@@ -115,3 +115,8 @@ variable "request_timeout_seconds" {
   type        = number
   default     = 300
 }
+
+variable "notification_channels" {
+  description = "List of notification channels to alert."
+  type        = list(string)
+}
