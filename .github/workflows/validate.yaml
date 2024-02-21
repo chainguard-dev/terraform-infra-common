@@ -11,6 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         module:
+          - audit-serviceaccount
           - authorize-private-service
           - cloudevent-broker
           - cloudevent-trigger
@@ -22,6 +23,10 @@ jobs:
           - dashboard/service
           - dashboard/job
           - dashboard/cloudevent-receiver
+          - prober
+          - cron
+          - configmap
+          - secret
 
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
