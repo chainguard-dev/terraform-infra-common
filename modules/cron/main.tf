@@ -206,7 +206,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
 
     condition_matched_log {
       filter = <<EOT
-      logName="projects/prod-enforce-fabc/logs/cloudaudit.googleapis.com%2Fdata_access"
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
       protoPayload.serviceName="run.googleapis.com"
       protoPayload.resourceName=("${join("\" OR \"", [
         "namespaces/${var.project_id}/jobs/${var.name}-cron",
@@ -216,14 +216,51 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
       -- Allow CI to reconcile jobs and their IAM policies.
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
-        protoPayload.methodName=("google.cloud.run.v2.Jobs.GetJob" OR "google.cloud.run.v2.Jobs.UpdateJob" OR "google.cloud.run.v2.Jobs.GetIamPolicy" OR "google.cloud.run.v2.Jobs.SetIamPolicy")
+        protoPayload.methodName=("${join("\" OR \"", [
+          "google.cloud.run.v2.Jobs.UpdateJob",
+          "google.cloud.run.v2.Jobs.SetIamPolicy",
+        ])}")
       )
+      EOT
+    }
+  }
 
-      -- Allow the delivery service account to run the job.
-      -(
-        protoPayload.authenticationInfo.principalEmail="${google_service_account.delivery.email}"
-        protoPayload.methodName="google.cloud.run.v1.Jobs.RunJob"
-      )
+  # TODO(mattmoor): Enable notifications once this stabilizes.
+  # notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
+// Create an alert policy to notify if the job is accessed by an unauthorized entity.
+resource "google_monitoring_alert_policy" "anomalous-job-execution" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Abnormal Job Execution: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Abnormal Job Execution: ${var.name}"
+
+    condition_matched_log {
+      filter = <<EOT
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fdata_access"
+      protoPayload.serviceName="run.googleapis.com"
+      protoPayload.methodName="google.cloud.run.v1.Jobs.RunJob"
+      protoPayload.resourceName=("${join("\" OR \"", [
+        "namespaces/${var.project_id}/jobs/${var.name}-cron",
+        "projects/${var.project_id}/locations/${var.region}/jobs/${var.name}-cron",
+      ])}")
+
+      -- Allow the delivery service account to run the job, but flag anyone else
+      -protoPayload.authenticationInfo.principalEmail="${google_service_account.delivery.email}"
       EOT
     }
   }
