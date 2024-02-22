@@ -16,6 +16,7 @@ resource "google_monitoring_alert_policy" "generate-access-token" {
 
     condition_matched_log {
       filter = <<EOT
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fdata_access"
       protoPayload.request.name="projects/-/serviceAccounts/${var.service-account}"
       protoPayload.serviceName="iamcredentials.googleapis.com"
       protoPayload.methodName="GenerateAccessToken"
@@ -51,6 +52,7 @@ resource "google_monitoring_alert_policy" "private-key-generated" {
 
     condition_matched_log {
       filter = <<EOT
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
       protoPayload.serviceName="iam.googleapis.com"
       protoPayload.request.name="projects/-/serviceAccounts/${var.service-account}"
       protoPayload.methodName="google.iam.admin.v1.CreateServiceAccountKey"
