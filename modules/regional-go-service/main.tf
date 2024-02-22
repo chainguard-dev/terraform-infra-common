@@ -210,7 +210,7 @@ resource "google_monitoring_alert_policy" "anomalous-service-access" {
 
     condition_matched_log {
       filter = <<EOT
-      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fdata_access"
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
       protoPayload.serviceName="run.googleapis.com"
       protoPayload.resourceName=("${join("\" OR \"", concat([
         "namespaces/${var.project_id}/services/${var.name}"
@@ -223,8 +223,6 @@ resource "google_monitoring_alert_policy" "anomalous-service-access" {
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
         protoPayload.methodName=("${join("\" OR \"", [
-          "google.cloud.run.v2.Services.GetService",
-          "google.cloud.run.v2.Services.GetIamPolicy",
           "google.cloud.run.v2.Services.UpdateService",
           "google.cloud.run.v2.Services.SetIamPolicy",
         ])}")
