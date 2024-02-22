@@ -46,6 +46,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
 
     condition_matched_log {
       filter = <<EOT
+      -- This looks at logs from both data_access and activity, so we don't filter on either here.
       protoPayload.serviceName="secretmanager.googleapis.com"
       (
         protoPayload.request.name: ("projects/${var.project_id}/secrets/${var.name}/" OR "projects/${data.google_project.project.number}/secrets/${var.name}/") OR

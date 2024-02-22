@@ -82,7 +82,12 @@ resource "google_monitoring_alert_policy" "oom" {
     display_name = "${var.cloudrun_name} OOM Alert"
 
     condition_matched_log {
-      filter = "${join(" AND ", var.filter)} AND logName:\"run.googleapis.com%2Fvarlog%2Fsystem\" AND severity=ERROR AND textPayload:\"Consider increasing the memory limit\""
+      filter = <<EOT
+        logName: "run.googleapis.com%2Fvarlog%2Fsystem"
+        ${join("\n", var.filter)}
+        severity=ERROR
+        textPayload:"Consider increasing the memory limit"
+      EOT
     }
   }
 
