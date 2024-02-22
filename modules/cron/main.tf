@@ -217,6 +217,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
         protoPayload.methodName=("${join("\" OR \"", [
+          "google.cloud.run.v2.Jobs.CreateJob",
           "google.cloud.run.v2.Jobs.UpdateJob",
           "google.cloud.run.v2.Jobs.SetIamPolicy",
         ])}")
