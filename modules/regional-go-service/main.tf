@@ -223,6 +223,7 @@ resource "google_monitoring_alert_policy" "anomalous-service-access" {
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
         protoPayload.methodName=("${join("\" OR \"", [
+          "google.cloud.run.v2.Services.CreateService",
           "google.cloud.run.v2.Services.UpdateService",
           "google.cloud.run.v2.Services.SetIamPolicy",
         ])}")
