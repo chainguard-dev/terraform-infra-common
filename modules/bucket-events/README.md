@@ -3,6 +3,8 @@
 This module provisions infrastructure to listen to events from a GCS bucket and
 publish them to a broker.
 
+The
+
 ```hcl
 // Create a network with several regional subnets
 module "networking" {
@@ -27,18 +29,15 @@ data "google_storage_bucket" "bucket" {
   name = "my-bucket"
 }
 
-// Listen to events.
+// Forward events to the broker.
 module "bucket-events" {
-  source = "chainguard-dev/common/infra//modules/bucket-events"
+  source = "./modules/bucket-events"
 
-  name       = "my-broker"
-  project_id = var.project_id
-
-  bucket   = data.google_storage_bucket.bucket.name
-  location = data.google_storage_bucket.bucket.location
-  broker   = module.cloudevent-broker.broker
-
-  notification_channels = []
+  project_id = local.project
+  name       = "bucket-events"
+  bucket     = data.google_storage_bucket.bucket.name
+  regions    = module.networking.regional-networks
+  ingress    = module.cloudevent-broker.ingress
 }
 ```
 
@@ -51,10 +50,8 @@ No requirements.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
-| <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
 ## Modules
@@ -70,7 +67,6 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
 | [google_pubsub_subscription.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription_iam_binding.allow-pubsub-to-ack](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription_iam_binding) | resource |
@@ -81,8 +77,8 @@ No requirements.
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [google_service_account_iam_binding.allow-pubsub-to-mint-tokens](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account_iam_binding) | resource |
 | [google_storage_notification.notification](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_notification) | resource |
-| [ko_build.this](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 | [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [google_storage_bucket.bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/storage_bucket) | data source |
 | [google_storage_project_service_account.gcs_account](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/storage_project_service_account) | data source |
 
 ## Inputs
