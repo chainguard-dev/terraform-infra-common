@@ -13,6 +13,7 @@ jobs:
         module:
           - audit-serviceaccount
           - authorize-private-service
+          - bucket-events
           - cloudevent-broker
           - cloudevent-trigger
           - cloudevent-recorder
