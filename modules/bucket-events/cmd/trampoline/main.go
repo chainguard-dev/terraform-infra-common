@@ -17,9 +17,9 @@ import (
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/storage/v1"
 
 	"github.com/kelseyhightower/envconfig"
@@ -49,14 +49,9 @@ func main() {
 
 	log.Infof("env: %+v", env)
 
-	// Authorize calls to the ingress as the GSA.
-	c, err := google.DefaultClient(ctx, storage.CloudPlatformScope)
-	if err != nil {
-		log.Fatalf("failed to create google client: %v", err) //nolint:gocritic
-	}
 	ceclient, err := cloudevents.NewClientHTTP(
 		cloudevents.WithTarget(env.IngressURI),
-		cehttp.WithClient(*c))
+		cehttp.WithRoundTripper(httpmetrics.Transport))
 	if err != nil {
 		log.Fatalf("failed to create cloudevents client: %v", err) //nolint:gocritic
 	}
