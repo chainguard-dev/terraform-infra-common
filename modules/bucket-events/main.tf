@@ -9,17 +9,31 @@ locals {
   }, local.lowercase, local.lowercase)
 }
 
-resource "random_string" "suffix" {
+resource "random_string" "service-suffix" {
+  length  = 4
+  upper   = false
+  special = false
+}
+
+// A dedicated service account for the trampoline service.
+resource "google_service_account" "service" {
+  project = var.project_id
+
+  account_id   = "${var.name}-${random_string.service-suffix.result}"
+  display_name = "Service account for ${var.bucket} trampoline service"
+}
+
+resource "random_string" "delivery-suffix" {
   length  = 4
   upper   = false
   special = false
 }
 
 // A dedicated service account for this subscription.
-resource "google_service_account" "this" {
+resource "google_service_account" "delivery" {
   project = var.project_id
 
-  account_id   = "${var.name}-${random_string.suffix.result}"
+  account_id   = "${var.name}-${random_string.delivery-suffix.result}"
   display_name = "Delivery account for ${var.bucket} events"
 }
 
@@ -35,17 +49,17 @@ resource "google_project_service_identity" "pubsub" {
 // NOTE: we use binding vs. member because we expect nothing but pubsub to be
 // able to assume this identity.
 resource "google_service_account_iam_binding" "allow-pubsub-to-mint-tokens" {
-  service_account_id = google_service_account.this.name
+  service_account_id = google_service_account.delivery.name
 
   role    = "roles/iam.serviceAccountTokenCreator"
   members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
 }
 
-module "audit-serviceaccount" {
+module "audit-delivery-serviceaccount" {
   source = "../audit-serviceaccount"
 
   project_id      = var.project_id
-  service-account = google_service_account.this.email
+  service-account = google_service_account.delivery.email
 
   # The absence of authorized identities here means that
   # nothing is authorized to act as this service account.
@@ -58,12 +72,12 @@ module "audit-serviceaccount" {
 module "this" {
   source     = "../regional-go-service"
   project_id = var.project_id
-  name       = "${var.name}-trampoline"
+  name       = var.name
   regions = {
     (local.region) : var.regions[local.region]
   }
 
-  service_account = google_service_account.this.email
+  service_account = google_service_account.service.email
   containers = {
     "trampoline" = {
       source = {
@@ -71,11 +85,9 @@ module "this" {
         importpath  = "./cmd/trampoline"
       }
       ports = [{ container_port = 8080 }]
-      regional-env = [{
-        name = "INGRESS_URI"
-        value = {
-          (local.region) : module.trampoline-emits-events.uri
-        }
+      env = [{
+        name  = "INGRESS_URI"
+        value = module.trampoline-emits-events.uri
       }]
     }
   }
@@ -89,13 +101,13 @@ module "authorize-delivery" {
 
   project_id = var.project_id
   region     = local.region
-  name       = "${var.name}-trampoline"
+  name       = var.name
 
-  service-account = google_service_account.this.email
+  service-account = google_service_account.delivery.email
 }
 
 resource "google_pubsub_topic" "dead-letter" {
-  name = "${var.name}-dlq-${random_string.suffix.result}"
+  name = "${var.name}-dlq-${random_string.delivery-suffix.result}"
 
   message_storage_policy {
     allowed_persistence_regions = [local.region]
@@ -115,7 +127,7 @@ resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter"
 resource "google_pubsub_subscription" "this" {
   depends_on = [module.this]
 
-  name  = "${var.name}-${random_string.suffix.result}"
+  name  = "${var.name}-${random_string.delivery-suffix.result}"
   topic = google_pubsub_topic.internal.id
 
   // TODO: Tune this and/or make it configurable?
@@ -127,7 +139,7 @@ resource "google_pubsub_subscription" "this" {
     // Authenticate requests to this service using tokens minted
     // from the given service account.
     oidc_token {
-      service_account_email = google_service_account.this.email
+      service_account_email = google_service_account.delivery.email
     }
 
     // Make the body of the push notification the raw Pub/Sub message.
@@ -197,5 +209,5 @@ module "trampoline-emits-events" {
   region     = local.region
   name       = var.ingress.name
 
-  service-account = google_service_account.this.email
+  service-account = google_service_account.service.email
 }

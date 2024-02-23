@@ -26,11 +26,6 @@ variable "ingress" {
   })
 }
 
-variable "filter" {
-  description = "A Knative Trigger-style filter over the cloud event attributes."
-  type        = map(string)
-}
-
 variable "max_delivery_attempts" {
   description = "The maximum number of delivery attempts for any event."
   type        = number

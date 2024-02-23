@@ -20,6 +20,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
+	"google.golang.org/api/idtoken"
 	"google.golang.org/api/storage/v1"
 
 	"github.com/kelseyhightower/envconfig"
@@ -49,11 +50,15 @@ func main() {
 
 	log.Infof("env: %+v", env)
 
+	c, err := idtoken.NewClient(ctx, env.IngressURI)
+	if err != nil {
+		log.Fatalf("failed to create idtoken client: %v", err) //nolint:gocritic
+	}
 	ceclient, err := cloudevents.NewClientHTTP(
 		cloudevents.WithTarget(env.IngressURI),
-		cehttp.WithRoundTripper(httpmetrics.Transport))
+		cehttp.WithRoundTripper(httpmetrics.WrapTransport(c.Transport)))
 	if err != nil {
-		log.Fatalf("failed to create cloudevents client: %v", err) //nolint:gocritic
+		log.Fatalf("failed to create cloudevents client: %v", err)
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +105,9 @@ func main() {
 		rctx := cloudevents.ContextWithRetriesExponentialBackoff(context.WithoutCancel(ctx), retryDelay, maxRetry)
 		if ceresult := ceclient.Send(rctx, event); cloudevents.IsUndelivered(ceresult) || cloudevents.IsNACK(ceresult) {
 			log.Errorf("Failed to deliver event: %v", ceresult)
+			w.WriteHeader(http.StatusInternalServerError)
 		}
+		log.Infof("event forwarded")
 	})
 
 	srv := &http.Server{
