@@ -7,26 +7,27 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
-	"cloud.google.com/go/compute/metadata"
-	"cloud.google.com/go/pubsub"
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/storage/v1"
 
 	"github.com/kelseyhightower/envconfig"
-	"google.golang.org/api/option"
 )
 
 type envConfig struct {
-	Port  int    `envconfig:"PORT" default:"8080" required:"true"`
-	Topic string `envconfig:"PUBSUB_TOPIC" required:"true"`
+	Port       int    `envconfig:"PORT" default:"8080" required:"true"`
+	IngressURI string `envconfig:"INGRESS_URI" required:"true"`
 }
 
 var eventTypes = map[string]string{
@@ -41,30 +42,34 @@ func main() {
 	if err := envconfig.Process("", &env); err != nil {
 		log.Panicf("failed to process env var: %s", err)
 	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+	log := clog.FromContext(ctx)
 
-	projectID, err := metadata.ProjectID()
-	if err != nil {
-		log.Panicf("failed to get project ID, %v", err)
-	}
-	psc, err := pubsub.NewClient(ctx, projectID, option.WithTokenSource(google.ComputeTokenSource("")))
-	if err != nil {
-		log.Panicf("failed to create pubsub client, %v", err)
-	}
+	log.Infof("env: %+v", env)
 
-	topic := psc.Topic(env.Topic)
-	defer topic.Stop()
+	// Authorize calls to the ingress as the GSA.
+	c, err := google.DefaultClient(ctx, storage.CloudPlatformScope)
+	if err != nil {
+		log.Fatalf("failed to create google client: %v", err) //nolint:gocritic
+	}
+	ceclient, err := cloudevents.NewClientHTTP(
+		cloudevents.WithTarget(env.IngressURI),
+		cehttp.WithClient(*c))
+	if err != nil {
+		log.Fatalf("failed to create cloudevents client: %v", err) //nolint:gocritic
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		log := clog.FromContext(ctx)
 
 		defer r.Body.Close()
-		data, err := io.ReadAll(r.Body)
-		if err != nil {
-			log.Errorf("failed to read body: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
+		var obj storage.Object
+		if err := json.NewDecoder(r.Body).Decode(&obj); err != nil {
+			log.Errorf("failed to decode body: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
@@ -74,33 +79,38 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		bucket := r.Header.Get("Bucketid")
+		object := r.Header.Get("Objectid")
 		log = log.With(
 			"event-type", t,
-			"bucket", r.Header.Get("Bucketid"),
-			"object", r.Header.Get("Objectid"))
+			"bucket", bucket,
+			"object", object,
+		)
 		log.Infof("forwarding event: %s", r.Header.Get("Eventtype"))
 
-		res := topic.Publish(ctx, toMessage(r.Header, t, data))
-		if _, err := res.Get(ctx); err != nil {
-			log.Errorf("failed to forward event: %v", err)
+		event := cloudevents.NewEvent()
+		event.SetType(t)
+		event.SetSubject(fmt.Sprintf("%s/%s", bucket, object))
+		event.SetSource(r.Host)
+		event.SetExtension("bucket", r.Header.Get("Bucketid"))
+		event.SetExtension("object", r.Header.Get("Objectid"))
+		if err := event.SetData(cloudevents.ApplicationJSON, obj); err != nil {
+			log.Errorf("failed to set data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	})
-	http.ListenAndServe(fmt.Sprintf(":%d", env.Port), nil)
-}
 
-func toMessage(hdrs http.Header, eventType string, data []byte) *pubsub.Message {
-	return &pubsub.Message{
-		Attributes: map[string]string{
-			"ce-bucket":    hdrs.Get("Bucketid"),
-			"ce-object":    hdrs.Get("Objectid"),
-			"ce-type":      eventType,
-			"ce-source":    hdrs.Get("Id"),
-			"ce-subject":   hdrs.Get("Subject"),
-			"ce-time":      hdrs.Get("Updated"),
-			"content-type": hdrs.Get("Content-Type"),
-		},
-		Data: data,
+		const retryDelay = 10 * time.Millisecond
+		const maxRetry = 3
+		rctx := cloudevents.ContextWithRetriesExponentialBackoff(context.WithoutCancel(ctx), retryDelay, maxRetry)
+		if ceresult := ceclient.Send(rctx, event); cloudevents.IsUndelivered(ceresult) || cloudevents.IsNACK(ceresult) {
+			log.Errorf("Failed to deliver event: %v", ceresult)
+		}
+	})
+
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%d", env.Port),
+		ReadHeaderTimeout: 10 * time.Second,
 	}
+	log.Fatalf("ListenAndServe: %v", srv.ListenAndServe())
 }

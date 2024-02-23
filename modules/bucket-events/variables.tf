@@ -11,22 +11,19 @@ variable "bucket" {
   type        = string
 }
 
-variable "location" {
-  description = "The location of the bucket."
-  type        = string
+variable "regions" {
+  description = "A map from region names to a network and subnetwork.  A pub/sub topic and ingress service (publishing to the respective topic) will be created in each region, with the ingress service configured to egress all traffic via the specified subnetwork."
+  type = map(object({
+    network = string
+    subnet  = string
+  }))
 }
 
-locals {
-  region = lookup({
-    "us" : "us-central1",
-    "eu" : "europe-west1",
-    "asia" : "asia-east1",
-  }, lower(var.location), lower(var.location))
-}
-
-variable "broker" {
-  description = "The name of the pubsub topic we are using as a broker."
-  type        = string
+variable "ingress" {
+  description = "An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events."
+  type = object({
+    name = string
+  })
 }
 
 variable "filter" {

@@ -16,7 +16,7 @@ resource "google_service_account" "this" {
   project = var.project_id
 
   account_id   = "${var.name}-${random_string.suffix.result}"
-  display_name = "Delivery account for ${var.bucket} events in ${local.region}"
+  display_name = "Delivery account for ${var.bucket} events"
 }
 
 // Lookup the identity of the pubsub service agent.
@@ -63,73 +63,54 @@ resource "cosign_sign" "this" {
   conflict = "REPLACE"
 }
 
-// Deploy the service into each of our regions.
-resource "google_cloud_run_v2_service" "this" {
-  project     = var.project_id
-  name        = "${var.name}-trampoline"
-  description = "A service to deliver events from ${var.bucket} in ${local.region} to the broker."
-  location    = local.region
+module "this" {
+  source     = "../regional-go-service"
+  project_id = var.project_id
+  name       = "${var.name}-trampoline"
+  regions    = var.regions
 
-  template {
-    scaling {
-      min_instance_count = 0
-      max_instance_count = 10 // TODO var
-    }
-    max_instance_request_concurrency = 1000 // TODO var
-    execution_environment            = "EXECUTION_ENVIRONMENT_GEN2"
-
-    service_account = google_service_account.this.email
-    timeout         = "10s" // TODO var
-
-    containers {
-      image = cosign_sign.this.signed_ref
-
-      env {
-        name  = "PUBSUB_TOPIC"
-        value = var.broker
+  service_account = google_service_account.this.email
+  containers = {
+    "recorder" = {
+      source = {
+        working_dir = path.module
+        importpath  = "./cmd/trampoline"
       }
-
-      resources {
-        limits = {
-          "cpu"    = "1000m" // TODO var
-          "memory" = "512Mi" // TODO var
-        }
-        cpu_idle = true
-      }
+      ports = [{ container_port = 8080 }]
+      regional-env = [{
+        name  = "INGRESS_URI"
+        value = { for k, v in module.trampoline-emits-events : k => v.uri }
+      }]
     }
-    //containers { image = module.otel-collector.image } TODO
   }
+
+  notification_channels = var.notification_channels
 }
 
-// Authorize this service account to invoke the private service receiving
-// events from this trigger.
+// Authorize the Pub/Sub topic to deliver events to the service.
 module "authorize-delivery" {
-  source = "../authorize-private-service"
+  for_each = var.regions
+  source   = "../authorize-private-service"
 
   project_id = var.project_id
-  region     = local.region
-  name       = google_cloud_run_v2_service.this.name
+  region     = each.key
+  name       = "${var.name}-trampoline"
 
   service-account = google_service_account.this.email
-}
-
-locals {
-  filter-elements = [
-    for key, value in var.filter : "attributes.ce-${key}=\"${value}\""
-  ]
 }
 
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.suffix.result}"
 
   message_storage_policy {
-    allowed_persistence_regions = [local.region]
+    allowed_persistence_regions = keys(var.regions)
   }
 }
 
 // Grant the pubsub service account the ability to send to the dead-letter topic.
 resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter" {
-  topic = google_pubsub_topic.dead-letter.name
+  for_each = var.regions
+  topic    = google_pubsub_topic.dead-letter.name
 
   role    = "roles/pubsub.publisher"
   members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
@@ -138,18 +119,17 @@ resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter"
 // Configure the subscription to deliver the events matching our filter to this service
 // using the above identity to authorize the delivery..
 resource "google_pubsub_subscription" "this" {
-  depends_on = [google_cloud_run_v2_service.this]
+  for_each   = var.regions
+  depends_on = [module.this]
 
   name  = "${var.name}-${random_string.suffix.result}"
-  topic = google_pubsub_topic.internal.id
+  topic = google_pubsub_topic.internal[each.key].id
 
   // TODO: Tune this and/or make it configurable?
   ack_deadline_seconds = 300
 
-  filter = join(" AND ", local.filter-elements)
-
   push_config {
-    push_endpoint = module.authorize-delivery.uri
+    push_endpoint = module.authorize-delivery[each.key].uri
 
     // Authenticate requests to this service using tokens minted
     // from the given service account.
@@ -179,7 +159,8 @@ resource "google_pubsub_subscription" "this" {
 
 // Grant the pubsub service account the ability to Acknowledge messages on this "this" subscription.
 resource "google_pubsub_subscription_iam_binding" "allow-pubsub-to-ack" {
-  subscription = google_pubsub_subscription.this.name
+  for_each     = var.regions
+  subscription = google_pubsub_subscription.this[each.key].name
 
   role    = "roles/pubsub.subscriber"
   members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
@@ -190,38 +171,44 @@ data "google_storage_project_service_account" "gcs_account" {}
 
 // Allow the GCS service account to publish to the internal topic.
 resource "google_pubsub_topic_iam_binding" "binding" {
-  topic   = google_pubsub_topic.internal.id
-  role    = "roles/pubsub.publisher"
-  members = ["serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"]
+  for_each = var.regions
+  topic    = google_pubsub_topic.internal[each.key].id
+  role     = "roles/pubsub.publisher"
+  members  = ["serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"]
 }
 
 // Creage the topic to receive the GCS events.
 resource "google_pubsub_topic" "internal" {
-  name = "${var.name}-internal"
+  for_each = var.regions
+  name     = "${var.name}-internal-${each.key}"
 
   // TODO: Tune this and/or make it configurable?
   message_retention_duration = "600s"
 
   message_storage_policy {
-    allowed_persistence_regions = [local.region]
+    allowed_persistence_regions = [each.key]
   }
 }
 
 // Create a notification to the topic.
 resource "google_storage_notification" "notification" {
+  for_each       = var.regions
   bucket         = var.bucket
   payload_format = "JSON_API_V1"
-  topic          = google_pubsub_topic.internal.id
+  topic          = google_pubsub_topic.internal[each.key].id
   event_types    = var.gcs_event_types
   depends_on     = [google_pubsub_topic_iam_binding.binding]
 }
 
-// Authorize the trampoline identity to publish events to the topic.
-// NOTE: we use binding vs. member because we do not expect anything
-// to publish to this topic other than the ingress service.
-resource "google_pubsub_topic_iam_binding" "ingress-publishes-events" {
-  project = var.project_id
-  topic   = var.broker
-  role    = "roles/pubsub.publisher"
-  members = ["serviceAccount:${google_service_account.this.email}"]
+// Authorize the trampoline service account to publish events.
+module "trampoline-emits-events" {
+  for_each = var.regions
+
+  source = "../authorize-private-service"
+
+  project_id = var.project_id
+  region     = each.key
+  name       = var.ingress.name
+
+  service-account = google_service_account.this.email
 }
