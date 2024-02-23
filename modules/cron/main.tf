@@ -226,8 +226,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
     }
   }
 
-  # TODO(mattmoor): Enable notifications once this stabilizes.
-  # notification_channels = var.notification_channels
+  notification_channels = var.notification_channels
 
   enabled = "true"
   project = var.project_id
@@ -266,8 +265,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-execution" {
     }
   }
 
-  # TODO(mattmoor): Enable notifications once this stabilizes.
-  # notification_channels = var.notification_channels
+  notification_channels = var.notification_channels
 
   enabled = "true"
   project = var.project_id
