@@ -56,7 +56,7 @@ func main() {
 	}
 	ceclient, err := cloudevents.NewClientHTTP(
 		cloudevents.WithTarget(env.IngressURI),
-		cehttp.WithRoundTripper(httpmetrics.WrapTransport(c.Transport)))
+		cehttp.WithClient(http.Client{Transport: httpmetrics.WrapTransport(c.Transport)}))
 	if err != nil {
 		log.Fatalf("failed to create cloudevents client: %v", err)
 	}

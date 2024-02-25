@@ -7,12 +7,12 @@ variable "name" {
 }
 
 variable "bucket" {
-  description = "The name of the bucket to watch for events."
+  description = "The name of the bucket to watch for events. The region where the bucket is located will be the region where the Pub/Sub topic and trampoline service will be created. The bucket must be in a region that is in the set of regions passed to the regions variable."
   type        = string
 }
 
 variable "regions" {
-  description = "A map from region names to a network and subnetwork.  A pub/sub topic and ingress service (publishing to the respective topic) will be created in each region, with the ingress service configured to egress all traffic via the specified subnetwork."
+  description = "A map from region names to a network and subnetwork. The bucket must be in one of these regions."
   type = map(object({
     network = string
     subnet  = string
