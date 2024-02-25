@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -164,14 +165,26 @@ func bucketize(host string) string {
 }
 
 var (
-	mGitHubRateLimit = promauto.NewGaugeVec(
+	mGitHubRateLimitRemaining = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_remaining",
 			Help: "The number of requests remaining in the current rate limit window",
 		},
-		[]string{"code", "method",
-			"rate-limit-remaining", "rate-limit", "rate-limit-reset", "rate-limit-resource",
-			"service_name", "configuration_name", "revision_name"},
+		[]string{"resource"},
+	)
+	mGitHubRateLimit = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit",
+			Help: "The number of requests allowed during the rate limit window",
+		},
+		[]string{"resource"},
+	)
+	mGitHubRateLimitReset = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit_reset",
+			Help: "The timestamp at which the current rate limit window resets",
+		},
+		[]string{"resource"},
 	)
 )
 
@@ -184,33 +197,25 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			return resp, err
 		}
 		if r.URL.Host == "api.github.com" {
-			remaining := resp.Header.Get("X-RateLimit-Remaining")
-			if remaining == "" {
-				remaining = "unknown"
-			}
-			lim := resp.Header.Get("X-RateLimit-Limit")
-			if lim == "" {
-				lim = "unknown"
-			}
-			reset := resp.Header.Get("X-RateLimit-Reset")
-			if reset == "" {
-				reset = "unknown"
-			}
 			resource := resp.Header.Get("X-RateLimit-Resource")
 			if resource == "" {
 				resource = "unknown"
 			}
-			mGitHubRateLimit.With(prometheus.Labels{
-				"code":                 fmt.Sprintf("%d", resp.StatusCode),
-				"method":               r.Method,
-				"rate-limit-remaining": remaining,
-				"rate-limit":           lim,
-				"rate-limit-reset":     reset,
-				"rate-limit-resource":  resource,
-				"service_name":         env.KnativeServiceName,
-				"configuration_name":   env.KnativeConfigurationName,
-				"revision_name":        env.KnativeRevisionName,
-			}).Inc()
+
+			set := func(key string, v *prometheus.GaugeVec) {
+				remaining := resp.Header.Get(key)
+				if remaining == "" {
+					return
+				}
+				i, err := strconv.Atoi(remaining)
+				if err != nil {
+					return
+				}
+				v.With(prometheus.Labels{"resource": resource}).Set(float64(i))
+			}
+			set("X-RateLimit-Remaining", mGitHubRateLimitRemaining)
+			set("X-RateLimit-Limit", mGitHubRateLimit)
+			set("X-RateLimit-Reset", mGitHubRateLimitReset)
 		}
 		return resp, err
 	}
