@@ -203,11 +203,11 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			}
 
 			set := func(key string, v *prometheus.GaugeVec) {
-				remaining := resp.Header.Get(key)
-				if remaining == "" {
+				val := resp.Header.Get(key)
+				if val == "" {
 					return
 				}
-				i, err := strconv.Atoi(remaining)
+				i, err := strconv.Atoi(val)
 				if err != nil {
 					return
 				}
