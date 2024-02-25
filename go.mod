@@ -5,6 +5,7 @@ go 1.21.6
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	cloud.google.com/go/pubsub v1.36.1
+	github.com/chainguard-dev/clog v1.3.1
 	github.com/cloudevents/sdk-go/v2 v2.15.1
 	github.com/google/go-cmp v0.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
