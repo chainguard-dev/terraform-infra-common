@@ -56,7 +56,8 @@ func WrapTransport(t http.RoundTripper) http.RoundTripper {
 	return instrumentRoundTripperCounter(
 		instrumentRoundTripperInFlight(
 			instrumentRoundTripperDuration(
-				otelhttp.NewTransport(t))))
+				instrumentGitHubRateLimits(
+					otelhttp.NewTransport(t)))))
 }
 
 func mapErrorToLabel(err error) string {
@@ -160,4 +161,57 @@ func bucketize(host string) string {
 		slog.Warn(`bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seenHostMap[host])
 	}
 	return "other"
+}
+
+var (
+	mGitHubRateLimit = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit_remaining",
+			Help: "The number of requests remaining in the current rate limit window",
+		},
+		[]string{"code", "method",
+			"rate-limit-remaining", "rate-limit", "rate-limit-reset", "rate-limit-resource",
+			"service_name", "configuration_name", "revision_name"},
+	)
+)
+
+// instrumentGitHubRateLimits is a promhttp.RoundTripperFunc that records GitHub rate limit metrics.
+// See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28
+func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFunc {
+	return func(r *http.Request) (*http.Response, error) {
+		resp, err := next.RoundTrip(r)
+		if err != nil {
+			return resp, err
+		}
+		if r.URL.Host == "api.github.com" {
+			remaining := resp.Header.Get("X-RateLimit-Remaining")
+			if remaining == "" {
+				remaining = "unknown"
+			}
+			lim := resp.Header.Get("X-RateLimit-Limit")
+			if lim == "" {
+				lim = "unknown"
+			}
+			reset := resp.Header.Get("X-RateLimit-Reset")
+			if reset == "" {
+				reset = "unknown"
+			}
+			resource := resp.Header.Get("X-RateLimit-Resource")
+			if resource == "" {
+				resource = "unknown"
+			}
+			mGitHubRateLimit.With(prometheus.Labels{
+				"code":                 fmt.Sprintf("%d", resp.StatusCode),
+				"method":               r.Method,
+				"rate-limit-remaining": remaining,
+				"rate-limit":           lim,
+				"rate-limit-reset":     reset,
+				"rate-limit-resource":  resource,
+				"service_name":         env.KnativeServiceName,
+				"configuration_name":   env.KnativeConfigurationName,
+				"revision_name":        env.KnativeRevisionName,
+			}).Inc()
+		}
+		return resp, err
+	}
 }
