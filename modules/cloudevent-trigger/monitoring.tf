@@ -25,9 +25,9 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
       threshold_value = 1
     }
 
-    display_name = "${var.name}: dead-letter queue messages above ${var.alert_threshold}"
+    display_name = "${var.name}: dead-letter queue messages above 1"
   }
-  display_name = "${var.name}: dead-letter queue messages above ${var.alert_threshold}"
+  display_name = "${var.name}: dead-letter queue messages above 1"
 
   enabled = "true"
 
