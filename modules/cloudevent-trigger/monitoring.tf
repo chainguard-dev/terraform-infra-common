@@ -1,7 +1,7 @@
 resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   // Close after 7 days
   alert_strategy {
-    auto_close = "604800s"
+    auto_close = "3600s" // 1 hour
   }
 
   combiner = "OR"
@@ -21,7 +21,8 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
         count = "1"
       }
 
-      threshold_value = var.alert_threshold
+      // TODO: make configurable later
+      threshold_value = 1
     }
 
     display_name = "${var.name}: dead-letter queue messages above ${var.alert_threshold}"
