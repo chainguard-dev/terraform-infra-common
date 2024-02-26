@@ -58,14 +58,21 @@ No requirements.
 |------|--------|---------|
 | <a name="module_audit-delivery-serviceaccount"></a> [audit-delivery-serviceaccount](#module\_audit-delivery-serviceaccount) | ../audit-serviceaccount | n/a |
 | <a name="module_authorize-delivery"></a> [authorize-delivery](#module\_authorize-delivery) | ../authorize-private-service | n/a |
+| <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
+| <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
+| <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
+| <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
+| <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
 | <a name="module_trampoline-emits-events"></a> [trampoline-emits-events](#module\_trampoline-emits-events) | ../authorize-private-service | n/a |
+| <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
+| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_pubsub_subscription.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription_iam_binding.allow-pubsub-to-ack](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription_iam_binding) | resource |
 | [google_pubsub_topic.dead-letter](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
