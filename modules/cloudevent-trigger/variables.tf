@@ -15,10 +15,11 @@ variable "filter" {
   description = <<EOD
 A Knative Trigger-style filter over the cloud event attributes.
 
-This is normally used to filter relevant event types:
+This is normally used to filter relevant event types, for example:
 
   { "type" : "dev.chainguard.foo" }
 
+In this case, only events with a type attribute of "dev.chainguard.foo" will be delivered.
 EOD
   type        = map(string)
   default     = {}
@@ -28,11 +29,11 @@ variable "filter_prefix" {
   description = <<EOD
 A Knative Trigger-style filter over the cloud event attribute prefixes.
 
-If an event may have a "source" attribute "foo.bar" or "foo.baz" and the filter is
+This can be used to filter relevant event types, for example:
 
-  { source = "foo." }
+  { "type" : "dev.chainguard." }
 
-then both events will be delivered to the service.
+In this case, any event with a type attribute that starts with "dev.chainguard." will be delivered.
 EOD
   type        = map(string)
   default     = {}
