@@ -57,9 +57,11 @@ module "authorize-delivery" {
 }
 
 locals {
-  filter-elements = [
-    for key, value in var.filter : "attributes.ce-${key}=\"${value}\""
-  ]
+  // See https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax
+  filter-elements = concat(
+    [for key, value in var.filter : "attributes.ce-${key}=\"${value}\""],
+    [for key, value in var.filter_prefix : "hasPrefix(attributes.ce-${key}, \"${value}\""],
+  )
 }
 
 resource "google_pubsub_topic" "dead-letter" {

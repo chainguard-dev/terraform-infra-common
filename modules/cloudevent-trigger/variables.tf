@@ -12,8 +12,30 @@ variable "broker" {
 }
 
 variable "filter" {
-  description = "A Knative Trigger-style filter over the cloud event attributes."
+  description = <<EOD
+A Knative Trigger-style filter over the cloud event attributes.
+
+This is normally used to filter relevant event types:
+
+  { "type" : "dev.chainguard.foo" }
+
+EOD
   type        = map(string)
+  default     = {}
+}
+
+variable "filter_prefix" {
+  description = <<EOD
+A Knative Trigger-style filter over the cloud event attribute prefixes.
+
+If an event may have a "source" attribute "foo.bar" or "foo.baz" and the filter is
+
+  { source = "foo." }
+
+then both events will be delivered to the service.
+EOD
+  type        = map(string)
+  default     = {}
 }
 
 variable "private-service" {
