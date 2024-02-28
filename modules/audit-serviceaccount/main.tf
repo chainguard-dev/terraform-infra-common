@@ -25,6 +25,10 @@ resource "google_monitoring_alert_policy" "generate-access-token" {
       ${join("\n", [for principal in var.allowed_principals : "-protoPayload.authenticationInfo.principalSubject=\"${principal}\""])}
       ${var.allowed_principal_regex != "" ? "-protoPayload.authenticationInfo.principalSubject=~\"${var.allowed_principal_regex}\"" : ""}
       EOT
+
+      label_extractors = {
+        "subject" = "EXTRACT(protoPayload.authenticationInfo.principalSubject)"
+      }
     }
   }
 
