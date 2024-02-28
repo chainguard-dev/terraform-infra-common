@@ -223,6 +223,10 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
         ])}")
       )
       EOT
+
+      label_extractors = {
+        "subject" = "EXTRACT(protoPayload.authenticationInfo.principalSubject)"
+      }
     }
   }
 
