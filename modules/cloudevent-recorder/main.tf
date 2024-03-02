@@ -46,3 +46,59 @@ resource "google_storage_bucket" "recorder" {
     }
   }
 }
+
+// What identity is deploying this?
+data "google_client_openid_userinfo" "me" {}
+
+resource "google_monitoring_alert_policy" "bucket-access" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Abnormal Event Bucket Access: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Bucket Access"
+
+    condition_matched_log {
+      filter = <<EOT
+      logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fdata_access"
+      protoPayload.serviceName="storage.googleapis.com"
+      protoPayload.resourceName=~"projects/_/buckets/${var.name}-(${join("|", keys(var.regions))})-${random_id.suffix.hex}"
+
+      -- The recorder service write objects into the bucket.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${google_service_account.recorder.email}"
+        protoPayload.methodName="storage.objects.create"
+      )
+
+      -- The importer identity (used by DTS) enumerates and reads objects.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${google_service_account.import-identity.email}"
+        protoPayload.methodName=("storage.objects.get" OR "storage.objects.list" OR "storage.buckets.get")
+      )
+
+      -- Our CI identity reconciles the bucket.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
+        protoPayload.methodName=("storage.buckets.get" OR "storage.getIamPermissions")
+      )
+      EOT
+
+      label_extractors = {
+        "subject" = "EXTRACT(protoPayload.authenticationInfo.principalSubject)"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
