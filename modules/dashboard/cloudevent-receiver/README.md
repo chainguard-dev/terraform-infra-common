@@ -84,6 +84,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
+| <a name="module_grpc"></a> [grpc](#module\_grpc) | ../sections/grpc | n/a |
 | <a name="module_http"></a> [http](#module\_http) | ../sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../sections/logs | n/a |
