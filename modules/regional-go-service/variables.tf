@@ -16,13 +16,24 @@ variable "regions" {
 
 variable "ingress" {
   type        = string
-  description = "The ingress mode for the service.  Must be one of INGRESS_TRAFFIC_ALL, INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER, or INGRESS_TRAFFIC_INTERNAL_ONLY."
+  description = <<EOD
+Which type of ingress traffic to accept for the service.
+
+- INGRESS_TRAFFIC_ALL accepts all traffic, enabling the public .run.app URL for the service
+- INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER accepts traffic only from a load balancer
+- INGRESS_TRAFFIC_INTERNAL_ONLY accepts internal traffic only
+EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 }
 
 variable "egress" {
   type        = string
-  description = "The egress mode for the service.  Must be one of ALL_TRAFFIC, or PRIVATE_RANGES_ONLY. Egress traffic is routed through the regional VPC network from var.regions."
+  description = <<EOD
+Which type of egress traffic to send through the VPC.
+
+- ALL_TRAFFIC sends all traffic through regional VPC network
+- PRIVATE_RANGES_ONLY sends only traffic to private IP addresses through regional VPC network
+EOD
   default     = "ALL_TRAFFIC"
 }
 

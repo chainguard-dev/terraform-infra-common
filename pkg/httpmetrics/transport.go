@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -56,7 +57,8 @@ func WrapTransport(t http.RoundTripper) http.RoundTripper {
 	return instrumentRoundTripperCounter(
 		instrumentRoundTripperInFlight(
 			instrumentRoundTripperDuration(
-				otelhttp.NewTransport(t))))
+				instrumentGitHubRateLimits(
+					otelhttp.NewTransport(t)))))
 }
 
 func mapErrorToLabel(err error) string {
@@ -160,4 +162,61 @@ func bucketize(host string) string {
 		slog.Warn(`bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seenHostMap[host])
 	}
 	return "other"
+}
+
+var (
+	mGitHubRateLimitRemaining = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit_remaining",
+			Help: "The number of requests remaining in the current rate limit window",
+		},
+		[]string{"resource"},
+	)
+	mGitHubRateLimit = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit",
+			Help: "The number of requests allowed during the rate limit window",
+		},
+		[]string{"resource"},
+	)
+	mGitHubRateLimitReset = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit_reset",
+			Help: "The timestamp at which the current rate limit window resets",
+		},
+		[]string{"resource"},
+	)
+)
+
+// instrumentGitHubRateLimits is a promhttp.RoundTripperFunc that records GitHub rate limit metrics.
+// See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28
+func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFunc {
+	return func(r *http.Request) (*http.Response, error) {
+		resp, err := next.RoundTrip(r)
+		if err != nil {
+			return resp, err
+		}
+		if r.URL.Host == "api.github.com" {
+			resource := resp.Header.Get("X-RateLimit-Resource")
+			if resource == "" {
+				resource = "unknown"
+			}
+
+			set := func(key string, v *prometheus.GaugeVec) {
+				val := resp.Header.Get(key)
+				if val == "" {
+					return
+				}
+				i, err := strconv.Atoi(val)
+				if err != nil {
+					return
+				}
+				v.With(prometheus.Labels{"resource": resource}).Set(float64(i))
+			}
+			set("X-RateLimit-Remaining", mGitHubRateLimitRemaining)
+			set("X-RateLimit-Limit", mGitHubRateLimit)
+			set("X-RateLimit-Reset", mGitHubRateLimitReset)
+		}
+		return resp, err
+	}
 }
