@@ -1,21 +1,18 @@
 variable "title" { type = string }
 variable "filter" { type = list(string) }
-variable "cloudrun_name" { type = string }
 variable "collapsed" { default = false }
 
 module "width" { source = "../width" }
 
-module "remaining" {
+module "used" {
   source = "../../widgets/xy"
-  title  = "GitHub API Rate Limit Remaining"
+  title  = "GitHub API Rate Limit Used (%)"
   filter = concat(var.filter, [
-    "metric.type=\"prometheus.googleapis.com/github_rate_limit_remaining/gauge\"",
-    "metric.label.service_name=\"${var.cloudrun_name}\"",
+    "metric.type=\"prometheus.googleapis.com/github_rate_limit_used/gauge\"",
   ])
   group_by_fields = ["resource.label.\"resource\""]
-  primary_align   = "ALIGN_MEAN"
+  primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_SUM"
-  plot_type       = "STACKED_AREA"
 }
 
 module "limit" {
@@ -23,22 +20,20 @@ module "limit" {
   title  = "GitHub API Rate Limit"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/github_rate_limit/gauge\"",
-    "metric.label.service_name=\"${var.cloudrun_name}\"",
   ])
   group_by_fields = ["resource.label.\"resource\""]
-  primary_align   = "ALIGN_DELTA"
+  primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MEAN"
 }
 
-module "reset" {
+module "time_to_reset" {
   source = "../../widgets/xy"
-  title  = "Next GitHub API reset"
+  title  = "Time to next GitHub API reset"
   filter = concat(var.filter, [
-    "metric.type=\"prometheus.googleapis.com/github_rate_limit_remaining_reset/gauge\"",
-    "metric.label.service_name=\"${var.cloudrun_name}\"",
+    "metric.type=\"prometheus.googleapis.com/github_rate_limit_time_to_reset/gauge\"",
   ])
   group_by_fields = ["resource.label.\"resource\""]
-  primary_align   = "ALIGN_DELTA"
+  primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MEAN"
 }
 
@@ -56,7 +51,7 @@ locals {
     xPos   = local.col[0],
     height = local.unit,
     width  = local.unit,
-    widget = module.remaining.widget,
+    widget = module.used.widget,
     },
     {
       yPos   = local.unit,
@@ -70,7 +65,7 @@ locals {
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
-      widget = module.reset.widget,
+      widget = module.time_to_reset.widget,
     },
   ]
 }

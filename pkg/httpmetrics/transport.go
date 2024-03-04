@@ -186,6 +186,20 @@ var (
 		},
 		[]string{"resource"},
 	)
+	mGitHubRateLimitUsed = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit_used",
+			Help: "The fraction of the rate limit window used",
+		},
+		[]string{"resource"},
+	)
+	mGitHubRateLimitTimeToReset = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "github_rate_limit_time_to_reset",
+			Help: "The number of minutes until the current rate limit window resets",
+		},
+		[]string{"resource"},
+	)
 )
 
 // instrumentGitHubRateLimits is a promhttp.RoundTripperFunc that records GitHub rate limit metrics.
@@ -202,20 +216,35 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				resource = "unknown"
 			}
 
-			set := func(key string, v *prometheus.GaugeVec) {
+			val := func(key string) float64 {
 				val := resp.Header.Get(key)
 				if val == "" {
-					return
+					return 0
 				}
 				i, err := strconv.Atoi(val)
 				if err != nil {
-					return
+					return 0
 				}
-				v.With(prometheus.Labels{"resource": resource}).Set(float64(i))
+				return float64(i)
 			}
-			set("X-RateLimit-Remaining", mGitHubRateLimitRemaining)
-			set("X-RateLimit-Limit", mGitHubRateLimit)
-			set("X-RateLimit-Reset", mGitHubRateLimitReset)
+			remaining := val("X-RateLimit-Remaining")
+			mGitHubRateLimitRemaining.With(prometheus.Labels{"resource": resource}).Set(remaining)
+
+			limit := val("X-RateLimit-Limit")
+			mGitHubRateLimit.With(prometheus.Labels{"resource": resource}).Set(limit)
+
+			reset := val("X-RateLimit-Reset")
+			mGitHubRateLimitReset.With(prometheus.Labels{"resource": resource}).Set(reset)
+
+			if limit > 0 {
+				used := (limit - remaining) / limit
+				mGitHubRateLimitUsed.With(prometheus.Labels{"resource": resource}).Set(used)
+			}
+
+			if reset > 0 {
+				timeToReset := time.Until(time.Unix(int64(reset), 0)).Minutes()
+				mGitHubRateLimitTimeToReset.With(prometheus.Labels{"resource": resource}).Set(timeToReset)
+			}
 		}
 		return resp, err
 	}
