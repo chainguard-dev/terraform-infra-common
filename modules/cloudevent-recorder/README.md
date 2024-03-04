@@ -109,5 +109,8 @@ No requirements.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_dataset_id"></a> [dataset\_id](#output\_dataset\_id) | n/a |
+| <a name="output_table_ids"></a> [table\_ids](#output\_table\_ids) | n/a |
 <!-- END_TF_DOCS -->
