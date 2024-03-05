@@ -3,6 +3,17 @@
 This module provisions infrastructure to listen to events from a GCS bucket and
 publish them to a broker.
 
+This uses [Pub/Sub notifications for GCS](https://cloud.google.com/storage/docs/pubsub-notifications) and emits events of the following types:
+
+| [GCS event type](https://cloud.google.com/storage/docs/pubsub-notifications#events) | CloudEvent type |
+| ----- | ----- |
+|	`OBJECT_FINALIZE` | `dev.chainguard.storage.object.finalize` |
+| `OBJECT_METADATA_UPDATE` | `dev.chainguard.storage.object.metadata_update` |
+| `OBJECT_DELETE` | `dev.chainguard.storage.object.delete` |
+| `OBJECT_ARCHIVE` | `dev.chainguard.storage.object.archive` |
+
+
+
 ```hcl
 // Create a network with several regional subnets
 module "networking" {

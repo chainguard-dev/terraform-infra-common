@@ -53,7 +53,12 @@ module "cloudevent-trigger" {
   name       = "bar"
   project_id = var.project_id
   broker     = module.cloudevent-broker.broker[each.key]
+
+  // Only trigger on bar-type events.
   filter     = { "type" : "dev.chainguard.bar" }
+
+  // Only trigger on events with subject matching "foo/*"
+  filter_prefix = { "subject": "foo/" }
 
   depends_on = [google_cloud_run_v2_service.fanout-service]
   private-service = {
