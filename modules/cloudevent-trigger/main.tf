@@ -60,7 +60,7 @@ locals {
   // See https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax
   filter-elements = concat(
     [for key, value in var.filter : "attributes.ce-${key}=\"${value}\""],
-    [for key, value in var.filter_prefix : "hasPrefix(attributes.ce-${key}, \"${value}\""],
+    [for key, value in var.filter_prefix : "hasPrefix(attributes.ce-${key}, \"${value}\")"],
   )
 }
 
