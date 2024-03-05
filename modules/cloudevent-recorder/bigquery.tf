@@ -143,7 +143,7 @@ resource "google_monitoring_alert_policy" "bq_dts" {
         AND metric.type = "bigquerydatatransfer.googleapis.com/transfer_config/completed_runs"
         AND metric.labels.completion_state = "SUCCEEDED"
         AND metric.labels.run_cause = "AUTO_SCHEDULE"
-        AND resource.labels.config_id = "${element(reverse(split("/", google_bigquery_data_transfer_config.import-job[conditions.key].name)), 0)}"
+        AND resource.labels.config_id = "${element(reverse(split("/", google_bigquery_data_transfer_config.import-job["${conditions.key}-${each.key}"].name)), 0)}"
         EOT
 
         trigger {
