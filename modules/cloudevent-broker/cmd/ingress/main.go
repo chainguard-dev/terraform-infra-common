@@ -7,7 +7,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -19,6 +18,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
+	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
 	cgpubsub "github.com/chainguard-dev/terraform-infra-common/pkg/pubsub"
 )
 
@@ -38,21 +39,21 @@ func main() {
 
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
-		log.Panicf("failed to process env var: %s", err)
+		clog.Fatalf("failed to process env var: %s", err)
 	}
 
 	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {
-		log.Panicf("failed to create CE client, %v", err)
+		clog.Fatalf("failed to create CE client, %v", err)
 	}
 
 	projectID, err := metadata.ProjectID()
 	if err != nil {
-		log.Panicf("failed to get project ID, %v", err)
+		clog.Fatalf("failed to get project ID, %v", err)
 	}
 	psc, err := pubsub.NewClient(ctx, projectID, option.WithTokenSource(google.ComputeTokenSource("")))
 	if err != nil {
-		log.Panicf("failed to create pubsub client, %v", err)
+		clog.Fatalf("failed to create pubsub client, %v", err)
 	}
 
 	topic := psc.Topic(env.Topic)
@@ -61,9 +62,9 @@ func main() {
 	if err := c.StartReceiver(cloudevents.ContextWithRetriesExponentialBackoff(ctx, retryDelay, maxRetry), func(ctx context.Context, event cloudevents.Event) {
 		res := topic.Publish(ctx, cgpubsub.FromCloudEvent(ctx, event))
 		if _, err := res.Get(ctx); err != nil {
-			log.Printf("failed to forward event: %v\n%v", err, event)
+			clog.FromContext(ctx).Errorf("failed to forward event: %v\n%v", event, err)
 		}
 	}); err != nil {
-		log.Panicf("failed to start receiver, %v", err)
+		clog.Fatalf("failed to start receiver, %v", err)
 	}
 }

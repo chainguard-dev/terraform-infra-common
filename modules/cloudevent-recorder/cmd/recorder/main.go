@@ -7,11 +7,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 
+	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -24,14 +25,14 @@ type envConfig struct {
 func main() {
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
-		log.Panicf("failed to process env var: %s", err)
+		clog.Fatalf("failed to process env var: %s", err)
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {
-		log.Panicf("failed to create event client, %v", err)
+		clog.Fatalf("failed to create event client, %v", err)
 	}
 	if err := c.StartReceiver(ctx, func(ctx context.Context, event cloudevents.Event) error {
 		dir := filepath.Join(env.LogPath, event.Type())
@@ -42,6 +43,6 @@ func main() {
 		filename := filepath.Join(dir, event.ID())
 		return os.WriteFile(filename, event.Data(), 0600)
 	}); err != nil {
-		log.Panicf("failed to start event receiver, %v", err)
+		clog.Fatalf("failed to start event receiver, %v", err)
 	}
 }

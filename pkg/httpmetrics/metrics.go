@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/chainguard-dev/clog"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -148,7 +149,7 @@ func HandlerFunc(name string, f func(http.ResponseWriter, *http.Request)) http.H
 func SetupTracer(ctx context.Context) func() {
 	traceExporter, err := otlptracehttp.New(ctx)
 	if err != nil {
-		log.Panicf("SetupTracer() = %v", err)
+		clog.FromContext(ctx).Fatalf("SetupTracer() = %v", err)
 	}
 	bsp := trace.NewBatchSpanProcessor(traceExporter)
 	res := resource.Default()
