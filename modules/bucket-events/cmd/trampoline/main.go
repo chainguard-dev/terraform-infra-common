@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -41,7 +40,7 @@ var eventTypes = map[string]string{
 func main() {
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
-		log.Panicf("failed to process env var: %s", err)
+		clog.Fatalf("failed to process env var: %s", err)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
