@@ -116,6 +116,8 @@ resource "google_bigquery_data_transfer_config" "import-job" {
 
 // Alert when no successful run in 30min, it should be successful every 15min
 resource "google_monitoring_alert_policy" "bq_dts" {
+  for_each = var.types
+
   // Close after 7 days
   alert_strategy {
     auto_close = "604800s"
@@ -124,7 +126,7 @@ resource "google_monitoring_alert_policy" "bq_dts" {
   combiner = "OR"
 
   dynamic "conditions" {
-    for_each = local.regional-types
+    for_each = var.regions
 
     content {
       condition_absent {
@@ -136,7 +138,13 @@ resource "google_monitoring_alert_policy" "bq_dts" {
 
         duration = "1800s"
         // config_id is the last value in the name, separated by '/'
-        filter = "resource.type = \"bigquery_dts_config\" AND metric.type = \"bigquerydatatransfer.googleapis.com/transfer_config/completed_runs\" AND (metric.labels.completion_state = \"SUCCEEDED\" AND metric.labels.run_cause = \"AUTO_SCHEDULE\") AND resource.labels.config_id = \"${element(reverse(split("/", google_bigquery_data_transfer_config.import-job[conditions.key].name)), 0)}\""
+        filter = <<EOT
+        resource.type = "bigquery_dts_config"
+        AND metric.type = "bigquerydatatransfer.googleapis.com/transfer_config/completed_runs"
+        AND metric.labels.completion_state = "SUCCEEDED"
+        AND metric.labels.run_cause = "AUTO_SCHEDULE"
+        AND resource.labels.config_id = "${element(reverse(split("/", google_bigquery_data_transfer_config.import-job[conditions.key].name)), 0)}"
+        EOT
 
         trigger {
           count = "1"

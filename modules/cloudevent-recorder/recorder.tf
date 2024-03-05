@@ -104,7 +104,7 @@ module "recorder-dashboard" {
 
   notification_channels = var.notification_channels
 
-  alerts = { "BQ DTS ${var.name}" : google_monitoring_alert_policy.bq_dts.id }
+  alerts = tomap({ for type, schema in var.types : "BQ DTS ${var.name}-${type}" => google_monitoring_alert_policy.bq_dts[type].id })
 
   triggers = {
     for type, schema in var.types : "type: ${type}" => {
