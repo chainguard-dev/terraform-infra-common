@@ -1,5 +1,4 @@
 resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
-  // Close after 7 days
   alert_strategy {
     auto_close = "3600s" // 1 hour
   }
@@ -29,8 +28,6 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   }
   display_name = "${var.name}-${var.private-service.region}: dead-letter queue messages above 1"
 
-  enabled = "true"
-
-  // TODO: renable?
-  // notification_channels = var.notification_channels
+  enabled               = "true"
+  notification_channels = var.notification_channels
 }
