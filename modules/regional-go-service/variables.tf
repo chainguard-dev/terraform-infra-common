@@ -158,3 +158,9 @@ variable "execution_environment" {
     condition     = var.execution_environment == "EXECUTION_ENVIRONMENT_GEN1" || var.execution_environment == "EXECUTION_ENVIRONMENT_GEN2"
   }
 }
+
+variable "labels" {
+  description = "Labels to apply to the service."
+  type        = map(string)
+  default     = {}
+}

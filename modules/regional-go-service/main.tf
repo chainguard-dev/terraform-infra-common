@@ -49,9 +49,11 @@ resource "google_cloud_run_v2_service" "this" {
   project  = var.project_id
   name     = var.name
   location = each.key
+  labels = var.labels
   ingress  = var.ingress
 
   launch_stage = "BETA" // Needed for vpc_access below
+
 
   template {
     scaling {
