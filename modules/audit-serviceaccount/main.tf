@@ -27,7 +27,7 @@ resource "google_monitoring_alert_policy" "generate-access-token" {
       EOT
 
       label_extractors = {
-        "subject" = "EXTRACT(protoPayload.authenticationInfo.principalSubject)"
+        "email" = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
       }
     }
   }

@@ -225,7 +225,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
       EOT
 
       label_extractors = {
-        "subject" = "EXTRACT(protoPayload.authenticationInfo.principalSubject)"
+        "email" = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
       }
     }
   }
@@ -266,6 +266,10 @@ resource "google_monitoring_alert_policy" "anomalous-job-execution" {
       -- Allow the delivery service account to run the job, but flag anyone else
       -protoPayload.authenticationInfo.principalEmail="${google_service_account.delivery.email}"
       EOT
+
+      label_extractors = {
+        "email" = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+      }
     }
   }
 

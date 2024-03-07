@@ -59,6 +59,10 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
         protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
       )
       EOT
+
+      label_extractors = {
+        "email" = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+      }
     }
   }
 
