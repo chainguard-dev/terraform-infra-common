@@ -89,6 +89,11 @@ resource "google_monitoring_alert_policy" "bucket-access" {
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
         protoPayload.methodName=("storage.buckets.get" OR "storage.getIamPermissions")
       )
+
+      -- Security scanners frequently probe for public buckets via listing buckets
+      -- and then getting permissions, so we ignore these even though they pierce
+      -- the abstraction.
+      protoPayload.methodName="storage.getIamPermissions"
       EOT
 
       label_extractors = {
