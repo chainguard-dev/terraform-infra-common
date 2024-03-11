@@ -47,3 +47,8 @@ jobs:
     - run: |
         # Exclude running unit tests against third_party repos.
         go test -race ./...
+
+    - name: Ensure github-events schemas are up to date
+      run: |
+        go run ./modules/github-events/cmd/schemagen
+        git diff --exit-code

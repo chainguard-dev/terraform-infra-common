@@ -153,4 +153,5 @@ No requirements.
 | Name | Description |
 |------|-------------|
 | <a name="output_public-urls"></a> [public-urls](#output\_public-urls) | Map of region to public URL for the service, if service-ingress is INGRESS\_TRAFFIC\_ALL. |
+| <a name="output_recorder-schemas"></a> [recorder-schemas](#output\_recorder-schemas) | n/a |
 <!-- END_TF_DOCS -->

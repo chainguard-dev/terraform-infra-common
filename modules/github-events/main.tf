@@ -85,3 +85,14 @@ output "public-urls" {
     for r, _ in var.regions : r => data.google_cloud_run_v2_service.this[r].uri
   } : {}
 }
+
+output "recorder-schemas" {
+  value = {
+    "dev.chainguard.github.pull_request" : {
+      schema = file("${path.module}/schemas/pull_request.schema.json")
+    }
+    "dev.chainguard.github.workflow_run" : {
+      schema = file("${path.module}/schemas/workflow_run.schema.json")
+    }
+  }
+}

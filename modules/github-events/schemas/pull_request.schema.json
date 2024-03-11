@@ -1,0 +1,68 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "name",
+      "type": "STRING"
+     }
+    ],
+    "name": "user",
+    "type": "RECORD"
+   },
+   {
+    "name": "number",
+    "type": "INTEGER"
+   },
+   {
+    "fields": [
+     {
+      "fields": [
+       {
+        "name": "name",
+        "type": "STRING"
+       }
+      ],
+      "name": "owner",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "name",
+        "type": "STRING"
+       }
+      ],
+      "name": "organization",
+      "type": "RECORD"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     }
+    ],
+    "name": "repo",
+    "type": "RECORD"
+   },
+   {
+    "name": "before",
+    "type": "STRING"
+   },
+   {
+    "name": "after",
+    "type": "STRING"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]
