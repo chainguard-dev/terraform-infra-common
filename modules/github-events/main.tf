@@ -24,14 +24,21 @@ module "webhook-secret" {
   notification-channels = var.notification_channels
 }
 
+// If set, populate the webhook secret latest version.
+resource "google_secret_manager_secret_version" "webhook-secret" {
+  count = var.webhook-secret != "" ? 1 : 0
+
+  secret      = module.webhook-secret.secret_id
+  secret_data = var.webhook-secret
+}
+
 module "this" {
   source     = "../regional-go-service"
   project_id = var.project_id
   name       = var.name
   regions    = var.regions
 
-  // TODO: make this require GCLB
-  ingress = "INGRESS_TRAFFIC_ALL" // Receives traffic from the internet.
+  ingress = var.service-ingress
 
   service_account = google_service_account.service.email
   containers = {

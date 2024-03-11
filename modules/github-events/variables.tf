@@ -36,3 +36,19 @@ variable "secret_version_adder" {
   type        = string
   description = "The user allowed to populate new webhook secret versions."
 }
+
+variable "service-ingress" {
+  type        = string
+  description = <<EOD
+Which type of ingress traffic to accept for the service (see regional-go-service). Valid values are:
+
+- INGRESS_TRAFFIC_ALL accepts all traffic, enabling the public .run.app URL for the service
+- INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER accepts traffic only from a load balancer
+EOD
+}
+
+variable "webhook-secret" {
+  type        = string
+  description = "The secret to use as the webhook secret. If empty, the value must be populated manually."
+  default     = ""
+}
