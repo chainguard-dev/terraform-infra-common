@@ -73,14 +73,22 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
+| <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
+| <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
+| <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
+| <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
 | <a name="module_trampoline-emits-events"></a> [trampoline-emits-events](#module\_trampoline-emits-events) | ../authorize-private-service | n/a |
 | <a name="module_webhook-secret"></a> [webhook-secret](#module\_webhook-secret) | ../secret | n/a |
+| <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
+| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
+| [google_secret_manager_secret_version.webhook-secret](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [google_service_account.service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [random_string.service-suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 
@@ -95,6 +103,8 @@ No requirements.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. The bucket must be in one of these regions. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new webhook secret versions. | `string` | n/a | yes |
+| <a name="input_service-ingress"></a> [service-ingress](#input\_service-ingress) | Which type of ingress traffic to accept for the service (see regional-go-service). Valid values are:<br><br>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer | `string` | n/a | yes |
+| <a name="input_webhook-secret"></a> [webhook-secret](#input\_webhook-secret) | The secret to use as the webhook secret. If empty, the value must be populated manually. | `string` | `""` | no |
 
 ## Outputs
 

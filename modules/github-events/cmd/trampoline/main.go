@@ -67,7 +67,7 @@ func main() {
 		}
 
 		// https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers
-		t := r.Header.Get("X-GitHub-Event")
+		t := github.WebHookType(r)
 		if t == "" {
 			log.Errorf("missing X-GitHub-Event header")
 			w.WriteHeader(http.StatusBadRequest)
