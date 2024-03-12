@@ -52,5 +52,6 @@ variable "types" {
     schema                = string
     alert_threshold       = optional(number, 50000)
     notification_channels = optional(list(string), [])
+    partition_field       = optional(string)
   }))
 }
