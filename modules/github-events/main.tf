@@ -70,3 +70,17 @@ module "trampoline-emits-events" {
 
   service-account = google_service_account.service.email
 }
+
+data "google_cloud_run_v2_service" "this" {
+  for_each = var.service-ingress == "INGRESS_TRAFFIC_ALL" ? var.regions : {}
+  project  = var.project_id
+  location = each.key
+  name     = var.name
+}
+
+output "public-urls" {
+  description = "Map of region to public URL for the service, if service-ingress is INGRESS_TRAFFIC_ALL."
+  value = var.service-ingress == "INGRESS_TRAFFIC_ALL" ? {
+    for r, _ in var.regions : r => data.google_cloud_run_v2_service.this[r].uri
+  } : {}
+}

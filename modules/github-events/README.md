@@ -53,25 +53,6 @@ module "github-events" {
 After applying this, generate a random secret value and add it to the GitHub
 webhook config, and populate the secret version in the GCP Secret Manager.
 
-## Using with `INGRESS_TRAFFIC_ALL`
-
-During development you may want to expose the service directly to the internet, without using a load balancer. This is useful for testing and development, but is not recommended in production.
-
-```hcl
-module "github-events" {
-  source = "./modules/github-events"
-
-  project_id = var.project_id
-  name       = "github-events"
-  regions    = module.networking.regional-networks
-  ingress    = module.cloudevent-broker.ingress
-
-  service-ingress = "INGRESS_TRAFFIC_ALL" // Expose the service to the internet.
-}
-```
-
-This will expose the `.run.app` URL for the service, which can be used to configure the GitHub webhook for testing.
-
 ## Using with `serverless-gclb`
 
 To expose the service to the internet for production, you should use `serverless-gclb` to create a load-balanced public endpoint. This is the endpoint where GitHub will be configured to send webhook requests.
@@ -98,6 +79,26 @@ module "serverless-gclb" {
   }
 }
 ```
+
+## Using with `INGRESS_TRAFFIC_ALL`
+
+During development you may want to expose the service directly to the internet, without using a load balancer. This is useful for testing and development, but is **not recommended in production.**
+
+```hcl
+module "github-events" {
+  source = "./modules/github-events"
+
+  project_id = var.project_id
+  name       = "github-events"
+  regions    = module.networking.regional-networks
+  ingress    = module.cloudevent-broker.ingress
+
+  service-ingress = "INGRESS_TRAFFIC_ALL" // Expose the service to the internet.
+}
+```
+
+The `public-urls` output will be populated with the `.run.app` URL for each regional service, which can be used to configure the GitHub webhook for testing.
+
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -132,6 +133,7 @@ No requirements.
 | [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_service_account.service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [random_string.service-suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/cloud_run_v2_service) | data source |
 
 ## Inputs
 
@@ -148,5 +150,7 @@ No requirements.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_public-urls"></a> [public-urls](#output\_public-urls) | Map of region to public URL for the service, if service-ingress is INGRESS\_TRAFFIC\_ALL. |
 <!-- END_TF_DOCS -->
