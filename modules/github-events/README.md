@@ -53,9 +53,51 @@ module "github-events" {
 After applying this, generate a random secret value and add it to the GitHub
 webhook config, and populate the secret version in the GCP Secret Manager.
 
-# TODO
+## Using with `INGRESS_TRAFFIC_ALL`
 
-- [ ] Document how to use this with `serverless-gclb` to expose the broker to the internet.
+During development you may want to expose the service directly to the internet, without using a load balancer. This is useful for testing and development, but is not recommended in production.
+
+```hcl
+module "github-events" {
+  source = "./modules/github-events"
+
+  project_id = var.project_id
+  name       = "github-events"
+  regions    = module.networking.regional-networks
+  ingress    = module.cloudevent-broker.ingress
+
+  service-ingress = "INGRESS_TRAFFIC_ALL" // Expose the service to the internet.
+}
+```
+
+This will expose the `.run.app` URL for the service, which can be used to configure the GitHub webhook for testing.
+
+## Using with `serverless-gclb`
+
+To expose the service to the internet for production, you should use `serverless-gclb` to create a load-balanced public endpoint. This is the endpoint where GitHub will be configured to send webhook requests.
+
+```hcl
+
+data "google_dns_managed_zone" "top-level-zone" { name = "your-top-level-zone" }
+
+module "serverless-gclb" {
+  source = "chainguard-dev/common/infra//modules/serverless-gclb"
+
+  name       = "github-events"
+  project_id = var.project_id
+  dns_zone   = data.google_dns_managed_zone.top-level-zone.name
+
+  // Regions are all of the places that we have backends deployed.
+  // Regions must be removed from serving before they are torn down.
+  regions         = keys(module.networking.regional-networks)
+  serving_regions = keys(module.networking.regional-networks)
+
+  public-services = {
+    // Matches github-events module name.
+    "github.yourdomain.com" = { name = "github-events" }
+  }
+}
+```
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -102,7 +144,7 @@ No requirements.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. The bucket must be in one of these regions. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new webhook secret versions. | `string` | n/a | yes |
-| <a name="input_service-ingress"></a> [service-ingress](#input\_service-ingress) | Which type of ingress traffic to accept for the service (see regional-go-service). Valid values are:<br><br>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer | `string` | n/a | yes |
+| <a name="input_service-ingress"></a> [service-ingress](#input\_service-ingress) | Which type of ingress traffic to accept for the service (see regional-go-service). Valid values are:<br><br>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer | `string` | `"INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"` | no |
 
 ## Outputs
 

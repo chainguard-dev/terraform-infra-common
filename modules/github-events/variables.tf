@@ -45,4 +45,5 @@ Which type of ingress traffic to accept for the service (see regional-go-service
 - INGRESS_TRAFFIC_ALL accepts all traffic, enabling the public .run.app URL for the service
 - INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER accepts traffic only from a load balancer
 EOD
+  default     = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 }
