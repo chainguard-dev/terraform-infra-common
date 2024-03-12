@@ -72,9 +72,6 @@ module "trampoline-emits-events" {
 }
 
 data "google_cloud_run_v2_service" "this" {
-  for_each = var.service-ingress == "INGRESS_TRAFFIC_ALL" ? var.regions : {}
-  project  = var.project_id
-  location = each.key
   for_each   = var.service-ingress == "INGRESS_TRAFFIC_ALL" ? var.regions : {}
   project    = var.project_id
   location   = each.key
