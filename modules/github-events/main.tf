@@ -50,9 +50,9 @@ module "this" {
       ports = [{ container_port = 8080 }]
       env = [{
         name = "WEBHOOK_SECRET"
-        value_from = {
+        value_source = {
           secret_key_ref = {
-            name    = module.webhook-secret.secret_id
+            secret  = module.webhook-secret.secret_id
             version = "latest"
           }
         }
