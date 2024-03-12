@@ -75,7 +75,11 @@ data "google_cloud_run_v2_service" "this" {
   for_each = var.service-ingress == "INGRESS_TRAFFIC_ALL" ? var.regions : {}
   project  = var.project_id
   location = each.key
-  name     = var.name
+  for_each   = var.service-ingress == "INGRESS_TRAFFIC_ALL" ? var.regions : {}
+  project    = var.project_id
+  location   = each.key
+  name       = var.name
+  depends_on = [module.this]
 }
 
 output "public-urls" {
