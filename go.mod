@@ -8,6 +8,7 @@ require (
 	github.com/chainguard-dev/clog v1.3.1
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/google/go-cmp v0.6.0
+	github.com/google/go-github/v60 v60.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.19.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
@@ -34,6 +35,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.5.0 // indirect
