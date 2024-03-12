@@ -1,0 +1,59 @@
+name: Validate terraform
+
+on:
+  pull_request:
+    branches: [ 'main' ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - audit-serviceaccount
+          - authorize-private-service
+          - bucket-events
+          - cloudevent-broker
+          - cloudevent-trigger
+          - cloudevent-recorder
+          - regional-go-service
+          - serverless-gclb
+          - otel-collector
+          - networking
+          - dashboard/service
+          - dashboard/job
+          - dashboard/cloudevent-receiver
+          - prober
+          - cron
+          - configmap
+          - secret
+          - github-wif-provider
+          - github-gsa
+          - github-events
+
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
+      - working-directory: modules/${{ matrix.module }}
+        run: |
+          terraform init
+          terraform validate
+
+  conclusion:
+    permissions:
+      actions: read
+
+    needs: validate
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: technote-space/workflow-conclusion-action@45ce8e0eb155657ab8ccf346ade734257fd196a5 # v3.0.3
+
+      - if: ${{ env.WORKFLOW_CONCLUSION == 'success' }}
+        working-directory: /tmp
+        run: echo ${{ env.WORKFLOW_CONCLUSION }} && exit 0
+
+      - if: ${{ env.WORKFLOW_CONCLUSION == 'failure' }}
+        working-directory: /tmp
+        run: echo ${{ env.WORKFLOW_CONCLUSION }} && exit 1
