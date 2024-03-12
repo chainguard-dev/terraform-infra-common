@@ -73,7 +73,7 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		t = "dev.chainguard.github." + r.Header.Get("X-GitHub-Event")
+		t = "dev.chainguard.github." + t
 
 		var obj interface{}
 		if err := json.Unmarshal(payload, &obj); err != nil {
