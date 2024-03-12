@@ -46,9 +46,3 @@ Which type of ingress traffic to accept for the service (see regional-go-service
 - INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER accepts traffic only from a load balancer
 EOD
 }
-
-variable "webhook-secret" {
-  type        = string
-  description = "The secret to use as the webhook secret. If empty, the value must be populated manually."
-  default     = ""
-}
