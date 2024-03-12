@@ -20,7 +20,8 @@ resource "google_bigquery_table" "types" {
   require_partition_filter = false
 
   time_partitioning {
-    type = "DAY"
+    type  = "DAY"
+    field = each.value.partition_field
 
     expiration_ms = (var.retention-period) * 24 * 60 * 60 * 1000
   }
