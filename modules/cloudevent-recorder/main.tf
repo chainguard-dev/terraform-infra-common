@@ -93,7 +93,7 @@ resource "google_monitoring_alert_policy" "bucket-access" {
       -- Security scanners frequently probe for public buckets via listing buckets
       -- and then getting permissions, so we ignore these even though they pierce
       -- the abstraction.
-      protoPayload.methodName="storage.getIamPermissions"
+      -protoPayload.methodName="storage.getIamPermissions"
       EOT
 
       label_extractors = {
