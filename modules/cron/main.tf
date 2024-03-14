@@ -167,6 +167,8 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
 }
 
 resource "google_cloud_scheduler_job" "cron" {
+  paused = var.paused
+
   name     = "${var.name}-cron"
   schedule = var.schedule
   region   = var.region
