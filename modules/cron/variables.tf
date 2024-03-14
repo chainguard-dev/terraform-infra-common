@@ -126,3 +126,9 @@ variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
 }
+
+variable "paused" {
+  description = "Whether the cron scheduler is paused or not."
+  type        = bool
+  default     = false
+}
