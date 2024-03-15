@@ -124,7 +124,8 @@ variable "volumes" {
   type = list(object({
     name = string
     empty_dir = optional(object({
-      medium = optional(string, "MEMORY")
+      medium     = optional(string, "MEMORY")
+      size_limit = optional(string, "2G")
     }))
     secret = optional(object({
       secret = string
