@@ -49,7 +49,7 @@ resource "google_cloud_run_v2_service" "this" {
   project  = var.project_id
   name     = var.name
   location = each.key
-  labels = var.labels
+  labels   = var.labels
   ingress  = var.ingress
 
   launch_stage = "BETA" // Needed for vpc_access below
@@ -155,7 +155,8 @@ resource "google_cloud_run_v2_service" "this" {
         dynamic "empty_dir" {
           for_each = volumes.value.empty_dir != null ? { "" : volumes.value.empty_dir } : {}
           content {
-            medium = empty_dir.value.medium
+            medium     = empty_dir.value.medium
+            size_limit = empty_dir.value.size_limit
           }
         }
       }
