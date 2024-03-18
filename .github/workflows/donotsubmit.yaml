@@ -23,4 +23,4 @@ jobs:
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
       - name: Do Not Submit
-        uses: chainguard-dev/actions/donotsubmit@@538d1927b846546b620784754c33e2a1db86e217 #main
+        uses: chainguard-dev/actions/donotsubmit@538d1927b846546b620784754c33e2a1db86e217 #main
