@@ -30,10 +30,15 @@ jobs:
           language: YAML
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: Check out code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
-      - uses: chainguard-dev/actions/boilerplate@main
+      - uses: chainguard-dev/actions/boilerplate@538d1927b846546b620784754c33e2a1db86e217 # main
         with:
           extension: ${{ matrix.extension }}
           language: ${{ matrix.language }}

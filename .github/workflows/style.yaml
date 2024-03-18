@@ -15,6 +15,11 @@ jobs:
     name: check gofmt
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: Check out code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
@@ -24,7 +29,7 @@ jobs:
           go-version-file: './go.mod'
           check-latest: true
 
-      - uses: chainguard-dev/actions/gofmt@main
+      - uses: chainguard-dev/actions/gofmt@538d1927b846546b620784754c33e2a1db86e217 # main
         with:
           args: -s
 
@@ -32,6 +37,11 @@ jobs:
     name: check goimports
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: Check out code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
@@ -41,13 +51,21 @@ jobs:
           go-version-file: './go.mod'
           check-latest: true
 
-      - uses: chainguard-dev/actions/goimports@main
+      - uses: chainguard-dev/actions/goimports@538d1927b846546b620784754c33e2a1db86e217 # main
 
   golangci-lint:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
+      pull-requests: read  # for golangci/golangci-lint-action to fetch pull requests
     name: golangci-lint
     runs-on: ubuntu-latest
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
       - name: Set up Go
@@ -69,6 +87,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: Check out code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
@@ -78,13 +101,13 @@ jobs:
           go-version-file: './go.mod'
           check-latest: true
 
-      - uses: chainguard-dev/actions/trailing-space@main
+      - uses: chainguard-dev/actions/trailing-space@538d1927b846546b620784754c33e2a1db86e217 # main
         if: ${{ always() }}
 
-      - uses: chainguard-dev/actions/eof-newline@main
+      - uses: chainguard-dev/actions/eof-newline@538d1927b846546b620784754c33e2a1db86e217 # main
         if: ${{ always() }}
 
-      - uses: reviewdog/action-tflint@master
+      - uses: reviewdog/action-tflint@2fa60920754fb622564b410ad421ab596adb628a # master
         if: ${{ always() }}
         with:
           github_token: ${{ secrets.github_token }}
