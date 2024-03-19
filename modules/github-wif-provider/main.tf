@@ -22,7 +22,9 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     # Don't use the GitHub subject because it it less specific than ours, which also captures:
     #   - The pull request number via `refs/pulls/N/merge`, and
     #   - The worflow file.
-    "google.subject" = "assertion.repository + '|' + assertion.ref + '|' + assertion.workflow_ref.split('@')[0]"
+    # We don't include assertion.repository because it is redundant with the prefix on assertion.workflow_ref.
+    # We use assertion.ref instead of the ref included in workflow_ref so that we get the PR number on pull_request_target PRs.
+    "google.subject" = "assertion.workflow_ref.split('@')[0] + '|' + assertion.ref"
 
     # assertion.ref has one of the forms:
     #   - Branch: refs/heads/main
