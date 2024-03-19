@@ -11,6 +11,12 @@ resource "google_project_iam_member" "metrics-writer" {
   member  = "serviceAccount:${var.service_account}"
 }
 
+resource "google_project_iam_member" "trace-writer" {
+  project = var.project_id
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${var.service_account}"
+}
+
 resource "ko_build" "otel-image" {
   base_image  = var.otel_collector_image
   importpath  = "./cmd/otel-collector"
