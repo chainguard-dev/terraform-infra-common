@@ -265,7 +265,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
     condition_matched_log {
       filter = <<EOT
         resource.type="cloud_run_revision"
-        resource.labels.service_name=${var.name}"
+        resource.labels.service_name="${var.name}"
         severity=ERROR
         protoPayload.status.message:"Ready condition status changed to False"
       EOT
