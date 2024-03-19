@@ -25,7 +25,7 @@ locals {
     )
   )
   # Build up the "workflow" portion of the principal match regular expression.
-  workflowPart = (var.workflow_ref == "*") ? (
+  workflowPart = "${var.repository}/${(var.workflow_ref == "*") ? (
     (var.audit_workflow_ref != "") ? (
       var.audit_workflow_ref
       ) : (
@@ -34,13 +34,12 @@ locals {
     ) : (
     # TODO(mattmoor): How can we "quote" this?
     var.workflow_ref
-  )
+  )}"
   # TODO(mattmoor): How can we "quote" the `wif-pool` here?
-  principalSubject = "^principal://iam\\.googleapis\\.com/${var.wif-pool}/subject/${join("\\\\|", [
-    var.repository,
-    local.refPart,
+  principalSubject = "^(principal://iam\\.googleapis\\.com/${var.wif-pool}/subject/${join("[|]", [
     local.workflowPart,
-  ])}$"
+    local.refPart,
+  ])})$"
 
   exact = "attribute.exact/${join("|", [
     var.repository,
