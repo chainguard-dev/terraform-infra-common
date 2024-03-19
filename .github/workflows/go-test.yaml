@@ -49,6 +49,7 @@ jobs:
         go test -race ./...
 
     - name: Ensure github-events schemas are up to date
-      run: |
-        go run ./modules/github-events/cmd/schemagen
-        git diff --exit-code
+      run: go run ./modules/github-events/cmd/schemagen
+    - uses: chainguard-dev/actions/nodiff@main
+      with:
+        fixup-command: go run ./modules/github-events/cmd/schemagen
