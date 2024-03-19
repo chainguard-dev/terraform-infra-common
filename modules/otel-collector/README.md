@@ -53,6 +53,7 @@ No modules.
 |------|------|
 | [cosign_sign.otel-image](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
+| [google_project_iam_member.trace-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [ko_build.otel-image](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 
 ## Inputs
