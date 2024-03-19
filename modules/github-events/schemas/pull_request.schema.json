@@ -16,7 +16,17 @@
       "type": "STRING"
      }
     ],
-    "name": "user",
+    "name": "sender",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "name",
+      "type": "STRING"
+     }
+    ],
+    "name": "assignee",
     "type": "RECORD"
    },
    {
@@ -51,6 +61,40 @@
      }
     ],
     "name": "repo",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "state",
+      "type": "STRING"
+     },
+     {
+      "name": "title",
+      "type": "STRING"
+     },
+     {
+      "name": "createdAt",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "updatedAt",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "draft",
+      "type": "BOOLEAN"
+     },
+     {
+      "name": "merged",
+      "type": "BOOLEAN"
+     },
+     {
+      "name": "mergeCommitSHA",
+      "type": "STRING"
+     }
+    ],
+    "name": "pullRequest",
     "type": "RECORD"
    },
    {

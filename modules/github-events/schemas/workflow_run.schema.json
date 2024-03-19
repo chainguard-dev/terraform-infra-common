@@ -42,11 +42,49 @@
    {
     "fields": [
      {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "runNumber",
+      "type": "INTEGER"
+     },
+     {
+      "name": "runAttempt",
+      "type": "INTEGER"
+     },
+     {
+      "name": "headBranch",
+      "type": "STRING"
+     },
+     {
+      "name": "headSHA",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "event",
+      "type": "STRING"
+     },
+     {
+      "name": "conclusion",
+      "type": "STRING"
+     }
+    ],
+    "name": "workflowRun",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
       "name": "name",
       "type": "STRING"
      }
     ],
-    "name": "organization",
+    "name": "org",
     "type": "RECORD"
    },
    {
@@ -86,7 +124,7 @@
       "type": "STRING"
      }
     ],
-    "name": "user",
+    "name": "sender",
     "type": "RECORD"
    }
   ],
