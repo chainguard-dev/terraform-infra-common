@@ -80,7 +80,7 @@ No modules.
 | [google_secret_manager_secret.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-service-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-version-adder](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
-| [google_secret_manager_secret_version.secret-version-base64](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [google_secret_manager_secret_version.placeholder](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
@@ -88,7 +88,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_authorized-adder"></a> [authorized-adder](#input\_authorized-adder) | A member-style representation of the identity authorized to add new secret values (e.g. group:oncall@my-corp.dev). | `string` | n/a | yes |
-| <a name="input_create_dummy_version"></a> [create\_dummy\_version](#input\_create\_dummy\_version) | Whether to create a dummy secret version to avoid bad refernce on first deploy. | `bool` | `false` | no |
+| <a name="input_create_placeholder_version"></a> [create\_placeholder\_version](#input\_create\_placeholder\_version) | Whether to create a placeholder secret version to avoid bad reference on first deploy. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the secret. | `string` | n/a | yes |
 | <a name="input_notification-channels"></a> [notification-channels](#input\_notification-channels) | The channels to notify if the configuration data is improperly accessed. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |

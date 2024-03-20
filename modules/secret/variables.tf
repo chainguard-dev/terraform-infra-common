@@ -22,8 +22,8 @@ variable "notification-channels" {
   type        = list(string)
 }
 
-variable "create_dummy_version" {
-  description = "Whether to create a dummy secret version to avoid bad refernce on first deploy."
+variable "create_placeholder_version" {
+  description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."
   type        = bool
   default     = false
 }
