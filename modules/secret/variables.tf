@@ -21,3 +21,9 @@ variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)
 }
+
+variable "create_dummy_version" {
+  description = "Whether to create a dummy secret version to avoid bad refernce on first deploy."
+  type        = bool
+  default     = false
+}
