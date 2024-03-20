@@ -24,14 +24,6 @@
       "type": "STRING"
      },
      {
-      "name": "createdAt",
-      "type": "TIMESTAMP"
-     },
-     {
-      "name": "updatedAt",
-      "type": "TIMESTAMP"
-     },
-     {
       "name": "state",
       "type": "STRING"
      }
@@ -80,7 +72,7 @@
    {
     "fields": [
      {
-      "name": "name",
+      "name": "login",
       "type": "STRING"
      }
     ],
@@ -92,7 +84,7 @@
      {
       "fields": [
        {
-        "name": "name",
+        "name": "login",
         "type": "STRING"
        }
       ],
@@ -102,7 +94,7 @@
      {
       "fields": [
        {
-        "name": "name",
+        "name": "login",
         "type": "STRING"
        }
       ],
@@ -120,7 +112,7 @@
    {
     "fields": [
      {
-      "name": "name",
+      "name": "login",
       "type": "STRING"
      }
     ],

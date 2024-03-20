@@ -12,7 +12,7 @@
    {
     "fields": [
      {
-      "name": "name",
+      "name": "login",
       "type": "STRING"
      }
     ],
@@ -22,7 +22,7 @@
    {
     "fields": [
      {
-      "name": "name",
+      "name": "login",
       "type": "STRING"
      }
     ],
@@ -30,15 +30,11 @@
     "type": "RECORD"
    },
    {
-    "name": "number",
-    "type": "INTEGER"
-   },
-   {
     "fields": [
      {
       "fields": [
        {
-        "name": "name",
+        "name": "login",
         "type": "STRING"
        }
       ],
@@ -48,7 +44,7 @@
      {
       "fields": [
        {
-        "name": "name",
+        "name": "login",
         "type": "STRING"
        }
       ],
@@ -66,6 +62,10 @@
    {
     "fields": [
      {
+      "name": "number",
+      "type": "INTEGER"
+     },
+     {
       "name": "state",
       "type": "STRING"
      },
@@ -74,24 +74,38 @@
       "type": "STRING"
      },
      {
-      "name": "createdAt",
-      "type": "TIMESTAMP"
-     },
-     {
-      "name": "updatedAt",
-      "type": "TIMESTAMP"
-     },
-     {
-      "name": "draft",
+      "name": "mergeable",
       "type": "BOOLEAN"
      },
      {
-      "name": "merged",
-      "type": "BOOLEAN"
+      "name": "mergeableState",
+      "type": "STRING"
+     },
+     {
+      "fields": [
+       {
+        "name": "login",
+        "type": "STRING"
+       }
+      ],
+      "name": "mergedBy",
+      "type": "RECORD"
      },
      {
       "name": "mergeCommitSHA",
       "type": "STRING"
+     },
+     {
+      "name": "additions",
+      "type": "INTEGER"
+     },
+     {
+      "name": "deletions",
+      "type": "INTEGER"
+     },
+     {
+      "name": "changedFiles",
+      "type": "INTEGER"
      }
     ],
     "name": "pullRequest",
