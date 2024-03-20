@@ -34,10 +34,10 @@ type PullRequest struct {
 	State  string
 	Title  string
 
-	//CreatedAt *Timestamp `json:"created_at,omitempty"`
-	//UpdatedAt *Timestamp `json:"updated_at,omitempty"`
-	//ClosedAt  *Timestamp `json:"closed_at,omitempty"`
-	//MergedAt  *Timestamp `json:"merged_at,omitempty"`
+	// CreatedAt *Timestamp `json:"created_at,omitempty"`
+	// UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+	// ClosedAt  *Timestamp `json:"closed_at,omitempty"`
+	// MergedAt  *Timestamp `json:"merged_at,omitempty"`
 
 	Mergeable      bigquery.NullBool
 	MergeableState bigquery.NullString
@@ -69,8 +69,8 @@ type Workflow struct {
 	Name  string
 	Path  string
 	State string
-	//CreatedAt *Timestamp `json:"created_at,omitempty"`
-	//UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+	// CreatedAt *Timestamp `json:"created_at,omitempty"`
+	// UpdatedAt *Timestamp `json:"updated_at,omitempty"`
 }
 
 type WorkflowRun struct {
