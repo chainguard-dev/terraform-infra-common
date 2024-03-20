@@ -1,4 +1,9 @@
 receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
   prometheus:
     config:
       scrape_configs:
@@ -78,6 +83,6 @@ service:
   extensions: [health_check]
   pipelines:
     metrics:
-      receivers: [prometheus]
+      receivers: [prometheus, otlp]
       processors: [batch, memory_limiter, resourcedetection, resource]
       exporters: [googlemanagedprometheus]
