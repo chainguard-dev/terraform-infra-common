@@ -9,6 +9,18 @@ resource "google_secret_manager_secret" "this" {
   }
 }
 
+// Create a placeholder GCP secret version to avoid bad reference on first deploy.
+resource "google_secret_manager_secret_version" "placeholder" {
+  count = var.create_placeholder_version ? 1 : 0
+
+  secret      = google_secret_manager_secret.this.id
+  secret_data = "placeholder"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 // Only the service account as which the service runs should have access to the secret.
 resource "google_secret_manager_secret_iam_binding" "authorize-service-access" {
   secret_id = google_secret_manager_secret.this.id

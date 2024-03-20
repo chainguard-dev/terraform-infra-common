@@ -21,3 +21,9 @@ variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)
 }
+
+variable "create_placeholder_version" {
+  description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."
+  type        = bool
+  default     = false
+}
