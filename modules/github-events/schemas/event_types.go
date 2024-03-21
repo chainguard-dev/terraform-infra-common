@@ -32,40 +32,42 @@ type Repository struct {
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequest
 type PullRequest struct {
-	Number bigquery.NullInt64
-	State  bigquery.NullString
-	Title  bigquery.NullString
+	Number bigquery.NullInt64  `json:"number,omitempty" bigquery:"number"`
+	State  bigquery.NullString `json:"state,omitempty" bigquery:"state"`
+	Title  bigquery.NullString `json:"title,omitempty" bigquery:"title"`
 
-	// CreatedAt *Timestamp `json:"created_at,omitempty"`
-	// UpdatedAt *Timestamp `json:"updated_at,omitempty"`
-	// ClosedAt  *Timestamp `json:"closed_at,omitempty"`
-	// MergedAt  *Timestamp `json:"merged_at,omitempty"`
+	CreatedAt bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
+	ClosedAt  bigquery.NullTimestamp `json:"closed_at,omitempty" bigquery:"closed_at"`
+	MergedAt  bigquery.NullTimestamp `json:"merged_at,omitempty" bigquery:"merged_at"`
 
-	Mergeable      bigquery.NullBool
-	MergeableState bigquery.NullString
-	MergedBy       *User
-	MergeCommitSHA bigquery.NullString
+	Mergeable      bigquery.NullBool   `json:"mergeable,omitempty" bigquery:"mergeable"`
+	MergeableState bigquery.NullString `json:"mergeable_state,omitempty" bigquery:"mergeable_state"`
+	MergedBy       User                `json:"merged_by,omitempty" bigquery:"merged_by"`
+	MergeCommitSHA bigquery.NullString `json:"merge_commit_sha,omitempty" bigquery:"merge_commit_sha"`
 
-	Additions    bigquery.NullInt64
-	Deletions    bigquery.NullInt64
-	ChangedFiles bigquery.NullInt64
+	Additions    bigquery.NullInt64 `json:"additions,omitempty" bigquery:"additions"`
+	Deletions    bigquery.NullInt64 `json:"deletions,omitempty" bigquery:"deletions"`
+	ChangedFiles bigquery.NullInt64 `json:"changed_files,omitempty" bigquery:"changed_files"`
 }
 
 // https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestEvent
 type PullRequestEvent struct {
-	Action     bigquery.NullString // assigned,opened  etc.
-	Sender     User
-	Assignee   User
-	Repository Repository
+	// assigned,opened  etc.
+	Action     bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	Sender     User                `json:"sender,omitempty" bigquery:"sender"`
+	Assignee   User                `json:"assignee,omitempty" bigquery:"assignee"`
+	Repository Repository          `json:"repository,omitempty" bigquery:"repository"`
 
-	PullRequest PullRequest
+	PullRequest PullRequest `json:"pull_request,omitempty" bigquery:"pull_request"`
 
 	// Populated when action is synchronize
-	Before bigquery.NullString
-	After  bigquery.NullString
+	Before bigquery.NullString `json:"before,omitempty" bigquery:"before"`
+	After  bigquery.NullString `json:"after,omitempty" bigquery:"after"`
 }
 
+// https://pkg.go.dev/github.com/google/go-github/v60/github#Workflow
 type Workflow struct {
 	ID    bigquery.NullInt64  `json:"id,omitempty" bigquery:"id"`
 	Name  bigquery.NullString `json:"name,omitempty" bigquery:"name"`
@@ -76,6 +78,7 @@ type Workflow struct {
 	UpdatedAt bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
 }
 
+// https://pkg.go.dev/github.com/google/go-github/v60/github#WorkflowRun
 type WorkflowRun struct {
 	ID           bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
 	RunNumber    bigquery.NullInt64     `json:"run_number,omitempty" bigquery:"run_number"`
