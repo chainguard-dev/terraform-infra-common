@@ -13,26 +13,28 @@ type Wrapper[T any] struct {
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#User
 type User struct {
-	Login string
+	Login bigquery.NullString `json:"login,omitempty" bigquery:"login"`
+	Type  bigquery.NullString `json:"type,omitempty" bigquery:"type"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#Organization
 type Organization struct {
-	Login string
+	Login bigquery.NullString `json:"login,omitempty" bigquery:"login"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#Repository
-type Repo struct {
-	Owner        User
-	Organization Organization
-	Name         string
+type Repository struct {
+	Owner    User
+	Name     bigquery.NullString `json:"name,omitempty" bigquery:"name"`
+	URL      bigquery.NullString `json:"url,omitempty" bigquery:"url"`
+	FullName bigquery.NullString `json:"full_name,omitempty" bigquery:"full_name"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequest
 type PullRequest struct {
-	Number int64
-	State  string
-	Title  string
+	Number bigquery.NullInt64
+	State  bigquery.NullString
+	Title  bigquery.NullString
 
 	// CreatedAt *Timestamp `json:"created_at,omitempty"`
 	// UpdatedAt *Timestamp `json:"updated_at,omitempty"`
@@ -52,46 +54,50 @@ type PullRequest struct {
 // https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestEvent
 type PullRequestEvent struct {
-	Action   string // assigned,opened  etc.
-	Sender   User
-	Assignee User
-	Repo     Repo
+	Action     bigquery.NullString // assigned,opened  etc.
+	Sender     User
+	Assignee   User
+	Repository Repository
 
 	PullRequest PullRequest
 
 	// Populated when action is synchronize
-	Before string
-	After  string
+	Before bigquery.NullString
+	After  bigquery.NullString
 }
 
 type Workflow struct {
-	ID    bigquery.NullInt64 `json:"id,omitempty" bigquery:"id"`
-	Name  string
-	Path  string
-	State string
+	ID    bigquery.NullInt64  `json:"id,omitempty" bigquery:"id"`
+	Name  bigquery.NullString `json:"name,omitempty" bigquery:"name"`
+	Path  bigquery.NullString `json:"path,omitempty" bigquery:"path"`
+	State bigquery.NullString `json:"state,omitempty" bigquery:"state"`
+
 	// CreatedAt *Timestamp `json:"created_at,omitempty"`
 	// UpdatedAt *Timestamp `json:"updated_at,omitempty"`
 }
 
 type WorkflowRun struct {
-	ID         int64 `bigquery:"id"`
-	RunNumber  int64
-	RunAttempt int64
-	HeadBranch string
-	HeadSHA    string
+	ID         bigquery.NullInt64  `json:"id,omitempty" bigquery:"id"`
+	RunNumber  bigquery.NullInt64  `json:"run_number,omitempty" bigquery:"run_number"`
+	RunAttempt bigquery.NullInt64  `json:"run_attempt,omitempty" bigquery:"run_attempt"`
+	HeadBranch bigquery.NullString `json:"head_branch,omitempty" bigquery:"head_branch"`
+	HeadSHA    bigquery.NullString `json:"head_sha,omitempty" bigquery:"head_sha"`
+	Name       bigquery.NullString `json:"name,omitempty" bigquery:"name"`
+	Event      bigquery.NullString `json:"event,omitempty" bigquery:"event"`
+	Status     bigquery.NullString `json:"status,omitempty" bigquery:"status"`
 
-	Name       string
-	Event      string
-	Conclusion string // success, failure, cancelled, etc.
+	// success, failure, cancelled, etc.
+	Conclusion bigquery.NullString `json:"conclusion,omitempty" bigquery:"conclusion"`
 }
 
 // https://docs.github.com/developers/webhooks-and-events/webhook-events-and-payloads#workflow_run
 // subset of https://pkg.go.dev/github.com/google/go-github/v60/github#WorkflowRunEvent
 type WorkflowRunEvent struct {
-	Action      string // completed, etc.
-	Workflow    Workflow
-	WorkflowRun WorkflowRun `json:"workflow_run"`
-	Org         Organization
-	Repo        Repo
-	Sender      User
+	// completed, etc.
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	Workflow     Workflow            `json:"workflow,omitempty" bigquery:"workflow"`
+	WorkflowRun  WorkflowRun         `json:"workflow_run,omitempty" bigquery:"workflow_run"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
 }
