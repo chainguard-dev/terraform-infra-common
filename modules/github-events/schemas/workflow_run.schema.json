@@ -26,6 +26,14 @@
      {
       "name": "state",
       "type": "STRING"
+     },
+     {
+      "name": "created_at",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "updated_at",
+      "type": "TIMESTAMP"
      }
     ],
     "name": "workflow",
@@ -64,6 +72,10 @@
      {
       "name": "status",
       "type": "STRING"
+     },
+     {
+      "name": "run_started_at",
+      "type": "TIMESTAMP"
      },
      {
       "name": "conclusion",
