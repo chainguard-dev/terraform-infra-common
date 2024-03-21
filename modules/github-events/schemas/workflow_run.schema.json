@@ -1,0 +1,126 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "path",
+      "type": "STRING"
+     },
+     {
+      "name": "state",
+      "type": "STRING"
+     }
+    ],
+    "name": "workflow",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "runNumber",
+      "type": "INTEGER"
+     },
+     {
+      "name": "runAttempt",
+      "type": "INTEGER"
+     },
+     {
+      "name": "headBranch",
+      "type": "STRING"
+     },
+     {
+      "name": "headSHA",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "event",
+      "type": "STRING"
+     },
+     {
+      "name": "conclusion",
+      "type": "STRING"
+     }
+    ],
+    "name": "workflowRun",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "login",
+      "type": "STRING"
+     }
+    ],
+    "name": "org",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "fields": [
+       {
+        "name": "login",
+        "type": "STRING"
+       }
+      ],
+      "name": "owner",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "login",
+        "type": "STRING"
+       }
+      ],
+      "name": "organization",
+      "type": "RECORD"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     }
+    ],
+    "name": "repo",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "login",
+      "type": "STRING"
+     }
+    ],
+    "name": "sender",
+    "type": "RECORD"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]
