@@ -1,0 +1,136 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "path",
+      "type": "STRING"
+     },
+     {
+      "name": "state",
+      "type": "STRING"
+     }
+    ],
+    "name": "workflow",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "run_number",
+      "type": "INTEGER"
+     },
+     {
+      "name": "run_attempt",
+      "type": "INTEGER"
+     },
+     {
+      "name": "head_branch",
+      "type": "STRING"
+     },
+     {
+      "name": "head_sha",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "event",
+      "type": "STRING"
+     },
+     {
+      "name": "status",
+      "type": "STRING"
+     },
+     {
+      "name": "conclusion",
+      "type": "STRING"
+     }
+    ],
+    "name": "workflow_run",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "login",
+      "type": "STRING"
+     }
+    ],
+    "name": "organization",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "fields": [
+       {
+        "name": "login",
+        "type": "STRING"
+       },
+       {
+        "name": "type",
+        "type": "STRING"
+       }
+      ],
+      "name": "owner",
+      "type": "RECORD"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "url",
+      "type": "STRING"
+     },
+     {
+      "name": "full_name",
+      "type": "STRING"
+     }
+    ],
+    "name": "repository",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "login",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
+      "type": "STRING"
+     }
+    ],
+    "name": "sender",
+    "type": "RECORD"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]
