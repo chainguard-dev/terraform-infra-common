@@ -38,19 +38,19 @@
       "type": "INTEGER"
      },
      {
-      "name": "runNumber",
+      "name": "run_number",
       "type": "INTEGER"
      },
      {
-      "name": "runAttempt",
+      "name": "run_attempt",
       "type": "INTEGER"
      },
      {
-      "name": "headBranch",
+      "name": "head_branch",
       "type": "STRING"
      },
      {
-      "name": "headSHA",
+      "name": "head_sha",
       "type": "STRING"
      },
      {
@@ -62,11 +62,15 @@
       "type": "STRING"
      },
      {
+      "name": "status",
+      "type": "STRING"
+     },
+     {
       "name": "conclusion",
       "type": "STRING"
      }
     ],
-    "name": "workflowRun",
+    "name": "workflow_run",
     "type": "RECORD"
    },
    {
@@ -76,7 +80,7 @@
       "type": "STRING"
      }
     ],
-    "name": "org",
+    "name": "organization",
     "type": "RECORD"
    },
    {
@@ -85,6 +89,10 @@
       "fields": [
        {
         "name": "login",
+        "type": "STRING"
+       },
+       {
+        "name": "type",
         "type": "STRING"
        }
       ],
@@ -92,27 +100,29 @@
       "type": "RECORD"
      },
      {
-      "fields": [
-       {
-        "name": "login",
-        "type": "STRING"
-       }
-      ],
-      "name": "organization",
-      "type": "RECORD"
+      "name": "name",
+      "type": "STRING"
      },
      {
-      "name": "name",
+      "name": "url",
+      "type": "STRING"
+     },
+     {
+      "name": "full_name",
       "type": "STRING"
      }
     ],
-    "name": "repo",
+    "name": "repository",
     "type": "RECORD"
    },
    {
     "fields": [
      {
       "name": "login",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
       "type": "STRING"
      }
     ],
