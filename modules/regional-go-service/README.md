@@ -111,5 +111,7 @@ No requirements.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_names"></a> [names](#output\_names) | n/a |
 <!-- END_TF_DOCS -->

@@ -46,6 +46,16 @@ resource "ko_build" "image" {
   repo        = local.repo
 }
 
+resource "google_cloud_run_v2_job_iam_member" "invoker" {
+  for_each = toset(var.invokers)
+
+  project  = google_cloud_run_v2_job.job.project
+  location = google_cloud_run_v2_job.job.location
+  name     = google_cloud_run_v2_job.job.name
+  role     = "roles/run.invoker"
+  member   = "user:${each.key}"
+}
+
 resource "google_cloud_run_v2_job" "job" {
   name     = "${var.name}-cron"
   location = var.region
@@ -223,6 +233,10 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
           "google.cloud.run.v2.Jobs.UpdateJob",
           "google.cloud.run.v2.Jobs.SetIamPolicy",
         ])}")
+      )
+      -(
+        protoPayload.authenticationInfo.principalEmail=~"${join("|", var.invokers)}"
+        protoPayload.methodName="google.cloud.run.v1.Jobs.RunJob"
       )
       EOT
 

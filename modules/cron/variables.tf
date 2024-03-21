@@ -132,3 +132,9 @@ variable "paused" {
   type        = bool
   default     = false
 }
+
+variable "invokers" {
+  description = "List of user emails to grant invoker perimssions to invoke the job."
+  type        = list(string)
+  default     = []
+}
