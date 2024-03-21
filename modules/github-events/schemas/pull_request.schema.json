@@ -84,11 +84,27 @@
       "type": "STRING"
      },
      {
+      "name": "created_at",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "updated_at",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "closed_at",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "merged_at",
+      "type": "TIMESTAMP"
+     },
+     {
       "name": "mergeable",
       "type": "BOOLEAN"
      },
      {
-      "name": "mergeableState",
+      "name": "mergeable_state",
       "type": "STRING"
      },
      {
@@ -102,11 +118,11 @@
         "type": "STRING"
        }
       ],
-      "name": "mergedBy",
+      "name": "merged_by",
       "type": "RECORD"
      },
      {
-      "name": "mergeCommitSHA",
+      "name": "merge_commit_sha",
       "type": "STRING"
      },
      {
@@ -118,11 +134,11 @@
       "type": "INTEGER"
      },
      {
-      "name": "changedFiles",
+      "name": "changed_files",
       "type": "INTEGER"
      }
     ],
-    "name": "pullRequest",
+    "name": "pull_request",
     "type": "RECORD"
    },
    {
