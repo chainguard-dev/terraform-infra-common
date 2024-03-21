@@ -72,19 +72,20 @@ type Workflow struct {
 	Path  bigquery.NullString `json:"path,omitempty" bigquery:"path"`
 	State bigquery.NullString `json:"state,omitempty" bigquery:"state"`
 
-	// CreatedAt *Timestamp `json:"created_at,omitempty"`
-	// UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+	CreatedAt bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
 }
 
 type WorkflowRun struct {
-	ID         bigquery.NullInt64  `json:"id,omitempty" bigquery:"id"`
-	RunNumber  bigquery.NullInt64  `json:"run_number,omitempty" bigquery:"run_number"`
-	RunAttempt bigquery.NullInt64  `json:"run_attempt,omitempty" bigquery:"run_attempt"`
-	HeadBranch bigquery.NullString `json:"head_branch,omitempty" bigquery:"head_branch"`
-	HeadSHA    bigquery.NullString `json:"head_sha,omitempty" bigquery:"head_sha"`
-	Name       bigquery.NullString `json:"name,omitempty" bigquery:"name"`
-	Event      bigquery.NullString `json:"event,omitempty" bigquery:"event"`
-	Status     bigquery.NullString `json:"status,omitempty" bigquery:"status"`
+	ID           bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	RunNumber    bigquery.NullInt64     `json:"run_number,omitempty" bigquery:"run_number"`
+	RunAttempt   bigquery.NullInt64     `json:"run_attempt,omitempty" bigquery:"run_attempt"`
+	HeadBranch   bigquery.NullString    `json:"head_branch,omitempty" bigquery:"head_branch"`
+	HeadSHA      bigquery.NullString    `json:"head_sha,omitempty" bigquery:"head_sha"`
+	Name         bigquery.NullString    `json:"name,omitempty" bigquery:"name"`
+	Event        bigquery.NullString    `json:"event,omitempty" bigquery:"event"`
+	Status       bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
+	RunStartedAt bigquery.NullTimestamp `json:"run_started_at,omitempty" bigquery:"run_started_at"`
 
 	// success, failure, cancelled, etc.
 	Conclusion bigquery.NullString `json:"conclusion,omitempty" bigquery:"conclusion"`
