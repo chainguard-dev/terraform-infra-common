@@ -16,7 +16,6 @@ output "widget" {
         minAlignmentPeriod = "60s"
         plotType           = "LINE"
         targetAxis         = "Y1"
-        legendTemplate     = "${var.band}th %ile"
         timeSeriesQuery = {
           timeSeriesFilter = {
             aggregation = {
