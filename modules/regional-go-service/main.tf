@@ -268,6 +268,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
         resource.labels.service_name="${var.name}"
         severity=ERROR
         protoPayload.status.message:"Ready condition status changed to False"
+        protoPayload.response.kind="Revision"
       EOT
 
       label_extractors = {
