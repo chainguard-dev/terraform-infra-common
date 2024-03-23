@@ -16,6 +16,23 @@ module "request_count" {
   secondary_reduce = "REDUCE_SUM"
 }
 
+module "failure_rate" {
+  source = "../../widgets/xy-ratio"
+  title  = "Request failure rate"
+
+  numerator_filter = [
+    "metric.type=\"loadbalancing.googleapis.com/https/request_count\"",
+    "resource.type=\"https_lb_rule\"",
+    "metric.label.\"response_code_class\"=\"500\"",
+    "resource.label.\"backend_target_name\"=\"${var.service_name}\"",
+  ]
+  denominator_filter = [
+    "metric.type=\"loadbalancing.googleapis.com/https/request_count\"",
+    "resource.type=\"https_lb_rule\"",
+    "resource.label.\"backend_target_name\"=\"${var.service_name}\"",
+  ]
+}
+
 module "incoming_latency" {
   source = "../../widgets/latency"
   title  = "Incoming request latency"
@@ -89,7 +106,14 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.outbound_request_latency.widget,
-  }]
+    },
+    {
+      yPos   = local.unit * 2
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.failure_rate.widget,
+    }]
 }
 
 module "collapsible" {
