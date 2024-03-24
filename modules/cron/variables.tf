@@ -138,3 +138,9 @@ variable "invokers" {
   type        = list(string)
   default     = []
 }
+
+variable "exec" {
+  description = "Execute job on modify."
+  type        = bool
+  default     = false
+}

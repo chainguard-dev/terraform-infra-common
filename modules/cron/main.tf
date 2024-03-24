@@ -138,6 +138,34 @@ resource "google_cloud_run_v2_job" "job" {
   }
 }
 
+data "google_client_config" "default" {}
+
+// Call cloud run api to execute job once.
+// https://cloud.google.com/run/docs/execute/jobs#command-line
+resource "null_resource" "exec" {
+  count = var.exec ? 1 : 0
+
+  provisioner "local-exec" {
+    command = join(" ", [
+      "gcloud",
+      "--project=${var.project_id}",
+      "run",
+      "jobs",
+      "execute",
+      google_cloud_run_v2_job.job.name,
+      "--region=${google_cloud_run_v2_job.job.location}",
+      "--wait"
+    ])
+  }
+
+  lifecycle {
+    // Trigger job each time cron job is modified.
+    replace_triggered_by = [
+      google_cloud_run_v2_job.job
+    ]
+  }
+}
+
 resource "google_service_account" "delivery" {
   project      = var.project_id
   account_id   = "${var.name}-dlv"
