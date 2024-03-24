@@ -6,6 +6,9 @@ terraform {
     google = {
       source = "hashicorp/google"
     }
+    terracurl = {
+      source = "devops-rob/terracurl"
+    }
   }
 }
 
@@ -145,6 +148,30 @@ resource "google_cloud_run_v2_job" "job" {
         }
       }
     }
+  }
+}
+
+data "google_client_config" "default" {}
+
+// Call cloud run api to execute job once.
+// idea borrowed from https://github.com/GoogleCloudPlatform/terraform-google-cloud-run/blob/v0.10.0/modules/job-exec/main.tf#L99-L119
+resource "terracurl_request" "exec" {
+  count = var.exec ? 1 : 0
+
+  name   = "${var.name}-exec-job"
+  url    = "https://run.googleapis.com/v2/${google_cloud_run_v2_job.job.id}:run"
+  method = "POST"
+  headers = {
+    Authorization = "Bearer ${data.google_client_config.default.access_token}"
+    Content-Type  = "application/json",
+  }
+  response_codes = [200]
+
+  lifecycle {
+    // Trigger job each time cron job is modified.
+    replace_triggered_by = [
+      google_cloud_run_v2_job.job
+    ]
   }
 }
 
