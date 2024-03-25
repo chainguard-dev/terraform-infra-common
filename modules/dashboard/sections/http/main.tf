@@ -16,6 +16,18 @@ module "request_count" {
   secondary_reduce = "REDUCE_SUM"
 }
 
+module "failure_rate" {
+  source = "../../widgets/percent"
+  title  = "Request failure rate"
+  legend = "5xx responses / All responses"
+
+  common_filter = concat(var.filter, [
+    "metric.type=\"run.googleapis.com/request_count\"",
+    "resource.label.\"service_name\"=\"${var.service_name}\"",
+  ])
+  numerator_additional_filter = ["metric.label.\"response_code_class\"=\"5xx\""]
+}
+
 module "incoming_latency" {
   source = "../../widgets/latency"
   title  = "Incoming request latency"
@@ -89,6 +101,13 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.outbound_request_latency.widget,
+    },
+    {
+      yPos   = local.unit * 2
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.failure_rate.widget,
   }]
 }
 
