@@ -1,4 +1,5 @@
 variable "title" { type = string }
+variable "legend" { default = "" }
 variable "numerator_group_by_fields" { default = [] }
 variable "denominator_group_by_fields" { default = [] }
 variable "numerator_filter" { type = list(string) }
@@ -21,7 +22,9 @@ output "widget" {
         minAlignmentPeriod = var.alignment_period
         plotType           = var.plot_type
         targetAxis         = "Y1"
+        legendTemplate     = var.legend
         timeSeriesQuery = {
+          // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#timeseriesfilterratio
           timeSeriesFilterRatio = {
             numerator = {
               filter = join("\n", var.numerator_filter)
@@ -44,7 +47,7 @@ output "widget" {
           }
         }
       }]
-      thresholds: var.thresholds
+      thresholds = var.thresholds
       yAxis = {
         label = "y1Axis"
         scale = "LINEAR"

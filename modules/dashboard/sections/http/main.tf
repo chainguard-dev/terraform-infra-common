@@ -20,17 +20,16 @@ module "failure_rate" {
   source = "../../widgets/xy-ratio"
   title  = "Request failure rate"
 
-  numerator_filter = [
-    "metric.type=\"loadbalancing.googleapis.com/https/request_count\"",
-    "resource.type=\"https_lb_rule\"",
-    "metric.label.\"response_code_class\"=\"500\"",
-    "resource.label.\"backend_target_name\"=\"${var.service_name}\"",
-  ]
-  denominator_filter = [
-    "metric.type=\"loadbalancing.googleapis.com/https/request_count\"",
-    "resource.type=\"https_lb_rule\"",
-    "resource.label.\"backend_target_name\"=\"${var.service_name}\"",
-  ]
+  numerator_filter = concat(var.filter, [
+    "metric.type=\"run.googleapis.com/request_count\"",
+    "metric.label.\"response_code_class\"=\"5xx\"",
+    "resource.label.\"service_name\"=\"${var.service_name}\"",
+  ])
+  denominator_filter = concat(var.filter, [
+    "metric.type=\"run.googleapis.com/request_count\"",
+    "resource.label.\"service_name\"=\"${var.service_name}\"",
+  ])
+  legend = "5xx responses / All responses"
 }
 
 module "incoming_latency" {
@@ -113,7 +112,7 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.failure_rate.widget,
-    }]
+  }]
 }
 
 module "collapsible" {
