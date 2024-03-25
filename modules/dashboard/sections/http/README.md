@@ -12,7 +12,7 @@ No providers.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
-| <a name="module_failure_rate"></a> [failure\_rate](#module\_failure\_rate) | ../../widgets/xy-ratio | n/a |
+| <a name="module_failure_rate"></a> [failure\_rate](#module\_failure\_rate) | ../../widgets/percent | n/a |
 | <a name="module_incoming_latency"></a> [incoming\_latency](#module\_incoming\_latency) | ../../widgets/latency | n/a |
 | <a name="module_outbound_request_count"></a> [outbound\_request\_count](#module\_outbound\_request\_count) | ../../widgets/xy | n/a |
 | <a name="module_outbound_request_latency"></a> [outbound\_request\_latency](#module\_outbound\_request\_latency) | ../../widgets/latency | n/a |

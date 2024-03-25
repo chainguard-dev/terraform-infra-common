@@ -17,19 +17,15 @@ module "request_count" {
 }
 
 module "failure_rate" {
-  source = "../../widgets/xy-ratio"
+  source = "../../widgets/percent"
   title  = "Request failure rate"
-
-  numerator_filter = concat(var.filter, [
-    "metric.type=\"run.googleapis.com/request_count\"",
-    "metric.label.\"response_code_class\"=\"5xx\"",
-    "resource.label.\"service_name\"=\"${var.service_name}\"",
-  ])
-  denominator_filter = concat(var.filter, [
-    "metric.type=\"run.googleapis.com/request_count\"",
-    "resource.label.\"service_name\"=\"${var.service_name}\"",
-  ])
   legend = "5xx responses / All responses"
+
+  common_filter = concat(var.filter, [
+    "metric.type=\"run.googleapis.com/request_count\"",
+    "resource.label.\"service_name\"=\"${var.service_name}\"",
+  ])
+  numerator_additional_filter = ["metric.label.\"response_code_class\"=\"5xx\""]
 }
 
 module "incoming_latency" {
