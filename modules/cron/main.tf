@@ -46,16 +46,6 @@ resource "ko_build" "image" {
   repo        = local.repo
 }
 
-resource "google_cloud_run_v2_job_iam_member" "invoker" {
-  for_each = toset(var.invokers)
-
-  project  = google_cloud_run_v2_job.job.project
-  location = google_cloud_run_v2_job.job.location
-  name     = google_cloud_run_v2_job.job.name
-  role     = "roles/run.invoker"
-  member   = "user:${each.key}"
-}
-
 resource "google_cloud_run_v2_job" "job" {
   name     = "${var.name}-cron"
   location = var.region
@@ -169,11 +159,11 @@ module "audit-delivery-serviceaccount" {
 }
 
 resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
-  project  = var.project_id
+  project  = google_cloud_run_v2_job.job.project
   location = google_cloud_run_v2_job.job.location
   name     = google_cloud_run_v2_job.job.name
   role     = "roles/run.invoker"
-  members  = ["serviceAccount:${google_service_account.delivery.email}"]
+  members  = concat(["serviceAccount:${google_service_account.delivery.email}"], [for i in var.invokers : "user:${i}"])
 }
 
 resource "google_cloud_scheduler_job" "cron" {
