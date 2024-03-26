@@ -56,7 +56,6 @@ No modules.
 | Name | Type |
 |------|------|
 | [google_monitoring_alert_policy.generate-access-token](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
-| [google_monitoring_alert_policy.private-key-generated](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 
 ## Inputs
 
