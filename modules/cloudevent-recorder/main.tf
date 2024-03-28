@@ -72,6 +72,9 @@ resource "google_monitoring_alert_policy" "bucket-access" {
       protoPayload.serviceName="storage.googleapis.com"
       protoPayload.resourceName=~"projects/_/buckets/${var.name}-(${join("|", keys(var.regions))})-${random_id.suffix.hex}"
 
+      -- Exclude things that happen during terraform plan.
+      -protoPayload.methodName=("storage.buckets.get")
+
       -- The recorder service write objects into the bucket.
       -(
         protoPayload.authenticationInfo.principalEmail="${google_service_account.recorder.email}"
@@ -81,13 +84,13 @@ resource "google_monitoring_alert_policy" "bucket-access" {
       -- The importer identity (used by DTS) enumerates and reads objects.
       -(
         protoPayload.authenticationInfo.principalEmail="${google_service_account.import-identity.email}"
-        protoPayload.methodName=("storage.objects.get" OR "storage.objects.list" OR "storage.buckets.get")
+        protoPayload.methodName=("storage.objects.get" OR "storage.objects.list")
       )
 
       -- Our CI identity reconciles the bucket.
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
-        protoPayload.methodName=("storage.buckets.get" OR "storage.getIamPermissions")
+        protoPayload.methodName=("storage.getIamPermissions")
       )
 
       -- Security scanners frequently probe for public buckets via listing buckets
