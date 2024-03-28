@@ -73,7 +73,7 @@ resource "google_monitoring_alert_policy" "bucket-access" {
       protoPayload.resourceName=~"projects/_/buckets/${var.name}-(${join("|", keys(var.regions))})-${random_id.suffix.hex}"
 
       -- Exclude things that happen during terraform plan.
-      protoPayload.methodName=("storage.buckets.get")
+      -protoPayload.methodName=("storage.buckets.get")
 
       -- The recorder service write objects into the bucket.
       -(
