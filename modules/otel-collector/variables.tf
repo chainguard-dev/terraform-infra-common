@@ -9,6 +9,6 @@ variable "service_account" {
 
 variable "otel_collector_image" {
   type        = string
-  default     = "chainguard/opentelemetry-collector-contrib:latest"
+  default     = "cgr.dev/chainguard/opentelemetry-collector-contrib:latest"
   description = "The otel collector image to use as a base."
 }
