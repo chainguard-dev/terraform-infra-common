@@ -27,3 +27,9 @@ variable "public-services" {
     name = string
   }))
 }
+
+variable "notification_channels" {
+  description = "The set of notification channels to which to send alerts."
+  type        = list(string)
+  default     = []
+}

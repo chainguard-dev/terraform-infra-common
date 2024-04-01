@@ -119,3 +119,64 @@ resource "google_compute_global_forwarding_rule" "this" {
   ip_address            = google_compute_global_address.this.id
   target                = google_compute_target_https_proxy.public-service.id
 }
+
+// What identity is deploying this?
+data "google_client_openid_userinfo" "me" {}
+
+locals {
+  authorized-accounts = [
+    # CI robot
+    data.google_client_openid_userinfo.me.email,
+  ]
+  audited-resources = concat(
+    [for _, v in google_dns_record_set.public-service : v.id],
+    [for _, v in google_compute_managed_ssl_certificate.public-service : v.id],
+    [for _, v in google_compute_backend_service.public-services : v.id],
+    [for _, v in google_compute_region_network_endpoint_group.regional-backends : v.id],
+    [ google_compute_url_map.public-service.id,
+      google_compute_target_https_proxy.public-service.id,
+      google_compute_global_forwarding_rule.this.id,
+    ],
+  )
+}
+
+resource "google_monitoring_alert_policy" "abnormal-gclb-access" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Abnormal GCLB Access"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Anomaly detected"
+
+    condition_matched_log {
+      filter = <<EOT
+      logName=(
+          "projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
+       OR "projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fdata_access"
+      )
+
+      protoPayload.resourceName=("${join("\" OR \"", local.audited-resources)}")
+      -- Allows robots
+      -protoPayload.authenticationInfo.principalEmail=("${join("\" OR \"", local.authorized-accounts)}")
+      -- Allow read-only operations
+      -protoPayload.methodName=~(".*\.get.*" OR ".*\.list.*" OR ".*\.aggregatedList")
+EOT
+      label_extractors = {
+        "email" = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
