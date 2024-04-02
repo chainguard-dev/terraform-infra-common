@@ -64,7 +64,8 @@ variable "containers" {
               memory = string
             }
           ), null)
-          cpu_idle = optional(bool, true)
+          cpu_idle          = optional(bool, true)
+          startup_cpu_boost = optional(bool, false)
         }
       ),
       {
