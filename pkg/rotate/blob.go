@@ -174,5 +174,9 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 			return err
 		}
 	}
+
+	if s.Err() != nil {
+		return fmt.Errorf("bufio scan error: %w", s.Err())
+	}
 	return nil
 }
