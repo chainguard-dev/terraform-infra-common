@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	"gocloud.dev/blob/memblob"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"gocloud.dev/blob"
@@ -201,4 +203,40 @@ func getFiles(ctx context.Context, bucket *blob.Bucket) (map[string]string, erro
 		blobs[obj.Key] = string(data)
 	}
 	return blobs, nil
+}
+
+func TestBufferWriteToBucket(t *testing.T) {
+	ctx := context.Background()
+	testFilename := filepath.Join("testdata", "long_event_line.json")
+	longEventLine, err := os.ReadFile(testFilename)
+	if err != nil {
+		t.Fatalf("Failed to read long_event_line.json: %v", err)
+	}
+	u := &uploader{}
+
+	bucket := memblob.OpenBucket(nil)
+	defer bucket.Close()
+
+	dstKey := "testkey-dst"
+	writer, err := bucket.NewWriter(ctx, "testkey-dst", nil)
+
+	if err != nil {
+		t.Fatalf("failed to create writer: %v", err)
+	}
+
+	err = u.BufferWriteToBucket(writer, testFilename)
+	if err != nil {
+		t.Fatalf("failed to upload file to blobstore: %v", err)
+	}
+
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	got, err := bucket.ReadAll(ctx, dstKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(got, longEventLine) {
+		t.Errorf("got %v, want %v", got, longEventLine)
+	}
 }

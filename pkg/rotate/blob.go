@@ -18,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chainguard-dev/clog"
+
 	"gocloud.dev/blob"
 
 	// Add gcsblob support that we need to support gs:// prefixes
@@ -164,6 +166,10 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 	}()
 
 	s := bufio.NewScanner(f)
+	// Increase the buffer size. Here we set it to 5MB, this is because the default buffer size is 64KB and some
+	// log files that come from broker events can contain very long lines.
+	buf := make([]byte, 0, 1024*1024*5) // Initial size of 0, max size of 5MB
+	s.Buffer(buf, cap(buf))
 
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
@@ -174,5 +180,10 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 			return err
 		}
 	}
+	if s.Err() != nil {
+		// log the error and use alerting to investigates errors
+		clog.Errorf("bufio scan error: %v", s.Err())
+	}
+
 	return nil
 }
