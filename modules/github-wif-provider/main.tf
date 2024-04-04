@@ -20,7 +20,7 @@ resource "google_iam_workload_identity_pool_provider" "this" {
   # ref: https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions
   attribute_mapping = {
     # Don't use the GitHub subject because it it less specific than ours, which also captures:
-    #   - The pull request number via `refs/pulls/N/merge`, and
+    #   - The pull request number via `refs/pull/N/merge`, and
     #   - The worflow file.
     # We don't include assertion.repository because it is redundant with the prefix on assertion.workflow_ref.
     # We use assertion.ref instead of the ref included in workflow_ref so that we get the PR number on pull_request_target PRs.

@@ -14,7 +14,7 @@ locals {
     )
     ) : (
     (var.refspec == "pull_request") ? (
-      "refs/pulls/[0-9]+/merge"
+      "refs/pull/[0-9]+/merge"
       ) : (
       (var.refspec == "version_tags") ? (
         "refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?"
