@@ -18,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chainguard-dev/clog"
+
 	"gocloud.dev/blob"
 
 	// Add gcsblob support that we need to support gs:// prefixes
@@ -179,7 +181,8 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 		}
 	}
 	if s.Err() != nil {
-		return fmt.Errorf("bufio scan error: %w", s.Err())
+		// log the error and use alerting to investigates errors
+		clog.Errorf("bufio scan error: %v", s.Err())
 	}
 
 	return nil
