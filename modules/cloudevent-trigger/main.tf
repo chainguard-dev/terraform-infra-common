@@ -118,6 +118,11 @@ resource "google_pubsub_subscription" "this" {
     dead_letter_topic     = google_pubsub_topic.dead-letter.id
     max_delivery_attempts = var.max_delivery_attempts
   }
+
+  retry_policy {
+    minimum_backoff = var.minimum_backoff
+    maximum_backoff = var.maximum_backoff
+  }
 }
 
 // Grant the pubsub service account the ability to Acknowledge messages on this "this" subscription.

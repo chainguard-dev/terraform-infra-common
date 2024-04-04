@@ -57,3 +57,15 @@ variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
 }
+
+variable "minimum_backoff" {
+  description = "The minimum delay between consecutive deliveries of a given message."
+  type        = number
+  default     = 10
+}
+
+variable "maximum_backoff" {
+  description = "The maximum delay between consecutive deliveries of a given message."
+  type        = number
+  default     = 600
+}
