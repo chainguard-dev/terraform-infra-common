@@ -1,5 +1,5 @@
 output "dataset_id" {
-  value = google_bigquery_dataset.this.dataset_id
+  value = var.create_dataset ? google_bigquery_dataset.this[0].dataset_id : data.google_bigquery_dataset.existing[0].dataset_id
 }
 
 output "table_ids" {

@@ -52,6 +52,8 @@ variable "types" {
     alert_threshold       = optional(number, 50000)
     notification_channels = optional(list(string), [])
     partition_field       = optional(string)
+    table_id              = optional(string)
+    create_table          = optional(bool, true)
   }))
 }
 
@@ -99,4 +101,16 @@ variable "cloud_storage_config_max_duration" {
   description = "The maximum duration that can elapse before a new Cloud Storage file is created. Min 1 minute, max 10 minutes, default 5 minutes."
   type        = number
   default     = 300 // default 5 minutes
+}
+
+variable "dataset_id" {
+  description = "The name of the BigQuery dataset to create."
+  type        = string
+  default     = null
+}
+
+variable "create_dataset" {
+  description = "Whether to create the BigQuery dataset. Set to false if the dataset already exists."
+  type        = bool
+  default     = true
 }

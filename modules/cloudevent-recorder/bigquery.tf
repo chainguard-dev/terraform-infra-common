@@ -1,21 +1,34 @@
 // The BigQuery dataset that will hold the recorded cloudevents.
 resource "google_bigquery_dataset" "this" {
-  project    = var.project_id
-  dataset_id = "cloudevents_${replace(var.name, "-", "_")}"
+  count   = var.create_dataset ? 1 : 0
+  project = var.project_id
+
+  // Use the provided dataset_id if set; otherwise, use the default naming convention
+  dataset_id = var.dataset_id != null ? var.dataset_id : "cloudevents_${replace(var.name, "-", "_")}"
   location   = var.location
 
   default_partition_expiration_ms = (var.retention-period) * 24 * 60 * 60 * 1000
 }
 
+// If we are not creating the dataset, we need to look up the existing dataset
+data "google_bigquery_dataset" "existing" {
+  count = var.create_dataset ? 0 : 1
+
+  project    = var.project_id
+  dataset_id = var.dataset_id != null ? var.dataset_id : "cloudevents_${replace(var.name, "-", "_")}"
+}
+
 // A BigQuery table for each of the cloudevent types with the specified
 // schema for that type.
 resource "google_bigquery_table" "types" {
-  for_each = var.types
+  for_each = { for k, v in var.types : k => v if v.create_table == null || v.create_table == true }
 
-  project    = var.project_id
-  dataset_id = google_bigquery_dataset.this.dataset_id
-  table_id   = replace(each.key, ".", "_")
-  schema     = each.value.schema
+  project = var.project_id
+  // Use the provided dataset_id if set; otherwise, use the default
+  dataset_id = var.create_dataset ? google_bigquery_dataset.this[0].dataset_id : data.google_bigquery_dataset.existing[0].dataset_id
+  // Use the provided table_id if set; otherwise, use the default
+  table_id = each.value.table_id != null ? each.value.table_id : replace(each.key, ".", "_")
+  schema   = each.value.schema
 
   require_partition_filter = false
 
@@ -39,13 +52,15 @@ resource "google_service_account" "import-identity" {
 
 // Only the DTS import identity should ever write to our dataset's tables.
 resource "google_bigquery_table_iam_binding" "import-writes-to-tables" {
-  for_each = var.types
+  for_each = { for k, v in var.types : k => v if v.create_table == null || v.create_table == true }
 
-  project    = var.project_id
-  dataset_id = google_bigquery_dataset.this.dataset_id
-  table_id   = google_bigquery_table.types[each.key].table_id
-  role       = "roles/bigquery.admin"
-  members    = ["serviceAccount:${google_service_account.import-identity.email}"]
+  project = var.project_id
+  # if the dataset_id is set in the var, use it, otherwise use the default dataset_id
+  dataset_id = var.create_dataset ? google_bigquery_dataset.this[0].dataset_id : data.google_bigquery_dataset.existing[0].dataset_id
+  # if the table_id is set in the var.types, use it, otherwise use the default table_id
+  table_id = each.value.table_id != null ? each.value.table_id : replace(each.key, ".", "_")
+  role     = "roles/bigquery.admin"
+  members  = ["serviceAccount:${google_service_account.import-identity.email}"]
 }
 
 // The BigQuery Data Transfer Service jobs are the only things that should
@@ -96,19 +111,19 @@ resource "google_bigquery_data_transfer_config" "import-job" {
 
   project              = var.project_id
   display_name         = "${var.name}-${each.key}"
-  location             = google_bigquery_dataset.this.location // These must be colocated
+  location             = var.create_dataset ? google_bigquery_dataset.this[0].location : data.google_bigquery_dataset.existing[0].location // These must be colocated
   service_account_name = google_service_account.import-identity.email
   disabled             = false
 
   data_source_id         = "google_cloud_storage"
   schedule               = "every 15 minutes"
-  destination_dataset_id = google_bigquery_dataset.this.dataset_id
+  destination_dataset_id = var.create_dataset ? google_bigquery_dataset.this[0].dataset_id : data.google_bigquery_dataset.existing[0].dataset_id
 
   // TODO(mattmoor): Bring back pubsub notification.
   # notification_pubsub_topic = google_pubsub_topic.bq_notification[each.key].id
   params = {
     data_path_template              = "gs://${google_storage_bucket.recorder[each.value.region].name}/${each.value.type}/*"
-    destination_table_name_template = google_bigquery_table.types[each.value.type].table_id
+    destination_table_name_template = var.types[each.value.type].table_id != null ? var.types[each.value.type].table_id : google_bigquery_table.types[each.value.type].table_id
     file_format                     = "JSON"
     max_bad_records                 = 0
     delete_source_files             = false
@@ -117,7 +132,7 @@ resource "google_bigquery_data_transfer_config" "import-job" {
 
 // Alert when no successful run in 30min, it should be successful every 15min
 resource "google_monitoring_alert_policy" "bq_dts" {
-  for_each = var.types
+  for_each = { for k, v in var.types : k => v if v.create_table == null || v.create_table == true }
 
   // Close after 7 days
   alert_strategy {

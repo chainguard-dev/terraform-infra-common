@@ -96,6 +96,13 @@ module "triggers" {
   notification_channels = var.notification_channels
 }
 
+locals {
+  alerts = tomap({
+    for type, schema in var.types :
+    "BQ DTS ${var.name}-${type}" => lookup(google_monitoring_alert_policy.bq_dts, type, null) != null ? google_monitoring_alert_policy.bq_dts[type].id : null
+  })
+}
+
 module "recorder-dashboard" {
   source       = "../dashboard/cloudevent-receiver"
   service_name = var.name
@@ -105,7 +112,7 @@ module "recorder-dashboard" {
 
   notification_channels = var.notification_channels
 
-  alerts = tomap({ for type, schema in var.types : "BQ DTS ${var.name}-${type}" => google_monitoring_alert_policy.bq_dts[type].id })
+  alerts = local.alerts
 
   triggers = {
     for type, schema in var.types : "type: ${type}" => {

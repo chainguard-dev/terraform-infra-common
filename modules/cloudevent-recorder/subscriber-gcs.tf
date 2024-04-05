@@ -23,7 +23,7 @@ resource "google_project_service_identity" "pubsub" {
 resource "google_pubsub_topic" "dead-letter" {
   for_each = var.method == "gcs" ? local.regional-types : {}
 
-  name     = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
+  name = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
 
   message_storage_policy {
     allowed_persistence_regions = [each.value.region]
@@ -45,7 +45,7 @@ resource "google_pubsub_subscription" "this" {
   for_each = var.method == "gcs" ? local.regional-types : {}
   name     = "${var.name}-${substr(md5(each.key), 0, 6)}"
 
-  topic    = var.broker[each.value.region]
+  topic = var.broker[each.value.region]
 
   ack_deadline_seconds = var.ack_deadline_seconds
 
