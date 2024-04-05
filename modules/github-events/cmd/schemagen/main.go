@@ -3,6 +3,8 @@ Copyright 2024 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0
 */
 
+//go:generate go run ./
+
 package main
 
 import (
@@ -14,7 +16,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
 )
 
-var base = flag.String("base", "./modules/github-events/schemas", "base directory to write to")
+var base = flag.String("base", "./../../schemas", "base directory to write to")
 
 func main() {
 	flag.Parse()

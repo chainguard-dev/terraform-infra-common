@@ -84,6 +84,137 @@
       "type": "STRING"
      },
      {
+      "fields": [
+       {
+        "name": "ref",
+        "type": "STRING"
+       },
+       {
+        "name": "sha",
+        "type": "STRING"
+       },
+       {
+        "fields": [
+         {
+          "fields": [
+           {
+            "name": "login",
+            "type": "STRING"
+           },
+           {
+            "name": "type",
+            "type": "STRING"
+           }
+          ],
+          "name": "owner",
+          "type": "RECORD"
+         },
+         {
+          "name": "name",
+          "type": "STRING"
+         },
+         {
+          "name": "url",
+          "type": "STRING"
+         },
+         {
+          "name": "full_name",
+          "type": "STRING"
+         }
+        ],
+        "name": "repo",
+        "type": "RECORD"
+       },
+       {
+        "fields": [
+         {
+          "name": "login",
+          "type": "STRING"
+         },
+         {
+          "name": "type",
+          "type": "STRING"
+         }
+        ],
+        "name": "user",
+        "type": "RECORD"
+       }
+      ],
+      "name": "base",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "ref",
+        "type": "STRING"
+       },
+       {
+        "name": "sha",
+        "type": "STRING"
+       },
+       {
+        "fields": [
+         {
+          "fields": [
+           {
+            "name": "login",
+            "type": "STRING"
+           },
+           {
+            "name": "type",
+            "type": "STRING"
+           }
+          ],
+          "name": "owner",
+          "type": "RECORD"
+         },
+         {
+          "name": "name",
+          "type": "STRING"
+         },
+         {
+          "name": "url",
+          "type": "STRING"
+         },
+         {
+          "name": "full_name",
+          "type": "STRING"
+         }
+        ],
+        "name": "repo",
+        "type": "RECORD"
+       },
+       {
+        "fields": [
+         {
+          "name": "login",
+          "type": "STRING"
+         },
+         {
+          "name": "type",
+          "type": "STRING"
+         }
+        ],
+        "name": "user",
+        "type": "RECORD"
+       }
+      ],
+      "name": "head",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "name",
+        "type": "STRING"
+       }
+      ],
+      "mode": "REPEATED",
+      "name": "labels",
+      "type": "RECORD"
+     },
+     {
       "name": "created_at",
       "type": "TIMESTAMP"
      },

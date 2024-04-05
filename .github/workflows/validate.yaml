@@ -34,6 +34,7 @@ jobs:
           - github-wif-provider
           - github-gsa
           - github-events
+          - github-bots
 
     steps:
       - name: Harden Runner

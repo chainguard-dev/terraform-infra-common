@@ -70,7 +70,7 @@ func (b bot) OnPullRequest(ctx context.Context, pr *github.PullRequest) error {
 		Status:     github.String("completed"),
 		Conclusion: &conclusion,
 	}); err != nil {
-		return fmt.Errorf("updating check run %s: %w", *crs.CheckRuns[0].ID, err)
+		return fmt.Errorf("updating check run %d: %w", *crs.CheckRuns[0].ID, err)
 	}
 	return nil
 }
