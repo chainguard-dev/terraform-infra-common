@@ -30,11 +30,28 @@ type Repository struct {
 	FullName bigquery.NullString `json:"full_name,omitempty" bigquery:"full_name"`
 }
 
+// https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestBranch
+type PullRequestBranch struct {
+	Ref  bigquery.NullString `json:"ref,omitempty" bigquery:"ref"`
+	SHA  bigquery.NullString `json:"sha,omitempty" bigquery:"sha"`
+	Repo Repository          `json:"repo,omitempty" bigquery:"repo"`
+	User User                `json:"user,omitempty" bigquery:"user"`
+}
+
+type Label struct {
+	Name bigquery.NullString `json:"name,omitempty" bigquery:"name"`
+}
+
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequest
 type PullRequest struct {
 	Number bigquery.NullInt64  `json:"number,omitempty" bigquery:"number"`
 	State  bigquery.NullString `json:"state,omitempty" bigquery:"state"`
 	Title  bigquery.NullString `json:"title,omitempty" bigquery:"title"`
+
+	Base PullRequestBranch `json:"base,omitempty" bigquery:"base"`
+	Head PullRequestBranch `json:"head,omitempty" bigquery:"head"`
+
+	Labels []Label `json:"labels" bigquery:"labels"`
 
 	CreatedAt bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
 	UpdatedAt bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`

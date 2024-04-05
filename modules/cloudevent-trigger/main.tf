@@ -120,8 +120,8 @@ resource "google_pubsub_subscription" "this" {
   }
 
   retry_policy {
-    minimum_backoff = var.minimum_backoff
-    maximum_backoff = var.maximum_backoff
+    minimum_backoff = "${var.minimum_backoff}s"
+    maximum_backoff = "${var.maximum_backoff}s"
   }
 }
 
