@@ -54,3 +54,49 @@ variable "types" {
     partition_field       = optional(string)
   }))
 }
+
+variable "method" { # todo (jr) add bq method that writes events directly to bq https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription#example-usage---pubsub-subscription-push-bq
+  type        = string
+  description = "The method used to transfer events (e.g., trigger, gcs)."
+  default     = "trigger"
+  validation {
+    condition     = contains(["trigger", "gcs"], var.method)
+    error_message = "The environment must be one of: trigger or gcs."
+  }
+}
+
+variable "max_delivery_attempts" {
+  description = "The maximum number of delivery attempts for any event."
+  type        = number
+  default     = 5
+}
+
+variable "ack_deadline_seconds" {
+  description = "The number of seconds to acknowledge a message before it is redelivered."
+  type        = number
+  default     = 300
+}
+
+variable "minimum_backoff" {
+  description = "The minimum delay between consecutive deliveries of a given message."
+  type        = number
+  default     = 10
+}
+
+variable "maximum_backoff" {
+  description = "The maximum delay between consecutive deliveries of a given message."
+  type        = number
+  default     = 600
+}
+
+variable "cloud_storage_config_max_bytes" {
+  description = "The maximum bytes that can be written to a Cloud Storage file before a new file is created. Min 1 KB, max 10 GiB."
+  type        = number
+  default     = 1000000000 // default 1 GB
+}
+
+variable "cloud_storage_config_max_duration" {
+  description = "The maximum duration that can elapse before a new Cloud Storage file is created. Min 1 minute, max 10 minutes, default 5 minutes."
+  type        = number
+  default     = 300 // default 5 minutes
+}
