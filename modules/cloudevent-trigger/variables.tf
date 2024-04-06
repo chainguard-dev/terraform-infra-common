@@ -69,3 +69,9 @@ variable "maximum_backoff" {
   type        = number
   default     = 600
 }
+
+variable "ack_deadline_seconds" {
+  description = "The deadline for acking a message."
+  type        = number
+  default     = 300
+}
