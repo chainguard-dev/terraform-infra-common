@@ -69,6 +69,10 @@ func (b bot) OnPullRequest(ctx context.Context, pr *github.PullRequest) error {
 		Name:       b.Name(),
 		Status:     github.String("completed"),
 		Conclusion: &conclusion,
+		Output: &github.CheckRunOutput{
+			Title:   github.String("Blocking label check"),
+			Summary: github.String("This PR has a blocking label"),
+		},
 	}); err != nil {
 		return fmt.Errorf("updating check run %d: %w", *crs.CheckRuns[0].ID, err)
 	}

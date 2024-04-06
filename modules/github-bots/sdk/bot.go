@@ -4,19 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"net/http"
 	"runtime/debug"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/clog/gcp"
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/go-github/v61/github"
 	"github.com/kelseyhightower/envconfig"
 )
 
-type Bot interface {
-	Name() string
-}
+type Bot interface{ Name() string }
 
 func Serve(b Bot) {
 	var env struct {
@@ -25,22 +25,35 @@ func Serve(b Bot) {
 	if err := envconfig.Process("", &env); err != nil {
 		clog.Fatalf("failed to process env var: %s", err)
 	}
+	ctx := context.Background()
 
 	slog.SetDefault(slog.New(gcp.NewHandler(slog.LevelInfo)))
 
-	ctx := context.Background()
-	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
+	http.DefaultTransport = httpmetrics.Transport
+	go httpmetrics.ServeMetrics()
+	httpmetrics.SetupTracer(ctx)
+	httpmetrics.SetBuckets(map[string]string{
+		"api.github.com": "github",
+		"octosts.dev":    "octosts",
+	})
+
+	c, err := cloudevents.NewClientHTTP(
+		cloudevents.WithPort(env.Port),
+		cloudevents.WithMiddleware(func(next http.Handler) http.Handler {
+			return httpmetrics.HandlerFunc(b.Name(), func(w http.ResponseWriter, r *http.Request) {
+				next.ServeHTTP(w, r)
+			})
+		}),
+	)
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
 	if err := c.StartReceiver(ctx, func(ctx context.Context, event cloudevents.Event) error {
-		// If this bot can handle the event, call the handler.
-
 		clog.FromContext(ctx).With("event", event).Debugf("received event")
 
 		defer func() {
 			if err := recover(); err != nil {
-				clog.Errorf("stacktrace from panic: %s", debug.Stack())
+				clog.Errorf("panic: %s", debug.Stack())
 			}
 		}()
 
