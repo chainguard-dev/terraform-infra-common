@@ -1,10 +1,22 @@
 # `cloudevent-recorder`
 
-This module provisions a regionalized cloudevents sink that consumes events of
-particular types from each of the regional brokers, and writes them into a
-regional GCS bucket where a periodic BigQuery Data-Transfer Service Job will
-pull events from into a BigQuery table schematized for that event type. The
-intended usage of this module for publishing events is something like this:
+This module provisions a regionalized event subscriber that consumes events of
+particular types from each of the regional brokers, writes them to Google BigQuery.
+
+```mermaid
+flowchart LR
+    subgraph "regional network"
+    A[[Pub/Sub topic]] -- notifies --> B(Recorder Service)
+    end
+
+   B -- writes every 3m --> C[(Cloud Storage)]
+   C --> D[Data Transfer Service]
+   D -- loads every 15m --> E[(BigQuery)]
+```
+
+The recorder service writes to a regional GCS bucket where a periodic BigQuery Data-Transfer Service Job will pull events from into a BigQuery table schematized for that event type.
+
+The intended usage of this module for publishing events is something like this:
 
 ```hcl
 // Create a network with several regional subnets

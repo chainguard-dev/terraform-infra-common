@@ -3,6 +3,32 @@
 This module provisions a Google Cloud Load Balancer (GCLB) that sits in front of
 some number of regionalized Cloud Run services.
 
+```mermaid
+flowchart LR
+    T[domain.com]
+    T --> A
+
+    A(Load Balancer)
+    A  --> X
+    A  --> Y
+    A  --> Z
+
+    subgraph "regional network C"
+    X(Cloud Run Service)
+    X -.-> L["..."]
+    end
+
+    subgraph "regional network B"
+    Y(Cloud Run Service)
+    Y -.-> M["..."]
+    end
+
+    subgraph "regional network A"
+    Z(Cloud Run Service)
+    Z -.-> N["..."]
+    end
+```
+
 ```hcl
 // Create a network with several regional subnets
 module "networking" {

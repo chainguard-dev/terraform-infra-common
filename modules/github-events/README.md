@@ -3,6 +3,19 @@
 This module provisions infrastructure to listen to webhook events from GitHub and
 publish them to a broker.
 
+```mermaid
+flowchart LR
+    G[GitHub.com]
+    G -- webhook --> T
+
+    subgraph "regional network"
+    T(Trampoline)
+    I(Ingress)
+    T -- emits --> I
+    I -.-> E["..."]
+    end
+```
+
 More information on GitHub webhooks:
 - https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
 - https://docs.github.com/en/webhooks/webhook-events-and-payloads

@@ -1,9 +1,16 @@
 # `cloudevent-trigger`
 
-This module provisions regionalizied event-triggered services using a Trigger
-abstraction akin to the Knative "Trigger" concept. The dual "Broker" concept is
-captured by the sibling `cloudevent-broker` module. The intended usage of this
-module for consuming events is something like this:
+```mermaid
+flowchart LR
+    subgraph "regional network"
+    A[[Pub/Sub topic]] -- notifies --> B(Cloud Run Service)
+    end
+```
+
+This module abstracts regionalizied event-triggered services.
+It's intended to be used with the "Broker" abstraction is described by the sibling [`cloudevent-broker`](./../cloudevent-broker/) module.
+
+The intended usage of this module for consuming events is something like this:
 
 ```hcl
 // Create a network with several regional subnets
