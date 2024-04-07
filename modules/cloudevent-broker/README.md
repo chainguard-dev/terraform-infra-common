@@ -1,5 +1,12 @@
 # `cloudevent-broker`
 
+```mermaid
+flowchart LR
+    subgraph "regional network"
+    A(Ingress) -- publishes to --> B[[Pub/Sub topic]]
+    end
+```
+
 This module provisions a regionalizied Broker abstraction akin to the Knative
 "Broker" concept. The dual "Trigger" concept is captured by the sibling
 `cloudevent-trigger` module. The intended usage of this module for publishing
