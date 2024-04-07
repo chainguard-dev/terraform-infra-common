@@ -3,6 +3,19 @@
 This module provisions infrastructure to listen to events from a GCS bucket and
 publish them to a broker.
 
+```mermaid
+flowchart LR
+    G[Cloud Storage]
+    G -- Pub/Sub --> T
+
+    subgraph "regional network"
+    T(Trampoline)
+    I(Ingress)
+    T -- emits --> I
+    I -.-> E["..."]
+    end
+```
+
 This uses [Pub/Sub notifications for GCS](https://cloud.google.com/storage/docs/pubsub-notifications) and emits events of the following types:
 
 | [GCS event type](https://cloud.google.com/storage/docs/pubsub-notifications#events) | CloudEvent type |
