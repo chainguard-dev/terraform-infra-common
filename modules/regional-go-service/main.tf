@@ -87,6 +87,16 @@ resource "google_cloud_run_v2_service" "this" {
           }
         }
 
+        startup_probe {
+          initial_delay_seconds = containers.value.startup_probe.initial_delay_seconds
+          failure_threshold = containers.value.startup_probe.failure_threshold
+          period_seconds    = containers.value.startup_probe.period_seconds
+          timeout_seconds   = containers.value.startup_probe.timeout_seconds
+          tcp_socket {
+            port = containers.value.startup_probe.tcp_socket_port
+          }
+        }
+
         dynamic "resources" {
           for_each = containers.value.resources != null ? { "" : containers.value.resources } : {}
           content {

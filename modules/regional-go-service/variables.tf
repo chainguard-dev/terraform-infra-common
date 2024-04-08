@@ -90,6 +90,13 @@ variable "containers" {
       name       = string
       mount_path = string
     })), [])
+    startup_probe = optional(object({  // Add this definition
+      initial_delay_seconds = number
+      timeout_seconds       = number
+      period_seconds        = number
+      failure_threshold     = number
+      tcp_socket_port       = number  // Simplified for TCP port configuration
+    }), null)
   }))
 }
 
