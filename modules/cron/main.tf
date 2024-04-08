@@ -253,7 +253,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
         ])}")
       )
       -(
-        protoPayload.authenticationInfo.principalEmail=~"${join("|", var.invokers)}"
+        protoPayload.authenticationInfo.principalEmail=~"${join("|", concat(var.invokers, [data.google_client_openid_userinfo.me]))}"
         protoPayload.methodName="google.cloud.run.v1.Jobs.RunJob"
       )
       EOT
