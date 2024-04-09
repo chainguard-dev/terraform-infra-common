@@ -298,7 +298,7 @@ resource "google_monitoring_alert_policy" "anomalous-job-execution" {
       ])}")
 
       -- Allow the delivery service account to run the job, but flag anyone else
-      -protoPayload.authenticationInfo.principalEmail="${google_service_account.delivery.email}"
+      -protoPayload.authenticationInfo.principalEmail=~"${join("|", [google_service_account.delivery.email, data.google_client_openid_userinfo.me.email])}"
       EOT
 
       label_extractors = {
