@@ -99,3 +99,20 @@ variable "notification_channels" {
   description = "A list of notification channels to send alerts to."
   type        = list(string)
 }
+
+variable "enable_slo_alert" {
+  type        = bool
+  default     = false
+  description = "If true, alert service availability dropping below SLO threshold. Outputs will return the alert ID for notification and dashboards."
+}
+
+variable "slo_threshold" {
+  description = "The uptime percent required to meet the SLO for the service, expressed as a decimal in {0, 1}"
+  type        = number
+  default     = 0.999
+
+  validation {
+    condition     = var.slo_threshold >= 0 && var.slo_threshold <= 1
+    error_message = "slo_threshold must be a decimal between 0 and 1"
+  }
+}
