@@ -28,6 +28,6 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   }
   display_name = "${var.name}-${var.private-service.region}: dead-letter queue messages above 1"
 
-  enabled               = "true"
+  enabled               = var.dead_letter_queue_alert_enabled
   notification_channels = var.notification_channels
 }
