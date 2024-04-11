@@ -48,8 +48,8 @@ jobs:
         # Exclude running unit tests against third_party repos.
         go test -race ./...
 
-    - name: Ensure github-events schemas are up to date
-      run: go run ./modules/github-events/cmd/schemagen
+    - name: Ensure generated files are up-to-date
+      run: go generate ./...
     - uses: chainguard-dev/actions/nodiff@main
       with:
-        fixup-command: go run ./modules/github-events/cmd/schemagen
+        fixup-command: go generate ./...

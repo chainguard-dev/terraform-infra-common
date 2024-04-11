@@ -47,7 +47,7 @@ func main() {
 	defer cancel()
 	log := clog.FromContext(ctx)
 
-	log.Infof("env: %+v", env)
+	log.Debugf("env: %+v", env)
 
 	c, err := idtoken.NewClient(ctx, env.IngressURI)
 	if err != nil {
@@ -85,7 +85,7 @@ func main() {
 			"bucket", bucket,
 			"object", object,
 		)
-		log.Infof("forwarding event: %s", r.Header.Get("Eventtype"))
+		log.Debugf("forwarding event: %s", r.Header.Get("Eventtype"))
 
 		event := cloudevents.NewEvent()
 		event.SetType(t)
@@ -106,7 +106,7 @@ func main() {
 			log.Errorf("Failed to deliver event: %v", ceresult)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		log.Infof("event forwarded")
+		log.Debugf("event forwarded")
 	})
 
 	srv := &http.Server{
