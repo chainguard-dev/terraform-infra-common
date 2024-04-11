@@ -30,10 +30,8 @@ locals {
 
 resource "google_monitoring_dashboard" "dashboard" {
   dashboard_json = jsonencode({
-    displayName = "SLO alerts"
-    labels = merge({
-      "slo" : ""
-    }, var.labels)
+    displayName = var.title
+    labels      = var.labels
 
     // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
     mosaicLayout = {

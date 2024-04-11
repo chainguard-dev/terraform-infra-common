@@ -18,3 +18,9 @@ variable "project_id" {
   description = "ID of the GCP project"
   type        = string
 }
+
+variable "title" {
+  description = "A title for the dashboard."
+  type        = string
+  default     = "Alerts"
+}
