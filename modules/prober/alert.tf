@@ -54,6 +54,7 @@ resource "google_monitoring_alert_policy" "uptime_alert" {
 
 locals {
   slo_threshold_friendly = "${var.slo_threshold * 100}%"
+  slo_policy_link        = var.slo_policy_link != "" ? " See SLO policy: ${var.slo_policy_link}" : ""
 }
 
 // Create an alert policy based on the service's SLO threshold,
@@ -86,7 +87,7 @@ resource "google_monitoring_alert_policy" "slo_alert" {
 
       threshold_value = var.slo_threshold
       trigger {
-        count   = 1
+        count = 1
       }
     }
 
@@ -97,7 +98,7 @@ resource "google_monitoring_alert_policy" "slo_alert" {
   enabled      = true
 
   documentation {
-    content = "${local.uptime_check_name} has fallen below ${local.slo_threshold_friendly} over the past day."
+    content = "${local.uptime_check_name} has fallen below ${local.slo_threshold_friendly} over the past day.${local.slo_policy_link}"
   }
 
   notification_channels = var.slo_notification_channels

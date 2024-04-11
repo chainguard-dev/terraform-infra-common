@@ -122,3 +122,9 @@ variable "slo_notification_channels" {
   type        = list(string)
   default     = []
 }
+
+variable "slo_policy_link" {
+  description = "An optional link to the SLO policy to include in the alert documentation."
+  type        = string
+  default     = ""
+}
