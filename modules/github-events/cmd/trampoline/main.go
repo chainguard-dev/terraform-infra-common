@@ -99,7 +99,7 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		log.Infof("forwarding event: %s", t)
+		log.Debugf("forwarding event: %s", t)
 
 		event := cloudevents.NewEvent()
 		event.SetType(t)
@@ -122,7 +122,7 @@ func main() {
 			log.Errorf("Failed to deliver event: %v", ceresult)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		log.Infof("event forwarded")
+		log.Debugf("event forwarded")
 	})
 
 	srv := &http.Server{

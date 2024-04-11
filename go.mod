@@ -11,6 +11,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v60 v60.0.0
+	github.com/google/go-github/v61 v61.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.19.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.50.0
