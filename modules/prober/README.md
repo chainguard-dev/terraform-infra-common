@@ -86,6 +86,7 @@ No requirements.
 
 | Name | Type |
 |------|------|
+| [google_monitoring_alert_policy.slo_alert](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.uptime_alert](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_uptime_check_config.global_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
 | [google_monitoring_uptime_check_config.regional_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
@@ -102,6 +103,7 @@ No requirements.
 | <a name="input_domain"></a> [domain](#input\_domain) | The domain of the environment to probe (required for multiple locations). | `string` | `""` | no |
 | <a name="input_egress"></a> [egress](#input\_egress) | The level of egress the prober requires. | `string` | `"ALL_TRAFFIC"` | no |
 | <a name="input_enable_alert"></a> [enable\_alert](#input\_enable\_alert) | If true, alert on failures. Outputs will return the alert ID for notification and dashboards. | `bool` | `false` | no |
+| <a name="input_enable_slo_alert"></a> [enable\_slo\_alert](#input\_enable\_slo\_alert) | If true, alert service availability dropping below SLO threshold. Outputs will return the alert ID for notification and dashboards. | `bool` | `false` | no |
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the prober application. | `string` | n/a | yes |
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory limit for the prober. | `string` | `"512Mi"` | no |
@@ -111,6 +113,9 @@ No requirements.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the prober. | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as. | `string` | n/a | yes |
+| <a name="input_slo_notification_channels"></a> [slo\_notification\_channels](#input\_slo\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | `[]` | no |
+| <a name="input_slo_policy_link"></a> [slo\_policy\_link](#input\_slo\_policy\_link) | An optional link to the SLO policy to include in the alert documentation. | `string` | `""` | no |
+| <a name="input_slo_threshold"></a> [slo\_threshold](#input\_slo\_threshold) | The uptime percent required to meet the SLO for the service, expressed as a decimal in {0, 1} | `number` | `0.999` | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. | `string` | `"60s"` | no |
 | <a name="input_working_dir"></a> [working\_dir](#input\_working\_dir) | The working directory that contains the importpath. | `string` | n/a | yes |
 
@@ -119,6 +124,7 @@ No requirements.
 | Name | Description |
 |------|-------------|
 | <a name="output_alert_id"></a> [alert\_id](#output\_alert\_id) | n/a |
+| <a name="output_slo_alert_id"></a> [slo\_alert\_id](#output\_slo\_alert\_id) | n/a |
 | <a name="output_uptime_check"></a> [uptime\_check](#output\_uptime\_check) | n/a |
 | <a name="output_uptime_check_name"></a> [uptime\_check\_name](#output\_uptime\_check\_name) | n/a |
 <!-- END_TF_DOCS -->
