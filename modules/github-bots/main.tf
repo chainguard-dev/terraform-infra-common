@@ -101,9 +101,10 @@ module "dashboard" {
 
   triggers = {
     (var.name) : {
-      subscription_prefix = "bot-trigger-${var.name}"
+      subscription_prefix   = "bot-trigger-${var.name}"
+      notification_channels = var.notification_channels
     }
   }
 
-  notification_channels = []
+  notification_channels = var.notification_channels
 }
