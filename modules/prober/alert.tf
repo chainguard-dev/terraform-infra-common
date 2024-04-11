@@ -81,7 +81,7 @@ resource "google_monitoring_alert_policy" "slo_alert" {
       filter     = <<-EOT
         metric.type="monitoring.googleapis.com/uptime_check/check_passed"
         resource.type="uptime_url"
-        metric.label.check_id="${local.uptime_check_id}"
+        metric.label.check_id=starts_with("${local.uptime_check_name}")
       EOT
 
       threshold_value = var.slo_threshold
@@ -97,8 +97,8 @@ resource "google_monitoring_alert_policy" "slo_alert" {
   enabled      = true
 
   documentation {
-    content = "${local.uptime_check_name} has fallen below ${local.slo_threshold_friendly} over the past day"
+    content = "${local.uptime_check_name} has fallen below ${local.slo_threshold_friendly} over the past day."
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = var.slo_notification_channels
 }

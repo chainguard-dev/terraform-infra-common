@@ -116,3 +116,9 @@ variable "slo_threshold" {
     error_message = "slo_threshold must be a decimal between 0 and 1"
   }
 }
+
+variable "slo_notification_channels" {
+  description = "A list of notification channels to send alerts to."
+  type        = list(string)
+  default     = []
+}
