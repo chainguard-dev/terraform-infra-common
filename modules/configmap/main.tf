@@ -70,7 +70,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
       label_extractors = {
         "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
         "method_name" = "EXTRACT(protoPayload.methodName)"
-        "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, '(\\S+)')"
+        "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, \"(\\\\S+)\")"
       }
     }
   }
