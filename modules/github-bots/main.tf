@@ -81,13 +81,29 @@ module "cloudevent-trigger" {
   source   = "chainguard-dev/common/infra//modules/cloudevent-trigger"
 
   project_id = var.project_id
-  name       = "bot-trigger"
+  name       = "bot-trigger-${var.name}"
   broker     = var.broker[each.key]
   filter     = { "type" : var.github-event }
 
   private-service = {
     region = each.key
     name   = var.name
+  }
+
+  notification_channels = var.notification_channels
+}
+
+module "dashboard" {
+  source = "chainguard-dev/common/infra//modules/dashboard/cloudevent-receiver"
+
+  project_id   = var.project_id
+  service_name = var.name
+
+  triggers = {
+    (var.name) : {
+      subscription_prefix   = "bot-trigger-${var.name}"
+      notification_channels = var.notification_channels
+    }
   }
 
   notification_channels = var.notification_channels
