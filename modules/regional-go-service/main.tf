@@ -235,7 +235,9 @@ resource "google_monitoring_alert_policy" "anomalous-service-access" {
       EOT
 
       label_extractors = {
-        "email" = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+        "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+        "method_name" = "EXTRACT(protoPayload.methodName)"
+        "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, '(\\S+)')"
       }
     }
   }
