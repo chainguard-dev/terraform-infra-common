@@ -72,9 +72,18 @@ resource "google_monitoring_alert_policy" "slo_alert" {
   conditions {
     condition_threshold {
       aggregations {
+        # Aggregate the uptime percent for all regions
+        # by taking the mean over a 1 day period
         alignment_period     = "${24 * 60 * 60}s" # 1 day
-        cross_series_reducer = "REDUCE_MIN"
+        cross_series_reducer = "REDUCE_MEAN"
         per_series_aligner   = "ALIGN_FRACTION_TRUE"
+      }
+      # Aggregate the mean over a 1 day rolling window from above.
+      # This flattens the graph into a step graph with a 1 day resolution.
+      aggregations {
+        alignment_period     = "${24 * 60 * 60}s" # 1 day
+        cross_series_reducer = "REDUCE_NONE"
+        per_series_aligner   = "ALIGN_MEAN"
       }
 
       comparison = "COMPARISON_LT"
