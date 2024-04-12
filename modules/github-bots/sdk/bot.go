@@ -16,9 +16,27 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-type Bot interface{ Name() string }
+type Bot struct {
+	Name     string
+	Handlers map[EventType][]EventHandlerFunc
+}
 
-func Serve(b Bot) {
+func NewBot(name string) Bot {
+	return Bot{
+		Name:     name,
+		Handlers: make(map[EventType][]EventHandlerFunc),
+	}
+}
+
+func (b *Bot) RegisterHandler(handler EventHandlerFunc) {
+	etype := handler.EventType()
+	if _, ok := b.Handlers[etype]; !ok {
+		b.Handlers[etype] = make([]EventHandlerFunc, 0)
+	}
+	b.Handlers[etype] = append(b.Handlers[etype], handler)
+}
+
+func Serve(b Bot) error {
 	var env struct {
 		Port int `envconfig:"PORT" default:"8080" required:"true"`
 	}
@@ -28,6 +46,8 @@ func Serve(b Bot) {
 	ctx := context.Background()
 
 	slog.SetDefault(slog.New(gcp.NewHandler(slog.LevelInfo)))
+
+	logger := clog.FromContext(ctx)
 
 	http.DefaultTransport = httpmetrics.Transport
 	go httpmetrics.ServeMetrics()
@@ -40,7 +60,7 @@ func Serve(b Bot) {
 	c, err := cloudevents.NewClientHTTP(
 		cloudevents.WithPort(env.Port),
 		cloudevents.WithMiddleware(func(next http.Handler) http.Handler {
-			return httpmetrics.HandlerFunc(b.Name(), func(w http.ResponseWriter, r *http.Request) {
+			return httpmetrics.HandlerFunc(b.Name, func(w http.ResponseWriter, r *http.Request) {
 				next.ServeHTTP(w, r)
 			})
 		}),
@@ -48,6 +68,8 @@ func Serve(b Bot) {
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
+
+	logger.Infof("starting bot %s receiver on port %d", b.Name, env.Port)
 	if err := c.StartReceiver(ctx, func(ctx context.Context, event cloudevents.Event) error {
 		clog.FromContext(ctx).With("event", event).Debugf("received event")
 
@@ -57,40 +79,65 @@ func Serve(b Bot) {
 			}
 		}()
 
-		if prb, ok := b.(interface {
-			OnPullRequest(ctx context.Context, pr *github.PullRequest) error
-		}); ok && event.Type() == "dev.chainguard.github.pull_request" {
-			log := clog.FromContext(ctx).With("bot", b.Name(), "event", event.Type())
-			lctx := clog.WithLogger(ctx, log)
+		logger.Info("handling event", "type", event.Type())
 
-			// I don't love this. We decode the event into a wrapper, then marshal the body to json,
-			// then unmarshal it into a github.PullRequest. There should be a better way to get
-			// the .Body field of the original event.
-			var pre schemas.Wrapper[schemas.PullRequestEvent]
-			if err := event.DataAs(&pre); err != nil {
-				clog.FromContext(lctx).Errorf("failed to unmarshal pull request: %v", err)
-				return err
-			}
-			b, err := json.Marshal(pre.Body.PullRequest)
-			if err != nil {
-				clog.FromContext(lctx).Errorf("failed to marshal pull request: %v", err)
-			}
-			var pr github.PullRequest
-			if err := json.Unmarshal(b, &pr); err != nil {
-				clog.FromContext(lctx).Errorf("failed to unmarshal pull request: %v", err)
-				return err
-			}
+		// dispatch event to n handlers
+		if handlers, ok := b.Handlers[EventType(event.Type())]; ok {
+			for _, handler := range handlers {
+				switch h := handler.(type) {
+				case WorkflowRunHandler:
+					logger.Debug("handling workflow run event")
 
-			if err := prb.OnPullRequest(ctx, &pr); err != nil {
-				clog.FromContext(lctx).Errorf("failed to handle pull request: %v", err)
-				return err
+					var wre schemas.Wrapper[github.WorkflowRunEvent]
+					if err := event.DataAs(&wre); err != nil {
+						return err
+					}
+
+					wr := &github.WorkflowRun{}
+					if err := marshalTo(wre.Body.WorkflowRun, wr); err != nil {
+						return err
+					}
+
+					cli := NewGitHubClient(ctx, *wre.Body.Repo.Owner.Login, *wre.Body.Repo.Name, b.Name)
+					defer cli.Close(ctx)
+
+					return h(ctx, cli, wr)
+
+				case PullRequestHandler:
+					logger.Debug("handling pull request event")
+
+					var pre schemas.Wrapper[github.PullRequestEvent]
+					if err := event.DataAs(&pre); err != nil {
+						return err
+					}
+
+					pr := &github.PullRequest{}
+					if err := marshalTo(pre.Body.PullRequest, pr); err != nil {
+						return err
+					}
+
+					cli := NewGitHubClient(ctx, *pre.Body.Repo.Owner.Login, *pre.Body.Repo.Name, b.Name)
+					defer cli.Close(ctx)
+
+					return h(ctx, cli, pr)
+				}
 			}
-			return nil
 		}
 
 		clog.FromContext(ctx).With("event", event).Debugf("ignoring event")
 		return nil
 	}); err != nil {
 		clog.Fatalf("failed to start event receiver, %v", err)
+		return err
 	}
+
+	return nil
+}
+
+func marshalTo(source any, target any) error {
+	b, err := json.Marshal(source)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, target)
 }

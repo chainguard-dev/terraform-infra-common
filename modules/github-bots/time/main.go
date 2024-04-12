@@ -1,5 +1,13 @@
 package main
 
-import "github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
+import (
+	"log"
 
-func main() { sdk.Serve(New()) }
+	"github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
+)
+
+func main() {
+	if err := sdk.Serve(New()); err != nil {
+		log.Fatal(err)
+	}
+}
