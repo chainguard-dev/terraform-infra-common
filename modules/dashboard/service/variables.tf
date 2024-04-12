@@ -23,3 +23,17 @@ variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
 }
+
+variable "sections" {
+  description = "Sections to include in the dashboard"
+  type = object({
+    http   = optional(bool, true)  // Include HTTP section
+    grpc   = optional(bool, true)  // Include GRPC section
+    github = optional(bool, false) // Include GitHub API section
+  })
+  default = {
+    http   = true
+    grpc   = true
+    github = false
+  }
+}

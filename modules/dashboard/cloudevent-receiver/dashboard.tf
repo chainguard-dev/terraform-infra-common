@@ -36,6 +36,12 @@ module "grpc" {
   service_name = var.service_name
 }
 
+module "github" {
+  source = "../sections/github"
+  title  = "GitHub API"
+  filter = []
+}
+
 module "resources" {
   source        = "../sections/resources"
   title         = "Resources"
@@ -54,10 +60,11 @@ module "layout" {
     [
       module.errgrp.section,
       module.logs.section,
-      module.http.section,
-      module.grpc.section,
-      module.resources.section,
     ],
+    var.sections.http ? [module.http.section] : [],
+    var.sections.grpc ? [module.grpc.section] : [],
+    var.sections.github ? [module.github.section] : [],
+    [module.resources.section],
   )
 }
 
