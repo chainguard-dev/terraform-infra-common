@@ -88,7 +88,39 @@ func Serve(b Bot) {
 			return nil
 		}
 
-		clog.FromContext(ctx).With("event", event).Debugf("ignoring event")
+		if prb, ok := b.(interface {
+			OnWorkflowRunEvent(ctx context.Context, wfr *github.WorkflowRunEvent) error
+		}); ok && event.Type() == "dev.chainguard.github.workflow_run" {
+			log := clog.FromContext(ctx).With("bot", b.Name(), "event", event.Type())
+			lctx := clog.WithLogger(ctx, log)
+
+			// I don't love this. We decode the event into a wrapper, then marshal the body to json,
+			// then unmarshal it into a github.PullRequest. There should be a better way to get
+			// the .Body field of the original event.
+			var wfr schemas.Wrapper[schemas.WorkflowRunEvent]
+			if err := event.DataAs(&wfr); err != nil {
+				clog.FromContext(lctx).Errorf("failed to unmarshal workflow run event: %v", err)
+				return err
+			}
+			b, err := json.Marshal(wfr.Body)
+			if err != nil {
+				clog.FromContext(lctx).Errorf("failed to marshal workflow run event: %v", err)
+			}
+
+			var wr github.WorkflowRunEvent
+			if err := json.Unmarshal(b, &wr); err != nil {
+				clog.FromContext(lctx).Errorf("failed to unmarshal workflow run event: %v", err)
+				return err
+			}
+
+			if err := prb.OnWorkflowRunEvent(ctx, &wr); err != nil {
+				clog.FromContext(lctx).Errorf("failed to handle workflow run event: %v", err)
+				return err
+			}
+			return nil
+		}
+
+		clog.FromContext(ctx).With("event", event).Debugf("ignoring event type %s", event.Type())
 		return nil
 	}); err != nil {
 		clog.Fatalf("failed to start event receiver, %v", err)
