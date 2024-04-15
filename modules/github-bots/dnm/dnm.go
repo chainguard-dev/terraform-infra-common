@@ -8,27 +8,27 @@ import (
 	"github.com/google/go-github/v61/github"
 )
 
-type bot struct{}
-
-func New() sdk.Bot { return bot{} }
-
 const label = "blocking/dnm"
 
-func (b bot) Name() string { return "dnm" }
+func New() sdk.Bot {
+	name := "dnm"
 
-func (b bot) OnPullRequest(ctx context.Context, pr *github.PullRequest) error {
-	owner, repo := *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name
+	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error {
+		cli := sdk.NewGitHubClient(ctx, *pre.Repo.Owner.Login, *pre.Repo.Name, name)
+		defer cli.Close(ctx)
 
-	client := sdk.NewGitHubClient(ctx, owner, repo, b.Name())
-	defer client.Close(ctx)
-
-	// If the title contains some variant of "dnm" and the PR doesn't have the label, add it -- this will no-op if it already has it.
-	for _, dnm := range []string{"dnm", "do not merge", "donotmerge", "do-not-merge"} {
-		if strings.Contains(strings.ToLower(*pr.Title), dnm) {
-			return client.AddLabel(ctx, pr, label)
+		// If the title contains some variant of "dnm" and the PR doesn't have the label, add it -- this will no-op if it already has it.
+		for _, dnm := range []string{name, "do not merge", "donotmerge", "do-not-merge"} {
+			if strings.Contains(strings.ToLower(*pr.Title), dnm) {
+				return cli.AddLabel(ctx, pr, label)
+			}
 		}
-	}
 
-	// If it has the label and the title doesn't match, remove the label -- this will no-op if it already doesn't have it.
-	return client.RemoveLabel(ctx, pr, label)
+		// If it has the label and the title doesn't match, remove the label -- this will no-op if it already doesn't have it.
+		return cli.RemoveLabel(ctx, pr, label)
+	})
+
+	return sdk.NewBot(name,
+		sdk.BotWithHandler(handler),
+	)
 }

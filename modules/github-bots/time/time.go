@@ -9,17 +9,17 @@ import (
 	"github.com/google/go-github/v61/github"
 )
 
-type bot struct{}
+func New() sdk.Bot {
+	name := "time"
 
-func New() sdk.Bot { return bot{} }
+	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error {
+		cli := sdk.NewGitHubClient(ctx, *pre.Repo.Owner.Login, *pre.Repo.Name, name)
+		defer cli.Close(ctx)
 
-func (b bot) Name() string { return "time" }
+		return cli.SetComment(ctx, pr, name, fmt.Sprintf("The time is now %s", time.Now().Format(time.RFC3339)))
+	})
 
-func (b bot) OnPullRequest(ctx context.Context, pr *github.PullRequest) error {
-	owner, repo := *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name
-
-	client := sdk.NewGitHubClient(ctx, owner, repo, b.Name())
-	defer client.Close(ctx)
-
-	return client.SetComment(ctx, pr, b.Name(), fmt.Sprintf("The time is now %s", time.Now().Format(time.RFC3339)))
+	return sdk.NewBot(name,
+		sdk.BotWithHandler(handler),
+	)
 }
