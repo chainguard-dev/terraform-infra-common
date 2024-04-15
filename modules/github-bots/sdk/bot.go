@@ -3,6 +3,7 @@ package sdk
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -18,25 +19,39 @@ import (
 
 type Bot struct {
 	Name     string
-	Handlers map[EventType][]EventHandlerFunc
+	Handlers map[EventType]EventHandlerFunc
 }
 
-func NewBot(name string) Bot {
-	return Bot{
+type BotOptions func(*Bot)
+
+func NewBot(name string, opts ...BotOptions) Bot {
+	bot := Bot{
 		Name:     name,
-		Handlers: make(map[EventType][]EventHandlerFunc),
+		Handlers: make(map[EventType]EventHandlerFunc),
+	}
+
+	for _, opt := range opts {
+		opt(&bot)
+	}
+
+	return bot
+}
+
+func BotWithHandler(handler EventHandlerFunc) BotOptions {
+	return func(b *Bot) {
+		b.RegisterHandler(handler)
 	}
 }
 
 func (b *Bot) RegisterHandler(handler EventHandlerFunc) {
 	etype := handler.EventType()
-	if _, ok := b.Handlers[etype]; !ok {
-		b.Handlers[etype] = make([]EventHandlerFunc, 0)
+	if _, ok := b.Handlers[etype]; ok {
+		panic(fmt.Sprintf("handler for event type %s already registered", etype))
 	}
-	b.Handlers[etype] = append(b.Handlers[etype], handler)
+	b.Handlers[etype] = handler
 }
 
-func Serve(b Bot) error {
+func Serve(b Bot) {
 	var env struct {
 		Port int `envconfig:"PORT" default:"8080" required:"true"`
 	}
@@ -82,45 +97,37 @@ func Serve(b Bot) error {
 		logger.Info("handling event", "type", event.Type())
 
 		// dispatch event to n handlers
-		if handlers, ok := b.Handlers[EventType(event.Type())]; ok {
-			for _, handler := range handlers {
-				switch h := handler.(type) {
-				case WorkflowRunHandler:
-					logger.Debug("handling workflow run event")
+		if handler, ok := b.Handlers[EventType(event.Type())]; ok {
+			switch h := handler.(type) {
+			case WorkflowRunHandler:
+				logger.Debug("handling workflow run event")
 
-					var wre schemas.Wrapper[github.WorkflowRunEvent]
-					if err := event.DataAs(&wre); err != nil {
-						return err
-					}
-
-					wr := &github.WorkflowRun{}
-					if err := marshalTo(wre.Body.WorkflowRun, wr); err != nil {
-						return err
-					}
-
-					cli := NewGitHubClient(ctx, *wre.Body.Repo.Owner.Login, *wre.Body.Repo.Name, b.Name)
-					defer cli.Close(ctx)
-
-					return h(ctx, cli, wr)
-
-				case PullRequestHandler:
-					logger.Debug("handling pull request event")
-
-					var pre schemas.Wrapper[github.PullRequestEvent]
-					if err := event.DataAs(&pre); err != nil {
-						return err
-					}
-
-					pr := &github.PullRequest{}
-					if err := marshalTo(pre.Body.PullRequest, pr); err != nil {
-						return err
-					}
-
-					cli := NewGitHubClient(ctx, *pre.Body.Repo.Owner.Login, *pre.Body.Repo.Name, b.Name)
-					defer cli.Close(ctx)
-
-					return h(ctx, cli, pr)
+				var wre schemas.Wrapper[github.WorkflowRunEvent]
+				if err := event.DataAs(&wre); err != nil {
+					return err
 				}
+
+				wr := &github.WorkflowRun{}
+				if err := marshalTo(wre.Body.WorkflowRun, wr); err != nil {
+					return err
+				}
+
+				return h(ctx, wre.Body, wr)
+
+			case PullRequestHandler:
+				logger.Debug("handling pull request event")
+
+				var pre schemas.Wrapper[github.PullRequestEvent]
+				if err := event.DataAs(&pre); err != nil {
+					return err
+				}
+
+				pr := &github.PullRequest{}
+				if err := marshalTo(pre.Body.PullRequest, pr); err != nil {
+					return err
+				}
+
+				return h(ctx, pre.Body, pr)
 			}
 		}
 
@@ -128,10 +135,7 @@ func Serve(b Bot) error {
 		return nil
 	}); err != nil {
 		clog.Fatalf("failed to start event receiver, %v", err)
-		return err
 	}
-
-	return nil
 }
 
 func marshalTo(source any, target any) error {

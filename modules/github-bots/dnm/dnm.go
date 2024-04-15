@@ -8,27 +8,27 @@ import (
 	"github.com/google/go-github/v61/github"
 )
 
+const label = "blocking/dnm"
+
 func New() sdk.Bot {
 	name := "dnm"
 
-	bot := sdk.NewBot(name)
-	bot.RegisterHandler(dnmHandler())
+	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error {
+		cli := sdk.NewGitHubClient(ctx, *pre.Repo.Owner.Login, *pre.Repo.Name, name)
+		defer cli.Close(ctx)
 
-	return bot
-}
-
-const label = "blocking/dnm"
-
-func dnmHandler() sdk.PullRequestHandler {
-	return func(ctx context.Context, client sdk.GitHubClient, pr *github.PullRequest) error {
 		// If the title contains some variant of "dnm" and the PR doesn't have the label, add it -- this will no-op if it already has it.
-		for _, dnm := range []string{"dnm", "do not merge", "donotmerge", "do-not-merge"} {
+		for _, dnm := range []string{name, "do not merge", "donotmerge", "do-not-merge"} {
 			if strings.Contains(strings.ToLower(*pr.Title), dnm) {
-				return client.AddLabel(ctx, pr, label)
+				return cli.AddLabel(ctx, pr, label)
 			}
 		}
 
 		// If it has the label and the title doesn't match, remove the label -- this will no-op if it already doesn't have it.
-		return client.RemoveLabel(ctx, pr, label)
-	}
+		return cli.RemoveLabel(ctx, pr, label)
+	})
+
+	return sdk.NewBot(name,
+		sdk.BotWithHandler(handler),
+	)
 }

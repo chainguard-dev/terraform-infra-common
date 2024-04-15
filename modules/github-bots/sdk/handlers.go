@@ -10,13 +10,13 @@ type EventHandlerFunc interface {
 	EventType() EventType
 }
 
-type PullRequestHandler func(ctx context.Context, client GitHubClient, pr *github.PullRequest) error
+type PullRequestHandler func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error
 
 func (r PullRequestHandler) EventType() EventType {
 	return PullRequestEvent
 }
 
-type WorkflowRunHandler func(ctx context.Context, client GitHubClient, wr *github.WorkflowRun) error
+type WorkflowRunHandler func(ctx context.Context, wre github.WorkflowRunEvent, wr *github.WorkflowRun) error
 
 func (r WorkflowRunHandler) EventType() EventType {
 	return WorkflowRunEvent

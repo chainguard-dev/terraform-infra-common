@@ -18,15 +18,12 @@ import (
 func New() sdk.Bot {
 	name := "blocker"
 
-	bot := sdk.NewBot(name)
-	bot.RegisterHandler(blockHandler(name))
-
-	return bot
-}
-
-func blockHandler(name string) sdk.PullRequestHandler {
-	return func(ctx context.Context, client sdk.GitHubClient, pr *github.PullRequest) error {
+	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error {
 		log := clog.FromContext(ctx)
+
+		cli := sdk.NewGitHubClient(ctx, *pre.Repo.Owner.Login, *pre.Repo.Name, name)
+		defer cli.Close(ctx)
+
 		owner, repo := *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name
 
 		hasBlockingLabel := slices.ContainsFunc(pr.Labels, func(l *github.Label) bool {
@@ -41,14 +38,14 @@ func blockHandler(name string) sdk.PullRequestHandler {
 		sha := *pr.Head.SHA
 
 		// If there are no check runs for the current head SHA, create one with the conclusion.
-		crs, _, err := client.Client().Checks.ListCheckRunsForRef(ctx, owner, repo, sha, &github.ListCheckRunsOptions{CheckName: github.String(name)})
+		crs, _, err := cli.Client().Checks.ListCheckRunsForRef(ctx, owner, repo, sha, &github.ListCheckRunsOptions{CheckName: github.String(name)})
 		if err != nil {
 			return fmt.Errorf("listing check runs: %w", err)
 		}
 		if len(crs.CheckRuns) == 0 {
 			log.Infof("Creating CheckRun for PR %d sha %s with conclusion %s", *pr.Number, sha, conclusion)
-			if _, _, err := client.Client().Checks.CreateCheckRun(ctx, owner, repo, github.CreateCheckRunOptions{
-				// Name:       b.Name,
+			if _, _, err := cli.Client().Checks.CreateCheckRun(ctx, owner, repo, github.CreateCheckRunOptions{
+				Name:       name,
 				HeadSHA:    sha,
 				Status:     github.String("completed"),
 				Conclusion: &conclusion,
@@ -66,7 +63,7 @@ func blockHandler(name string) sdk.PullRequestHandler {
 
 		// If there's already a check run, update its conclusion.
 		log.Infof("Updating CheckRun for PR %d sha %s with conclusion %s", *pr.Number, sha, conclusion)
-		if _, _, err = client.Client().Checks.UpdateCheckRun(ctx, owner, repo, *crs.CheckRuns[0].ID, github.UpdateCheckRunOptions{
+		if _, _, err = cli.Client().Checks.UpdateCheckRun(ctx, owner, repo, *crs.CheckRuns[0].ID, github.UpdateCheckRunOptions{
 			Name:       name,
 			Status:     github.String("completed"),
 			Conclusion: &conclusion,
@@ -78,5 +75,9 @@ func blockHandler(name string) sdk.PullRequestHandler {
 			return fmt.Errorf("updating check run %d: %w", *crs.CheckRuns[0].ID, err)
 		}
 		return nil
-	}
+	})
+
+	return sdk.NewBot(name,
+		sdk.BotWithHandler(handler),
+	)
 }

@@ -12,14 +12,14 @@ import (
 func New() sdk.Bot {
 	name := "time"
 
-	bot := sdk.NewBot(name)
-	bot.RegisterHandler(timeHandler(name))
+	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error {
+		cli := sdk.NewGitHubClient(ctx, *pre.Repo.Owner.Login, *pre.Repo.Name, name)
+		defer cli.Close(ctx)
 
-	return bot
-}
+		return cli.SetComment(ctx, pr, name, fmt.Sprintf("The time is now %s", time.Now().Format(time.RFC3339)))
+	})
 
-func timeHandler(name string) sdk.PullRequestHandler {
-	return func(ctx context.Context, client sdk.GitHubClient, pr *github.PullRequest) error {
-		return client.SetComment(ctx, pr, name, fmt.Sprintf("The time is now %s", time.Now().Format(time.RFC3339)))
-	}
+	return sdk.NewBot(name,
+		sdk.BotWithHandler(handler),
+	)
 }
