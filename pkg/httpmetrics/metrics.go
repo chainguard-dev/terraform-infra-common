@@ -51,7 +51,7 @@ var (
 			Name: "http_inflight_requests",
 			Help: "A gauge of requests currently being served by the wrapped handler.",
 		},
-		[]string{"handler", "service_name", "configuration_name", "revision_name"},
+		[]string{"handler", "service_name", "revision_name"},
 	)
 	duration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -60,7 +60,7 @@ var (
 			// TODO: tweak bucket values based on real usage.
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
 		},
-		[]string{"handler", "method", "service_name", "configuration_name", "revision_name"},
+		[]string{"handler", "method", "service_name", "revision_name"},
 	)
 	responseSize = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -69,22 +69,21 @@ var (
 			// TODO: tweak bucket values based on real usage.
 			Buckets: []float64{200, 500, 900, 1500},
 		},
-		[]string{"handler", "method", "service_name", "configuration_name", "revision_name"},
+		[]string{"handler", "method", "service_name", "revision_name"},
 	)
 	counter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_request_status",
 			Help: "The number of processed events by response code",
 		},
-		[]string{"handler", "method", "code", "service_name", "configuration_name", "revision_name", "ce_type"},
+		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type"},
 	)
 )
 
 // https://cloud.google.com/run/docs/container-contract#services-env-vars
 var env struct {
-	KnativeServiceName       string `envconfig:"K_SERVICE" default:"unknown"`
-	KnativeConfigurationName string `envconfig:"K_CONFIGURATION" default:"unknown"`
-	KnativeRevisionName      string `envconfig:"K_REVISION" default:"unknown"`
+	KnativeServiceName  string `envconfig:"K_SERVICE" default:"unknown"`
+	KnativeRevisionName string `envconfig:"K_REVISION" default:"unknown"`
 }
 
 func init() {
@@ -96,10 +95,9 @@ func init() {
 // Handler wraps a given http handler in standard metrics handlers.
 func Handler(name string, handler http.Handler) http.Handler {
 	labels := prometheus.Labels{
-		"handler":            name,
-		"service_name":       env.KnativeServiceName,
-		"configuration_name": env.KnativeConfigurationName,
-		"revision_name":      env.KnativeRevisionName,
+		"handler":       name,
+		"service_name":  env.KnativeServiceName,
+		"revision_name": env.KnativeRevisionName,
 	}
 	return promhttp.InstrumentHandlerInFlight(
 		inFlightGauge.With(labels),
