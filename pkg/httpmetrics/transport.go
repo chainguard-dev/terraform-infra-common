@@ -58,7 +58,8 @@ func WrapTransport(t http.RoundTripper) http.RoundTripper {
 		instrumentRoundTripperInFlight(
 			instrumentRoundTripperDuration(
 				instrumentGitHubRateLimits(
-					otelhttp.NewTransport(t)))))
+					instrumentDockerHubRateLimit(
+						otelhttp.NewTransport(t))))))
 }
 
 func mapErrorToLabel(err error) string {
@@ -240,6 +241,71 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			if reset > 0 {
 				timeToReset := time.Until(time.Unix(int64(reset), 0)).Minutes()
 				mGitHubRateLimitTimeToReset.With(prometheus.Labels{"resource": resource}).Set(timeToReset)
+			}
+		}
+		return resp, err
+	}
+}
+
+var (
+	mDockerRateLimitRemaining = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "docker_rate_limit_remaining",
+			Help: "The number of requests remaining in the current rate limit window",
+		},
+	)
+	mDockerRateLimit = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "docker_rate_limit",
+			Help: "The number of requests allowed during the rate limit window",
+		},
+	)
+	mDockerRateLimitUsed = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "docker_rate_limit_used",
+			Help: "The fraction of the rate limit window used",
+		},
+	)
+)
+
+func instrumentDockerHubRateLimit(next http.RoundTripper) promhttp.RoundTripperFunc {
+	return func(r *http.Request) (*http.Response, error) {
+		resp, err := next.RoundTrip(r)
+		if err != nil {
+			return resp, err
+		}
+		if r.URL.Host == "index.docker.io" {
+			// https://www.docker.com/blog/checking-your-current-docker-pull-rate-limits-and-status/
+			// Values are like:
+			// "Ratelimit-Limit: 100;w=21600" indicating "100 requests per 21600 seconds" (6 hours)
+			// "Ratelimit-Remaining: 98;w=21600" indicating "98 requests remaining in the current 6 hour window"
+			val := func(key string) float64 {
+				val := resp.Header.Get(key)
+				if val == "" {
+					return 0
+				}
+				val, _, ok := strings.Cut(";", val)
+				if !ok {
+					return 0
+				}
+				i, err := strconv.Atoi(val)
+				if err != nil {
+					return 0
+				}
+				return float64(i)
+			}
+
+			remaining := val("RateLimit-Remaining")
+			if remaining > 0 {
+				mDockerRateLimitRemaining.Set(remaining)
+			}
+
+			limit := val("RateLimit-Limit")
+
+			if limit > 0 {
+				mDockerRateLimit.Set(limit)
+				used := (limit - remaining) / limit
+				mDockerRateLimitUsed.Set(used)
 			}
 		}
 		return resp, err
