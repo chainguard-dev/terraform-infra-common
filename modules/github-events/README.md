@@ -139,7 +139,6 @@ No requirements.
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
-| <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
 | <a name="module_trampoline-emits-events"></a> [trampoline-emits-events](#module\_trampoline-emits-events) | ../authorize-private-service | n/a |
 | <a name="module_webhook-secret"></a> [webhook-secret](#module\_webhook-secret) | ../secret | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
