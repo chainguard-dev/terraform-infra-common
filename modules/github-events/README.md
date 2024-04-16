@@ -112,6 +112,11 @@ module "github-events" {
 
 The `public-urls` output will be populated with the `.run.app` URL for each regional service, which can be used to configure the GitHub webhook for testing.
 
+## Using with `cloudevent-recorder`
+
+The event payloads produced by this module are the full GitHub webhook payloads, and are not transformed in any way. If you want to record these events using `cloudevent-recorder`, you must set `ignore_unknown_fields`, since event payloads will not match the schema.
+
+The schemas that describe which fields get recorded are defined in `./schemas/event_types.go`, and the BQ schemas are generated using `./cmd/schemagen`. To add fields or new types, modify the `event_types.go` file and run `go generate ./...`.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
