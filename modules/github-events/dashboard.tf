@@ -1,9 +1,3 @@
-module "topic" {
-  source       = "../dashboard/sections/topic"
-  title        = "Notification Topic"
-  topic_prefix = var.name
-}
-
 module "logs" {
   source = "../dashboard/sections/logs"
   title  = "Service Logs"
@@ -31,7 +25,6 @@ module "width" { source = "../dashboard/sections/width" }
 module "layout" {
   source = "../dashboard/sections/layout"
   sections = [
-    module.topic.section,
     module.logs.section,
     module.http.section,
     module.resources.section,
