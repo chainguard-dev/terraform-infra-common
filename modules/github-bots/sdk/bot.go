@@ -12,6 +12,7 @@ import (
 	"github.com/chainguard-dev/clog/gcp"
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/go-github/v61/github"
 	"github.com/kelseyhightower/envconfig"
@@ -72,13 +73,8 @@ func Serve(b Bot) {
 		"octo-sts.dev":   "octosts",
 	})
 
-	c, err := cloudevents.NewClientHTTP(
+	c, err := mce.NewClientHTTP(
 		cloudevents.WithPort(env.Port),
-		cloudevents.WithMiddleware(func(next http.Handler) http.Handler {
-			return httpmetrics.HandlerFunc(b.Name, func(w http.ResponseWriter, r *http.Request) {
-				next.ServeHTTP(w, r)
-			})
-		}),
 	)
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)

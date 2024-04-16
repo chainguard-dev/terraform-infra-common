@@ -20,6 +20,8 @@ import (
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cgpubsub "github.com/chainguard-dev/terraform-infra-common/pkg/pubsub"
 )
 
@@ -42,7 +44,10 @@ func main() {
 		clog.Fatalf("failed to process env var: %s", err)
 	}
 
-	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
+	go httpmetrics.ServeMetrics()
+	httpmetrics.SetupTracer(ctx)
+
+	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {
 		clog.Fatalf("failed to create CE client, %v", err)
 	}
