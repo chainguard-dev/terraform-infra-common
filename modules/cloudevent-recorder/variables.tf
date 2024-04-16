@@ -100,3 +100,9 @@ variable "cloud_storage_config_max_duration" {
   type        = number
   default     = 300 // default 5 minutes
 }
+
+variable "ignore_unknown_values" {
+  description = "Whether to ignore unknown values in the data, when transferring data to BigQuery."
+  type        = bool
+  default     = false
+}
