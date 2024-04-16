@@ -9,7 +9,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
+	"cloud.google.com/go/compute/metadata"
+	"github.com/chainguard-dev/clog"
 	"google.golang.org/api/idtoken"
 
 	"chainguard.dev/sdk/sts"
@@ -21,6 +24,17 @@ const (
 
 // Token mints a new octo sts token based on the policy for a given repo.
 func Token(ctx context.Context, policyName, org, repo string) (string, error) {
+	// To help enable local development, we allow the use of a GitHub token,
+	// but *only when not running on GCE*.
+	if tok := os.Getenv("GH_TOKEN"); tok != "" && !metadata.OnGCE() {
+		clog.Warnf("using GH_TOKEN for token exchange")
+		return tok, nil
+	}
+	if tok := os.Getenv("GITHUB_TOKEN"); tok != "" && !metadata.OnGCE() {
+		clog.Warnf("using GITHUB_TOKEN for token exchange")
+		return tok, nil
+	}
+
 	scope := org
 	if repo != "" {
 		scope = fmt.Sprintf("%s/%s", org, repo)
