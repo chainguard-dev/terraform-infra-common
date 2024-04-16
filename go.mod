@@ -5,7 +5,7 @@ go 1.21.6
 require (
 	chainguard.dev/sdk v0.1.19
 	cloud.google.com/go/bigquery v1.60.0
-	cloud.google.com/go/compute/metadata v0.2.3
+	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/pubsub v1.37.0
 	github.com/chainguard-dev/clog v1.3.1
 	github.com/cloudevents/sdk-go/v2 v2.15.2
@@ -27,7 +27,6 @@ require (
 require (
 	chainguard.dev/go-grpc-kit v0.17.2 // indirect
 	cloud.google.com/go v0.112.1 // indirect
-	cloud.google.com/go/compute v1.25.0 // indirect
 	cloud.google.com/go/iam v1.1.7 // indirect
 	cloud.google.com/go/storage v1.39.1 // indirect
 	github.com/apache/arrow/go/v14 v14.0.2 // indirect
