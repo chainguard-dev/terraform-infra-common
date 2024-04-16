@@ -12,12 +12,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"reflect"
 	"time"
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
-	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
@@ -30,11 +28,6 @@ type envConfig struct {
 	Port          int    `envconfig:"PORT" default:"8080" required:"true"`
 	IngressURI    string `envconfig:"EVENT_INGRESS_URI" required:"true"`
 	WebhookSecret string `envconfig:"WEBHOOK_SECRET" required:"true"`
-}
-
-var types = map[string]interface{}{
-	"dev.chainguard.github.workflow_run": schemas.WorkflowRunEvent{},
-	"dev.chainguard.github.pull_request": schemas.PullRequestEvent{},
 }
 
 func main() {
@@ -82,23 +75,6 @@ func main() {
 		}
 		t = "dev.chainguard.github." + t
 		log = log.With("event-type", t)
-
-		var obj interface{}
-		// If it's a known type, we decode into that type so only the known fields are populated.
-		// Otherwise, we decode into a generic interface{} and forward the full event payload.
-		if typ, known := types[t]; known {
-			// Make a defensive copy of the type so we don't populate the original.
-			cp := reflect.New(reflect.TypeOf(typ)).Interface()
-			err = json.Unmarshal(payload, &cp)
-			obj = cp
-		} else {
-			err = json.Unmarshal(payload, &obj)
-		}
-		if err != nil {
-			log.Errorf("failed to decode body: %v", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 		log.Debugf("forwarding event: %s", t)
 
 		event := cloudevents.NewEvent()
@@ -106,9 +82,12 @@ func main() {
 		event.SetSource(r.Host)
 		// TODO: Extract organization and repo to set in subject, for better filtering.
 		// event.SetSubject(fmt.Sprintf("%s/%s", org, repo))
-		if err := event.SetData(cloudevents.ApplicationJSON, schemas.Wrapper[interface{}]{
+		if err := event.SetData(cloudevents.ApplicationJSON, struct {
+			When time.Time       `json:"when"`
+			Body json.RawMessage `json:"body"`
+		}{
 			When: time.Now(),
-			Body: obj,
+			Body: payload,
 		}); err != nil {
 			log.Errorf("failed to set data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)

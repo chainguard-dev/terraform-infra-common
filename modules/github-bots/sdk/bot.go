@@ -69,7 +69,7 @@ func Serve(b Bot) {
 	httpmetrics.SetupTracer(ctx)
 	httpmetrics.SetBuckets(map[string]string{
 		"api.github.com": "github",
-		"octosts.dev":    "octosts",
+		"octo-sts.dev":   "octosts",
 	})
 
 	c, err := cloudevents.NewClientHTTP(
