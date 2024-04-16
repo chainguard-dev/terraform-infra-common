@@ -6,9 +6,11 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/chainguard-dev/clog"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -51,7 +53,7 @@ var (
 			Name: "http_inflight_requests",
 			Help: "A gauge of requests currently being served by the wrapped handler.",
 		},
-		[]string{"handler", "service_name", "revision_name"},
+		[]string{"handler", "service_name", "revision_name", "email"},
 	)
 	duration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -60,7 +62,7 @@ var (
 			// TODO: tweak bucket values based on real usage.
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
 		},
-		[]string{"handler", "method", "service_name", "revision_name"},
+		[]string{"handler", "method", "service_name", "revision_name", "email"},
 	)
 	responseSize = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -69,14 +71,14 @@ var (
 			// TODO: tweak bucket values based on real usage.
 			Buckets: []float64{200, 500, 900, 1500},
 		},
-		[]string{"handler", "method", "service_name", "revision_name"},
+		[]string{"handler", "method", "service_name", "revision_name", "email"},
 	)
 	counter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_request_status",
 			Help: "The number of processed events by response code",
 		},
-		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type"},
+		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type", "email"},
 	)
 )
 
@@ -94,24 +96,71 @@ func init() {
 
 // Handler wraps a given http handler in standard metrics handlers.
 func Handler(name string, handler http.Handler) http.Handler {
-	labels := prometheus.Labels{
-		"handler":       name,
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
-	}
-	return promhttp.InstrumentHandlerInFlight(
-		inFlightGauge.With(labels),
-		promhttp.InstrumentHandlerDuration(
-			duration.MustCurryWith(labels),
-			instrumentHandlerCounter(
-				counter.MustCurryWith(labels),
-				promhttp.InstrumentHandlerResponseSize(
-					responseSize.MustCurryWith(labels),
-					otelhttp.NewHandler(handler, ""),
+	verify := extractCloudRunCaller()
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		labels := prometheus.Labels{
+			"handler":       name,
+			"service_name":  env.KnativeServiceName,
+			"revision_name": env.KnativeRevisionName,
+			"email":         "unknown",
+		}
+
+		if token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "); token != "" {
+			if email, ok := verify(r.Context(), token); ok {
+				labels["email"] = email
+			}
+		}
+
+		h := promhttp.InstrumentHandlerInFlight(
+			inFlightGauge.With(labels),
+			promhttp.InstrumentHandlerDuration(
+				duration.MustCurryWith(labels),
+				instrumentHandlerCounter(
+					counter.MustCurryWith(labels),
+					promhttp.InstrumentHandlerResponseSize(
+						responseSize.MustCurryWith(labels),
+						otelhttp.NewHandler(handler, ""),
+					),
 				),
 			),
-		),
-	)
+		)
+
+		h.ServeHTTP(w, r)
+	})
+}
+
+func extractCloudRunCaller() func(context.Context, string) (string, bool) {
+	provider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
+	if err != nil {
+		// If we are unable to build a provider for Google, then this is likely
+		// being used somewhere other than Cloud Run, so fast-path to returning
+		// false.
+		return func(context.Context, string) (string, bool) {
+			return "", false
+		}
+	}
+
+	verifier := provider.Verifier(&oidc.Config{
+		// When on Cloud Run, this is checked by the platform.
+		SkipClientIDCheck: true,
+	})
+	return func(ctx context.Context, token string) (string, bool) {
+		tok, err := verifier.Verify(ctx, token)
+		if err != nil {
+			// If the issuer isn't Google, then this may be a public service
+			// with its own auth.
+			return "", false
+		}
+		var claims struct {
+			Email         string `json:"email"`
+			EmailVerified bool   `json:"email_verified"`
+		}
+		if err := tok.Claims(&claims); err == nil {
+			return claims.Email, claims.EmailVerified
+		}
+		return "", false
+	}
 }
 
 // Handler wraps a given http handler func in standard metrics handlers.
