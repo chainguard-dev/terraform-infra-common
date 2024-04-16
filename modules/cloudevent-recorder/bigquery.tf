@@ -112,6 +112,7 @@ resource "google_bigquery_data_transfer_config" "import-job" {
     file_format                     = "JSON"
     max_bad_records                 = 0
     delete_source_files             = false
+    ignore_unknown_values           = var.ignore_unknown_values
   }
 }
 
