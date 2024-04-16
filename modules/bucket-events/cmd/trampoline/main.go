@@ -17,9 +17,8 @@ import (
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
-	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
-	"google.golang.org/api/idtoken"
 	"google.golang.org/api/storage/v1"
 
 	"github.com/kelseyhightower/envconfig"
@@ -45,19 +44,15 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	log := clog.FromContext(ctx)
 
-	log.Debugf("env: %+v", env)
+	go httpmetrics.ServeMetrics()
+	httpmetrics.SetupTracer(ctx)
 
-	c, err := idtoken.NewClient(ctx, env.IngressURI)
+	clog.DebugContextf(ctx, "env: %+v", env)
+
+	ceclient, err := mce.NewClientHTTP(mce.WithTarget(ctx, env.IngressURI)...)
 	if err != nil {
-		log.Fatalf("failed to create idtoken client: %v", err) //nolint:gocritic
-	}
-	ceclient, err := cloudevents.NewClientHTTP(
-		cloudevents.WithTarget(env.IngressURI),
-		cehttp.WithClient(http.Client{Transport: httpmetrics.WrapTransport(c.Transport)}))
-	if err != nil {
-		log.Fatalf("failed to create cloudevents client: %v", err)
+		clog.FatalContextf(ctx, "failed to create cloudevents client: %v", err)
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -113,5 +108,5 @@ func main() {
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
-	log.Fatalf("ListenAndServe: %v", srv.ListenAndServe())
+	clog.FatalContextf(ctx, "ListenAndServe: %v", srv.ListenAndServe())
 }

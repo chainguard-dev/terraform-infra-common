@@ -13,6 +13,8 @@ import (
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -30,7 +32,10 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	c, err := cloudevents.NewClientHTTP(cloudevents.WithPort(env.Port))
+	go httpmetrics.ServeMetrics()
+	httpmetrics.SetupTracer(ctx)
+
+	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
