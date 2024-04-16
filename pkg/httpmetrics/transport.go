@@ -23,14 +23,14 @@ var (
 			Name: "http_client_request_count",
 			Help: "The total number of HTTP requests",
 		},
-		[]string{"code", "method", "host", "service_name", "configuration_name", "revision_name", "ce_type"},
+		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type"},
 	)
 	mReqInFlight = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "http_client_request_in_flight",
 			Help: "The number of outgoing HTTP requests currently inflight",
 		},
-		[]string{"method", "host", "service_name", "configuration_name", "revision_name", "ce_type"},
+		[]string{"method", "host", "service_name", "revision_name", "ce_type"},
 	)
 	mReqDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -38,7 +38,7 @@ var (
 			Help:    "The duration of HTTP requests",
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
 		},
-		[]string{"code", "method", "host", "service_name", "configuration_name", "revision_name", "ce_type"},
+		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type"},
 	)
 	seenHostMap = make(map[string]int)
 )
@@ -88,23 +88,21 @@ func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripper
 		resp, err := next.RoundTrip(r)
 		if err == nil {
 			mReqCount.With(prometheus.Labels{
-				"code":               fmt.Sprintf("%d", resp.StatusCode),
-				"method":             r.Method,
-				"host":               bucketize(r.URL.Host),
-				"service_name":       env.KnativeServiceName,
-				"configuration_name": env.KnativeConfigurationName,
-				"revision_name":      env.KnativeRevisionName,
-				"ce_type":            r.Header.Get(CeTypeHeader),
+				"code":          fmt.Sprintf("%d", resp.StatusCode),
+				"method":        r.Method,
+				"host":          bucketize(r.URL.Host),
+				"service_name":  env.KnativeServiceName,
+				"revision_name": env.KnativeRevisionName,
+				"ce_type":       r.Header.Get(CeTypeHeader),
 			}).Inc()
 		} else {
 			mReqCount.With(prometheus.Labels{
-				"code":               mapErrorToLabel(err),
-				"method":             r.Method,
-				"host":               bucketize(r.URL.Host),
-				"service_name":       env.KnativeServiceName,
-				"configuration_name": env.KnativeConfigurationName,
-				"revision_name":      env.KnativeRevisionName,
-				"ce_type":            r.Header.Get(CeTypeHeader),
+				"code":          mapErrorToLabel(err),
+				"method":        r.Method,
+				"host":          bucketize(r.URL.Host),
+				"service_name":  env.KnativeServiceName,
+				"revision_name": env.KnativeRevisionName,
+				"ce_type":       r.Header.Get(CeTypeHeader),
 			}).Inc()
 		}
 		return resp, err
@@ -114,12 +112,11 @@ func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripper
 func instrumentRoundTripperInFlight(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
 		g := mReqInFlight.With(prometheus.Labels{
-			"method":             r.Method,
-			"host":               bucketize(r.URL.Host),
-			"service_name":       env.KnativeServiceName,
-			"configuration_name": env.KnativeConfigurationName,
-			"revision_name":      env.KnativeRevisionName,
-			"ce_type":            r.Header.Get(CeTypeHeader),
+			"method":        r.Method,
+			"host":          bucketize(r.URL.Host),
+			"service_name":  env.KnativeServiceName,
+			"revision_name": env.KnativeRevisionName,
+			"ce_type":       r.Header.Get(CeTypeHeader),
 		})
 		g.Inc()
 		defer g.Dec()
@@ -133,13 +130,12 @@ func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTrippe
 		resp, err := next.RoundTrip(r)
 		if err == nil {
 			mReqDuration.With(prometheus.Labels{
-				"code":               fmt.Sprintf("%d", resp.StatusCode),
-				"method":             r.Method,
-				"host":               bucketize(r.URL.Host),
-				"service_name":       env.KnativeServiceName,
-				"configuration_name": env.KnativeConfigurationName,
-				"revision_name":      env.KnativeRevisionName,
-				"ce_type":            r.Header.Get(CeTypeHeader),
+				"code":          fmt.Sprintf("%d", resp.StatusCode),
+				"method":        r.Method,
+				"host":          bucketize(r.URL.Host),
+				"service_name":  env.KnativeServiceName,
+				"revision_name": env.KnativeRevisionName,
+				"ce_type":       r.Header.Get(CeTypeHeader),
 			}).Observe(time.Since(start).Seconds())
 		}
 		return resp, err
