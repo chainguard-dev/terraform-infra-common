@@ -7,12 +7,13 @@ resource "google_compute_network" "this" {
   delete_default_routes_on_create = true
 }
 
-// Create a default route to the Internet.
-resource "google_compute_route" "egress-inet" {
+// Allow private Google access from the VPC.
+resource "google_compute_route" "private-google-access" {
   name    = var.name
   network = google_compute_network.this.name
 
-  dest_range       = "0.0.0.0/0"
+  # https://cloud.google.com/vpc/docs/configure-private-google-access-hybrid#config
+  dest_range       = "199.36.153.8/30"
   next_hop_gateway = "default-internet-gateway"
 }
 
