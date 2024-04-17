@@ -51,7 +51,8 @@ func main() {
 	go httpmetrics.ServeMetrics()
 	httpmetrics.SetupTracer(ctx)
 
-	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port))
+	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port),
+		cehttp.WithRequestDataAtContextMiddleware() /* give request headers to the handler context */)
 	if err != nil {
 		clog.Fatalf("failed to create CE client, %v", err)
 	}
