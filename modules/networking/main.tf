@@ -17,6 +17,11 @@ resource "google_compute_route" "private-google-access" {
   next_hop_gateway = "default-internet-gateway"
 }
 
+moved {
+  from = google_compute_route.egress-inet
+  to   = google_compute_route.private-google-access
+}
+
 // Create regional subnets in each of the specified regions,
 // which we will use to operate Cloud Run services.
 resource "google_compute_subnetwork" "regional" {
