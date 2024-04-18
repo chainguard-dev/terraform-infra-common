@@ -51,7 +51,7 @@ resource "google_dns_managed_zone" "private-google-com" {
   }
 }
 
-// Create a record for *.run.app that points to private.googleapis.com
+// Create a record for *.google.com that points to private.googleapis.com
 resource "google_dns_record_set" "private-google-com-cname" {
   project      = var.project_id
   name         = "*.google.com."
