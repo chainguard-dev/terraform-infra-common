@@ -36,8 +36,18 @@ module "bots" {
 
   name         = each.key
   github-event = each.value
-  source_code = {
-    importpath  = "./${each.key}"
+  containers = {
+    "bot" = {
+      source = {
+        importpath  = "./${each.key}"
+      }
+      env = [
+        {
+          name  = "FOO"
+          value = "BAR"
+        }
+      ]
+    }
   }
 }
 
@@ -88,12 +98,12 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_broker"></a> [broker](#input\_broker) | A map from each of the input region names to the name of the Broker topic in that region. | `map(string)` | n/a | yes |
+| <a name="input_containers"></a> [containers](#input\_containers) | The containers to run in the service.  Each container will be run in each region. | <pre>map(object({<br>    source = object({<br>      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc")<br>      working_dir = string<br>      importpath  = string<br>    })<br>    args = optional(list(string), [])<br>    ports = optional(list(object({<br>      name           = optional(string, "http1")<br>      container_port = optional(number, 8080)<br>    })), [])<br>    resources = optional(<br>      object(<br>        {<br>          limits = optional(object(<br>            {<br>              cpu    = string<br>              memory = string<br>            }<br>          ), null)<br>          cpu_idle          = optional(bool, true)<br>          startup_cpu_boost = optional(bool, false)<br>        }<br>      ),<br>      {<br>        cpu_idle = true<br>      }<br>    )<br>    env = optional(list(object({<br>      name  = string<br>      value = optional(string)<br>      value_source = optional(object({<br>        secret_key_ref = object({<br>          secret  = string<br>          version = string<br>        })<br>      }), null)<br>    })), [])<br>    regional-env = optional(list(object({<br>      name  = string<br>      value = map(string)<br>    })), [])<br>    volume_mounts = optional(list(object({<br>      name       = string<br>      mount_path = string<br>    })), [])<br>  }))</pre> | n/a | yes |
 | <a name="input_github-event"></a> [github-event](#input\_github-event) | The GitHub event type to subscribe to. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name of the bot. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
-| <a name="input_source_code"></a> [source\_code](#input\_source\_code) | The source code for the bot. | <pre>object({<br>    working_dir = string<br>    importpath  = string<br>  })</pre> | n/a | yes |
 
 ## Outputs
 
