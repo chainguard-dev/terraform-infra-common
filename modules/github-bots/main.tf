@@ -21,12 +21,55 @@ variable "broker" {
   type        = map(string)
 }
 
-variable "source_code" {
-  description = "The source code for the bot."
-  type = object({
-    working_dir = string
-    importpath  = string
-  })
+variable "containers" {
+  description = "The containers to run in the service.  Each container will be run in each region."
+  type = map(object({
+    source = object({
+      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc")
+      working_dir = string
+      importpath  = string
+    })
+    args = optional(list(string), [])
+    ports = optional(list(object({
+      name           = optional(string, "http1")
+      container_port = optional(number, 8080)
+    })), [])
+    resources = optional(
+      object(
+        {
+          limits = optional(object(
+            {
+              cpu    = string
+              memory = string
+            }
+          ), null)
+          cpu_idle          = optional(bool, true)
+          startup_cpu_boost = optional(bool, false)
+        }
+      ),
+      {
+        cpu_idle = true
+      }
+    )
+    env = optional(list(object({
+      name  = string
+      value = optional(string)
+      value_source = optional(object({
+        secret_key_ref = object({
+          secret  = string
+          version = string
+        })
+      }), null)
+    })), [])
+    regional-env = optional(list(object({
+      name  = string
+      value = map(string)
+    })), [])
+    volume_mounts = optional(list(object({
+      name       = string
+      mount_path = string
+    })), [])
+  }))
 }
 
 variable "github-event" {
@@ -64,12 +107,7 @@ module "service" {
 
   egress = "PRIVATE_RANGES_ONLY" // Makes GitHub API calls
 
-  containers = {
-    "${var.name}" = {
-      source = var.source_code
-      ports  = [{ container_port = 8080 }]
-    }
-  }
+  containers = var.containers
 
   notification_channels = var.notification_channels
 }
