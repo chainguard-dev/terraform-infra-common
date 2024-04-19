@@ -39,6 +39,34 @@ EOD
   default     = {}
 }
 
+variable "filter_has_attributes" {
+  description = <<EOD
+A Knative Trigger-style filter over the cloud event attribute prefixes.
+
+This can be used to filter on the presence of an event attribute, for example:
+
+  ["location"]
+
+In this case, any event with a type attribute of "location" will be delivered.
+EOD
+  type        = list(string)
+  default     = []
+}
+
+variable "filter_not_has_attributes" {
+  description = <<EOD
+A Knative Trigger-style filter over the cloud event attribute prefixes.
+
+This can be used to filter on the absence of an event attribute, for example:
+
+  ["location"]
+
+In this case, any event with a type attribute of "location" will NOT be delivered.
+EOD
+  type        = list(string)
+  default     = []
+}
+
 variable "private-service" {
   description = "The private cloud run service that is subscribing to these events."
   type = object({
