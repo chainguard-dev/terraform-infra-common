@@ -18,6 +18,15 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+// Define a type for keys used in context to prevent key collisions.
+type contextKey string
+
+// Define constants for the keys to use with context.WithValue.
+const (
+	ContextKeyAttributes contextKey = "ce-attributes"
+	ContextKeyType       contextKey = "ce-type"
+)
+
 type Bot struct {
 	Name     string
 	Handlers map[EventType]EventHandlerFunc
@@ -94,36 +103,60 @@ func Serve(b Bot) {
 
 		// dispatch event to n handlers
 		if handler, ok := b.Handlers[EventType(event.Type())]; ok {
+			// loop over all event headers and add them to the context so they can be used by the handlers
+			for k, v := range event.Context.GetExtensions() {
+				ctx = context.WithValue(ctx, contextKey(k), v)
+			}
+
+			// add existing event attributes to context so they can be used by the handlers
+			ctx = context.WithValue(ctx, ContextKeyAttributes, event.Extensions())
+			ctx = context.WithValue(ctx, ContextKeyType, event.Type())
+
 			switch h := handler.(type) {
 			case WorkflowRunHandler:
 				logger.Debug("handling workflow run event")
 
 				var wre schemas.Wrapper[github.WorkflowRunEvent]
 				if err := event.DataAs(&wre); err != nil {
+					logger.Errorf("failed to unmarshal workflow run event: %v", err)
 					return err
 				}
 
 				wr := &github.WorkflowRun{}
 				if err := marshalTo(wre.Body.WorkflowRun, wr); err != nil {
+					logger.Errorf("failed to marshal workflow run: %v", err)
 					return err
 				}
 
-				return h(ctx, wre.Body, wr)
+				err = h(ctx, wre.Body, wr)
+				if err != nil {
+					logger.Errorf("failed to handle workload run event: %v", err)
+					return err
+				}
+				logger.Debug("handled workflow run event")
+				return nil
 
 			case PullRequestHandler:
 				logger.Debug("handling pull request event")
 
 				var pre schemas.Wrapper[github.PullRequestEvent]
 				if err := event.DataAs(&pre); err != nil {
+					logger.Errorf("failed to unmarshal pull request event: %v", err)
 					return err
 				}
 
 				pr := &github.PullRequest{}
 				if err := marshalTo(pre.Body.PullRequest, pr); err != nil {
+					logger.Errorf("failed to marshal pull request event: %v", err)
 					return err
 				}
 
-				return h(ctx, pre.Body, pr)
+				err = h(ctx, pre.Body, pr)
+				if err != nil {
+					logger.Errorf("failed to handle pull request: %v", err)
+					return err
+				}
+				return nil
 			}
 		}
 
