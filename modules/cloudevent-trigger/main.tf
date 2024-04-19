@@ -61,6 +61,8 @@ locals {
   filter-elements = concat(
     [for key, value in var.filter : "attributes.ce-${key}=\"${value}\""],
     [for key, value in var.filter_prefix : "hasPrefix(attributes.ce-${key}, \"${value}\")"],
+    [for key in var.filter_has_attributes : "attributes:ce-${key}"],
+    [for key in var.filter_not_has_attributes : "NOT attributes:ce-${key}"],
   )
 }
 

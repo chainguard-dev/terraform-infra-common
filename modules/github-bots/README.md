@@ -83,7 +83,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cloudevent-trigger"></a> [cloudevent-trigger](#module\_cloudevent-trigger) | chainguard-dev/common/infra//modules/cloudevent-trigger | n/a |
+| <a name="module_cloudevent-trigger"></a> [cloudevent-trigger](#module\_cloudevent-trigger) | ../cloudevent-trigger | n/a |
 | <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | chainguard-dev/common/infra//modules/dashboard/cloudevent-receiver | n/a |
 | <a name="module_service"></a> [service](#module\_service) | chainguard-dev/common/infra//modules/regional-go-service | n/a |
 
@@ -99,6 +99,10 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_broker"></a> [broker](#input\_broker) | A map from each of the input region names to the name of the Broker topic in that region. | `map(string)` | n/a | yes |
 | <a name="input_containers"></a> [containers](#input\_containers) | The containers to run in the service.  Each container will be run in each region. | <pre>map(object({<br>    source = object({<br>      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc")<br>      working_dir = string<br>      importpath  = string<br>    })<br>    args = optional(list(string), [])<br>    ports = optional(list(object({<br>      name           = optional(string, "http1")<br>      container_port = optional(number, 8080)<br>    })), [])<br>    resources = optional(<br>      object(<br>        {<br>          limits = optional(object(<br>            {<br>              cpu    = string<br>              memory = string<br>            }<br>          ), null)<br>          cpu_idle          = optional(bool, true)<br>          startup_cpu_boost = optional(bool, false)<br>        }<br>      ),<br>      {<br>        cpu_idle = true<br>      }<br>    )<br>    env = optional(list(object({<br>      name  = string<br>      value = optional(string)<br>      value_source = optional(object({<br>        secret_key_ref = object({<br>          secret  = string<br>          version = string<br>        })<br>      }), null)<br>    })), [])<br>    regional-env = optional(list(object({<br>      name  = string<br>      value = map(string)<br>    })), [])<br>    volume_mounts = optional(list(object({<br>      name       = string<br>      mount_path = string<br>    })), [])<br>  }))</pre> | n/a | yes |
+| <a name="input_extra_filter"></a> [extra\_filter](#input\_extra\_filter) | Optional additional filters to include. | `map(string)` | `{}` | no |
+| <a name="input_extra_filter_has_attributes"></a> [extra\_filter\_has\_attributes](#input\_extra\_filter\_has\_attributes) | Optional additional attributes to check for presence. | `list(string)` | `[]` | no |
+| <a name="input_extra_filter_not_has_attributes"></a> [extra\_filter\_not\_has\_attributes](#input\_extra\_filter\_not\_has\_attributes) | Optional additional prefixes to check for presence. | `list(string)` | `[]` | no |
+| <a name="input_extra_filter_prefix"></a> [extra\_filter\_prefix](#input\_extra\_filter\_prefix) | Optional additional prefixes for filtering events. | `map(string)` | `{}` | no |
 | <a name="input_github-event"></a> [github-event](#input\_github-event) | The GitHub event type to subscribe to. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name of the bot. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |

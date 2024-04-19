@@ -112,16 +112,41 @@ module "service" {
   notification_channels = var.notification_channels
 }
 
+locals {
+  combined_filter = merge(
+    { "type" : var.github-event }, // Default filter setup
+    var.extra_filter               // Merges any additional filters provided
+  )
+
+  combined_filter_prefix = merge(
+    {},                     // Default empty map
+    var.extra_filter_prefix // Merges any provided prefix filters
+  )
+
+  combined_filter_has_attributes = concat(
+    [],                             // Default empty map
+    var.extra_filter_has_attributes // Merges any provided filters for attributes
+  )
+
+  combined_filter_not_has_attributes = concat(
+    [],                                 // Default empty map
+    var.extra_filter_not_has_attributes // Merges any provided filters for not attributes
+  )
+}
+
 module "cloudevent-trigger" {
   depends_on = [module.service]
 
   for_each = var.regions
-  source   = "chainguard-dev/common/infra//modules/cloudevent-trigger"
+  source   = "../cloudevent-trigger"
 
-  project_id = var.project_id
-  name       = "bot-trigger-${var.name}"
-  broker     = var.broker[each.key]
-  filter     = { "type" : var.github-event }
+  project_id                = var.project_id
+  name                      = "bot-trigger-${var.name}"
+  broker                    = var.broker[each.key]
+  filter                    = local.combined_filter
+  filter_prefix             = local.combined_filter_prefix
+  filter_has_attributes     = local.combined_filter_has_attributes
+  filter_not_has_attributes = local.combined_filter_not_has_attributes
 
   private-service = {
     region = each.key
