@@ -3,6 +3,8 @@ package sdk
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
@@ -130,4 +132,67 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 		return fmt.Errorf("creating comment: %w %v", err, resp.Status)
 	}
 	return nil
+}
+
+func (c GitHubClient) GetWorkflowRunLogs(ctx context.Context, wre github.WorkflowRunEvent) ([]byte, error) {
+	logURL, resp, err := c.inner.Actions.GetWorkflowRunLogs(ctx, *wre.Repo.Owner.Login, *wre.Repo.Name, *wre.WorkflowRun.ID, 3)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate log retrieval: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusFound {
+		return nil, fmt.Errorf("unexpected status code when getting logs: %s", resp.Status)
+	}
+
+	logsResp, err := http.Get(logURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("error fetching logs from URL: %w", err)
+	}
+	defer logsResp.Body.Close()
+
+	body, err := io.ReadAll(logsResp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading log response body: %w", err)
+	}
+
+	if logsResp.StatusCode != http.StatusOK {
+		if logsResp.StatusCode == http.StatusNotFound || logsResp.StatusCode == http.StatusGone {
+			return nil, fmt.Errorf("logs not found or expired")
+		}
+		return nil, fmt.Errorf("failed to fetch logs, status %d: %s", logsResp.StatusCode, string(body))
+	}
+
+	return body, nil
+}
+
+func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre github.WorkflowRunEvent) (int, error) {
+	opts := &github.PullRequestListOptions{
+		State:       "open",
+		Head:        fmt.Sprintf("%s:%s", *wre.Repo.Owner.Login, *wre.WorkflowRun.HeadBranch), // Filtering by branch name
+		ListOptions: github.ListOptions{PerPage: 10},
+	}
+	// Iterate through all pages of the results
+	for {
+		pulls, resp, err := c.inner.PullRequests.List(ctx, *wre.Repo.Owner.Login, *wre.Repo.Name, opts)
+		if err != nil {
+			return 0, fmt.Errorf("failed to list pull requests: %w", err)
+		}
+
+		// Check each pull request to see if the commit SHA matches
+		for _, pr := range pulls {
+			if *pr.Head.SHA == *wre.WorkflowRun.HeadSHA {
+				return *pr.Number, nil
+			}
+		}
+
+		// Check if there is another page of results
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opts.Page = resp.NextPage // Update to fetch the next page
+	}
+
+	return 0, fmt.Errorf("no matching pull request found")
 }
