@@ -18,6 +18,18 @@ module "audit-serviceaccount" {
   notification_channels = var.notification_channels
 }
 
+resource "google_project_iam_member" "metrics-writer" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${var.service_account}"
+}
+
+resource "google_project_iam_member" "trace-writer" {
+  project = var.project_id
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${var.service_account}"
+}
+
 // Build each of the application images from source.
 resource "ko_build" "this" {
   for_each    = var.containers
@@ -31,14 +43,6 @@ resource "cosign_sign" "this" {
   for_each = var.containers
   image    = ko_build.this[each.key].image_ref
   conflict = "REPLACE"
-}
-
-// Build our otel-collector sidecar image.
-module "otel-collector" {
-  source = "../otel-collector"
-
-  project_id      = var.project_id
-  service_account = var.service_account
 }
 
 // Deploy the service into each of our regions.
@@ -132,7 +136,15 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
     }
-    containers { image = module.otel-collector.image }
+    containers {
+      image = var.otel_collector_image
+      // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
+      args = ["--config=env:OTEL_CONFIG"]
+      env {
+        name  = "OTEL_CONFIG"
+        value = file("${path.module}/otel-config/config.yaml")
+      }
+    }
 
     dynamic "volumes" {
       for_each = var.volumes
