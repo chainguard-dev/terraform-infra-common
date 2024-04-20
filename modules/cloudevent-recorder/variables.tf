@@ -106,3 +106,12 @@ variable "ignore_unknown_values" {
   type        = bool
   default     = false
 }
+
+variable "limits" {
+  description = "Resource limits for the regional go service."
+  type = object({
+    cpu    = string
+    memory = string
+  })
+  default = null
+}

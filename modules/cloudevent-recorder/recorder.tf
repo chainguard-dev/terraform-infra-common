@@ -44,10 +44,7 @@ module "this" {
         mount_path = "/logs"
       }]
       resources = {
-        limits = {
-          cpu    = "1.0"
-          memory = "1.5Gi"
-        }
+        limits = var.limits
       }
     }
     "logrotate" = {
