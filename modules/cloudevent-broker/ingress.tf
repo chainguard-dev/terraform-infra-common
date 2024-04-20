@@ -42,6 +42,9 @@ module "this" {
         name  = "PUBSUB_TOPIC"
         value = { for k, v in google_pubsub_topic.this : k => v.name }
       }]
+      resources = {
+        limits = var.limits
+      }
     }
   }
 

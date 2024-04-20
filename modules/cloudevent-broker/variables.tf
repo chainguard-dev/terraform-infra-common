@@ -18,3 +18,12 @@ variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
 }
+
+variable "limits" {
+  description = "Resource limits for the regional go service."
+  type = object({
+    cpu    = string
+    memory = string
+  })
+  default = null
+}
