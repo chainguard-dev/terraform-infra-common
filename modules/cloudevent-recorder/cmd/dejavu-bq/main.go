@@ -43,13 +43,13 @@ func Publish(ctx context.Context, env envConfig, event cloudevents.Event) error 
 		cloudevents.WithTarget(fmt.Sprintf("%s:%d", env.Host, env.Port)),
 		cehttp.WithClient(http.Client{}))
 	if err != nil {
-		return fmt.Errorf("failed to create cloudevents client: %v", err)
+		return fmt.Errorf("failed to create cloudevents client: %w", err)
 	}
 
 	rctx := cloudevents.ContextWithRetriesExponentialBackoff(context.WithoutCancel(ctx), retryDelay, maxRetry)
 	ceresult := ceclient.Send(rctx, event)
 	if cloudevents.IsUndelivered(ceresult) || cloudevents.IsNACK(ceresult) {
-		return fmt.Errorf("Failed to deliver event: %v", ceresult)
+		return fmt.Errorf("failed to deliver event: %w", ceresult)
 	}
 
 	return nil
