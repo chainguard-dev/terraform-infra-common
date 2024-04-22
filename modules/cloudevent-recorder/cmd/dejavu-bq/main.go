@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,20 +38,18 @@ type envConfig struct {
 }
 
 func Publish(ctx context.Context, env envConfig, event cloudevents.Event) error {
-	log := clog.FromContext(ctx)
-
 	// TODO: Add idtoken back?
 	ceclient, err := cloudevents.NewClientHTTP(
 		cloudevents.WithTarget(fmt.Sprintf("%s:%d", env.Host, env.Port)),
 		cehttp.WithClient(http.Client{}))
 	if err != nil {
-		log.Fatalf("failed to create cloudevents client: %v", err)
+		return fmt.Errorf("failed to create cloudevents client: %v", err)
 	}
 
 	rctx := cloudevents.ContextWithRetriesExponentialBackoff(context.WithoutCancel(ctx), retryDelay, maxRetry)
 	ceresult := ceclient.Send(rctx, event)
 	if cloudevents.IsUndelivered(ceresult) || cloudevents.IsNACK(ceresult) {
-		log.Errorf("Failed to deliver event: %v", ceresult)
+		return fmt.Errorf("Failed to deliver event: %v", ceresult)
 	}
 
 	return nil
@@ -59,7 +58,8 @@ func Publish(ctx context.Context, env envConfig, event cloudevents.Event) error 
 func main() {
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %s", err)
+		clog.Errorf("failed to process env var: %s", err)
+        return
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -72,7 +72,8 @@ func main() {
 	// BigQuery client
 	client, err := bigquery.NewClient(ctx, env.Project)
 	if err != nil {
-		log.Fatalf("failed to create bigquery client: %v", err)
+		log.Errorf("failed to create bigquery client: %v", err)
+        return
 	}
 	defer client.Close()
 
@@ -80,7 +81,8 @@ func main() {
 	it, err := q.Read(ctx)
 	if err != nil {
 		log.Error(env.Query)
-		log.Fatalf("failed to run thresholdQuery, %v", err)
+		log.Errorf("failed to run thresholdQuery, %v", err)
+        return
 	}
 
 	// Iterate through each row in the returned query and handle every module
@@ -88,7 +90,7 @@ func main() {
 	for {
 		var row map[string]bigquery.Value
 		err = it.Next(&row)
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
@@ -99,11 +101,12 @@ func main() {
 
 		body, err := json.Marshal(row)
 		if err != nil {
-			log.Fatalf("marshaling row: %v", err)
+			log.Errorf("marshaling row: %v", err)
+            return
 		}
 		log.Info(string(body))
 
-		// TODO: Extract event type
+		// TODO: Extract event type intelligently
 		log = log.With("event-type", env.EventType)
 		log.Debugf("forwarding event: %s", env.EventType)
 
@@ -111,11 +114,15 @@ func main() {
 		event.SetType(env.EventType)
 		event.SetSource(env.EventSource)
 		if err := event.SetData(cloudevents.ApplicationJSON, body); err != nil {
-			log.Fatalf("failed to set data: %v", err)
+			log.Errorf("failed to set data: %v", err)
+            return
 		}
 
 		// TODO: Time based publishing if we care about replaying using the
 		// timestamps in the dataset
-		Publish(ctx, env, event)
+        if err := Publish(ctx, env, event); err != nil {
+            log.Errorf("Publishing event: %v", err)
+            // Try to process next events
+        }
 	}
 }
