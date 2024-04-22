@@ -174,3 +174,9 @@ func marshalTo(source any, target any) error {
 	}
 	return json.Unmarshal(b, target)
 }
+
+// AttributeFromContext retrieves an attribute by key from the context.
+// Returns nil if the attribute does not exist.
+func AttributeFromContext(ctx context.Context, key string) interface{} {
+	return ctx.Value(contextKey(key))
+}
