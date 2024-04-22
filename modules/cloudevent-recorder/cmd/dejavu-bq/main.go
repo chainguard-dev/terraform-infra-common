@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -59,7 +59,7 @@ func main() {
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
 		clog.Errorf("failed to process env var: %s", err)
-        return
+		return
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -73,7 +73,7 @@ func main() {
 	client, err := bigquery.NewClient(ctx, env.Project)
 	if err != nil {
 		log.Errorf("failed to create bigquery client: %v", err)
-        return
+		return
 	}
 	defer client.Close()
 
@@ -82,7 +82,7 @@ func main() {
 	if err != nil {
 		log.Error(env.Query)
 		log.Errorf("failed to run thresholdQuery, %v", err)
-        return
+		return
 	}
 
 	// Iterate through each row in the returned query and handle every module
@@ -102,7 +102,7 @@ func main() {
 		body, err := json.Marshal(row)
 		if err != nil {
 			log.Errorf("marshaling row: %v", err)
-            return
+			return
 		}
 		log.Info(string(body))
 
@@ -115,14 +115,14 @@ func main() {
 		event.SetSource(env.EventSource)
 		if err := event.SetData(cloudevents.ApplicationJSON, body); err != nil {
 			log.Errorf("failed to set data: %v", err)
-            return
+			return
 		}
 
 		// TODO: Time based publishing if we care about replaying using the
 		// timestamps in the dataset
-        if err := Publish(ctx, env, event); err != nil {
-            log.Errorf("Publishing event: %v", err)
-            // Try to process next events
-        }
+		if err := Publish(ctx, env, event); err != nil {
+			log.Errorf("Publishing event: %v", err)
+			// Try to process next events
+		}
 	}
 }
