@@ -101,7 +101,7 @@ resource "google_cloud_run_v2_service" "this" {
     timeout         = "${var.request_timeout_seconds}s"
 
     // A main container has ports. It needs to go first to avoid a bug in the
-    // Cloud Run terraform provider where ommiting the port{} block does not
+    // Cloud Run terraform provider where omitting the port{} block does not
     // remove the port from the service.
     containers {
       image = cosign_sign.this[local.main_container_idx].signed_ref
