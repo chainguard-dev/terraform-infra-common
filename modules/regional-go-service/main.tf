@@ -38,11 +38,33 @@ resource "ko_build" "this" {
   importpath  = each.value.source.importpath
 }
 
-// Sign each of the application images.
 resource "cosign_sign" "this" {
   for_each = var.containers
   image    = ko_build.this[each.key].image_ref
   conflict = "REPLACE"
+}
+
+locals {
+  // Pull out the containers from var.containers that has no port
+  sidecars = {
+    for key, value in var.containers : key => value if length(value.ports) == 0
+  }
+  // Pull out the main container from var.containers that has a port.
+  // There should be only one of them, but using a map to make it easier to
+  // iterate over and look up the ko_builds.
+  has_port = {
+    for key, value in var.containers : key => value if length(value.ports) > 0
+  }
+
+  main_container_idx = keys(local.has_port)[0]
+  main_container     = local.has_port[local.main_container_idx]
+}
+
+check "exactly_one_main_container" {
+  assert {
+    condition     = length(local.has_port) == 1
+    error_message = "Exactly one container with ports must be specified."
+  }
 }
 
 // Deploy the service into each of our regions.
@@ -77,19 +99,74 @@ resource "google_cloud_run_v2_service" "this" {
     }
     service_account = var.service_account
     timeout         = "${var.request_timeout_seconds}s"
+
+    // A main container has ports. It needs to go first to avoid a bug in the
+    // Cloud Run terraform provider where omitting the port{} block does not
+    // remove the port from the service.
+    containers {
+      image = cosign_sign.this[local.main_container_idx].signed_ref
+      args  = local.main_container.args
+
+      dynamic "ports" {
+        for_each = local.main_container.ports
+        content {
+          name           = ports.value.name
+          container_port = ports.value.container_port
+        }
+      }
+
+      dynamic "resources" {
+        for_each = local.main_container.resources != null ? { "" : local.main_container.resources } : {}
+        content {
+          limits            = resources.value.limits
+          cpu_idle          = resources.value.cpu_idle
+          startup_cpu_boost = resources.value.startup_cpu_boost
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.main_container.env
+        content {
+          name  = env.value.name
+          value = env.value.value
+          dynamic "value_source" {
+            for_each = env.value.value_source != null ? { "" : env.value.value_source } : {}
+            content {
+              secret_key_ref {
+                secret  = value_source.value.secret_key_ref.secret
+                version = value_source.value.secret_key_ref.version
+              }
+            }
+          }
+        }
+      }
+
+      // Iterate over regional environment variables and look up the
+      // appropriate value to pass to each region.
+      dynamic "env" {
+        for_each = local.main_container.regional-env
+        content {
+          name  = env.value.name
+          value = env.value.value[each.key]
+        }
+      }
+
+      dynamic "volume_mounts" {
+        for_each = local.main_container.volume_mounts
+        content {
+          name       = volume_mounts.value.name
+          mount_path = volume_mounts.value.mount_path
+        }
+      }
+
+    }
+
+    // Now the sidecar containers can be added.
     dynamic "containers" {
-      for_each = var.containers
+      for_each = local.sidecars
       content {
         image = cosign_sign.this[containers.key].signed_ref
         args  = containers.value.args
-
-        dynamic "ports" {
-          for_each = containers.value.ports
-          content {
-            name           = ports.value.name
-            container_port = ports.value.container_port
-          }
-        }
 
         dynamic "resources" {
           for_each = containers.value.resources != null ? { "" : containers.value.resources } : {}
