@@ -49,7 +49,7 @@ func main() {
 	}
 
 	go httpmetrics.ServeMetrics()
-	httpmetrics.SetupTracer(ctx)
+	defer httpmetrics.SetupTracer(ctx)()
 
 	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port),
 		cehttp.WithRequestDataAtContextMiddleware() /* give request headers to the handler context */)

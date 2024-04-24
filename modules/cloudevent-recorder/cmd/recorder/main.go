@@ -33,7 +33,7 @@ func main() {
 	defer cancel()
 
 	go httpmetrics.ServeMetrics()
-	httpmetrics.SetupTracer(ctx)
+	defer httpmetrics.SetupTracer(ctx)()
 
 	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port))
 	if err != nil {
