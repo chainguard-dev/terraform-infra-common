@@ -16,6 +16,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/pubsub"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/oauth2/google"
@@ -25,8 +26,8 @@ import (
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
 	cgpubsub "github.com/chainguard-dev/terraform-infra-common/pkg/pubsub"
-	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
 )
 
 const (
@@ -40,6 +41,8 @@ type envConfig struct {
 }
 
 func main() {
+	profiler.SetupProfiler()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 

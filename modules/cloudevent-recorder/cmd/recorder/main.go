@@ -11,12 +11,14 @@ import (
 	"os/signal"
 	"path/filepath"
 
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/kelseyhightower/envconfig"
+
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
-	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
 )
 
 type envConfig struct {
@@ -25,10 +27,13 @@ type envConfig struct {
 }
 
 func main() {
+	profiler.SetupProfiler()
+
 	var env envConfig
 	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %s", err)
+		clog.Fatalf("failed to process env var: %v", err)
 	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
