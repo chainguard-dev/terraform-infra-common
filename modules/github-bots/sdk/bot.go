@@ -76,7 +76,7 @@ func Serve(b Bot) {
 
 	http.DefaultTransport = httpmetrics.Transport
 	go httpmetrics.ServeMetrics()
-	httpmetrics.SetupTracer(ctx)
+	defer httpmetrics.SetupTracer(ctx)()
 	httpmetrics.SetBuckets(map[string]string{
 		"api.github.com": "github",
 		"octo-sts.dev":   "octosts",

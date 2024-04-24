@@ -39,7 +39,7 @@ func main() {
 	defer cancel()
 
 	go httpmetrics.ServeMetrics()
-	httpmetrics.SetupTracer(ctx)
+	defer httpmetrics.SetupTracer(ctx)()
 
 	ceclient, err := mce.NewClientHTTP(mce.WithTarget(ctx, env.IngressURI)...)
 	if err != nil {

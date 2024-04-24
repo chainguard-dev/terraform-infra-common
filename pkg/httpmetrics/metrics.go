@@ -3,25 +3,30 @@ package httpmetrics
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"net/http/pprof"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/chainguard-dev/clog"
+	"cloud.google.com/go/compute/metadata"
+	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	"google.golang.org/api/option"
 )
 
 // ServeMetrics serves the metrics endpoint if the METRICS_PORT env var is set.
@@ -196,17 +201,17 @@ func HandlerFunc(name string, f func(http.ResponseWriter, *http.Request)) http.H
 //
 //	defer metrics.SetupTracer(ctx)()
 func SetupTracer(ctx context.Context) func() {
-	traceExporter, err := otlptracehttp.New(ctx)
-	if err != nil {
-		clog.FromContext(ctx).Fatalf("SetupTracer() = %v", err)
+	traceEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+	projectID, _ := metadata.ProjectID()
+	var options []trace.TracerProviderOption
+	if traceEndpoint == "" && projectID != "" {
+		// No trace endpoint provided and we are on GCP.
+		options = tracerOptionsGCP(ctx)
+	} else {
+		// We are either on KinD or GKE.
+		options = tracerOptions(ctx)
 	}
-	bsp := trace.NewBatchSpanProcessor(traceExporter)
-	res := resource.Default()
-
-	tp := trace.NewTracerProvider(
-		trace.WithResource(res),
-		trace.WithSpanProcessor(bsp),
-	)
+	tp := trace.NewTracerProvider(options...)
 	otel.SetTracerProvider(tp)
 
 	prp := propagation.NewCompositeTextMapPropagator(
@@ -219,6 +224,49 @@ func SetupTracer(ctx context.Context) func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			slog.Error("Error shutting down tracer provider", "error", err)
 		}
+	}
+}
+
+func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
+	// Else, we upload directly to Cloud Trace.
+	traceExporter, err := texporter.New(
+		// Avoid infinite recursion in trace uploads
+		//   https://github.com/open-telemetry/opentelemetry-go/issues/1928
+		texporter.WithTraceClientOptions([]option.ClientOption{option.WithTelemetryDisabled()}),
+	)
+	if err != nil {
+		log.Panicf("tracerOptionsGCP(); texporter.New() = %v", err)
+	}
+	res, err := resource.New(ctx,
+		// Use the GCP resource detector to detect information about the GCP platform
+		resource.WithDetectors(gcp.NewDetector()),
+		// Keep the default detectors
+		resource.WithTelemetrySDK(),
+	)
+	if err != nil {
+		log.Panicf("tracerOptionsGCP(); resource.New() = %v", err)
+	}
+	bsp := trace.NewBatchSpanProcessor(traceExporter)
+	return []trace.TracerProviderOption{
+		trace.WithResource(res),
+		trace.WithSpanProcessor(bsp),
+		// On Cloud Run, this gives fuller traces. We can tune this down
+		// in the future if cost becomes an issue.
+		trace.WithSampler(trace.AlwaysSample()),
+	}
+}
+
+func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
+	traceExporter, err := otlptracehttp.New(ctx)
+	if err != nil {
+		log.Panicf("traceOptions() = %v", err)
+	}
+	bsp := trace.NewBatchSpanProcessor(traceExporter)
+	res := resource.Default()
+
+	return []trace.TracerProviderOption{
+		trace.WithResource(res),
+		trace.WithSpanProcessor(bsp),
 	}
 }
 
