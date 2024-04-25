@@ -6,6 +6,7 @@ require (
 	chainguard.dev/sdk v0.1.19
 	cloud.google.com/go/bigquery v1.60.0
 	cloud.google.com/go/compute/metadata v0.3.0
+	cloud.google.com/go/profiler v0.4.0
 	cloud.google.com/go/pubsub v1.37.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.22.0
 	github.com/chainguard-dev/clog v1.3.1
@@ -54,6 +55,7 @@ require (
 	github.com/google/flatbuffers v23.5.26+incompatible // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/google/pprof v0.0.0-20230602150820-91b7bce49751 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.6.0 // indirect
