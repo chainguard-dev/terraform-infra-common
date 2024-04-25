@@ -134,7 +134,7 @@ variable "paused" {
 }
 
 variable "invokers" {
-  description = "List of user emails to grant invoker perimssions to invoke the job."
+  description = "List of iam members invoker perimssions to invoke the job."
   type        = list(string)
   default     = []
 }
