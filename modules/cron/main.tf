@@ -191,7 +191,7 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
   location = google_cloud_run_v2_job.job.location
   name     = google_cloud_run_v2_job.job.name
   role     = "roles/run.invoker"
-  members  = concat(["serviceAccount:${google_service_account.delivery.email}"], [for i in var.invokers : "user:${i}"])
+  members  = concat(["serviceAccount:${google_service_account.delivery.email}"], var.invokers)
 }
 
 resource "google_cloud_scheduler_job" "cron" {
