@@ -22,9 +22,16 @@ func (r WorkflowRunHandler) EventType() EventType {
 	return WorkflowRunEvent
 }
 
+type IssueCommentHandler func(ctx context.Context, ice github.IssueCommentEvent, ic *github.IssueComment) error
+
+func (r IssueCommentHandler) EventType() EventType {
+	return IssueCommentEvent
+}
+
 type EventType string
 
 const (
-	PullRequestEvent EventType = "dev.chainguard.github.pull_request"
-	WorkflowRunEvent EventType = "dev.chainguard.github.workflow_run"
+	PullRequestEvent  EventType = "dev.chainguard.github.pull_request"
+	WorkflowRunEvent  EventType = "dev.chainguard.github.workflow_run"
+	IssueCommentEvent EventType = "dev.chainguard.github.issue_comment"
 )
