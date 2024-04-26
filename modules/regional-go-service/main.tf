@@ -30,6 +30,12 @@ resource "google_project_iam_member" "trace-writer" {
   member  = "serviceAccount:${var.service_account}"
 }
 
+resource "google_project_iam_member" "profiler-writer" {
+  project = var.project_id
+  role    = "roles/cloudprofiler.agent"
+  member  = "serviceAccount:${var.service_account}"
+}
+
 // Build each of the application images from source.
 resource "ko_build" "this" {
   for_each    = var.containers
