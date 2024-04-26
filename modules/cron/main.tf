@@ -194,6 +194,14 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
   members  = concat(["serviceAccount:${google_service_account.delivery.email}"], var.invokers)
 }
 
+resource "google_cloud_run_v2_job_iam_binding" "authorize-list" {
+  project  = google_cloud_run_v2_job.job.project
+  location = google_cloud_run_v2_job.job.location
+  name     = google_cloud_run_v2_job.job.name
+  role     = "roles/run.viewer"
+  members  = var.invokers
+}
+
 resource "google_cloud_scheduler_job" "cron" {
   paused = var.paused
 
