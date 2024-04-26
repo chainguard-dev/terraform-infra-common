@@ -68,6 +68,14 @@ type PullRequest struct {
 	ChangedFiles bigquery.NullInt64 `json:"changed_files,omitempty" bigquery:"changed_files"`
 }
 
+type PullRequestLinks struct {
+	URL      bigquery.NullString    `json:"url,omitempty" bigquery:"url"`
+	HTMLURL  bigquery.NullString    `json:"html_url,omitempty" bigquery:"html_url"`
+	DiffURL  bigquery.NullString    `json:"diff_url,omitempty" bigquery:"diff_url"`
+	PatchURL bigquery.NullString    `json:"patch_url,omitempty" bigquery:"patch_url"`
+	MergedAt bigquery.NullTimestamp `json:"merged_at,omitempty" bigquery:"merged_at"`
+}
+
 // https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestEvent
 type PullRequestEvent struct {
@@ -121,4 +129,51 @@ type WorkflowRunEvent struct {
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+}
+
+type IssueCommentEvent struct {
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	Issue        Issue               `json:"issue,omitempty" bigquery:"issue"`
+	Comment      IssueComment        `json:"comment,omitempty" bigquery:"comment"`
+	Repo         Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+}
+
+type Issue struct {
+	ID                bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	Number            bigquery.NullInt64     `json:"number,omitempty" bigquery:"number"`
+	State             bigquery.NullString    `json:"state,omitempty" bigquery:"state"`
+	StateReason       bigquery.NullString    `json:"state_reason,omitempty" bigquery:"state_reason"`
+	Locked            bigquery.NullBool      `json:"locked,omitempty" bigquery:"locked"`
+	Title             bigquery.NullString    `json:"title,omitempty" bigquery:"title"`
+	Body              bigquery.NullString    `json:"body,omitempty" bigquery:"body"`
+	AuthorAssociation bigquery.NullString    `json:"author_association,omitempty" bigquery:"author_association"`
+	User              User                   `json:"user,omitempty" bigquery:"user"`
+	Labels            []Label                `json:"labels" bigquery:"labels"`
+	Assignee          User                   `json:"assignee,omitempty" bigquery:"assignee"`
+	Comments          bigquery.NullInt64     `json:"comments,omitempty" bigquery:"comments"`
+	ClosedAt          bigquery.NullTimestamp `json:"closed_at,omitempty" bigquery:"closed_at"`
+	CreatedAt         bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt         bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
+	ClosedBy          User                   `json:"closed_by,omitempty" bigquery:"closed_by"`
+	URL               bigquery.NullString    `json:"url,omitempty" bigquery:"url"`
+	HTMLURL           bigquery.NullString    `json:"html_url,omitempty" bigquery:"html_url"`
+	CommentsURL       bigquery.NullString    `json:"comments_url,omitempty" bigquery:"comments_url"`
+	EventsURL         bigquery.NullString    `json:"events_url,omitempty" bigquery:"events_url"`
+	LabelsURL         bigquery.NullString    `json:"labels_url,omitempty" bigquery:"labels_url"`
+	RepositoryURL     bigquery.NullString    `json:"repository_url,omitempty" bigquery:"repository_url"`
+	PullRequestLinks  PullRequestLinks       `json:"pull_request,omitempty" bigquery:"pull_request"`
+	Repository        Repository             `json:"repository,omitempty" bigquery:"repository"`
+	Assignees         []User                 `json:"assignees,omitempty" bigquery:"assignees"`
+	NodeID            bigquery.NullString    `json:"node_id,omitempty" bigquery:"node_id"`
+	Draft             bigquery.NullBool      `json:"draft,omitempty" bigquery:"draft"`
+}
+
+type IssueComment struct {
+	URL      bigquery.NullString    `json:"url,omitempty" bigquery:"url"`
+	HTMLURL  bigquery.NullString    `json:"html_url,omitempty" bigquery:"html_url"`
+	DiffURL  bigquery.NullString    `json:"diff_url,omitempty" bigquery:"diff_url"`
+	PatchURL bigquery.NullString    `json:"patch_url,omitempty" bigquery:"patch_url"`
+	MergedAt bigquery.NullTimestamp `json:"merged_at,omitempty" bigquery:"merged_at"`
 }

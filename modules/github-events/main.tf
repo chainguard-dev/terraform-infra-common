@@ -94,5 +94,8 @@ output "recorder-schemas" {
     "dev.chainguard.github.workflow_run" : {
       schema = file("${path.module}/schemas/workflow_run.schema.json")
     }
+    "dev.chainguard.github.issue_comment" : {
+      schema = file("${path.module}/schemas/issue_comment.schema.json")
+    }
   }
 }

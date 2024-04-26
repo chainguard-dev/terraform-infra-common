@@ -128,12 +128,10 @@ func Serve(b Bot) {
 					return err
 				}
 
-				err = h(ctx, wre.Body, wr)
-				if err != nil {
-					logger.Errorf("failed to handle workload run event: %v", err)
+				if err := h(ctx, wre.Body, wr); err != nil {
+					logger.Errorf("failed to handle workflow run event: %v", err)
 					return err
 				}
-				logger.Debug("handled workflow run event")
 				return nil
 
 			case PullRequestHandler:
@@ -151,9 +149,29 @@ func Serve(b Bot) {
 					return err
 				}
 
-				err = h(ctx, pre.Body, pr)
-				if err != nil {
-					logger.Errorf("failed to handle pull request: %v", err)
+				if err := h(ctx, pre.Body, pr); err != nil {
+					logger.Errorf("failed to handle pull request event: %v", err)
+					return err
+				}
+				return nil
+
+			case IssueCommentHandler:
+				logger.Debug("handling issue comment event")
+
+				var ice schemas.Wrapper[github.IssueCommentEvent]
+				if err := event.DataAs(&ice); err != nil {
+					logger.Errorf("failed to unmarshal issue comment event: %v", err)
+					return err
+				}
+
+				ic := &github.IssueComment{}
+				if err := marshalTo(ice.Body.Comment, ic); err != nil {
+					logger.Errorf("failed to marshal issue comment: %v", err)
+					return err
+				}
+
+				if err := h(ctx, ice.Body, ic); err != nil {
+					logger.Errorf("failed to handle issue comment event: %v", err)
 					return err
 				}
 				return nil
