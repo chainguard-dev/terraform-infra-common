@@ -6,7 +6,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
@@ -33,8 +32,7 @@ import (
 func ServeMetrics() {
 	// Start the metrics server on the metrics port, if defined.
 	var env struct {
-		MetricsPort int  `envconfig:"METRICS_PORT" default:"2112" required:"true"`
-		EnablePprof bool `envconfig:"ENABLE_PPROF" default:"false" required:"true"`
+		MetricsPort int `envconfig:"METRICS_PORT" default:"2112" required:"true"`
 	}
 	if err := envconfig.Process("", &env); err != nil {
 		slog.Error("Failed to process environment variables", "error", err)
@@ -47,22 +45,6 @@ func ServeMetrics() {
 		Addr:              fmt.Sprintf(":%d", env.MetricsPort),
 		Handler:           mux,
 		ReadHeaderTimeout: 10 * time.Second,
-	}
-
-	if env.EnablePprof {
-		// pprof handles
-		mux.HandleFunc("/debug/pprof/", pprof.Index)
-		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-		mux.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
-		mux.Handle("/debug/pprof/block", pprof.Handler("block"))
-		mux.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-		mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-		mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
-		mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-		slog.Info("registering handle for /debug/pprof")
 	}
 
 	if err := srv.ListenAndServe(); err != nil {
@@ -115,8 +97,6 @@ func init() {
 	if err := envconfig.Process("", &env); err != nil {
 		slog.Warn("Failed to process environment variables", "error", err)
 	}
-	// Reset default serve mux to remove pprof registration
-	http.DefaultServeMux = http.NewServeMux()
 }
 
 // Handler wraps a given http handler in standard metrics handlers.
