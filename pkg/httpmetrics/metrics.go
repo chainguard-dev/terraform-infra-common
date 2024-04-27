@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -94,6 +95,11 @@ var env struct {
 }
 
 func init() {
+	// Set the global metric provider to a no-op so that any metrics created from otelgrpc interceptors
+	// are disabled to prevent memory leaks.
+	// See https://github.com/open-telemetry/opentelemetry-go-contrib/issues/4226
+	otel.SetMeterProvider(noop.MeterProvider{})
+
 	if err := envconfig.Process("", &env); err != nil {
 		slog.Warn("Failed to process environment variables", "error", err)
 	}
