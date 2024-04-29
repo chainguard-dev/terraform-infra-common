@@ -200,7 +200,7 @@ resource "google_project_iam_member" "authorize-list" {
 
   project  = google_cloud_run_v2_job.job.project
   role     = "roles/run.viewer"
-  members  = each.key
+  member   = each.key
 }
 
 resource "google_cloud_scheduler_job" "cron" {
