@@ -194,12 +194,13 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
   members  = concat(["serviceAccount:${google_service_account.delivery.email}"], var.invokers)
 }
 
-resource "google_cloud_run_v2_job_iam_binding" "authorize-list" {
+// project iam, as job iam does allow user to actually list the job to access it
+resource "google_project_iam_member" "authorize-list" {
+  for_each = toset(var.invokers)
+
   project  = google_cloud_run_v2_job.job.project
-  location = google_cloud_run_v2_job.job.location
-  name     = google_cloud_run_v2_job.job.name
   role     = "roles/run.viewer"
-  members  = var.invokers
+  members  = each.key
 }
 
 resource "google_cloud_scheduler_job" "cron" {
