@@ -35,8 +35,9 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_cloudrun_name"></a> [cloudrun\_name](#input\_cloudrun\_name) | n/a | `string` | n/a | yes |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
+| <a name="input_enable_oom_policy"></a> [enable\_oom\_policy](#input\_enable\_oom\_policy) | n/a | `bool` | `true` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | n/a | yes |
-| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | n/a | `list(string)` | `[]` | no |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | n/a | `list(string)` | n/a | yes |
 | <a name="input_title"></a> [title](#input\_title) | n/a | `string` | n/a | yes |
 
 ## Outputs
