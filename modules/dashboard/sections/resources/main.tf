@@ -5,6 +5,7 @@ variable "collapsed" { default = false }
 variable "notification_channels" {
   type = list(string)
 }
+variable "enable_oom_policy" { default = true }
 
 module "width" { source = "../width" }
 
@@ -91,7 +92,7 @@ resource "google_monitoring_alert_policy" "oom" {
     }
   }
 
-  enabled = "true"
+  enabled = var.enable_oom_policy
 
   notification_channels = var.notification_channels
 }
