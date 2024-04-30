@@ -46,3 +46,9 @@ variable "sections" {
     github = false
   }
 }
+
+variable "enable_oom_policy" {
+  description = "Toggle for enabling/disabling OOM alert policy."
+  type        = bool
+  default     = true
+}
