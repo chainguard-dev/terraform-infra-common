@@ -195,8 +195,9 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
 }
 
 // project iam, as job iam does allow user to actually list the job to access it
+// only grant it to groups, individual should have access otherwise.
 resource "google_project_iam_member" "authorize-list" {
-  for_each = toset(var.invokers)
+  for_each = toset([for i in var.invokers : i if startswith(i, "group:")])
 
   project  = google_cloud_run_v2_job.job.project
   role     = "roles/run.viewer"
