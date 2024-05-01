@@ -30,10 +30,12 @@ variable "sections" {
     http   = optional(bool, true)  // Include HTTP section
     grpc   = optional(bool, true)  // Include GRPC section
     github = optional(bool, false) // Include GitHub API section
+    gorm   = optional(bool, false) // Include GORM section
   })
   default = {
     http   = true
     grpc   = true
     github = false
+    gorm   = false
   }
 }
