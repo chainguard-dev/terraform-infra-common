@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -195,4 +197,58 @@ func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre g
 	}
 
 	return 0, fmt.Errorf("no matching pull request found")
+}
+
+func (c GitHubClient) GetWorkflowRunArtifact(ctx context.Context, wr *github.WorkflowRun, name string) (*zip.Reader, error) {
+	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
+
+	artifacts, _, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, &github.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list workflow run [%d] artifacts: %w", *wr.ID, err)
+	}
+
+	var zr *zip.Reader
+	for _, a := range artifacts.Artifacts {
+		if *a.Name != name {
+			continue
+		}
+
+		aid := a.GetID()
+		url, ghresp, err := c.inner.Actions.DownloadArtifact(ctx, owner, repo, aid, 10)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download artifact (%s) [%d]: %w", name, aid, err)
+		}
+
+		if ghresp.StatusCode != http.StatusFound {
+			return nil, fmt.Errorf("failed to find artifact (%s) [%d]: %s", name, aid, ghresp.Status)
+		}
+
+		client := &http.Client{}
+
+		resp, err := client.Get(url.String())
+		if err != nil {
+			return nil, fmt.Errorf("could not download artifact: %w", err)
+		}
+		defer resp.Body.Close()
+
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read artifact: %w", err)
+		}
+
+		buf := bytes.NewReader(data)
+
+		r, err := zip.NewReader(buf, resp.ContentLength)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zip reader: %w", err)
+		}
+
+		zr = r
+	}
+
+	if zr == nil {
+		return nil, fmt.Errorf("artifact %s for workflow_run %d not found", name, *wr.ID)
+	}
+
+	return zr, nil
 }
