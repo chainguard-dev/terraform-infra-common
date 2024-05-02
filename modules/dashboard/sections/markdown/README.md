@@ -9,7 +9,9 @@ No providers.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_width"></a> [width](#module\_width) | ../width | n/a |
 
 ## Resources
 
@@ -26,5 +28,5 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_widget"></a> [widget](#output\_widget) | https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#Text |
+| <a name="output_section"></a> [section](#output\_section) | n/a |
 <!-- END_TF_DOCS -->

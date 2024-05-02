@@ -137,6 +137,8 @@ No requirements.
 | <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
+| <a name="module_logurl"></a> [logurl](#module\_logurl) | ../logurl | n/a |
+| <a name="module_markdown"></a> [markdown](#module\_markdown) | ../sections/markdown | n/a |
 | <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 | <a name="module_trampoline-emits-events"></a> [trampoline-emits-events](#module\_trampoline-emits-events) | ../authorize-private-service | n/a |

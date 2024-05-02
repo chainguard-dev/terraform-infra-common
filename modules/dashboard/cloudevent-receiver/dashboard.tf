@@ -1,3 +1,22 @@
+module "logurl" {
+  source = "../logurl"
+
+  text    = "Logs Explorer"
+  project = var.project_id
+  params = {
+    "resource.type"                = "cloud_run_revision"
+    "resource.labels.service_name" = var.service_name
+  }
+}
+
+module "markdown" {
+  source  = "../sections/markdown"
+  title   = "Overview"
+  content = <<EOM
+  # ${module.logurl.markdown}
+  EOM
+}
+
 module "subscription" {
   for_each = var.triggers
 
@@ -56,6 +75,7 @@ module "width" { source = "../sections/width" }
 module "layout" {
   source = "../sections/layout"
   sections = concat(
+    [module.markdown.section],
     [for key in sort(keys(var.triggers)) : module.subscription[key].section],
     [
       module.errgrp.section,

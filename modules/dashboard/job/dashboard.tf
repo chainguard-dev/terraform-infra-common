@@ -1,3 +1,22 @@
+module "logurl" {
+  source = "../logurl"
+
+  text    = "Logs Explorer"
+  project = var.project_id
+  params = {
+    "resource.type"                = "cloud_run_job"
+    "resource.labels.service_name" = var.job_name
+  }
+}
+
+module "markdown" {
+  source  = "../sections/markdown"
+  title   = "Overview"
+  content = <<EOM
+  # ${module.logurl.markdown}
+  EOM
+}
+
 module "errgrp" {
   source       = "../sections/errgrp"
   title        = "Job Error Reporting"
@@ -24,6 +43,7 @@ module "width" { source = "../sections/width" }
 module "layout" {
   source = "../sections/layout"
   sections = [
+    module.markdown.section,
     module.errgrp.section,
     module.logs.section,
     module.resources.section,

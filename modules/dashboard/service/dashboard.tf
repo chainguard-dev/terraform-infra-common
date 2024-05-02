@@ -1,3 +1,22 @@
+module "logurl" {
+  source = "../logurl"
+
+  text    = "Logs Explorer"
+  project = var.project_id
+  params = {
+    "resource.type"                = "cloud_run_revision"
+    "resource.labels.service_name" = var.service_name
+  }
+}
+
+module "markdown" {
+  source  = "../sections/markdown"
+  title   = "Overview"
+  content = <<EOM
+  # ${module.logurl.markdown}
+  EOM
+}
+
 module "errgrp" {
   source       = "../sections/errgrp"
   title        = "Service Error Reporting"
@@ -59,6 +78,7 @@ module "width" { source = "../sections/width" }
 module "layout" {
   source = "../sections/layout"
   sections = concat(
+    module.markdown.section,
     [for x in keys(var.alerts) : module.alerts[x].section],
     [
       module.errgrp.section,

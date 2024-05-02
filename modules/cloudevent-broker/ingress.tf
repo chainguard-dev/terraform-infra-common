@@ -51,6 +51,25 @@ module "this" {
   notification_channels = var.notification_channels
 }
 
+module "logurl" {
+  source = "../logurl"
+
+  text    = "Logs Explorer"
+  project = var.project_id
+  params = {
+    "resource.type"                = "cloud_run_revision"
+    "resource.labels.service_name" = var.name
+  }
+}
+
+module "markdown" {
+  source  = "../sections/markdown"
+  title   = "Overview"
+  content = <<EOM
+  # ${module.logurl.markdown}
+  EOM
+}
+
 module "topic" {
   source       = "../dashboard/sections/topic"
   title        = "Broker Events"
@@ -84,6 +103,7 @@ module "width" { source = "../dashboard/sections/width" }
 module "layout" {
   source = "../dashboard/sections/layout"
   sections = [
+    module.markdown.section,
     module.topic.section,
     module.logs.section,
     module.http.section,
