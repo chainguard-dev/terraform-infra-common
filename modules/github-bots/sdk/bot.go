@@ -128,7 +128,7 @@ func Serve(b Bot) {
 					return err
 				}
 
-				if err := h(ctx, wre.Body, wr); err != nil {
+				if err := h(ctx, wre.Body); err != nil {
 					logger.Errorf("failed to handle workflow run event: %v", err)
 					return err
 				}
@@ -149,7 +149,7 @@ func Serve(b Bot) {
 					return err
 				}
 
-				if err := h(ctx, pre.Body, pr); err != nil {
+				if err := h(ctx, pre.Body); err != nil {
 					logger.Errorf("failed to handle pull request event: %v", err)
 					return err
 				}
@@ -170,7 +170,7 @@ func Serve(b Bot) {
 					return err
 				}
 
-				if err := h(ctx, ice.Body, ic); err != nil {
+				if err := h(ctx, ice.Body); err != nil {
 					logger.Errorf("failed to handle issue comment event: %v", err)
 					return err
 				}
