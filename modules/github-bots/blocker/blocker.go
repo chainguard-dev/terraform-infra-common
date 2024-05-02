@@ -18,15 +18,15 @@ import (
 func New() sdk.Bot {
 	name := "blocker"
 
-	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent, pr *github.PullRequest) error {
+	handler := sdk.PullRequestHandler(func(ctx context.Context, pre github.PullRequestEvent) error {
 		log := clog.FromContext(ctx)
 
 		cli := sdk.NewGitHubClient(ctx, *pre.Repo.Owner.Login, *pre.Repo.Name, name)
 		defer cli.Close(ctx)
 
-		owner, repo := *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name
+		owner, repo := *pre.Repo.Owner.Login, *pre.Repo.Name
 
-		hasBlockingLabel := slices.ContainsFunc(pr.Labels, func(l *github.Label) bool {
+		hasBlockingLabel := slices.ContainsFunc(pre.PullRequest.Labels, func(l *github.Label) bool {
 			return strings.HasPrefix(*l.Name, "blocking/")
 		})
 
@@ -35,7 +35,7 @@ func New() sdk.Bot {
 			conclusion = "failure"
 			log.Debug("PR %d has blocking label")
 		}
-		sha := *pr.Head.SHA
+		sha := *pre.PullRequest.Head.SHA
 
 		// If there are no check runs for the current head SHA, create one with the conclusion.
 		crs, _, err := cli.Client().Checks.ListCheckRunsForRef(ctx, owner, repo, sha, &github.ListCheckRunsOptions{CheckName: github.String(name)})
@@ -43,7 +43,7 @@ func New() sdk.Bot {
 			return fmt.Errorf("listing check runs: %w", err)
 		}
 		if len(crs.CheckRuns) == 0 {
-			log.Infof("Creating CheckRun for PR %d sha %s with conclusion %s", *pr.Number, sha, conclusion)
+			log.Infof("Creating CheckRun for PR %d sha %s with conclusion %s", *pre.PullRequest.Number, sha, conclusion)
 			if _, _, err := cli.Client().Checks.CreateCheckRun(ctx, owner, repo, github.CreateCheckRunOptions{
 				Name:       name,
 				HeadSHA:    sha,
@@ -57,12 +57,12 @@ func New() sdk.Bot {
 
 		// No change, nothing else to do.
 		if *crs.CheckRuns[0].Conclusion == conclusion {
-			log.Debugf("CheckRun for PR %d sha %s already has conclusion %s", *pr.Number, sha, conclusion)
+			log.Debugf("CheckRun for PR %d sha %s already has conclusion %s", *pre.Number, sha, conclusion)
 			return nil
 		}
 
 		// If there's already a check run, update its conclusion.
-		log.Infof("Updating CheckRun for PR %d sha %s with conclusion %s", *pr.Number, sha, conclusion)
+		log.Infof("Updating CheckRun for PR %d sha %s with conclusion %s", *pre.Number, sha, conclusion)
 		if _, _, err = cli.Client().Checks.UpdateCheckRun(ctx, owner, repo, *crs.CheckRuns[0].ID, github.UpdateCheckRunOptions{
 			Name:       name,
 			Status:     github.String("completed"),
