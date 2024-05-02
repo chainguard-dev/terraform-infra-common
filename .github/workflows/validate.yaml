@@ -1,0 +1,75 @@
+name: Validate terraform
+
+on:
+  pull_request:
+    branches: [ 'main' ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: "${{steps.list_dirs.outputs.matrix}}"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - name: List tf dirs
+        id: list_dirs
+        run: |
+          # list all files with *.tf files, take the dirname, and dedupe with sort -u
+          matrix="$(find . -type f -name "*.tf" -exec dirname "{}" \; | sort -u | jq -cnR '[inputs | select(length>0)]')"
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
+  validate:
+    runs-on: ubuntu-latest
+    needs:
+      - build-matrix
+    strategy:
+      # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs#defining-the-maximum-number-of-concurrent-jobs
+      max-parallel: 10
+      fail-fast: false
+      matrix:
+        dirs: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: hashicorp/setup-terraform@97f030cf6dc0b4f5e0da352c7bca9cca34579800 # v3.1.0
+      - working-directory: ${{ matrix.dirs }}
+        run: |
+          terraform init
+          terraform validate
+
+  conclusion:
+    permissions:
+      actions: read
+
+    needs: validate
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
+      - uses: technote-space/workflow-conclusion-action@45ce8e0eb155657ab8ccf346ade734257fd196a5 # v3.0.3
+
+      - if: ${{ env.WORKFLOW_CONCLUSION == 'success' }}
+        working-directory: /tmp
+        run: echo ${{ env.WORKFLOW_CONCLUSION }} && exit 0
+
+      - if: ${{ env.WORKFLOW_CONCLUSION == 'failure' }}
+        working-directory: /tmp
+        run: echo ${{ env.WORKFLOW_CONCLUSION }} && exit 1
