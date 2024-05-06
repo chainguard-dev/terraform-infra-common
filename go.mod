@@ -1,6 +1,6 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.21.6
+go 1.22.2
 
 require (
 	chainguard.dev/sdk v0.1.19
