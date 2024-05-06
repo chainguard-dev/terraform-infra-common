@@ -3,12 +3,12 @@ module github.com/chainguard-dev/terraform-infra-common
 go 1.22.2
 
 require (
-	chainguard.dev/sdk v0.1.19
+	chainguard.dev/sdk v0.1.20
 	cloud.google.com/go/bigquery v1.61.0
 	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/profiler v0.4.0
 	cloud.google.com/go/pubsub v1.37.0
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.22.0
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.23.0
 	github.com/chainguard-dev/clog v1.3.1
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.10.0
@@ -25,7 +25,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.26.0
 	gocloud.dev v0.37.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
-	golang.org/x/oauth2 v0.19.0
+	golang.org/x/oauth2 v0.20.0
 	google.golang.org/api v0.177.0
 )
 
@@ -38,7 +38,7 @@ require (
 	cloud.google.com/go/storage v1.40.0 // indirect
 	cloud.google.com/go/trace v1.10.6 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.22.0 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.46.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.47.0 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
@@ -71,8 +71,8 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.48.0 // indirect
+	github.com/prometheus/client_model v0.6.0 // indirect
+	github.com/prometheus/common v0.51.1 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
@@ -100,7 +100,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.29.1 // indirect
 	k8s.io/apimachinery v0.29.1 // indirect
-	k8s.io/klog/v2 v2.110.1 // indirect
+	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	knative.dev/pkg v0.0.0-20231101193506-b09d4f2a2845 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
