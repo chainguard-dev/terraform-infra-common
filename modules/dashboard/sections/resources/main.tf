@@ -24,7 +24,7 @@ module "cpu_utilization" {
   title          = "CPU utilization"
   filter         = concat(var.filter, ["metric.type=\"run.googleapis.com/container/cpu/utilizations\""])
   primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_MEAN"
+  primary_reduce = "REDUCE_PERCENTILE_99"
 }
 
 module "memory_utilization" {
@@ -32,7 +32,7 @@ module "memory_utilization" {
   title          = "Memory utilization"
   filter         = concat(var.filter, ["metric.type=\"run.googleapis.com/container/memory/utilizations\""])
   primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_MEAN"
+  primary_reduce = "REDUCE_PERCENTILE_99"
 }
 
 module "startup_latency" {
@@ -40,7 +40,7 @@ module "startup_latency" {
   title          = "Startup latency"
   filter         = concat(var.filter, ["metric.type=\"run.googleapis.com/container/startup_latencies\""])
   primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_MEAN"
+  primary_reduce = "REDUCE_PERCENTILE_99"
   plot_type      = "STACKED_BAR"
 }
 
