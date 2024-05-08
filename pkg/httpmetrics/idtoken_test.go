@@ -1,0 +1,35 @@
+/*
+Copyright 2024 Chainguard, Inc.
+SPDX-License-Identifier: Apache-2.0
+*/
+package httpmetrics
+
+import (
+	"context"
+	"net/http"
+	"testing"
+
+	"google.golang.org/api/option"
+)
+
+func TestNewIdTokenClient(t *testing.T) {
+	aud := "https://example.com"
+	ctx := context.Background()
+	t.Run("with regular transport", func(t *testing.T) {
+		_, err := NewIdTokenClient(ctx, aud, option.WithCredentialsFile("testdata/creds.json"))
+		if err != nil {
+			t.Fatalf("NewIdTokenClient() = %v", err)
+		}
+	})
+	t.Run("with wrapped transport", func(t *testing.T) {
+		prev := http.DefaultTransport
+		http.DefaultTransport = WrapTransport(http.DefaultTransport)
+		defer func() {
+			http.DefaultTransport = prev
+		}()
+		_, err := NewIdTokenClient(ctx, aud, option.WithCredentialsFile("testdata/creds.json"))
+		if err != nil {
+			t.Fatalf("NewIdTokenClient() = %v", err)
+		}
+	})
+}
