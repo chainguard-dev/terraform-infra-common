@@ -43,7 +43,7 @@ func TestExtractInnerTransport(t *testing.T) {
 
 	t.Run("wrapped", func(t *testing.T) {
 		inner := &http.Transport{}
-		var tr http.RoundTripper = WrapTransport(inner)
+		var tr = WrapTransport(inner)
 		if got := ExtractInnerTransport(tr); got != inner {
 			t.Errorf("want %v, got %v", inner, got)
 		}

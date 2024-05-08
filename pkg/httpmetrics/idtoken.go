@@ -23,7 +23,7 @@ import (
 //
 // We can't just use the option.WithHTTPClient and call upstream idtoken.NewClient()
 // because that code always reads from the http.DefaultTransport anyway.
-func newIdTokenClient(ctx context.Context, audience string, opts ...idtoken.ClientOption) (*http.Client, error) {
+func newIDTokenClient(ctx context.Context, audience string, opts ...idtoken.ClientOption) (*http.Client, error) {
 	// unwrap the transport from the metrics transport
 	innerTransport := ExtractInnerTransport(http.DefaultTransport)
 	httpTransport := innerTransport.(*http.Transport).Clone()
@@ -46,9 +46,9 @@ func newIdTokenClient(ctx context.Context, audience string, opts ...idtoken.Clie
 	return &http.Client{Transport: t}, nil
 }
 
-// NewIdTokenClient creates a new http.Client based on idtoken.Client, with metrics.
-func NewIdTokenClient(ctx context.Context, audience string, opts ...idtoken.ClientOption) (*http.Client, error) {
-	c, err := newIdTokenClient(ctx, audience, opts...)
+// NewIDTokenClient creates a new http.Client based on idtoken.Client, with metrics.
+func NewIDTokenClient(ctx context.Context, audience string, opts ...idtoken.ClientOption) (*http.Client, error) {
+	c, err := newIDTokenClient(ctx, audience, opts...)
 	if err != nil {
 		return nil, err
 	}

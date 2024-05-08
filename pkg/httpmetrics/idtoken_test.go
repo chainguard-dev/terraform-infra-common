@@ -12,13 +12,13 @@ import (
 	"google.golang.org/api/option"
 )
 
-func TestNewIdTokenClient(t *testing.T) {
+func TestNewIDTokenClient(t *testing.T) {
 	aud := "https://example.com"
 	ctx := context.Background()
 	t.Run("with regular transport", func(t *testing.T) {
-		_, err := NewIdTokenClient(ctx, aud, option.WithCredentialsFile("testdata/creds.json"))
+		_, err := NewIDTokenClient(ctx, aud, option.WithCredentialsFile("testdata/creds.json"))
 		if err != nil {
-			t.Fatalf("NewIdTokenClient() = %v", err)
+			t.Fatalf("NewIDTokenClient() = %v", err)
 		}
 	})
 	t.Run("with wrapped transport", func(t *testing.T) {
@@ -27,7 +27,7 @@ func TestNewIdTokenClient(t *testing.T) {
 		defer func() {
 			http.DefaultTransport = prev
 		}()
-		_, err := NewIdTokenClient(ctx, aud, option.WithCredentialsFile("testdata/creds.json"))
+		_, err := NewIDTokenClient(ctx, aud, option.WithCredentialsFile("testdata/creds.json"))
 		if err != nil {
 			t.Fatalf("NewIdTokenClient() = %v", err)
 		}
