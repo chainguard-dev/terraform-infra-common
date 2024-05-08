@@ -32,3 +32,20 @@ func TestTransport(t *testing.T) {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
 }
+
+func TestExtractInnerTransport(t *testing.T) {
+	t.Run("not wrapped", func(t *testing.T) {
+		tr := &http.Transport{}
+		if got := ExtractInnerTransport(tr); got != tr {
+			t.Errorf("want %v, got %v", tr, got)
+		}
+	})
+
+	t.Run("wrapped", func(t *testing.T) {
+		inner := &http.Transport{}
+		var tr http.RoundTripper = WrapTransport(inner)
+		if got := ExtractInnerTransport(tr); got != inner {
+			t.Errorf("want %v, got %v", inner, got)
+		}
+	})
+}
