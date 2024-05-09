@@ -52,14 +52,30 @@ func SetBucketSuffixes(bs map[string]string) { bucketSuffixes = bs }
 // Transport is an http.RoundTripper that records metrics for each request.
 var Transport = WrapTransport(http.DefaultTransport)
 
+type MetricsTransport struct {
+	http.RoundTripper
+
+	inner http.RoundTripper
+}
+
 // WrapTransport wraps an http.RoundTripper with instrumentation.
 func WrapTransport(t http.RoundTripper) http.RoundTripper {
-	return instrumentRoundTripperCounter(
-		instrumentRoundTripperInFlight(
-			instrumentRoundTripperDuration(
-				instrumentGitHubRateLimits(
-					instrumentDockerHubRateLimit(
-						otelhttp.NewTransport(t))))))
+	return &MetricsTransport{
+		RoundTripper: instrumentRoundTripperCounter(
+			instrumentRoundTripperInFlight(
+				instrumentRoundTripperDuration(
+					instrumentGitHubRateLimits(
+						instrumentDockerHubRateLimit(
+							otelhttp.NewTransport(t)))))),
+		inner: t,
+	}
+}
+
+func ExtractInnerTransport(rt http.RoundTripper) http.RoundTripper {
+	if mt, ok := rt.(*MetricsTransport); ok {
+		return mt.inner
+	}
+	return rt
 }
 
 func mapErrorToLabel(err error) string {
