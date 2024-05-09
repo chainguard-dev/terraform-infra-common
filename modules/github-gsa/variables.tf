@@ -2,6 +2,11 @@ variable "project_id" {
   type = string
 }
 
+variable "wif_project_id" {
+  type    = string
+  default = ""
+}
+
 variable "name" {
   description = "The name to give the service account."
   type        = string

@@ -114,6 +114,8 @@ locals {
 
 // Create the IAM binding allowing workflows to impersonate the service account.
 resource "google_service_account_iam_binding" "allow-impersonation" {
+  project_id = var.wif_project_id != "" ? var.wif_project_id : var.project_id
+
   service_account_id = google_service_account.this.name
   role               = "roles/iam.workloadIdentityUser"
 
@@ -123,11 +125,11 @@ resource "google_service_account_iam_binding" "allow-impersonation" {
 
   lifecycle {
     precondition {
-      condition = var.audit_workflow_ref == "" || var.workflow_ref == "*"
+      condition     = var.audit_workflow_ref == "" || var.workflow_ref == "*"
       error_message = "audit_workflow_ref may only be specified when workflow_ref is '*'"
     }
     precondition {
-      condition = var.audit_refspec == "" || var.refspec == "*"
+      condition     = var.audit_refspec == "" || var.refspec == "*"
       error_message = "audit_refspec may only be specified when refspec is '*'"
     }
   }
@@ -138,7 +140,7 @@ resource "google_service_account_iam_binding" "allow-impersonation" {
 module "audit-usage" {
   source = "../audit-serviceaccount"
 
-  project_id      = var.project_id
+  project_id      = var.wif_project_id != "" ? var.wif_project_id : var.project_id
   service-account = google_service_account.this.email
 
   allowed_principal_regex = local.principalSubject

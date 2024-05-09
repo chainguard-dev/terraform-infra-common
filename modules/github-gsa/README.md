@@ -65,6 +65,7 @@ No requirements.
 | <a name="input_refspec"></a> [refspec](#input\_refspec) | The refspec to allow to federate with this identity. | `string` | n/a | yes |
 | <a name="input_repository"></a> [repository](#input\_repository) | The name of the repository to allow to assume this identity. | `string` | n/a | yes |
 | <a name="input_wif-pool"></a> [wif-pool](#input\_wif-pool) | The name of the Workload Identity Federation pool. | `string` | n/a | yes |
+| <a name="input_wif_project_id"></a> [wif\_project\_id](#input\_wif\_project\_id) | n/a | `string` | `""` | no |
 | <a name="input_workflow_ref"></a> [workflow\_ref](#input\_workflow\_ref) | The workflow to allow to federate with this identity (e.g. .github/workflows/deploy.yaml). | `string` | n/a | yes |
 
 ## Outputs
