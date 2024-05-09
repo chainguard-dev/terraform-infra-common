@@ -89,6 +89,8 @@ No requirements.
 | <a name="module_http"></a> [http](#module\_http) | ../sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../sections/logs | n/a |
+| <a name="module_logurl"></a> [logurl](#module\_logurl) | ../logurl | n/a |
+| <a name="module_markdown"></a> [markdown](#module\_markdown) | ../sections/markdown | n/a |
 | <a name="module_resources"></a> [resources](#module\_resources) | ../sections/resources | n/a |
 | <a name="module_subscription"></a> [subscription](#module\_subscription) | ../sections/subscription | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../sections/width | n/a |
