@@ -199,9 +199,9 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
 resource "google_project_iam_member" "authorize-list" {
   for_each = toset([for i in var.invokers : i if startswith(i, "group:")])
 
-  project  = google_cloud_run_v2_job.job.project
-  role     = "roles/run.viewer"
-  member   = each.key
+  project = google_cloud_run_v2_job.job.project
+  role    = "roles/run.viewer"
+  member  = each.key
 }
 
 resource "google_cloud_scheduler_job" "cron" {
@@ -317,6 +317,52 @@ resource "google_monitoring_alert_policy" "anomalous-job-execution" {
         "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
         "method_name" = "EXTRACT(protoPayload.methodName)"
         "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, \"(\\\\S+)\")"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
+
+resource "google_monitoring_alert_policy" "success" {
+  count = var.success_alert_alignment_period_seconds == 0 ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Cloud Run Job Success Execcution: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Cloud Run Job Success Execcution: ${var.name}"
+
+    condition_absent {
+      filter = <<EOT
+        resource.type = "cloud_run_job"
+        AND resource.labels.job_name = "${google_cloud_run_v2_job.job.name}"
+        AND metric.type = "run.googleapis.com/job/completed_execution_count"
+        AND metric.labels.result = "succeeded"
+      EOT
+
+      aggregations {
+        alignment_period     = "${var.success_alert_alignment_period_seconds}s"
+        cross_series_reducer = "REDUCE_NONE"
+        per_series_aligner   = "ALIGN_MAX"
+      }
+
+      duration = "${ceil(var.success_alert_alignment_period_seconds / 4)}s"
+      trigger {
+        count = "1"
       }
     }
   }
