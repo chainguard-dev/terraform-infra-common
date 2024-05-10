@@ -27,3 +27,9 @@ variable "limits" {
   })
   default = null
 }
+
+variable "enable_profiler" {
+  type        = bool
+  default     = false
+  description = "Enable cloud profiler."
+}

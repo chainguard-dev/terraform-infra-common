@@ -172,3 +172,9 @@ variable "otel_collector_image" {
   default     = "chainguard/opentelemetry-collector-contrib:latest"
   description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub."
 }
+
+variable "enable_profiler" {
+  type        = bool
+  default     = false
+  description = "Enable cloud profiler."
+}

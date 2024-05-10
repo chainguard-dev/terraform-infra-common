@@ -21,3 +21,9 @@ variable "extra_filter_not_has_attributes" {
   default     = []
   description = "Optional additional prefixes to check for presence."
 }
+
+variable "enable_profiler" {
+  type        = bool
+  default     = false
+  description = "Enable cloud profiler."
+}

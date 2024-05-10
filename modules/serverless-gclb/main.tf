@@ -133,7 +133,7 @@ locals {
     [for _, v in google_compute_managed_ssl_certificate.public-service : v.id],
     [for _, v in google_compute_backend_service.public-services : v.id],
     [for _, v in google_compute_region_network_endpoint_group.regional-backends : v.id],
-    [ google_compute_url_map.public-service.id,
+    [google_compute_url_map.public-service.id,
       google_compute_target_https_proxy.public-service.id,
       google_compute_global_forwarding_rule.this.id,
     ],

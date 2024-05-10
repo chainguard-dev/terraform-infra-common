@@ -136,6 +136,11 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
 
+      env {
+        name  = "ENABLE_PROFILER"
+        value = var.enable_profiler
+      }
+
       dynamic "volume_mounts" {
         for_each = local.main_container.volume_mounts
         content {

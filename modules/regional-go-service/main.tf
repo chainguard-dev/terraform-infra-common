@@ -49,7 +49,7 @@ module "this" {
   egress     = var.egress
 
   service_account = var.service_account
-  containers      = {
+  containers = {
     for name, container in var.containers : name => {
       image         = cosign_sign.this[name].signed_ref
       args          = container.args
@@ -65,6 +65,7 @@ module "this" {
   scaling          = var.scaling
   volumes          = var.volumes
   regional-volumes = var.regional-volumes
+  enable_profiler  = var.enable_profiler
 
   request_timeout_seconds = var.request_timeout_seconds
   execution_environment   = var.execution_environment

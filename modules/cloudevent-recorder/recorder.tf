@@ -71,6 +71,8 @@ module "this" {
     empty_dir = {}
   }]
 
+  enable_profiler = var.enable_profiler
+
   notification_channels = var.notification_channels
 }
 

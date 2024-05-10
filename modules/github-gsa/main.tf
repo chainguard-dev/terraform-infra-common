@@ -123,11 +123,11 @@ resource "google_service_account_iam_binding" "allow-impersonation" {
 
   lifecycle {
     precondition {
-      condition = var.audit_workflow_ref == "" || var.workflow_ref == "*"
+      condition     = var.audit_workflow_ref == "" || var.workflow_ref == "*"
       error_message = "audit_workflow_ref may only be specified when workflow_ref is '*'"
     }
     precondition {
-      condition = var.audit_refspec == "" || var.refspec == "*"
+      condition     = var.audit_refspec == "" || var.refspec == "*"
       error_message = "audit_refspec may only be specified when refspec is '*'"
     }
   }
