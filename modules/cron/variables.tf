@@ -140,7 +140,13 @@ variable "invokers" {
 }
 
 variable "exec" {
-  description = "Execute job on modify."
+  description = "Whether to execute job on modify."
   type        = bool
   default     = false
+}
+
+variable "success_alert_alignment_period_seconds" {
+  description = "Alignment period for successful completion alert. 0 (default) to not create alert."
+  type        = number
+  default     = 0
 }
