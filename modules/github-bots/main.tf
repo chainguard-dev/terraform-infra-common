@@ -98,7 +98,7 @@ resource "google_service_account" "sa" {
 }
 
 module "service" {
-  source = "chainguard-dev/common/infra//modules/regional-go-service"
+  source = "../regional-go-service"
 
   name            = var.name
   project_id      = var.project_id

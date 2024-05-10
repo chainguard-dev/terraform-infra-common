@@ -94,7 +94,7 @@ No requirements.
 |------|--------|---------|
 | <a name="module_cloudevent-trigger"></a> [cloudevent-trigger](#module\_cloudevent-trigger) | ../cloudevent-trigger | n/a |
 | <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | chainguard-dev/common/infra//modules/dashboard/cloudevent-receiver | n/a |
-| <a name="module_service"></a> [service](#module\_service) | chainguard-dev/common/infra//modules/regional-go-service | n/a |
+| <a name="module_service"></a> [service](#module\_service) | ../regional-go-service | n/a |
 
 ## Resources
 
