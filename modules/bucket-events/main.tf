@@ -114,6 +114,21 @@ resource "google_pubsub_topic" "dead-letter" {
   }
 }
 
+// Create a subscription to the dead-letter topic so dead-lettered messages
+// are retained. This also allows us to alerts based on better metrics
+// like the age or count of dead-lettered messages.
+resource "google_pubsub_subscription" "dead-letter-pull-sub" {
+  name                       = google_pubsub_topic.dead-letter.name
+  topic                      = google_pubsub_topic.dead-letter.name
+  message_retention_duration = "86400s"
+
+  expiration_policy {
+    ttl = "86400s"
+  }
+
+  enable_message_ordering = true
+}
+
 // Grant the pubsub service account the ability to send to the dead-letter topic.
 resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter" {
   topic = google_pubsub_topic.dead-letter.name
