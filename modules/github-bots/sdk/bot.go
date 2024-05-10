@@ -113,8 +113,8 @@ func Serve(b Bot) {
 			ctx = context.WithValue(ctx, ContextKeyType, event.Type())
 
 			switch h := handler.(type) {
-			case WorkflowRunHandler:
-				logger.Debug("handling workflow run event")
+			case WorkflowRunArtifactHandler:
+				logger.Debug("handling workflow run artifact event")
 
 				var wre schemas.Wrapper[github.WorkflowRunEvent]
 				if err := event.DataAs(&wre); err != nil {
@@ -122,9 +122,18 @@ func Serve(b Bot) {
 					return err
 				}
 
-				wr := &github.WorkflowRun{}
-				if err := marshalTo(wre.Body.WorkflowRun, wr); err != nil {
-					logger.Errorf("failed to marshal workflow run: %v", err)
+				if err := h(ctx, wre.Body); err != nil {
+					logger.Errorf("failed to handle workflow run event: %v", err)
+					return err
+				}
+				return nil
+
+			case WorkflowRunHandler:
+				logger.Debug("handling workflow run event")
+
+				var wre schemas.Wrapper[github.WorkflowRunEvent]
+				if err := event.DataAs(&wre); err != nil {
+					logger.Errorf("failed to unmarshal workflow run event: %v", err)
 					return err
 				}
 
@@ -143,12 +152,6 @@ func Serve(b Bot) {
 					return err
 				}
 
-				pr := &github.PullRequest{}
-				if err := marshalTo(pre.Body.PullRequest, pr); err != nil {
-					logger.Errorf("failed to marshal pull request event: %v", err)
-					return err
-				}
-
 				if err := h(ctx, pre.Body); err != nil {
 					logger.Errorf("failed to handle pull request event: %v", err)
 					return err
@@ -161,12 +164,6 @@ func Serve(b Bot) {
 				var ice schemas.Wrapper[github.IssueCommentEvent]
 				if err := event.DataAs(&ice); err != nil {
 					logger.Errorf("failed to unmarshal issue comment event: %v", err)
-					return err
-				}
-
-				ic := &github.IssueComment{}
-				if err := marshalTo(ice.Body.Comment, ic); err != nil {
-					logger.Errorf("failed to marshal issue comment: %v", err)
 					return err
 				}
 
