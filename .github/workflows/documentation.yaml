@@ -18,6 +18,7 @@ jobs:
           - cloudevent-trigger
           - cloudevent-recorder
           - regional-go-service
+          - regional-service
           - serverless-gclb
           - networking
           - dashboard/service
