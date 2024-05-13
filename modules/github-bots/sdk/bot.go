@@ -182,14 +182,6 @@ func Serve(b Bot) {
 	}
 }
 
-func marshalTo(source any, target any) error {
-	b, err := json.Marshal(source)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, target)
-}
-
 // AttributeFromContext retrieves an attribute by key from the context.
 // Returns nil if the attribute does not exist.
 func AttributeFromContext(ctx context.Context, key string) interface{} {

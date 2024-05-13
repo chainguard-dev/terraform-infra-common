@@ -42,6 +42,6 @@ const (
 	WorkflowRunEvent  EventType = "dev.chainguard.github.workflow_run"
 	IssueCommentEvent EventType = "dev.chainguard.github.issue_comment"
 
-	// LoFo events (https://github.com/chainguard-dev/mono/tree/main/bots/lofo)
+	// LoFo events
 	WorkflowRunArtifactEvent EventType = "dev.chainguard.lofo.workflow_run_artifacts"
 )
