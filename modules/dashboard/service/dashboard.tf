@@ -31,6 +31,13 @@ module "github" {
   filter = []
 }
 
+module "gorm" {
+  source       = "../sections/gorm"
+  title        = "GORM"
+  filter       = []
+  service_name = var.service_name
+}
+
 module "resources" {
   source                = "../sections/resources"
   title                 = "Resources"
@@ -60,6 +67,7 @@ module "layout" {
     var.sections.http ? [module.http.section] : [],
     var.sections.grpc ? [module.grpc.section] : [],
     var.sections.github ? [module.github.section] : [],
+    var.sections.gorm ? [module.gorm.section] : [],
     [module.resources.section],
   )
 }

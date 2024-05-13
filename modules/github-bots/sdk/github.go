@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -8,6 +10,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
+
+	bufra "github.com/avvmoto/buf-readerat"
+	"github.com/snabb/httpreaderat"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/octosts"
@@ -29,6 +34,8 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubCl
 	return GitHubClient{
 		inner: github.NewClient(oauth2.NewClient(ctx, ts)),
 		ts:    ts,
+		// TODO: Make this configurable?
+		bufSize: 1024 * 1024, // 1MB buffer for requests
 	}
 }
 
@@ -52,8 +59,9 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 }
 
 type GitHubClient struct {
-	inner *github.Client
-	ts    *tokenSource
+	inner   *github.Client
+	ts      *tokenSource
+	bufSize int
 }
 
 func (c GitHubClient) Client() *github.Client { return c.inner }
@@ -145,6 +153,7 @@ func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, co
 	return nil
 }
 
+// Deprecated: use FetchWorkflowRunLogs instead.
 func (c GitHubClient) GetWorkflowRunLogs(ctx context.Context, wre github.WorkflowRunEvent) ([]byte, error) {
 	logURL, resp, err := c.inner.Actions.GetWorkflowRunLogs(ctx, *wre.Repo.Owner.Login, *wre.Repo.Name, *wre.WorkflowRun.ID, 3)
 	if err != nil {
@@ -177,6 +186,31 @@ func (c GitHubClient) GetWorkflowRunLogs(ctx context.Context, wre github.Workflo
 	return body, nil
 }
 
+// FetchWorkflowRunLogs returns a Reader for the logs of the given WorkflowRun
+func (c GitHubClient) FetchWorkflowRunLogs(ctx context.Context, wr *github.WorkflowRun) (io.ReaderAt, error) {
+	url, ghresp, err := c.inner.Actions.GetWorkflowRunLogs(ctx, *wr.Repository.Owner.Login, *wr.Repository.Name, *wr.ID, 3)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate log retrieval: %w", err)
+	}
+	defer ghresp.Body.Close()
+
+	if ghresp.StatusCode != http.StatusFound {
+		return nil, fmt.Errorf("failed to find log artifact (%d) for workflow [%s]: %s", *wr.ID, *wr.Name, ghresp.Status)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	htdrd, err := httpreaderat.New(nil, req, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return bufra.NewBufReaderAt(htdrd, c.bufSize), nil
+}
+
 func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre github.WorkflowRunEvent) (int, error) {
 	opts := &github.PullRequestListOptions{
 		State:       "open",
@@ -206,4 +240,109 @@ func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre g
 	}
 
 	return 0, fmt.Errorf("no matching pull request found")
+}
+
+// Deprecated: Use FetchWorkflowRunArtifact instead.
+func (c GitHubClient) GetWorkflowRunArtifact(ctx context.Context, wr *github.WorkflowRun, name string) (*zip.Reader, error) {
+	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
+
+	artifacts, _, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, &github.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list workflow run [%d] artifacts: %w", *wr.ID, err)
+	}
+
+	var zr *zip.Reader
+	for _, a := range artifacts.Artifacts {
+		if *a.Name != name {
+			continue
+		}
+
+		aid := a.GetID()
+		url, ghresp, err := c.inner.Actions.DownloadArtifact(ctx, owner, repo, aid, 10)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download artifact (%s) [%d]: %w", name, aid, err)
+		}
+
+		if ghresp.StatusCode != http.StatusFound {
+			return nil, fmt.Errorf("failed to find artifact (%s) [%d]: %s", name, aid, ghresp.Status)
+		}
+
+		client := &http.Client{}
+
+		resp, err := client.Get(url.String())
+		if err != nil {
+			return nil, fmt.Errorf("could not download artifact: %w", err)
+		}
+		defer resp.Body.Close()
+
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read artifact: %w", err)
+		}
+
+		buf := bytes.NewReader(data)
+
+		r, err := zip.NewReader(buf, resp.ContentLength)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zip reader: %w", err)
+		}
+		zr = r
+	}
+
+	if zr == nil {
+		return nil, fmt.Errorf("artifact %s for workflow_run %d not found", name, *wr.ID)
+	}
+
+	return zr, nil
+}
+
+// FetchWorkflowRunArtifact returns a zip reader for the artifact with `name` from the given WorkflowRun.
+func (c GitHubClient) FetchWorkflowRunArtifact(ctx context.Context, wr *github.WorkflowRun, name string) (*zip.Reader, error) {
+	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
+
+	artifacts, _, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, &github.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list workflow run [%d] artifacts: %w", *wr.ID, err)
+	}
+
+	var zr *zip.Reader
+	for _, a := range artifacts.Artifacts {
+		if *a.Name != name {
+			continue
+		}
+
+		aid := a.GetID()
+		url, ghresp, err := c.inner.Actions.DownloadArtifact(ctx, owner, repo, aid, 10)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download artifact (%s) [%d]: %w", name, aid, err)
+		}
+
+		if ghresp.StatusCode != http.StatusFound {
+			return nil, fmt.Errorf("failed to find artifact (%s) [%d]: %s", name, aid, ghresp.Status)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+		if err != nil {
+			return nil, err
+		}
+
+		htdrd, err := httpreaderat.New(nil, req, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		bhtrdr := bufra.NewBufReaderAt(htdrd, c.bufSize)
+
+		r, err := zip.NewReader(bhtrdr, htdrd.Size())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zip reader: %w", err)
+		}
+		zr = r
+	}
+
+	if zr == nil {
+		return nil, fmt.Errorf("artifact %s for workflow_run %d not found", name, *wr.ID)
+	}
+
+	return zr, nil
 }

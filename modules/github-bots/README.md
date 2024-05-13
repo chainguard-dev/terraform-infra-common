@@ -61,10 +61,19 @@ module "my-custom-bot" {
 
   name         = "my-custom-bot"
   github-event = "dev.chainguard.github.pull_request"
-  source_code = {
-    importpath  = "./cmd/custom/bot"
-    working_dir = path.module
-  }
+  containers = {
+    "bot" = {
+      source = {
+        working_dir = path.module
+        importpath  = "chainguard.dev/bots/my-custom-bot"
+      }
+      ports = [{ container_port = 8080 }]
+      env = [{
+        name  = "LOG_LEVEL"
+        value = "info"
+      }]
+    }
+
 }
 ```
 

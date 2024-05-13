@@ -39,6 +39,22 @@ resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter"
   members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
 }
 
+// Create a subscription to the dead-letter topic so dead-lettered messages
+// are retained. This also allows us to alerts based on better metrics
+// like the age or count of dead-lettered messages.
+resource "google_pubsub_subscription" "dead-letter-pull-sub" {
+  for_each                   = google_pubsub_topic.dead-letter
+  name                       = each.value.name
+  topic                      = each.value.name
+  message_retention_duration = "86400s"
+
+  expiration_policy {
+    ttl = "86400s"
+  }
+
+  enable_message_ordering = true
+}
+
 // Configure the subscription to deliver the events matching our filter to this service
 // using the above identity to authorize the delivery..
 resource "google_pubsub_subscription" "this" {

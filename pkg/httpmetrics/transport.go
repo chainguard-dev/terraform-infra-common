@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 )
 
 const CeTypeHeader string = "ce-type"
@@ -52,14 +53,30 @@ func SetBucketSuffixes(bs map[string]string) { bucketSuffixes = bs }
 // Transport is an http.RoundTripper that records metrics for each request.
 var Transport = WrapTransport(http.DefaultTransport)
 
+type MetricsTransport struct {
+	http.RoundTripper
+
+	inner http.RoundTripper
+}
+
 // WrapTransport wraps an http.RoundTripper with instrumentation.
 func WrapTransport(t http.RoundTripper) http.RoundTripper {
-	return instrumentRoundTripperCounter(
-		instrumentRoundTripperInFlight(
-			instrumentRoundTripperDuration(
-				instrumentGitHubRateLimits(
-					instrumentDockerHubRateLimit(
-						otelhttp.NewTransport(t))))))
+	return &MetricsTransport{
+		RoundTripper: instrumentRoundTripperCounter(
+			instrumentRoundTripperInFlight(
+				instrumentRoundTripperDuration(
+					instrumentGitHubRateLimits(
+						instrumentDockerHubRateLimit(
+							otelhttp.NewTransport(t)))))),
+		inner: t,
+	}
+}
+
+func ExtractInnerTransport(rt http.RoundTripper) http.RoundTripper {
+	if mt, ok := rt.(*MetricsTransport); ok {
+		return mt.inner
+	}
+	return rt
 }
 
 func mapErrorToLabel(err error) string {
@@ -86,12 +103,17 @@ func mapErrorToLabel(err error) string {
 
 func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
+		tracer := otel.Tracer("httpmetrics")
+		host := bucketize(r.URL.Host)
+		_, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
+		defer span.End()
+
 		resp, err := next.RoundTrip(r)
 		if err == nil {
 			mReqCount.With(prometheus.Labels{
 				"code":          fmt.Sprintf("%d", resp.StatusCode),
 				"method":        r.Method,
-				"host":          bucketize(r.URL.Host),
+				"host":          host,
 				"service_name":  env.KnativeServiceName,
 				"revision_name": env.KnativeRevisionName,
 				"ce_type":       r.Header.Get(CeTypeHeader),
@@ -100,7 +122,7 @@ func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripper
 			mReqCount.With(prometheus.Labels{
 				"code":          mapErrorToLabel(err),
 				"method":        r.Method,
-				"host":          bucketize(r.URL.Host),
+				"host":          host,
 				"service_name":  env.KnativeServiceName,
 				"revision_name": env.KnativeRevisionName,
 				"ce_type":       r.Header.Get(CeTypeHeader),

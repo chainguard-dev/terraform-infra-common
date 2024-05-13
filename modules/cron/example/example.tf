@@ -27,4 +27,6 @@ module "cron" {
   env = {
     EXAMPLE_ENV = "honk"
   }
+
+  notification_channels = []
 }
