@@ -47,3 +47,9 @@ Which type of ingress traffic to accept for the service (see regional-go-service
 EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 }
+
+variable "enable_profiler" {
+  type        = bool
+  default     = false
+  description = "Enable cloud profiler."
+}

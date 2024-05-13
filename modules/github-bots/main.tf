@@ -98,7 +98,7 @@ resource "google_service_account" "sa" {
 }
 
 module "service" {
-  source = "chainguard-dev/common/infra//modules/regional-go-service"
+  source = "../regional-go-service"
 
   name            = var.name
   project_id      = var.project_id
@@ -108,6 +108,8 @@ module "service" {
   egress = "PRIVATE_RANGES_ONLY" // Makes GitHub API calls
 
   containers = var.containers
+
+  enable_profiler = var.enable_profiler
 
   notification_channels = var.notification_channels
 }

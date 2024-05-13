@@ -128,3 +128,9 @@ variable "slo_policy_link" {
   type        = string
   default     = ""
 }
+
+variable "enable_profiler" {
+  type        = bool
+  default     = false
+  description = "Enable cloud profiler."
+}

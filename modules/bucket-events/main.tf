@@ -92,6 +92,8 @@ module "this" {
     }
   }
 
+  enable_profiler = var.enable_profiler
+
   notification_channels = var.notification_channels
 }
 
