@@ -176,7 +176,7 @@ func (c GitHubClient) GetWorkflowRunLogs(ctx context.Context, wre github.Workflo
 }
 
 // FetchWorkflowRunLogs returns a Reader for the logs of the given WorkflowRun
-func (c GitHubClient) FetchWorkflowRunLogs(ctx context.Context, wr *github.WorkflowRun) (io.ReaderAt, error) {
+func (c GitHubClient) FetchWorkflowRunLogs(ctx context.Context, wr *github.WorkflowRun, store httpreaderat.Store) (*zip.Reader, error) {
 	url, ghresp, err := c.inner.Actions.GetWorkflowRunLogs(ctx, *wr.Repository.Owner.Login, *wr.Repository.Name, *wr.ID, 3)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate log retrieval: %w", err)
@@ -192,12 +192,18 @@ func (c GitHubClient) FetchWorkflowRunLogs(ctx context.Context, wr *github.Workf
 		return nil, err
 	}
 
-	htdrd, err := httpreaderat.New(nil, req, nil)
+	htdrd, err := httpreaderat.New(nil, req, store)
 	if err != nil {
 		return nil, err
 	}
 
-	return bufra.NewBufReaderAt(htdrd, c.bufSize), nil
+	bhtrdr := bufra.NewBufReaderAt(htdrd, c.bufSize)
+
+	zr, err := zip.NewReader(bhtrdr, htdrd.Size())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zip reader: %w", err)
+	}
+	return zr, nil
 }
 
 func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre github.WorkflowRunEvent) (int, error) {
