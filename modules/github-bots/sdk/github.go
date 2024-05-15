@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -97,7 +98,8 @@ func checkRateLimiting(ctx context.Context, githubErr error) (bool, time.Duratio
 
 	// If GitHub returned an error of type RateLimitError, we can attempt to compute the next time to try the request again
 	// by reading its rate limit information
-	if rateLimitError, ok := githubErr.(*github.RateLimitError); ok {
+	var rateLimitError *github.RateLimitError
+	if errors.As(githubErr, &rateLimitError) {
 		isRateLimited = true
 		retryAfter := time.Until(rateLimitError.Rate.Reset.Time)
 		delay = retryAfter
@@ -105,7 +107,8 @@ func checkRateLimiting(ctx context.Context, githubErr error) (bool, time.Duratio
 	}
 
 	// If GitHub returned a Retry-After header, use its value, otherwise use the default
-	if abuseRateLimitError, ok := githubErr.(*github.AbuseRateLimitError); ok {
+	var abuseRateLimitError *github.AbuseRateLimitError
+	if errors.As(githubErr, &abuseRateLimitError) {
 		isRateLimited = true
 		if abuseRateLimitError.RetryAfter != nil {
 			if abuseRateLimitError.RetryAfter.Seconds() > 0 {
