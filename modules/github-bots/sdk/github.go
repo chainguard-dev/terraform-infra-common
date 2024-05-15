@@ -4,12 +4,14 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	bufra "github.com/avvmoto/buf-readerat"
 	"github.com/snabb/httpreaderat"
@@ -80,6 +82,53 @@ func (c GitHubClient) Close(ctx context.Context) error {
 		return fmt.Errorf("revoking token: %w", err)
 	}
 
+	return nil
+}
+
+// checkRateLimiting checks for github API rate limiting. It attempts to use
+// the returned Retry-After header to calculate the delay returned from the API.
+//
+// Modified from https://github.com/wolfi-dev/wolfictl/blob/main/pkg/gh/github.go
+func checkRateLimiting(_ context.Context, githubErr error) (bool, time.Duration) {
+	// Default delay is 30 seconds
+	delay := time.Duration(30 * int(time.Second))
+	isRateLimited := false
+
+	// If GitHub returned an error of type RateLimitError, we can attempt to
+	// compute the next time to try the request again by reading its rate limit information
+	var rateLimitError *github.RateLimitError
+	if errors.As(githubErr, &rateLimitError) {
+		isRateLimited = true
+		delay = time.Until(*rateLimitError.Rate.Reset.GetTime())
+	}
+
+	// If GitHub returned a Retry-After header, use its value, otherwise use the default
+	var abuseRateLimitError *github.AbuseRateLimitError
+	if errors.As(githubErr, &abuseRateLimitError) {
+		isRateLimited = true
+		delay = abuseRateLimitError.GetRetryAfter()
+	}
+	return isRateLimited, delay
+}
+
+// handleGithubResponse handles the github response and error returned by most
+// API calls. It will handle checking for rate limiting as well as any errors
+// returned by the API.
+func handleGithubResponse(ctx context.Context, resp *github.Response, err error) error {
+	githubErr := github.CheckResponse(resp.Response)
+	if githubErr != nil {
+		rateLimited, delay := checkRateLimiting(ctx, githubErr)
+		// if we were not rate limited, return err
+		if !rateLimited {
+			return err
+		}
+		// For now we don't handle rate limiting, just log that we got rate
+		// limited and what the delay from github is
+		return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
+	} else if err != nil {
+		// if err is not rate limit, return err
+		return err
+	}
 	return nil
 }
 
@@ -295,44 +344,42 @@ func (c GitHubClient) GetWorkflowRunArtifact(ctx context.Context, wr *github.Wor
 func (c GitHubClient) FetchWorkflowRunArtifact(ctx context.Context, wr *github.WorkflowRun, name string) (*zip.Reader, error) {
 	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
 
-	artifacts, _, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, &github.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list workflow run [%d] artifacts: %w", *wr.ID, err)
-	}
-
 	var zr *zip.Reader
-	for _, a := range artifacts.Artifacts {
+	if err := c.ListArtifactsFunc(ctx, wr, &github.ListOptions{PerPage: 30}, func(a *github.Artifact) (bool, error) {
 		if *a.Name != name {
-			continue
+			return false, nil
 		}
 
 		aid := a.GetID()
 		url, ghresp, err := c.inner.Actions.DownloadArtifact(ctx, owner, repo, aid, 10)
 		if err != nil {
-			return nil, fmt.Errorf("failed to download artifact (%s) [%d]: %w", name, aid, err)
+			return false, fmt.Errorf("failed to download artifact (%s) [%d]: %w", name, aid, err)
 		}
 
 		if ghresp.StatusCode != http.StatusFound {
-			return nil, fmt.Errorf("failed to find artifact (%s) [%d]: %s", name, aid, ghresp.Status)
+			return false, fmt.Errorf("failed to find artifact (%s) [%d]: %s", name, aid, ghresp.Status)
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
 		htdrd, err := httpreaderat.New(nil, req, nil)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
 		bhtrdr := bufra.NewBufReaderAt(htdrd, c.bufSize)
 
 		r, err := zip.NewReader(bhtrdr, htdrd.Size())
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zip reader: %w", err)
+			return false, fmt.Errorf("failed to create zip reader: %w", err)
 		}
 		zr = r
+		return true, nil
+	}); err != nil {
+		return nil, err
 	}
 
 	if zr == nil {
@@ -340,4 +387,35 @@ func (c GitHubClient) FetchWorkflowRunArtifact(ctx context.Context, wr *github.W
 	}
 
 	return zr, nil
+}
+
+// ListArtifactsFunc executes a paginated list of all artifacts for a given
+// workflow run and executes the provided function on each of the artifacts.
+// The provided function should return a boolean to indicate whether the list
+// operation can stop making API calls.
+func (c GitHubClient) ListArtifactsFunc(ctx context.Context, wr *github.WorkflowRun, opt *github.ListOptions, f func(artifact *github.Artifact) (bool, error)) error {
+	if opt == nil {
+		opt = &github.ListOptions{}
+	}
+	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
+	for {
+		artifacts, resp, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, opt)
+		if err := handleGithubResponse(ctx, resp, err); err != nil {
+			return err
+		}
+		for _, artifact := range artifacts.Artifacts {
+			stop, err := f(artifact)
+			if err != nil {
+				return err
+			}
+			if stop {
+				return nil
+			}
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
+	}
+	return nil
 }
