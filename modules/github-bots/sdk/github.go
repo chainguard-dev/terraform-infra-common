@@ -86,35 +86,27 @@ func (c GitHubClient) Close(ctx context.Context) error {
 }
 
 // checkRateLimiting checks for github API rate limiting. It attempts to use
-// the returned Retry-After header to delay requests.
+// the returned Retry-After header to calculate the delay returned from the API.
 //
 // Modified from https://github.com/wolfi-dev/wolfictl/blob/main/pkg/gh/github.go
-func checkRateLimiting(ctx context.Context, githubErr error) (bool, time.Duration) {
-	log := clog.FromContext(ctx)
-
+func checkRateLimiting(_ context.Context, githubErr error) (bool, time.Duration) {
 	// Default delay is 30 seconds
 	delay := time.Duration(30 * int(time.Second))
 	isRateLimited := false
 
-	// If GitHub returned an error of type RateLimitError, we can attempt to compute the next time to try the request again
-	// by reading its rate limit information
+	// If GitHub returned an error of type RateLimitError, we can attempt to
+	// compute the next time to try the request again by reading its rate limit information
 	var rateLimitError *github.RateLimitError
 	if errors.As(githubErr, &rateLimitError) {
 		isRateLimited = true
-		retryAfter := time.Until(rateLimitError.Rate.Reset.Time)
-		delay = retryAfter
-		log.Infof("parsed retryAfter %d from GitHub rate limit error's reset time", retryAfter)
+		delay = time.Until(*rateLimitError.Rate.Reset.GetTime())
 	}
 
 	// If GitHub returned a Retry-After header, use its value, otherwise use the default
 	var abuseRateLimitError *github.AbuseRateLimitError
 	if errors.As(githubErr, &abuseRateLimitError) {
 		isRateLimited = true
-		if abuseRateLimitError.RetryAfter != nil {
-			if abuseRateLimitError.RetryAfter.Seconds() > 0 {
-				delay = *abuseRateLimitError.RetryAfter
-			}
-		}
+		delay = abuseRateLimitError.GetRetryAfter()
 	}
 	return isRateLimited, delay
 }
@@ -123,15 +115,16 @@ func checkRateLimiting(ctx context.Context, githubErr error) (bool, time.Duratio
 // API calls. It will handle checking for rate limiting as well as any errors
 // returned by the API.
 func handleGithubResponse(ctx context.Context, resp *github.Response, err error) error {
-	// if err is rate limit, delay and try again
 	githubErr := github.CheckResponse(resp.Response)
 	if githubErr != nil {
 		rateLimited, delay := checkRateLimiting(ctx, githubErr)
+		// if we were not rate limited, return err
 		if !rateLimited {
 			return err
 		}
-		fmt.Printf("retrying after %v second delay due to rate limiting\n", delay.Seconds())
-		time.Sleep(delay)
+		// For now we don't handle rate limiting, just log that we got rate
+		// limited and what the delay from github is
+		return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
 	} else if err != nil {
 		// if err is not rate limit, return err
 		return err
