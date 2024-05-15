@@ -389,10 +389,10 @@ func (c GitHubClient) FetchWorkflowRunArtifact(ctx context.Context, wr *github.W
 	return zr, nil
 }
 
-// ListArtifactsFunc executes a rate-limited, paginated list of all artifacts
-// for a given workflow run and executes the provided function on each of the
-// artifacts. The provided function should return a boolean to indicate whether
-// the list operation can stop making API calls.
+// ListArtifactsFunc executes a paginated list of all artifacts for a given
+// workflow run and executes the provided function on each of the artifacts.
+// The provided function should return a boolean to indicate whether the list
+// operation can stop making API calls.
 func (c GitHubClient) ListArtifactsFunc(ctx context.Context, wr *github.WorkflowRun, opt *github.ListOptions, f func(artifact *github.Artifact) (bool, error)) error {
 	if opt == nil {
 		opt = &github.ListOptions{}
