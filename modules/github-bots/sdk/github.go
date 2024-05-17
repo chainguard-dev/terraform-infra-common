@@ -55,7 +55,14 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 		ctx := context.Background()
 		clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
 		otok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
-		ts.tok, ts.err = &oauth2.Token{AccessToken: otok}, err
+
+		// Explicitly set the token to nil rather than a struct with an empty
+		// token field
+		if err != nil {
+			ts.tok, ts.err = nil, err
+		} else {
+			ts.tok, ts.err = &oauth2.Token{AccessToken: otok}, nil
+		}
 	})
 	return ts.tok, ts.err
 }
@@ -115,21 +122,23 @@ func checkRateLimiting(_ context.Context, githubErr error) (bool, time.Duration)
 // API calls. It will handle checking for rate limiting as well as any errors
 // returned by the API.
 func handleGithubResponse(ctx context.Context, resp *github.Response, err error) error {
-	githubErr := github.CheckResponse(resp.Response)
-	if githubErr != nil {
-		rateLimited, delay := checkRateLimiting(ctx, githubErr)
-		// if we were not rate limited, return err
-		if !rateLimited {
-			return err
+	// resp may be nil if err is nonempty. However, err may contain a rate limit
+	// error so we have to inspect for rate limiting if resp is non-nil
+	if resp != nil {
+		githubErr := github.CheckResponse(resp.Response)
+		if githubErr != nil {
+			rateLimited, delay := checkRateLimiting(ctx, githubErr)
+			// if we were not rate limited, return err
+			if !rateLimited {
+				return err
+			}
+			// For now we don't handle rate limiting, just log that we got rate
+			// limited and what the delay from github is
+			return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
 		}
-		// For now we don't handle rate limiting, just log that we got rate
-		// limited and what the delay from github is
-		return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
-	} else if err != nil {
-		// if err is not rate limit, return err
-		return err
 	}
-	return nil
+	// err is nil or contains an error
+	return err
 }
 
 func (c GitHubClient) AddLabel(ctx context.Context, pr *github.PullRequest, label string) error {
