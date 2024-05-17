@@ -23,14 +23,14 @@ func WithTarget(ctx context.Context, url string) []cehttp.Option {
 
 	if strings.HasPrefix(url, "https://") {
 		idc, err := idtoken.NewClient(ctx, url)
+		if err != nil {
+			log.Panicf("failed to create idtoken client: %v", err)
+		}
 		// If we don't specify a client, NewClientHTTP will use http.DefaultClient
 		// and may clobber its Transport. To avoid so, we pass a client with the
 		// the metrics transport instead.
 		metricsClient := http.Client{
 			Transport: metrics.WrapTransport(idc.Transport),
-		}
-		if err != nil {
-			log.Panicf("failed to create idtoken client: %v", err)
 		}
 		opts = append(opts, cehttp.WithClient(metricsClient))
 	}
