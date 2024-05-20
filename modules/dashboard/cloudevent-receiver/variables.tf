@@ -33,6 +33,12 @@ variable "alerts" {
   default     = {}
 }
 
+variable "split_triggers" {
+  description = "Opt-in flag to split into per-trigger dashboards. Helpful when hitting widget limits"
+  type        = bool
+  default     = false
+}
+
 variable "sections" {
   description = "Sections to include in the dashboard"
   type = object({
