@@ -54,9 +54,12 @@ module "resources" {
 module "width" { source = "../sections/width" }
 
 module "layout" {
-  source = "../sections/layout"
-  sections = concat(
-    [for key in sort(keys(var.triggers)) : module.subscription[key].section],
+  # Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
+  # per trigger so services (like the recorder) with large amounts of triggers
+  # do not hit the widget limit.
+  for_each = var.triggers
+  source   = "../sections/layout"
+  sections = concat([module.subscription[each.key].section],
     [
       module.errgrp.section,
       module.logs.section,
@@ -69,8 +72,12 @@ module "layout" {
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
+  # Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
+  # per trigger so services (like the recorder) with large amounts of triggers
+  # do not hit the widget limit.
+  for_each = var.triggers
   dashboard_json = jsonencode({
-    displayName = "Cloud Event Receiver: ${var.service_name}"
+    displayName = "Cloud Event Receiver: ${var.service_name} (${each.key})"
     labels = merge({
       "service" : ""
       "eventing" : ""
@@ -84,7 +91,7 @@ resource "google_monitoring_dashboard" "dashboard" {
     // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
     mosaicLayout = {
       columns = module.width.size
-      tiles   = module.layout.tiles,
+      tiles   = module.layout[each.key].tiles,
     }
   })
 }
