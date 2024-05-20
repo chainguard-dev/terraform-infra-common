@@ -54,7 +54,8 @@ module "resources" {
 module "width" { source = "../sections/width" }
 
 module "layout" {
-  count  = var.split_triggers ? 0 : 1
+  // This funky for_each just creates one instance when split_triggers is false
+  for_each = var.split_triggers ? {} : {(var.service_name): ""}
   source = "../sections/layout"
   sections = concat(
     [for key in sort(keys(var.triggers)) : module.subscription[key].section],
@@ -70,7 +71,8 @@ module "layout" {
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
-  count = var.split_triggers ? 0 : 1
+  // This funky for_each just creates one instance when split_triggers is false
+  for_each = var.split_triggers ? {} : {(var.service_name): ""}
   dashboard_json = jsonencode({
     displayName = "Cloud Event Receiver: ${var.service_name}"
     labels = merge({
@@ -85,20 +87,19 @@ resource "google_monitoring_dashboard" "dashboard" {
 
     // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
     mosaicLayout = {
-      columns = module.width.size
-      tiles   = module.layout.tiles,
+      columns = module.width.size,
+      tiles   = module.layout[each.key].tiles,
     }
   })
 }
 
-# Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
-# per trigger so services (like the recorder) with large amounts of triggers
-# do not hit the widget limit.
-#
-# This module is opt-in and will replace the layout module above
+// Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
+// per trigger so services (like the recorder) with large amounts of triggers
+// do not hit the widget limit.
+//
+// This module is opt-in and will replace the layout module above
 module "trigger_layout" {
-  count    = var.split_triggers ? 1 : 0
-  for_each = var.triggers
+  for_each = var.split_triggers ? var.triggers : {}
   source   = "../sections/layout"
   sections = concat([module.subscription[each.key].section],
     [
@@ -112,14 +113,13 @@ module "trigger_layout" {
   )
 }
 
-# Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
-# per trigger so services (like the recorder) with large amounts of triggers
-# do not hit the widget limit.
-#
-# This resource is opt-in and will replace the dashboard resource above
+// Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
+// per trigger so services (like the recorder) with large amounts of triggers
+// do not hit the widget limit.
+//
+// This resource is opt-in and will replace the dashboard resource above
 resource "google_monitoring_dashboard" "trigger_dashboards" {
-  count    = var.split_triggers ? 1 : 0
-  for_each = var.triggers
+  for_each = var.split_triggers ? var.triggers : {}
   dashboard_json = jsonencode({
     displayName = "Cloud Event Receiver: ${var.service_name} (${each.key})"
     labels = merge({
@@ -135,7 +135,7 @@ resource "google_monitoring_dashboard" "trigger_dashboards" {
     // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
     mosaicLayout = {
       columns = module.width.size
-      tiles   = module.layout[each.key].tiles,
+      tiles   = module.trigger_layout[each.key].tiles,
     }
   })
 }

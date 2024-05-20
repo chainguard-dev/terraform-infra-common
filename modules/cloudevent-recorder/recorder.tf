@@ -112,6 +112,7 @@ module "recorder-dashboard" {
 
   alerts = tomap({ for type, schema in var.types : "BQ DTS ${var.name}-${type}" => google_monitoring_alert_policy.bq_dts[type].id })
 
+  split_triggers = var.split_triggers
   triggers = {
     for type, schema in var.types : "type: ${type}" => {
       subscription_prefix   = "${var.name}-${random_id.trigger-suffix[type].hex}"
