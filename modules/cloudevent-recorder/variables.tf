@@ -121,3 +121,9 @@ variable "enable_profiler" {
   default     = false
   description = "Enable cloud profiler."
 }
+
+variable "split_triggers" {
+  description = "Opt-in flag to split into per-trigger dashboards. Helpful when hitting widget limits"
+  type        = bool
+  default     = false
+}
