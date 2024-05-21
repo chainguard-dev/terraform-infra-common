@@ -131,6 +131,7 @@ type WorkflowRunEvent struct {
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
 }
 
+// https://pkg.go.dev/github.com/google/go-github/v60/github#IssueCommentEvent
 type IssueCommentEvent struct {
 	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
 	Issue        Issue               `json:"issue,omitempty" bigquery:"issue"`
@@ -140,6 +141,26 @@ type IssueCommentEvent struct {
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 }
 
+// https://pkg.go.dev/github.com/google/go-github/v60/github#IssueEvent
+type IssueEvent struct {
+	ID                bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	URL               bigquery.NullString    `json:"url,omitempty" bigquery:"url"`
+	Actor             User                   `json:"actor,omitempty" bigquery:"actor"`
+	Action            bigquery.NullString    `json:"action,omitempty" bigquery:"action"`
+	Event             bigquery.NullString    `json:"event,omitempty" bigquery:"event"`
+	CreatedAt         bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	Issue             Issue                  `json:"issue,omitempty" bigquery:"issue"`
+	Repository        Repository             `json:"repository,omitempty" bigquery:"repository"`
+	Assignee          User                   `json:"assignee,omitempty" bigquery:"assignee"`
+	Assigner          User                   `json:"assigner,omitempty" bigquery:"assigner"`
+	CommitID          bigquery.NullString    `json:"commit_id,omitempty" bigquery:"commit_id"`
+	Label             Label                  `json:"label,omitempty" bigquery:"label"`
+	LockReason        bigquery.NullString    `json:"lock_reason,omitempty" bigquery:"lock_reason"`
+	RequestedReviewer User                   `json:"requested_reviewer,omitempty" bigquery:"requested_reviewer"`
+	ReviewRequester   User                   `json:"review_requester,omitempty" bigquery:"review_requester"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#Issue
 type Issue struct {
 	ID                bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
 	Number            bigquery.NullInt64     `json:"number,omitempty" bigquery:"number"`
@@ -170,6 +191,7 @@ type Issue struct {
 	Draft             bigquery.NullBool      `json:"draft,omitempty" bigquery:"draft"`
 }
 
+// https://pkg.go.dev/github.com/google/go-github/v60/github#IssueComment
 type IssueComment struct {
 	URL      bigquery.NullString    `json:"url,omitempty" bigquery:"url"`
 	HTMLURL  bigquery.NullString    `json:"html_url,omitempty" bigquery:"html_url"`
