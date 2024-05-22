@@ -34,8 +34,9 @@ locals {
     for svcinfo in values(var.public-services) : merge([
       for region in var.regions : {
         "${svcinfo.name}-${region}" : {
-          name   = svcinfo.name
-          region = region
+          name     = svcinfo.name
+          region   = region
+          disabled = svcinfo.disabled
         }
       }
     ]...)
@@ -82,7 +83,7 @@ resource "google_compute_url_map" "public-service" {
 
   // For each of the public services create a host rule.
   dynamic "host_rule" {
-    for_each = var.public-services
+    for_each = { for k, v in var.public-services : k => v if !v.disabled }
     content {
       hosts        = [host_rule.key]
       path_matcher = host_rule.value.name
@@ -92,7 +93,7 @@ resource "google_compute_url_map" "public-service" {
   // For each of the public services create an empty path matcher
   // that routes to its backend service.
   dynamic "path_matcher" {
-    for_each = var.public-services
+    for_each = { for k, v in var.public-services : k => v if !v.disabled }
     content {
       name            = path_matcher.value.name
       default_service = google_compute_backend_service.public-services[path_matcher.key].id
@@ -106,7 +107,7 @@ resource "google_compute_target_https_proxy" "public-service" {
   name    = var.name
   url_map = google_compute_url_map.public-service.id
 
-  ssl_certificates = [for domain, cert in google_compute_managed_ssl_certificate.public-service : cert.id]
+  ssl_certificates = [for domain, cert in google_compute_managed_ssl_certificate.public-service : cert.id if !var.public-services[domain].disabled]
 }
 
 // Attach the HTTPS proxy to the global IP address via a forwarding rule.
