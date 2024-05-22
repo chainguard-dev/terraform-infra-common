@@ -24,7 +24,8 @@ variable "dns_zone" {
 variable "public-services" {
   description = "A map from hostnames (managed by dns_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname, and a DNS record set will be created for each hostname pointing to the load balancer's global IP address."
   type = map(object({
-    name = string
+    name     = string
+    disabled = optional(bool, false)
   }))
 }
 
