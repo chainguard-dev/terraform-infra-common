@@ -65,6 +65,11 @@ variable "env" {
   description = "A map of custom environment variables (e.g. key=value)"
 }
 
+variable "secret_env" {
+  default     = {}
+  description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name)"
+}
+
 variable "timeout" {
   type        = string
   default     = "60s"
@@ -140,3 +145,4 @@ variable "enable_profiler" {
   default     = false
   description = "Enable cloud profiler."
 }
+
