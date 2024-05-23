@@ -140,3 +140,27 @@ variable "enable_profiler" {
   default     = false
   description = "Enable cloud profiler."
 }
+
+variable "volumes" {
+  description = "The volumes to make available to the containers in the service for mounting."
+  type = list(object({
+    name = string
+    secret = optional(object({
+      secret = string
+      items = list(object({
+        version = string
+        path    = string
+      }))
+    }))
+  }))
+  default = []
+}
+
+variable "volume_mounts" {
+  description = "The volume mounts to attach to the containers in the service."
+  type = list(object({
+    name       = string
+    mount_path = string
+  }))
+  default = []
+}
