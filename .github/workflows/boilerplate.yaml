@@ -1,0 +1,44 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Boilerplate
+
+on:
+  pull_request:
+    branches: [ 'main', 'release-*' ]
+
+jobs:
+
+  check:
+    name: Boilerplate Check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep running if one leg fails.
+      matrix:
+        extension:
+        - go
+        - sh
+        - yaml
+
+        # Map between extension and human-readable name.
+        include:
+        - extension: go
+          language: Go
+        - extension: sh
+          language: Bash
+        - extension: yaml
+          language: YAML
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - uses: chainguard-dev/actions/boilerplate@538d1927b846546b620784754c33e2a1db86e217 # main
+        with:
+          extension: ${{ matrix.extension }}
+          language: ${{ matrix.language }}
