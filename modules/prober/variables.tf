@@ -18,6 +18,12 @@ variable "service_account" {
   description = "The email address of the service account to run the service as."
 }
 
+variable "base_image" {
+  type        = string
+  description = "The base image to use for the prober."
+  default     = null
+}
+
 variable "importpath" {
   type        = string
   description = "The import path that contains the prober application."
