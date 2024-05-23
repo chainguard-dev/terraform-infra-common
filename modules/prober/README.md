@@ -114,13 +114,12 @@ No requirements.
 | <a name="input_period"></a> [period](#input\_period) | The period for the prober in seconds. | `string` | `"300s"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the prober. | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
+| <a name="input_secret_env"></a> [secret\_env](#input\_secret\_env) | A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret\_key=secret\_name) | `map` | `{}` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as. | `string` | n/a | yes |
 | <a name="input_slo_notification_channels"></a> [slo\_notification\_channels](#input\_slo\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | `[]` | no |
 | <a name="input_slo_policy_link"></a> [slo\_policy\_link](#input\_slo\_policy\_link) | An optional link to the SLO policy to include in the alert documentation. | `string` | `""` | no |
 | <a name="input_slo_threshold"></a> [slo\_threshold](#input\_slo\_threshold) | The uptime percent required to meet the SLO for the service, expressed as a decimal in {0, 1} | `number` | `0.999` | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. | `string` | `"60s"` | no |
-| <a name="input_volume_mounts"></a> [volume\_mounts](#input\_volume\_mounts) | The volume mounts to attach to the containers in the service. | <pre>list(object({<br>    name       = string<br>    mount_path = string<br>  }))</pre> | `[]` | no |
-| <a name="input_volumes"></a> [volumes](#input\_volumes) | The volumes to make available to the containers in the service for mounting. | <pre>list(object({<br>    name = string<br>    secret = optional(object({<br>      secret = string<br>      items = list(object({<br>        version = string<br>        path    = string<br>      }))<br>    }))<br>  }))</pre> | `[]` | no |
 | <a name="input_working_dir"></a> [working\_dir](#input\_working\_dir) | The working directory that contains the importpath. | `string` | n/a | yes |
 
 ## Outputs

@@ -65,6 +65,11 @@ variable "env" {
   description = "A map of custom environment variables (e.g. key=value)"
 }
 
+variable "secret_env" {
+  default     = {}
+  description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name)"
+}
+
 variable "timeout" {
   type        = string
   default     = "60s"
@@ -141,26 +146,3 @@ variable "enable_profiler" {
   description = "Enable cloud profiler."
 }
 
-variable "volumes" {
-  description = "The volumes to make available to the containers in the service for mounting."
-  type = list(object({
-    name = string
-    secret = optional(object({
-      secret = string
-      items = list(object({
-        version = string
-        path    = string
-      }))
-    }))
-  }))
-  default = []
-}
-
-variable "volume_mounts" {
-  description = "The volume mounts to attach to the containers in the service."
-  type = list(object({
-    name       = string
-    mount_path = string
-  }))
-  default = []
-}

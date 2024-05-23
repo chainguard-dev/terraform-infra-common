@@ -23,7 +23,6 @@ module "this" {
   project_id = var.project_id
   name       = local.service_name
   regions    = var.regions
-  volumes    = var.volumes
 
   // If we're using GCLB then disallow external traffic,
   // otherwise allow the prober URI to be used directly.
@@ -42,11 +41,23 @@ module "this" {
       }
       ports = [{ container_port = 8080 }]
       env = concat([{
-        // This is a shared secret with the uptime check, which must be
-        // passed in an Authorization header for the probe to do work.
-        name  = "AUTHORIZATION"
-        value = random_password.secret.result
-      }], [for k, v in var.env : { name = k, value = v }])
+          // This is a shared secret with the uptime check, which must be
+          // passed in an Authorization header for the probe to do work.
+          name  = "AUTHORIZATION"
+          value = random_password.secret.result
+        }],
+        [for k, v in var.env : { name = k, value = v }],
+        [
+          for k, v in var.secret_env : {
+            name = k,
+            value_source = {
+              secret_key_ref = {
+                secret  = v
+                version = "latest"
+              }
+            }
+          }
+        ])
       resources = {
         limits = {
           cpu    = var.cpu
@@ -57,7 +68,6 @@ module "this" {
           memory = var.memory
         }
       }
-      volume_mounts = var.volume_mounts
     }
   }
 
