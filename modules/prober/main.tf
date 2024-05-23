@@ -37,6 +37,7 @@ module "this" {
       source = {
         working_dir = var.working_dir
         importpath  = var.importpath
+        base_image  = var.base_image
       }
       ports = [{ container_port = 8080 }]
       env = concat([{
