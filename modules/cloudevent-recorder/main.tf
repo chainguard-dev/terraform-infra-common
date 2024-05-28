@@ -75,6 +75,9 @@ resource "google_monitoring_alert_policy" "bucket-access" {
       -- Exclude things that happen during terraform plan.
       -protoPayload.methodName=("storage.buckets.get")
 
+      -- Don't alert if someone just opens the bucket list in the UI
+      -protoPayload.methodName=("storage.managedFolders.list")
+
       -- The recorder service write objects into the bucket.
       -(
         protoPayload.authenticationInfo.principalEmail="${google_service_account.recorder.email}"
