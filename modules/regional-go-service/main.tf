@@ -31,6 +31,7 @@ resource "ko_build" "this" {
   base_image  = each.value.source.base_image
   working_dir = each.value.source.working_dir
   importpath  = each.value.source.importpath
+  env         = each.value.source.env
 }
 
 resource "cosign_sign" "this" {

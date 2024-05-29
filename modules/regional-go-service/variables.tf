@@ -49,6 +49,7 @@ variable "containers" {
       base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc")
       working_dir = string
       importpath  = string
+      env         = optional(list(string), [])
     })
     args = optional(list(string), [])
     ports = optional(list(object({
