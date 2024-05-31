@@ -131,7 +131,7 @@ func Handler(name string, handler http.Handler) http.Handler {
 					counter.MustCurryWith(labels),
 					promhttp.InstrumentHandlerResponseSize(
 						responseSize.MustCurryWith(labels),
-						otelhttp.NewHandler(handler, ""),
+						otelhttp.NewHandler(handler, name),
 					),
 				),
 			),
