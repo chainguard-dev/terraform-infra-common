@@ -16,7 +16,10 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
-const CeTypeHeader string = "ce-type"
+const (
+	CeTypeHeader          string = "ce-type"
+	GoogClientTraceHeader string = "googclient_traceparent"
+)
 
 var (
 	mReqCount = promauto.NewCounterVec(
@@ -62,12 +65,13 @@ type MetricsTransport struct {
 // WrapTransport wraps an http.RoundTripper with instrumentation.
 func WrapTransport(t http.RoundTripper) http.RoundTripper {
 	return &MetricsTransport{
-		RoundTripper: instrumentRoundTripperCounter(
-			instrumentRoundTripperInFlight(
-				instrumentRoundTripperDuration(
-					instrumentGitHubRateLimits(
-						instrumentDockerHubRateLimit(
-							otelhttp.NewTransport(t)))))),
+		RoundTripper: useGoogClientTraceparent(
+			instrumentRoundTripperCounter(
+				instrumentRoundTripperInFlight(
+					instrumentRoundTripperDuration(
+						instrumentGitHubRateLimits(
+							instrumentDockerHubRateLimit(
+								otelhttp.NewTransport(t))))))),
 		inner: t,
 	}
 }
@@ -100,6 +104,13 @@ func mapErrorToLabel(err error) string {
 
 // These instrument methods based on promhttp, with bucketized host and Knative labels added:
 // https://pkg.go.dev/github.com/prometheus/client_golang/prometheus/promhttp
+
+func useGoogClientTraceparent(next http.RoundTripper) promhttp.RoundTripperFunc {
+	return func(r *http.Request) (*http.Response, error) {
+		applyGoogClientTraceHeader(r)
+		return next.RoundTrip(r)
+	}
+}
 
 func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
