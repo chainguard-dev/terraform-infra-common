@@ -105,7 +105,9 @@ func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripper
 	return func(r *http.Request) (*http.Response, error) {
 		tracer := otel.Tracer("httpmetrics")
 		host := bucketize(r.URL.Host)
-		_, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
+		ctx, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
+		// Ensure that outgoing requests are nested under this span.
+		r = r.WithContext(ctx)
 		defer span.End()
 
 		resp, err := next.RoundTrip(r)
