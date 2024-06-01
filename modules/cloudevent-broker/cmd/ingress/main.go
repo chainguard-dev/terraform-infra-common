@@ -73,7 +73,11 @@ func main() {
 	if err != nil {
 		clog.Fatalf("failed to get project ID, %v", err)
 	}
-	psc, err := pubsub.NewClient(ctx, projectID, option.WithTokenSource(google.ComputeTokenSource("")))
+	psc, err := pubsub.NewClientWithConfig(ctx, projectID,
+		&pubsub.ClientConfig{
+			EnableOpenTelemetryTracing: true,
+		},
+		option.WithTokenSource(google.ComputeTokenSource("")))
 	if err != nil {
 		clog.Fatalf("failed to create pubsub client, %v", err)
 	}
