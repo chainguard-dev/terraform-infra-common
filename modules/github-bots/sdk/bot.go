@@ -81,7 +81,7 @@ func Serve(b Bot) {
 		"octo-sts.dev":   "octosts",
 	})
 
-	c, err := mce.NewClientHTTP(
+	c, err := mce.NewClientHTTP(b.Name,
 		cloudevents.WithPort(env.Port),
 	)
 	if err != nil {

@@ -50,7 +50,7 @@ func main() {
 
 	clog.DebugContextf(ctx, "env: %+v", env)
 
-	ceclient, err := mce.NewClientHTTP(mce.WithTarget(ctx, env.IngressURI)...)
+	ceclient, err := mce.NewClientHTTP("trampoline", mce.WithTarget(ctx, env.IngressURI)...)
 	if err != nil {
 		clog.FatalContextf(ctx, "failed to create cloudevents client: %v", err)
 	}
