@@ -14,7 +14,7 @@ import (
 	metrics "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 )
 
-func NewClientHTTP(opts ...cehttp.Option) (cloudevents.Client, error) {
+func NewClientHTTP(name string, opts ...cehttp.Option) (cloudevents.Client, error) {
 	// If we don't specify a client, NewClientHTTP will use http.DefaultClient
 	// and may clobber its Transport. To avoid so, we pass a client with the
 	// the metrics transport instead.
@@ -24,7 +24,7 @@ func NewClientHTTP(opts ...cehttp.Option) (cloudevents.Client, error) {
 	copt := append([]cehttp.Option{
 		cehttp.WithClient(metricsClient),
 		cloudevents.WithMiddleware(func(next http.Handler) http.Handler {
-			return metrics.Handler("cloudevents", next)
+			return metrics.Handler(name, next)
 		})}, opts...)
 	return cloudevents.NewClientHTTP(copt...)
 }

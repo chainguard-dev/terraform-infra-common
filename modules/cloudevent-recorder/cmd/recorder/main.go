@@ -40,7 +40,7 @@ func main() {
 	go httpmetrics.ServeMetrics()
 	defer httpmetrics.SetupTracer(ctx)()
 
-	c, err := mce.NewClientHTTP(cloudevents.WithPort(env.Port))
+	c, err := mce.NewClientHTTP("ce-recorder", cloudevents.WithPort(env.Port))
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
