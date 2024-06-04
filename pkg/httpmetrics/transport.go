@@ -19,6 +19,7 @@ import (
 const (
 	CeTypeHeader          string = "ce-type"
 	GoogClientTraceHeader string = "googclient_traceparent"
+	OriginalTraceHeader   string = "original-traceparent"
 )
 
 var (
@@ -71,7 +72,8 @@ func WrapTransport(t http.RoundTripper) http.RoundTripper {
 					instrumentRoundTripperDuration(
 						instrumentGitHubRateLimits(
 							instrumentDockerHubRateLimit(
-								otelhttp.NewTransport(t))))))),
+								otelhttp.NewTransport(
+									newPreserveTraceparentTransport(t)))))))),
 		inner: t,
 	}
 }
@@ -107,7 +109,7 @@ func mapErrorToLabel(err error) string {
 
 func useGoogClientTraceparent(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
-		applyGoogClientTraceHeader(r)
+		restoreTraceparentHeader(r)
 		return next.RoundTrip(r)
 	}
 }
