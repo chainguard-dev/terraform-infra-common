@@ -110,7 +110,7 @@ func Handler(name string, handler http.Handler) http.Handler {
 	verify := extractCloudRunCaller()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		applyGoogClientTraceHeader(r)
+		restoreTraceparentHeader(r)
 
 		labels := prometheus.Labels{
 			"handler":       name,
@@ -133,22 +133,29 @@ func Handler(name string, handler http.Handler) http.Handler {
 					counter.MustCurryWith(labels),
 					promhttp.InstrumentHandlerResponseSize(
 						responseSize.MustCurryWith(labels),
-						otelhttp.NewHandler(handler, name),
+						otelhttp.NewHandler(preserveTraceparentHandler(handler), name),
 					),
 				),
 			),
 		)
-
 		h.ServeHTTP(w, r)
 	})
 }
 
-func applyGoogClientTraceHeader(r *http.Request) {
-	// If the incoming request has a googclient trace header, use it instead.
-	// These are messages coming from pubsub, and the googclient trace header contains
-	// the original outgoing span.
-	if googTrace := r.Header.Get(GoogClientTraceHeader); googTrace != "" {
-		r.Header.Set("traceparent", googTrace)
+func restoreTraceparentHeader(r *http.Request) {
+	for _, k := range []string{
+		// If the incoming request has a googclient trace header, use it instead.
+		// These are messages coming from pubsub, and the googclient trace header contains
+		// the original outgoing span.
+		GoogClientTraceHeader,
+		// Else, if the incoming request has a original-traceparent header, use it
+		// to avoid missing Cloud Run spans.
+		OriginalTraceHeader,
+	} {
+		if v := r.Header.Get(k); v != "" {
+			r.Header.Set("traceparent", v)
+			return
+		}
 	}
 }
 
