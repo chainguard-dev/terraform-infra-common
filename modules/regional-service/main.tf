@@ -365,8 +365,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
   project = var.project_id
 }
 
-// Create an alert policy to notify if the service is struggling to rollout.
-resource "google_monitoring_alert_policy" "crash" {
+resource "google_monitoring_alert_policy" "panic" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -376,7 +375,7 @@ resource "google_monitoring_alert_policy" "crash" {
     }
   }
 
-  display_name = "Panic|Fatal in: ${var.name}"
+  display_name = "Panic in: ${var.name}"
   combiner     = "OR"
 
   conditions {
@@ -395,6 +394,26 @@ resource "google_monitoring_alert_policy" "crash" {
       }
     }
   }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "fatal" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Fatal in: ${var.name}"
+  combiner     = "OR"
+
   conditions {
     display_name = "Fatal in: ${var.name}"
 
@@ -416,6 +435,7 @@ resource "google_monitoring_alert_policy" "crash" {
   enabled = "true"
   project = var.project_id
 }
+
 
 
 // When the service is behind a load balancer, then it is publicly exposed and responsible
