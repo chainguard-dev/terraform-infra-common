@@ -46,8 +46,7 @@ var (
 		},
 		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type"},
 	)
-	seenHostMap   = make(map[string]int)
-	seenHostMutex = &sync.RWMutex{}
+	seenHostMap = sync.Map{}
 )
 
 var buckets = map[string]string{}
@@ -193,11 +192,13 @@ func bucketize(host string) string {
 			return v
 		}
 	}
-	if math.Mod(float64(seenHostMap[host]), 10) == 0 {
-		seenHostMutex.Lock()
-		seenHostMap[host]++
-		seenHostMutex.Unlock()
-		slog.Warn(`bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seenHostMap[host])
+
+	v, _ := seenHostMap.LoadOrStore(host, 1)
+	vInt := v.(int)
+
+	if math.Mod(float64(vInt), 10) == 0 {
+		seenHostMap.Store(host, vInt+1)
+		slog.Warn(`bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", vInt+1)
 	}
 	return "other"
 }
