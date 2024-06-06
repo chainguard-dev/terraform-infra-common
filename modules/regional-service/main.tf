@@ -365,6 +365,58 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
   project = var.project_id
 }
 
+// Create an alert policy to notify if the service is struggling to rollout.
+resource "google_monitoring_alert_policy" "crash" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Panic|Fatal in: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Panic in: ${var.name}"
+
+    condition_matched_log {
+      filter = <<EOT
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="${var.name}"
+        severity=ERROR
+        textPayload=~"panic: .*"
+      EOT
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+      }
+    }
+  }
+  conditions {
+    display_name = "Fatal in: ${var.name}"
+
+    condition_matched_log {
+      filter = <<EOT
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="${var.name}"
+        textPayload:"fatal error: "
+      EOT
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
 
 // When the service is behind a load balancer, then it is publicly exposed and responsible
 // for handling its own authentication.
