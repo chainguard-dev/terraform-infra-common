@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -45,7 +46,8 @@ var (
 		},
 		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type"},
 	)
-	seenHostMap = make(map[string]int)
+	seenHostMap   = make(map[string]int)
+	seenHostMutex = &sync.RWMutex{}
 )
 
 var buckets = map[string]string{}
@@ -192,7 +194,9 @@ func bucketize(host string) string {
 		}
 	}
 	if math.Mod(float64(seenHostMap[host]), 10) == 0 {
+		seenHostMutex.Lock()
 		seenHostMap[host]++
+		seenHostMutex.Unlock()
 		slog.Warn(`bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seenHostMap[host])
 	}
 	return "other"
