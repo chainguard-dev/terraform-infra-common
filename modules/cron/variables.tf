@@ -38,6 +38,12 @@ variable "importpath" {
   description = "The import path that contains the cron application."
 }
 
+variable "ko_build_env" {
+  type        = list(string)
+  description = "A list of custom environment variables to pass to the ko build."
+  default     = []
+}
+
 variable "working_dir" {
   type        = string
   description = "The working directory that contains the importpath."
