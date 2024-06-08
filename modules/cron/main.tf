@@ -1,11 +1,7 @@
 terraform {
   required_providers {
-    ko = {
-      source = "ko-build/ko"
-    }
-    google = {
-      source = "hashicorp/google"
-    }
+    ko     = { source = "ko-build/ko" }
+    google = { source = "hashicorp/google" }
   }
 }
 
@@ -44,6 +40,7 @@ resource "ko_build" "image" {
   working_dir = var.working_dir
   base_image  = var.base_image
   repo        = local.repo
+  env         = var.ko_build_env
 }
 
 resource "google_cloud_run_v2_job" "job" {
@@ -198,9 +195,9 @@ resource "google_cloud_run_v2_job_iam_binding" "authorize-calls" {
 resource "google_project_iam_member" "authorize-list" {
   for_each = toset(var.invokers)
 
-  project  = google_cloud_run_v2_job.job.project
-  role     = "roles/run.viewer"
-  member   = each.key
+  project = google_cloud_run_v2_job.job.project
+  role    = "roles/run.viewer"
+  member  = each.key
 }
 
 resource "google_cloud_scheduler_job" "cron" {
@@ -248,18 +245,18 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
       logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Factivity"
       protoPayload.serviceName="run.googleapis.com"
       protoPayload.resourceName=("${join("\" OR \"", [
-        "namespaces/${var.project_id}/jobs/${var.name}-cron",
-        "projects/${var.project_id}/locations/${var.region}/jobs/${var.name}-cron",
+      "namespaces/${var.project_id}/jobs/${var.name}-cron",
+      "projects/${var.project_id}/locations/${var.region}/jobs/${var.name}-cron",
       ])}")
 
       -- Allow CI to reconcile jobs and their IAM policies.
       -(
         protoPayload.authenticationInfo.principalEmail="${data.google_client_openid_userinfo.me.email}"
         protoPayload.methodName=("${join("\" OR \"", [
-          "google.cloud.run.v2.Jobs.CreateJob",
-          "google.cloud.run.v2.Jobs.UpdateJob",
-          "google.cloud.run.v2.Jobs.SetIamPolicy",
-        ])}")
+      "google.cloud.run.v2.Jobs.CreateJob",
+      "google.cloud.run.v2.Jobs.UpdateJob",
+      "google.cloud.run.v2.Jobs.SetIamPolicy",
+])}")
       )
       -(
         protoPayload.authenticationInfo.principalEmail=~"${join("|", concat(var.invokers, [data.google_client_openid_userinfo.me.email]))}"
@@ -267,18 +264,18 @@ resource "google_monitoring_alert_policy" "anomalous-job-access" {
       )
       EOT
 
-      label_extractors = {
-        "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
-        "method_name" = "EXTRACT(protoPayload.methodName)"
-        "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, \"(\\\\S+)\")"
-      }
-    }
-  }
+label_extractors = {
+  "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+  "method_name" = "EXTRACT(protoPayload.methodName)"
+  "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, \"(\\\\S+)\")"
+}
+}
+}
 
-  notification_channels = var.notification_channels
+notification_channels = var.notification_channels
 
-  enabled = "true"
-  project = var.project_id
+enabled = "true"
+project = var.project_id
 }
 
 // Create an alert policy to notify if the job is accessed by an unauthorized entity.
@@ -304,24 +301,24 @@ resource "google_monitoring_alert_policy" "anomalous-job-execution" {
       protoPayload.serviceName="run.googleapis.com"
       protoPayload.methodName="google.cloud.run.v1.Jobs.RunJob"
       protoPayload.resourceName=("${join("\" OR \"", [
-        "namespaces/${var.project_id}/jobs/${var.name}-cron",
-        "projects/${var.project_id}/locations/${var.region}/jobs/${var.name}-cron",
-      ])}")
+      "namespaces/${var.project_id}/jobs/${var.name}-cron",
+      "projects/${var.project_id}/locations/${var.region}/jobs/${var.name}-cron",
+])}")
 
       -- Allow the delivery service account to run the job, but flag anyone else
       -protoPayload.authenticationInfo.principalEmail=~"${join("|", [google_service_account.delivery.email, data.google_client_openid_userinfo.me.email])}"
       EOT
 
-      label_extractors = {
-        "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
-        "method_name" = "EXTRACT(protoPayload.methodName)"
-        "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, \"(\\\\S+)\")"
-      }
-    }
-  }
+label_extractors = {
+  "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
+  "method_name" = "EXTRACT(protoPayload.methodName)"
+  "user_agent"  = "REGEXP_EXTRACT(protoPayload.requestMetadata.callerSuppliedUserAgent, \"(\\\\S+)\")"
+}
+}
+}
 
-  notification_channels = var.notification_channels
+notification_channels = var.notification_channels
 
-  enabled = "true"
-  project = var.project_id
+enabled = "true"
+project = var.project_id
 }
