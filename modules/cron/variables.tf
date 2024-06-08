@@ -39,9 +39,9 @@ variable "importpath" {
 }
 
 variable "ko_build_env" {
-  type        = map(string)
-  description = "A map of custom environment variables to pass to the ko build."
-  default     = {}
+  type        = list(string)
+  description = "A list of custom environment variables to pass to the ko build."
+  default     = []
 }
 
 variable "working_dir" {
