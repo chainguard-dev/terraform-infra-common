@@ -66,7 +66,7 @@ resource "google_monitoring_alert_policy" "oom" {
     }
   }
 
-  enabled = var.enable_oom_policy
+  enabled = true
 
   notification_channels = var.notification_channels
 }
