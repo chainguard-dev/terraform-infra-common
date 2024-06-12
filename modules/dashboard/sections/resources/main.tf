@@ -5,7 +5,6 @@ variable "collapsed" { default = false }
 variable "notification_channels" {
   type = list(string)
 }
-variable "enable_oom_policy" { default = true }
 
 module "width" { source = "../width" }
 
@@ -60,43 +59,6 @@ module "received_bytes" {
   primary_reduce = "REDUCE_NONE"
 }
 
-module "oom_alert" {
-  source     = "../../widgets/alert"
-  title      = google_monitoring_alert_policy.oom.display_name
-  alert_name = google_monitoring_alert_policy.oom.name
-}
-
-resource "google_monitoring_alert_policy" "oom" {
-  # In the absence of data, incident will auto-close after an hour
-  alert_strategy {
-    auto_close = "3600s"
-
-    notification_rate_limit {
-      period = "3600s" // re-alert once an hour if condition still valid.
-    }
-  }
-
-  display_name = "${var.cloudrun_name} OOM Alert"
-  combiner     = "OR"
-
-  conditions {
-    display_name = "${var.cloudrun_name} OOM Alert"
-
-    condition_matched_log {
-      filter = <<EOT
-        logName: "run.googleapis.com%2Fvarlog%2Fsystem"
-        ${join("\n", var.filter)}
-        severity=ERROR
-        textPayload:"Consider increasing the memory limit"
-      EOT
-    }
-  }
-
-  enabled = var.enable_oom_policy
-
-  notification_channels = var.notification_channels
-}
-
 locals {
   columns = 3
   unit    = module.width.size / local.columns
@@ -105,50 +67,44 @@ locals {
   // N columns, unit width each  ([0, unit, 2 * unit, ...])
   col = range(0, local.columns * local.unit, local.unit)
 
-  tiles = [{
-    yPos   = 0,
-    xPos   = local.col[0],
-    height = local.unit,
-    width  = module.width.size,
-    widget = module.oom_alert.widget,
-    },
+  tiles = [
     {
-      yPos   = local.unit,
+      yPos   = 0,
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
       widget = module.cpu_utilization.widget,
     },
     {
-      yPos   = local.unit,
+      yPos   = 0,
       xPos   = local.col[1],
       height = local.unit,
       width  = local.unit,
       widget = module.memory_utilization.widget,
     },
     {
-      yPos   = local.unit,
+      yPos   = 0,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
       widget = module.instance_count.widget,
     },
     {
-      yPos   = local.unit * 2,
+      yPos   = local.unit,
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
       widget = module.startup_latency.widget,
     },
     {
-      yPos   = local.unit * 2,
+      yPos   = local.unit,
       xPos   = local.col[1],
       height = local.unit,
       width  = local.unit,
       widget = module.sent_bytes.widget,
     },
     {
-      yPos   = local.unit * 2,
+      yPos   = local.unit,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
