@@ -57,6 +57,7 @@ resource "google_monitoring_alert_policy" "oom" {
         logName: "/logs/run.googleapis.com%2Fvarlog%2Fsystem"
         severity=ERROR
         textPayload:"Consider increasing the memory limit"
+        ${var.oom_filter}"
       EOT
 
       label_extractors = {
