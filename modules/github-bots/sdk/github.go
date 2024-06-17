@@ -175,6 +175,7 @@ func (c GitHubClient) RemoveLabel(ctx context.Context, pr *github.PullRequest, l
 	return nil
 }
 
+// SetComment adds or replaces a bot comment on the given pull request.
 func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, botName, content string) error {
 	cs, _, err := c.inner.Issues.ListComments(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, nil)
 	if err != nil {
@@ -192,6 +193,16 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 			return nil
 		}
 	}
+	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
+		Body: &content,
+	}); err != nil || resp.StatusCode != 201 {
+		return fmt.Errorf("creating comment: %w %v", err, resp.Status)
+	}
+	return nil
+}
+
+// AddComment adds a new comment to the given pull request.
+func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, content string) error {
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
 	}); err != nil || resp.StatusCode != 201 {
