@@ -22,6 +22,12 @@ func (r WorkflowRunHandler) EventType() EventType {
 	return WorkflowRunEvent
 }
 
+type WorkflowRunLogsHandler func(ctx context.Context, wre github.WorkflowRunEvent) error
+
+func (r WorkflowRunLogsHandler) EventType() EventType {
+	return WorkflowRunLogsEvent
+}
+
 type IssueCommentHandler func(ctx context.Context, ice github.IssueCommentEvent) error
 
 func (r IssueCommentHandler) EventType() EventType {
@@ -44,4 +50,5 @@ const (
 
 	// LoFo events
 	WorkflowRunArtifactEvent EventType = "dev.chainguard.lofo.workflow_run_artifacts"
+	WorkflowRunLogsEvent     EventType = "dev.chainguard.lofo.workflow_run_logs"
 )
