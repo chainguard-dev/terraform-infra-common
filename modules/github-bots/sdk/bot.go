@@ -142,6 +142,21 @@ func Serve(b Bot) {
 				}
 				return nil
 
+			case WorkflowRunLogsHandler:
+				logger.Debug("handling workflow run logs event")
+
+				var wre schemas.Wrapper[github.WorkflowRunEvent]
+				if err := event.DataAs(&wre); err != nil {
+					logger.Errorf("failed to unmarshal workflow run with logs event: %v", err)
+					return err
+				}
+
+				if err := h(ctx, wre.Body); err != nil {
+					logger.Errorf("failed to handle workflow run with logs event: %v", err)
+					return err
+				}
+				return nil
+
 			case PullRequestHandler:
 				logger.Debug("handling pull request event")
 
