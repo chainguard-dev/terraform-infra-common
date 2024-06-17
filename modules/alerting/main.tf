@@ -177,3 +177,57 @@ resource "google_monitoring_alert_policy" "fatal" {
   enabled = "true"
   project = var.project_id
 }
+
+resource "google_monitoring_alert_policy" "service_failure_rate" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_monitoring_query_language {
+      duration = "0s"
+      query    = <<EOT
+        fetch cloud_run_revision
+            | metric 'run.googleapis.com/request_count'
+            | group_by 5m, [value_request_count_aggregate: aggregate(value.request_count)]
+            | every 5m
+            | { group_by [metric.response_code_class, resource.service_name],
+                  [response_code_count_aggregate: aggregate(value_request_count_aggregate)]
+            |     filter (metric.response_code_class = '5xx');
+                group_by [resource.service_name],
+                  [value_request_count_aggregate_aggregate: aggregate(value_request_count_aggregate)]
+            | }
+            | join
+            | value [response_code_ratio: val(0) / val(1)]
+            | condition gt(val(), ${var.failure_rate_ratio_threshold})"
+      EOT
+
+      trigger {
+        count = "1"
+      }
+
+      // When there are no failures, we get no data instead of "0" in the
+      // metric. This flag treats lack of data as 0 so incidents autoresolve
+      // correctly.
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
+    }
+
+    display_name = "5xx failure rate above ${var.failure_rate_ratio_threshold}"
+  }
+
+  display_name = "5xx failure rate above ${var.failure_rate_ratio_threshold}"
+
+  documentation {
+    content = <<-EOT
+    Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
+    EOT
+  }
+
+  enabled = "true"
+  project = var.project_id
+
+  notification_channels = var.notification_channels
+}
