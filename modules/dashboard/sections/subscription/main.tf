@@ -29,7 +29,7 @@ resource "google_monitoring_alert_policy" "pubsub_unacked_messages" {
 
       comparison = "COMPARISON_GT"
       duration   = "0s"
-      filter     = "resource.type = \"pubsub_subscription\" AND metric.type = \"pubsub.googleapis.com/subscription/num_unacked_messages_by_region\" AND metadata.system_labels.name = monitoring.regex.full_match(\"${var.subscription_prefix}-.*\")"
+      filter     = "resource.type = \"pubsub_subscription\" AND metric.type = \"pubsub.googleapis.com/subscription/num_unacked_messages_by_region\" AND metadata.system_labels.name = monitoring.regex.full_match(\"${var.subscription_prefix}-[^.]*\")"
 
       trigger {
         count = "1"
@@ -59,7 +59,7 @@ module "received-events" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/push_request_count\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}-.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}-[^-]*\")",
   ]
   group_by_fields = [
     "resource.label.\"subscription_id\"",
@@ -75,7 +75,7 @@ module "push-latency" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/push_request_latencies\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}-.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}-[^-]*\")",
   ]
   group_by_fields = ["resource.label.\"subscription_id\""]
 }
@@ -86,7 +86,7 @@ module "oldest-unacked" {
   filter = [
     "resource.type=\"pubsub_subscription\"",
     "metric.type=\"pubsub.googleapis.com/subscription/oldest_unacked_message_age\"",
-    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}-.*\")",
+    "resource.label.\"subscription_id\"=monitoring.regex.full_match(\"${var.subscription_prefix}-[^-]*\")",
   ]
   group_by_fields = ["resource.label.\"subscription_id\""]
   primary_align   = "ALIGN_MAX"
