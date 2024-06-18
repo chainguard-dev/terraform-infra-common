@@ -1,3 +1,15 @@
+locals {
+  oncall = [
+    var.notification_channel_pagerduty,
+    var.notification_channel_email
+  ]
+
+  slack = [
+    var.notification_channel_slack,
+    var.notification_channel_email
+  ]
+}
+
 // Create an alert policy to notify if the service is struggling to rollout.
 resource "google_monitoring_alert_policy" "bad-rollout" {
   # In the absence of data, incident will auto-close after an hour
@@ -30,7 +42,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.oncall
 
   enabled = "true"
   project = var.project_id
@@ -69,7 +81,7 @@ resource "google_monitoring_alert_policy" "oom" {
 
   enabled = true
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.oncall
 }
 
 resource "google_monitoring_alert_policy" "panic" {
@@ -102,7 +114,7 @@ resource "google_monitoring_alert_policy" "panic" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
@@ -137,7 +149,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
@@ -172,7 +184,7 @@ resource "google_monitoring_alert_policy" "fatal" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
@@ -219,10 +231,10 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
     EOT
   }
 
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
   enabled = "true"
   project = var.project_id
-
-  notification_channels = var.notification_channels
 }
 
 resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
@@ -256,7 +268,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
@@ -293,7 +305,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
