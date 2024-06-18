@@ -187,27 +187,25 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
   combiner = "OR"
 
   conditions {
-    condition_monitoring_query_language {
-      duration = "${var.failure_rate_duration}s"
-      query    = <<EOT
-        fetch cloud_run_revision
-        | metric 'run.googleapis.com/request_count'
-        | group_by 5m, [value_request_count_aggregate: aggregate(value.request_count)]
-        | every 5m
-        | { group_by [metric.response_code_class, resource.service_name],
-              [response_code_count_aggregate: aggregate(value_request_count_aggregate)]
-            | filter (metric.response_code_class = '5xx')
-          ; group_by [resource.service_name],
-              [value_request_count_aggregate_aggregate:
-                 aggregate(value_request_count_aggregate)] }
-        | join
-        | value [response_code_ratio: val(0) / val(1)]
-        | condition gt(val(), 0.2)
-      EOT
+    condition_prometheus_query_language {
+      duration            = "${var.failure_rate_duration}s"
+      evaluation_interval = "60s"
 
-      trigger {
-        count = "1"
-      }
+      // Using custom prometheus metric to avoid counting failed health check 5xx, should be a separate alert
+      // First part of the query calculates the error rate (5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
+      // Second part ensures services has non-zero traffic over last 5 min.
+      query = <<EOT
+        (sum by (service_name)
+           (rate(http_request_status_total{code=~"5.."}[1m]))
+         /
+         sum by (service_name)
+           (rate(http_request_status_total{}[1m]))
+        ) > ${var.failure_rate_ratio_threshold}
+        and
+        sum by (service_name)
+          (rate(http_request_status_total{}[5m]))
+        > 0.0001
+      EOT
     }
 
     display_name = "5xx failure rate above ${var.failure_rate_ratio_threshold}"
