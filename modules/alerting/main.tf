@@ -224,3 +224,77 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
 
   notification_channels = var.notification_channels
 }
+
+resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Cloud Run scaling issue"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Cloud Run scaling issue"
+
+    condition_matched_log {
+      filter = <<EOT
+        resource.type="cloud_run_revision"
+        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload:"The request was aborted because there was no available instance."
+      EOT
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "location"      = "EXTRACT(resource.labels.location)"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Cloud Run failed request"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Cloud Run failed request"
+
+    condition_matched_log {
+      filter = <<EOT
+        resource.type="cloud_run_revision"
+        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
+      EOT
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "location"      = "EXTRACT(resource.labels.location)"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}
