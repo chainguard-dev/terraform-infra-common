@@ -17,3 +17,9 @@ variable "failure_rate_ratio_threshold" {
   type        = number
   default     = 0.2
 }
+
+variable "failure_rate_duration" {
+  description = "duration for condition to be active before alerting"
+  type        = number
+  default     = 120
+}
