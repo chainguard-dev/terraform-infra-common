@@ -191,18 +191,18 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
       duration = "0s"
       query    = <<EOT
         fetch cloud_run_revision
-            | metric 'run.googleapis.com/request_count'
-            | group_by 5m, [value_request_count_aggregate: aggregate(value.request_count)]
-            | every 5m
-            | { group_by [metric.response_code_class, resource.service_name],
-                  [response_code_count_aggregate: aggregate(value_request_count_aggregate)]
-            |     filter (metric.response_code_class = '5xx');
-                group_by [resource.service_name],
-                  [value_request_count_aggregate_aggregate: aggregate(value_request_count_aggregate)]
-            | }
-            | join
-            | value [response_code_ratio: val(0) / val(1)]
-            | condition gt(val(), ${var.failure_rate_ratio_threshold})"
+        | metric 'run.googleapis.com/request_count'
+        | group_by 5m, [value_request_count_aggregate: aggregate(value.request_count)]
+        | every 5m
+        | { group_by [metric.response_code_class, resource.service_name],
+              [response_code_count_aggregate: aggregate(value_request_count_aggregate)]
+            | filter (metric.response_code_class = '5xx')
+          ; group_by [resource.service_name],
+              [value_request_count_aggregate_aggregate:
+                 aggregate(value_request_count_aggregate)] }
+        | join
+        | value [response_code_ratio: val(0) / val(1)]
+        | condition gt(val(), 0.2)
       EOT
 
       trigger {
