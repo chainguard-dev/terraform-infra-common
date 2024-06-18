@@ -208,11 +208,6 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
       trigger {
         count = "1"
       }
-
-      // When there are no failures, we get no data instead of "0" in the
-      // metric. This flag treats lack of data as 0 so incidents autoresolve
-      // correctly.
-      evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
     }
 
     display_name = "5xx failure rate above ${var.failure_rate_ratio_threshold}"
