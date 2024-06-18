@@ -188,7 +188,7 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
 
   conditions {
     condition_monitoring_query_language {
-      duration = "0s"
+      duration = "${var.failure_rate_duration}s"
       query    = <<EOT
         fetch cloud_run_revision
         | metric 'run.googleapis.com/request_count'
