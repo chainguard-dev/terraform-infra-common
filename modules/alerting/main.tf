@@ -81,7 +81,7 @@ resource "google_monitoring_alert_policy" "oom" {
 
   enabled = true
 
-  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.oncall
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 }
 
 resource "google_monitoring_alert_policy" "panic" {
