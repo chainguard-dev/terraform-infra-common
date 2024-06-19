@@ -99,8 +99,8 @@ output "recorder-schemas" {
     "dev.chainguard.github.issue_comment" : {
       schema = file("${path.module}/schemas/issue_comment.schema.json")
     }
-    "dev.chainguard.github.issue" : {
-      schema = file("${path.module}/schemas/issue.schema.json")
+    "dev.chainguard.github.issues" : {
+      schema = file("${path.module}/schemas/issues.schema.json")
     }
   }
 }
