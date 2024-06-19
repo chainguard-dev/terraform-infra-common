@@ -13,6 +13,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	gcpclog "github.com/chainguard-dev/clog/gcp"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
@@ -125,7 +126,7 @@ func Handler(name string, handler http.Handler) http.Handler {
 			}
 		}
 
-		h := promhttp.InstrumentHandlerInFlight(
+		h := gcpclog.WithCloudTraceContext(promhttp.InstrumentHandlerInFlight(
 			inFlightGauge.With(labels),
 			promhttp.InstrumentHandlerDuration(
 				duration.MustCurryWith(labels),
@@ -137,7 +138,7 @@ func Handler(name string, handler http.Handler) http.Handler {
 					),
 				),
 			),
-		)
+		))
 		h.ServeHTTP(w, r)
 	})
 }
