@@ -259,6 +259,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
         log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request was aborted because there was no available instance."
+        ${var.scaling_issue_filter}
       EOT
 
       label_extractors = {
@@ -296,6 +297,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
         log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
+        ${var.failed_req_filter}
       EOT
 
       label_extractors = {

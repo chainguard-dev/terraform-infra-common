@@ -31,6 +31,16 @@ variable "oom_filter" {
   type        = string
 }
 
+variable "failed_req_filter" {
+  description = "additional filter to apply to failed request alert policy"
+  type        = string
+}
+
+variable "scaling_issue_filter" {
+  description = "additional filter to apply to scaling issue alert policy"
+  type        = string
+}
+
 variable "failure_rate_ratio_threshold" {
   description = "ratio threshold to alert for cloud run server failure rate."
   type        = number
