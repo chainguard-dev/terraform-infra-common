@@ -88,6 +88,15 @@ output "public-urls" {
   } : {}
 }
 
+// READ THIS BEFORE YOU EDIT!!!
+// These schemas are used to generate bigquery table names used by the recorder.
+// If you are adding a schema you're fine to proceed. If you are changing the
+// name of a schema, or removing a schema, terraform will try to delete the old
+// schema. The recorders have a parameter `deletion_protection` enabled by default
+// so terraform will fail to delete the schema.
+//
+// The proper process for deleting or modifying a schema is in this playbook
+// https://eng.inky.wtf/docs/infra/playbooks/schema-names/
 output "recorder-schemas" {
   value = {
     "dev.chainguard.github.pull_request" : {
