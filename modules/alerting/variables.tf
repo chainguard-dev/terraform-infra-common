@@ -29,16 +29,19 @@ variable "notification_channel_email" {
 variable "oom_filter" {
   description = "additional filter to apply to oom alert policy"
   type        = string
+  default     = ""
 }
 
 variable "failed_req_filter" {
   description = "additional filter to apply to failed request alert policy"
   type        = string
+  default     = ""
 }
 
 variable "scaling_issue_filter" {
   description = "additional filter to apply to scaling issue alert policy"
   type        = string
+  default     = ""
 }
 
 variable "failure_rate_ratio_threshold" {
