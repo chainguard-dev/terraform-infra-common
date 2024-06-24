@@ -51,7 +51,14 @@ func main() {
 		}
 
 		filename := filepath.Join(dir, event.ID())
-		return os.WriteFile(filename, event.Data(), 0600)
+		if err := os.WriteFile(filename, event.Data(), 0600); err != nil {
+			clog.Warnf("failed to write file %s; %v", filename, err)
+			if err := os.RemoveAll(filename); err != nil {
+				clog.Warnf("failed to remove failed write file: %s; %v", filename, err)
+			}
+			return err
+		}
+		return nil
 	}); err != nil {
 		clog.Fatalf("failed to start event receiver, %v", err)
 	}
