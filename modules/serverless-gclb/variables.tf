@@ -34,3 +34,12 @@ variable "notification_channels" {
   type        = list(string)
   default     = []
 }
+
+variable "iap" {
+  description = "IAP configuration for the load balancer."
+  type = object({
+    oauth2_client_id     = string
+    oauth2_client_secret = string
+  })
+  default = null
+}

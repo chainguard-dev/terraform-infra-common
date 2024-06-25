@@ -69,6 +69,14 @@ resource "google_compute_backend_service" "public-services" {
       group = google_compute_region_network_endpoint_group.regional-backends["${each.value.name}-${backend.key}"]["id"]
     }
   }
+
+  dynamic "iap" {
+    for_each = var.iap[*]
+    content {
+      oauth2_client_id     = iap.value["oauth2_client_id"]
+      oauth2_client_secret = iap.value["oauth2_client_secret"]
+    }
+  }
 }
 
 // Create a URL map that routes each hostname to the appropriate backend service.
