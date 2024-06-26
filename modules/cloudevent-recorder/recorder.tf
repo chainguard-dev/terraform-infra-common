@@ -26,7 +26,7 @@ locals {
     value = "/logs"
   }]
 
-  logrotate_env = var.flush_interval == "" ? lenv : concat(lenv, [{
+  logrotate_env = var.flush_interval == "" ? local.lenv : concat(local.lenv, [{
     name  = "FLUSH_INTERVAL"
     value = var.flush_interval
   }])
