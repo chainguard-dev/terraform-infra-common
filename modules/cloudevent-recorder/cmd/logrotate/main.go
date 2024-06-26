@@ -15,6 +15,8 @@ import (
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/rotate"
 	"github.com/kelseyhightower/envconfig"
+
+	"syscall"
 )
 
 type rotateConfig struct {
@@ -31,7 +33,7 @@ func main() {
 
 	uploader := rotate.NewUploader(rc.LogPath, rc.Bucket, rc.FlushInterval)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	if err := uploader.Run(ctx); err != nil {
 		clog.Fatalf("Failed to run the uploader: %v", err)
