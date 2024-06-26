@@ -105,7 +105,7 @@ func (u *uploader) Run(ctx context.Context) error {
 				path := filepath.Join(u.source, dir, f)
 				if err = os.Remove(path); err != nil {
 					// log the error, but continue to upload the rest of the files
-					log.Printf("failed to delete file: %s %v", path, err)
+					clog.WarnContextf(ctx, "failed to delete file: %s %v", path, err)
 					deleteErr = fmt.Errorf("failed to delete file: %s %w", path, err)
 				}
 				processed++
