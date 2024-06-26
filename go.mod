@@ -2,6 +2,8 @@ module github.com/chainguard-dev/terraform-infra-common
 
 go 1.22.4
 
+// This is to allow pubsub tracing to happen
+// Remove once function in normal release
 replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2
 
 require (
