@@ -127,3 +127,9 @@ variable "split_triggers" {
   type        = bool
   default     = false
 }
+
+variable "flush_interval" {
+  description = "Flush interval for logrotate, as a duration string."
+  type        = string
+  default     = ""
+}
