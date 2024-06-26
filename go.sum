@@ -29,6 +29,8 @@ cloud.google.com/go/profiler v0.4.0 h1:ZeRDZbsOBDyRG0OiK0Op1/XWZ3xeLwJc9zjkzczUx
 cloud.google.com/go/profiler v0.4.0/go.mod h1:RvPlm4dilIr3oJtAOeFQU9Lrt5RoySHSDj4pTd6TWeU=
 cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2 h1:L4riX1KnYBvcd/klUcSN2J3IP8CwG/GUOwM+m/PKafk=
 cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2/go.mod h1:w0/SojkGQHyr45Ixf1oOAIUELRArOWpl6/r2yf+wibk=
+cloud.google.com/go/secretmanager v1.12.0 h1:e5pIo/QEgiFiHPVJPxM5jbtUr4O/u5h2zLHYtkFQr24=
+cloud.google.com/go/secretmanager v1.12.0/go.mod h1:Y1Gne3Ag+fZ2TDTiJc8ZJCMFbi7k1rYT4Rw30GXfvlk=
 cloud.google.com/go/storage v1.40.0 h1:VEpDQV5CJxFmJ6ueWNsKxcr1QAYOXEgxDa+sBbJahPw=
 cloud.google.com/go/storage v1.40.0/go.mod h1:Rrj7/hKlG87BLqDJYtwR0fbPld8uJPbQ2ucUMY7Ir0g=
 cloud.google.com/go/trace v1.10.6 h1:XF0Ejdw0NpRfAvuZUeQe3ClAG4R/9w5JYICo7l2weaw=

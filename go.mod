@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/profiler v0.4.0
 	cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2
+	cloud.google.com/go/secretmanager v1.12.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.23.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/chainguard-dev/clog v1.3.1
