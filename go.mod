@@ -1,13 +1,15 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.22.2
+go 1.22.4
+
+replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2
 
 require (
 	chainguard.dev/sdk v0.1.20
 	cloud.google.com/go/bigquery v1.61.0
 	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/profiler v0.4.0
-	cloud.google.com/go/pubsub v1.38.0
+	cloud.google.com/go/pubsub v1.39.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/chainguard-dev/clog v1.4.0
@@ -41,6 +43,7 @@ require (
 	cloud.google.com/go/trace v1.10.7 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.23.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.0 // indirect
+	github.com/apache/arrow/go/v14 v14.0.2 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
