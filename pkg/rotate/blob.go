@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -45,7 +44,7 @@ type uploader struct {
 }
 
 func (u *uploader) Run(ctx context.Context) error {
-	log.Printf("Uploading combined logs from %s to %s every %g minutes", u.source, u.bucket, u.flushInterval.Minutes())
+	clog.InfoContextf(ctx, "Uploading combined logs from %s to %s every %g minutes", u.source, u.bucket, u.flushInterval.Minutes())
 
 	done := false
 
@@ -87,6 +86,9 @@ func (u *uploader) Run(ctx context.Context) error {
 		}); err != nil {
 			return err
 		}
+		for k, v := range fileMap {
+			clog.InfoContextf(ctx, "Found %d files in dir %s to process", len(v), k)
+		}
 
 		for dir, files := range fileMap {
 			// Setup the GCS object with the filename to write to
@@ -119,16 +121,16 @@ func (u *uploader) Run(ctx context.Context) error {
 		}
 
 		if processed > 0 {
-			log.Printf("Processed %d files to blobstore", processed)
+			clog.InfoContextf(ctx, "Processed %d files to blobstore", processed)
 		}
 		if done {
-			log.Printf("Exiting flush Run loop")
+			clog.InfoContextf(ctx, "Exiting flush Run loop")
 			return nil
 		}
 		select {
 		case <-time.After(u.flushInterval):
 		case <-ctx.Done():
-			log.Printf("Flushing one more time")
+			clog.InfoContext(ctx, "Flushing one more time")
 			done = true
 		}
 	}
