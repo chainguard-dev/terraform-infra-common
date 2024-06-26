@@ -20,6 +20,18 @@ resource "google_storage_bucket_iam_binding" "recorder-writes-to-gcs-buckets" {
   members = ["serviceAccount:${google_service_account.recorder.email}"]
 }
 
+locals {
+  lenv = [{
+    name  = "LOG_PATH"
+    value = "/logs"
+  }]
+
+  logrotate_env = var.flush_interval == "" ? lenv : concat(lenv, [{
+    name  = "FLUSH_INTERVAL"
+    value = var.flush_interval
+  }])
+}
+
 module "this" {
   count      = var.method == "trigger" ? 1 : 0
   source     = "../regional-go-service"
@@ -52,10 +64,7 @@ module "this" {
         working_dir = path.module
         importpath  = "./cmd/logrotate"
       }
-      env = [{
-        name  = "LOG_PATH"
-        value = "/logs"
-      }]
+      env = local.logrotate_env
       regional-env = [{
         name  = "BUCKET"
         value = { for k, v in google_storage_bucket.recorder : k => v.url }
