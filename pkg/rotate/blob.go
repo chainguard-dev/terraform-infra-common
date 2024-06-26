@@ -95,9 +95,16 @@ func (u *uploader) Run(ctx context.Context) error {
 				return err
 			}
 
+			var deleteErr error
 			for _, f := range files {
 				if err := u.BufferWriteToBucket(writer, filepath.Join(u.source, dir, f)); err != nil {
 					return fmt.Errorf("failed to upload file to blobstore: %s, %w", filepath.Join(dir, fileName), err)
+				}
+				path := filepath.Join(u.source, dir, f)
+				if err = os.Remove(path); err != nil {
+					// log the error, but continue to upload the rest of the files
+					log.Printf("failed to delete file: %s %v", path, err)
+					deleteErr = fmt.Errorf("failed to delete file: %s %w", path, err)
 				}
 				processed++
 			}
@@ -106,11 +113,8 @@ func (u *uploader) Run(ctx context.Context) error {
 				return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
 			}
 
-			for _, f := range files {
-				path := filepath.Join(u.source, dir, f)
-				if err := os.Remove(path); err != nil {
-					return fmt.Errorf("failed to delete file: %s %w", path, err)
-				}
+			if deleteErr != nil {
+				return deleteErr
 			}
 		}
 
