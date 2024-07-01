@@ -49,7 +49,7 @@ variables passed to the application. These can be specified in the module:
 or as from a secret in Google Secret Manager:
 
 ```terraform
-  env_secret = {
+  secret_env = {
     "FOO" : "secret_name_in_secret_manager"
   }
 ```
