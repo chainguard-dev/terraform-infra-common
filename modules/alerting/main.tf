@@ -227,7 +227,7 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "Cloud Run service $${resource.label.service_name} had 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+    subject = "Cloud Run service $${metric_or_resource.labels.service_name} had 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
 
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
