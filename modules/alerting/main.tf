@@ -234,7 +234,7 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
     EOT
   }
 
-  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.oncall
 
   enabled = "true"
   project = var.project_id
