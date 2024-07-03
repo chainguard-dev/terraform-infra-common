@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/chainguard-dev/clog"
@@ -19,7 +20,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -35,7 +36,7 @@ func main() {
 		clog.Fatalf("failed to process env var: %s", err)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	go httpmetrics.ServeMetrics()
