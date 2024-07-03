@@ -1,6 +1,6 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.22.4
+go 1.22.5
 
 // This is to allow pubsub tracing to happen
 // Remove once function in normal release

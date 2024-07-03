@@ -35,7 +35,7 @@ func main() {
 		clog.Fatalf("failed to process env var: %s", err)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	go httpmetrics.ServeMetrics()

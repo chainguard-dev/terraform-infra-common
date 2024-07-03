@@ -43,7 +43,7 @@ type envConfig struct {
 func main() {
 	profiler.SetupProfiler()
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	var env envConfig
@@ -69,7 +69,7 @@ func main() {
 		SkipClientIDCheck: true,
 	})
 
-	projectID, err := metadata.ProjectID()
+	projectID, err := metadata.ProjectIDWithContext(ctx)
 	if err != nil {
 		clog.Fatalf("failed to get project ID, %v", err)
 	}

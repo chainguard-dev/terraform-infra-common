@@ -207,7 +207,7 @@ func HandlerFunc(name string, f func(http.ResponseWriter, *http.Request)) http.H
 //	defer metrics.SetupTracer(ctx)()
 func SetupTracer(ctx context.Context) func() {
 	traceEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-	projectID, _ := metadata.ProjectID()
+	projectID, _ := metadata.ProjectIDWithContext(ctx)
 	var options []trace.TracerProviderOption
 	if traceEndpoint == "" && projectID != "" {
 		// No trace endpoint provided and we are on GCP.
