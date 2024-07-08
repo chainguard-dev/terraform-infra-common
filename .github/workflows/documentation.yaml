@@ -28,6 +28,7 @@ jobs:
           - cron
           - configmap
           - secret
+          - github-bots
           - github-wif-provider
           - github-gsa
           - github-events
