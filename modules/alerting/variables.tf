@@ -55,3 +55,9 @@ variable "failure_rate_duration" {
   type        = number
   default     = 120
 }
+
+variable "failure_rate_exclude_services" {
+  description = "List of service names to exclude from the 5xx failure rate alert"
+  type        = list(string)
+  default     = []
+}

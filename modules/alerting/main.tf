@@ -208,14 +208,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (service_name)
-           (rate(http_request_status_total{code=~"5.."}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5.."}[1m]))
          /
          sum by (service_name)
-           (rate(http_request_status_total{}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}"}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (service_name)
-          (rate(http_request_status_total{}[5m]))
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}"}[5m]))
         > 0.0001
       EOT
     }
