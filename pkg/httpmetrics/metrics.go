@@ -255,6 +255,8 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 	return []trace.TracerProviderOption{
 		trace.WithResource(res),
 		trace.WithSpanProcessor(bsp),
+		// Use 0.1 percent.
+		trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(0.1))),
 	}
 }
 
