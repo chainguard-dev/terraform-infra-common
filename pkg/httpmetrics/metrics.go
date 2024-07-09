@@ -255,9 +255,6 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 	return []trace.TracerProviderOption{
 		trace.WithResource(res),
 		trace.WithSpanProcessor(bsp),
-		// On Cloud Run, this gives fuller traces. We can tune this down
-		// in the future if cost becomes an issue.
-		trace.WithSampler(trace.AlwaysSample()),
 	}
 }
 
