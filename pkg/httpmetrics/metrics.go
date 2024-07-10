@@ -252,9 +252,18 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 		log.Panicf("tracerOptionsGCP(); resource.New() = %v", err)
 	}
 	bsp := trace.NewBatchSpanProcessor(traceExporter)
+	// Default to 10%
+	samplingRate := 0.1
+	// If OTEL_TRACE_SAMPLING_RATE is set, use that value.
+	if v := os.Getenv("OTEL_TRACE_SAMPLING_RATE"); v != "" {
+		if rate, err := strconv.ParseFloat(v, 64); err == nil {
+			samplingRate = rate
+		}
+	}
 	return []trace.TracerProviderOption{
 		trace.WithResource(res),
 		trace.WithSpanProcessor(bsp),
+		trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRate))),
 	}
 }
 
