@@ -9,7 +9,7 @@ replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.37.0-beta.ot
 require (
 	chainguard.dev/sdk v0.1.20
 	cloud.google.com/go/bigquery v1.61.0
-	cloud.google.com/go/compute/metadata v0.4.0
+	cloud.google.com/go/compute/metadata v0.5.0
 	cloud.google.com/go/profiler v0.4.1
 	cloud.google.com/go/pubsub v1.40.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.0
