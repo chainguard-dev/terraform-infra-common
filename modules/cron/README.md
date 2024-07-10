@@ -64,6 +64,7 @@ No requirements.
 | Name | Version |
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
+| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 | <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 | <a name="provider_null"></a> [null](#provider\_null) | n/a |
 
@@ -78,7 +79,7 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [google_cloud_run_v2_job.job](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job) | resource |
+| [google-beta_google_cloud_run_v2_job.job](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_job) | resource |
 | [google_cloud_run_v2_job_iam_binding.authorize-calls](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job_iam_binding) | resource |
 | [google_cloud_scheduler_job.cron](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
 | [google_monitoring_alert_policy.anomalous-job-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
@@ -120,7 +121,7 @@ No requirements.
 | <a name="input_success_alert_alignment_period_seconds"></a> [success\_alert\_alignment\_period\_seconds](#input\_success\_alert\_alignment\_period\_seconds) | Alignment period for successful completion alert. 0 (default) to not create alert. | `number` | `0` | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The maximum amount of time in seconds to allow the job to run. | `string` | `"600s"` | no |
 | <a name="input_volume_mounts"></a> [volume\_mounts](#input\_volume\_mounts) | The volume mounts to mount the volumes to the container in the job. | <pre>list(object({<br>    name       = string<br>    mount_path = string<br>  }))</pre> | `[]` | no |
-| <a name="input_volumes"></a> [volumes](#input\_volumes) | The volumes to make available to the container in the job for mounting. | <pre>list(object({<br>    name = string<br>    secret = optional(object({<br>      secret = string<br>      items = list(object({<br>        version = string<br>        path    = string<br>      }))<br>    }))<br>  }))</pre> | `[]` | no |
+| <a name="input_volumes"></a> [volumes](#input\_volumes) | The volumes to make available to the container in the job for mounting. | <pre>list(object({<br>    name = string<br>    empty_dir = optional(object({<br>      medium     = optional(string, "Memory")<br>      size_limit = optional(string)<br>    }))<br>    secret = optional(object({<br>      secret = string<br>      items = list(object({<br>        version = string<br>        path    = string<br>      }))<br>    }))<br>  }))</pre> | `[]` | no |
 | <a name="input_vpc_access"></a> [vpc\_access](#input\_vpc\_access) | The VPC to send egress to. For more information, visit https://cloud.google.com/run/docs/configuring/vpc-direct-vpc | <pre>object({<br>    # Currently, only one network interface is supported.<br>    network_interfaces = list(object({<br>      network    = string<br>      subnetwork = string<br>      tags       = optional(list(string))<br>    }))<br>    # Egress is one of "PRIVATE_RANGES_ONLY", "ALL_TRAFFIC", or "ALL_PRIVATE_RANGES"<br>    egress = string<br>  })</pre> | `null` | no |
 | <a name="input_working_dir"></a> [working\_dir](#input\_working\_dir) | The working directory that contains the importpath. | `string` | n/a | yes |
 
