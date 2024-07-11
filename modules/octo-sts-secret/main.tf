@@ -37,7 +37,7 @@ module "this" {
 
   timeout = "60s" // 1 minute
   # Run every 30 minutes
-  schedule = "*/30 * * * *"
+  schedule = "17-59/30 * * * *"
 
   working_dir = path.module
   importpath  = "./cmd/rotate"
