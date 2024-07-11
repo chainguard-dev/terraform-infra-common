@@ -108,6 +108,10 @@ variable "volumes" {
   description = "The volumes to make available to the container in the job for mounting."
   type = list(object({
     name = string
+    empty_dir = optional(object({
+      medium     = optional(string, "MEMORY")
+      size_limit = optional(string)
+    }))
     secret = optional(object({
       secret = string
       items = list(object({

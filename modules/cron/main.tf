@@ -1,7 +1,8 @@
 terraform {
   required_providers {
-    ko     = { source = "ko-build/ko" }
-    google = { source = "hashicorp/google" }
+    ko          = { source = "ko-build/ko" }
+    google      = { source = "hashicorp/google" }
+    google-beta = { source = "hashicorp/google-beta" }
   }
 }
 
@@ -44,6 +45,8 @@ resource "ko_build" "image" {
 }
 
 resource "google_cloud_run_v2_job" "job" {
+  provider = google-beta
+
   name     = "${var.name}-cron"
   location = var.region
 
@@ -61,6 +64,14 @@ resource "google_cloud_run_v2_job" "job" {
         for_each = var.volumes
         content {
           name = volumes.value.name
+
+          dynamic "empty_dir" {
+            for_each = volumes.value.empty_dir != null ? { "" : volumes.value.empty_dir } : {}
+            content {
+              medium     = empty_dir.value.medium
+              size_limit = empty_dir.value.size_limit
+            }
+          }
 
           dynamic "secret" {
             for_each = volumes.value.secret != null ? { "" : volumes.value.secret } : {}
