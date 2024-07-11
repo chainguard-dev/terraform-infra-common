@@ -34,7 +34,7 @@ func main() {
 		panic(fmt.Errorf("failed to parse env: %w", err))
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	c, err := secretmanager.NewClient(ctx)
