@@ -33,8 +33,6 @@ module "this" {
   project_id = var.project_id
   region     = var.region
 
-  invokers = var.invokers
-
   timeout = "60s" // 1 minute
   # Run every 30 minutes
   schedule = "17-59/30 * * * *"
@@ -51,5 +49,12 @@ module "this" {
     GITHUB_TOKEN_SECRET = module.gh-token-secret.secret_id
   }
 
+  notification_channels = var.notification_channels
+}
+
+module "dashboard" {
+  source       = "../dashboard/job"
+  job_name = module.this.name
+  project_id = var.project_id
   notification_channels = var.notification_channels
 }

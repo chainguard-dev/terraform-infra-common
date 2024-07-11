@@ -17,12 +17,6 @@ variable "region" {
   description = "The region to run the job."
 }
 
-variable "invokers" {
-  description = "List of user emails to grant invoker perimssions to invoke the job."
-  type        = list(string)
-  default     = []
-}
-
 variable "github_org" {
   description = "The GitHub organization for which the octo-sts token will be requested."
   type        = string
