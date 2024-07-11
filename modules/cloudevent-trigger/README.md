@@ -67,10 +67,10 @@ module "cloudevent-trigger" {
   // Only trigger on events with subject matching "foo/*"
   filter_prefix = { "subject": "foo/" }
 
-  depends_on = [google_cloud_run_v2_service.fanout-service]
+  depends_on = [module.bar-service]
   private-service = {
     region = each.key
-    name   = google_cloud_run_v2_service.bar-service[each.key].name
+    name   = module.bar-service.names[each.key]
   }
 }
 ```
