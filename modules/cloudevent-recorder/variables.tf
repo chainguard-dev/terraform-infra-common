@@ -116,6 +116,16 @@ variable "limits" {
   default = null
 }
 
+variable "scaling" {
+  description = "The scaling configuration for the service."
+  type = object({
+    min_instances                    = optional(number, 0)
+    max_instances                    = optional(number, 100)
+    max_instance_request_concurrency = optional(number)
+  })
+  default = {}
+}
+
 variable "enable_profiler" {
   type        = bool
   default     = false
