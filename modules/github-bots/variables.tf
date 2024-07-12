@@ -82,6 +82,12 @@ variable "notification_channels" {
   type        = list(string)
 }
 
+variable "raw_filter" {
+  description = "Raw PubSub filter to apply, ignores other variables. https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax"
+  type        = string
+  default     = ""
+}
+
 variable "extra_filter" {
   type        = map(string)
   default     = {}
