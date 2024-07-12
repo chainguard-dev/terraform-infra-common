@@ -80,6 +80,8 @@ module "this" {
     empty_dir = {}
   }]
 
+  scaling = var.scaling
+
   enable_profiler = var.enable_profiler
 
   notification_channels = var.notification_channels
