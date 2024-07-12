@@ -14,6 +14,15 @@ module "networking" {
   regions    = [...]
 }
 
+// Create the a service account.
+resource "google_service_account" "foo" {
+  project = var.project_id
+
+  account_id   = "foo-svac"
+  display_name = "foo Service Account"
+  description  = "Dedicated service account for the foo service principal."
+}
+
 module "foo-service" {
   source = "chainguard-dev/common/infra//modules/regional-go-service"
 
