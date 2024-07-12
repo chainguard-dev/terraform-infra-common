@@ -1,0 +1,134 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Code Style
+
+on:
+  pull_request:
+    branches: [ 'main', 'release-*' ]
+  push:
+    branches: [ 'main', 'release-*' ]
+
+jobs:
+
+  gofmt:
+    name: check gofmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: './go.mod'
+          check-latest: true
+
+      - uses: chainguard-dev/actions/gofmt@538d1927b846546b620784754c33e2a1db86e217 # main
+        with:
+          args: -s
+
+  goimports:
+    name: check goimports
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: './go.mod'
+          check-latest: true
+
+      - uses: chainguard-dev/actions/goimports@538d1927b846546b620784754c33e2a1db86e217 # main
+
+  golangci-lint:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
+      pull-requests: read  # for golangci/golangci-lint-action to fetch pull requests
+    name: golangci-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: './go.mod'
+          check-latest: true
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@a4f60bb28d35aeee14e6880718e0c85ff1882e64 # v6.0.1
+        with:
+          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
+          version: v1.55
+          args: --timeout=5m
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: './go.mod'
+          check-latest: true
+
+      - uses: chainguard-dev/actions/trailing-space@538d1927b846546b620784754c33e2a1db86e217 # main
+        if: ${{ always() }}
+
+      - uses: chainguard-dev/actions/eof-newline@538d1927b846546b620784754c33e2a1db86e217 # main
+        if: ${{ always() }}
+
+      - uses: reviewdog/action-tflint@ed9fc532031da01c06455483e57ef4ba8573ad61 # master
+        if: ${{ always() }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          fail_on_error: true
+
+      - uses: reviewdog/action-misspell@278e1b3c7dd09d2827fa080919a40db73ccafe24 # v1.22.0
+        if: ${{ always() }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          fail_on_error: true
+          locale: "US"
+          exclude: |
+            **/go.sum
+            **/third_party/**
+            ./*.yml
+          ignore: cancelled
+
+      - uses: get-woke/woke-action-reviewdog@d71fd0115146a01c3181439ce714e21a69d75e31 # v0
+        if: ${{ always() }}
+        with:
+          github-token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: error
+          fail-on-error: true
