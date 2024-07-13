@@ -123,6 +123,6 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_serviceaccount-email"></a> [serviceaccount-email](#output\_serviceaccount-email) | The ID of the service account for the bot. |
+| <a name="output_serviceaccount-email"></a> [serviceaccount-email](#output\_serviceaccount-email) | The email of the service account for the bot. |
 | <a name="output_serviceaccount-id"></a> [serviceaccount-id](#output\_serviceaccount-id) | The ID of the service account for the bot. |
 <!-- END_TF_DOCS -->
