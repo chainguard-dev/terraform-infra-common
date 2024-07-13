@@ -24,7 +24,7 @@ type Organization struct {
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#Repository
 type Repository struct {
-	Owner    User
+	Owner    User                `json:"owner,omitempty" bigquery:"owner"`
 	Name     bigquery.NullString `json:"name,omitempty" bigquery:"name"`
 	URL      bigquery.NullString `json:"url,omitempty" bigquery:"url"`
 	FullName bigquery.NullString `json:"full_name,omitempty" bigquery:"full_name"`
@@ -80,16 +80,45 @@ type PullRequestLinks struct {
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestEvent
 type PullRequestEvent struct {
 	// assigned,opened  etc.
-	Action     bigquery.NullString `json:"action,omitempty" bigquery:"action"`
-	Sender     User                `json:"sender,omitempty" bigquery:"sender"`
-	Assignee   User                `json:"assignee,omitempty" bigquery:"assignee"`
-	Repository Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Assignee     User                `json:"assignee,omitempty" bigquery:"assignee"`
+	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 
 	PullRequest PullRequest `json:"pull_request,omitempty" bigquery:"pull_request"`
 
 	// Populated when action is synchronize
 	Before bigquery.NullString `json:"before,omitempty" bigquery:"before"`
 	After  bigquery.NullString `json:"after,omitempty" bigquery:"after"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v61/github#PushEventRepository
+type PushEventRepository struct {
+	Owner    User                `json:"owner,omitempty" bigquery:"owner"`
+	Name     bigquery.NullString `json:"name,omitempty" bigquery:"name"`
+	URL      bigquery.NullString `json:"url,omitempty" bigquery:"url"`
+	FullName bigquery.NullString `json:"full_name,omitempty" bigquery:"full_name"`
+}
+
+// https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
+// https://pkg.go.dev/github.com/google/go-github/v61/github#PushEvent
+type PushEvent struct {
+	PushID       bigquery.NullInt64  `json:"push_id,omitempty" bigquery:"push_id"`
+	Head         bigquery.NullString `json:"head,omitempty" bigquery:"head"`
+	Ref          bigquery.NullString `json:"ref,omitempty" bigquery:"ref"`
+	Size         bigquery.NullInt64  `json:"size,omitempty" bigquery:"size"`
+	Before       bigquery.NullString `json:"before,omitempty" bigquery:"before"`
+	DistinctSize bigquery.NullInt64  `json:"distinct_size,omitempty" bigquery:"distinct_size"`
+
+	// The following fields are only populated by Webhook events.
+	Action  bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	After   bigquery.NullString `json:"after,omitempty" bigquery:"after"`
+	BaseRef bigquery.NullString `json:"base_ref,omitempty" bigquery:"base_ref"`
+	Repo    PushEventRepository `json:"repository,omitempty" bigquery:"repository"`
+	Sender  User                `json:"sender,omitempty" bigquery:"sender"`
+
+	Organization Organization `json:"organization,omitempty" bigquery:"organization"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#Workflow

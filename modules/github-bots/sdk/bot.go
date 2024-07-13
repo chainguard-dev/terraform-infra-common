@@ -186,6 +186,20 @@ func Serve(b Bot) {
 					return err
 				}
 				return nil
+			case PushHandler:
+				logger.Debug("handling push event")
+
+				var pe schemas.Wrapper[github.PushEvent]
+				if err := event.DataAs(&pe); err != nil {
+					logger.Errorf("failed to unmarshal push event: %v", err)
+					return err
+				}
+
+				if err := h(ctx, pe.Body); err != nil {
+					logger.Errorf("failed to handle push event: %v", err)
+					return err
+				}
+				return nil
 			}
 		}
 
