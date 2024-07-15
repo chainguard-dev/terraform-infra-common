@@ -118,29 +118,6 @@ func checkRateLimiting(_ context.Context, githubErr error) (bool, time.Duration)
 	return isRateLimited, delay
 }
 
-// handleGithubResponse handles the github response and error returned by most
-// API calls. It will handle checking for rate limiting as well as any errors
-// returned by the API.
-func handleGithubResponse(ctx context.Context, resp *github.Response, err error) error {
-	// resp may be nil if err is nonempty. However, err may contain a rate limit
-	// error so we have to inspect for rate limiting if resp is non-nil
-	if resp != nil {
-		githubErr := github.CheckResponse(resp.Response)
-		if githubErr != nil {
-			rateLimited, delay := checkRateLimiting(ctx, githubErr)
-			// if we were not rate limited, return err
-			if !rateLimited {
-				return err
-			}
-			// For now we don't handle rate limiting, just log that we got rate
-			// limited and what the delay from github is
-			return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
-		}
-	}
-	// err is nil or contains an error
-	return err
-}
-
 func (c GitHubClient) AddLabel(ctx context.Context, pr *github.PullRequest, label string) error {
 	log := clog.FromContext(ctx)
 
@@ -152,7 +129,7 @@ func (c GitHubClient) AddLabel(ctx context.Context, pr *github.PullRequest, labe
 
 	log.Infof("Adding label %q to PR %d", label, *pr.Number)
 	_, resp, err := c.inner.Issues.AddLabelsToIssue(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, []string{label})
-	if err := validateResponse(err, resp, "add label to pull request"); err != nil {
+	if err := validateResponse(ctx, err, resp, "add label to pull request"); err != nil {
 		return err
 	}
 	return nil
@@ -169,7 +146,7 @@ func (c GitHubClient) RemoveLabel(ctx context.Context, pr *github.PullRequest, l
 
 	log.Infof("Removing label %q from PR %d", label, *pr.Number)
 	resp, err := c.inner.Issues.RemoveLabelForIssue(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, label)
-	if err := validateResponse(err, resp, "remove label from pull request"); err != nil {
+	if err := validateResponse(ctx, err, resp, "remove label from pull request"); err != nil {
 		return err
 	}
 	return nil
@@ -188,7 +165,7 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 			if _, resp, err := c.inner.Issues.EditComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *com.ID, &github.IssueComment{
 				Body: &content,
 			}); err != nil || resp.StatusCode != 200 {
-				return validateResponse(err, resp, "editing comment")
+				return validateResponse(ctx, err, resp, "editing comment")
 			}
 			return nil
 		}
@@ -196,7 +173,7 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
 	}); err != nil || resp.StatusCode != 201 {
-		return validateResponse(err, resp, "create comment")
+		return validateResponse(ctx, err, resp, "create comment")
 	}
 	return nil
 }
@@ -206,7 +183,7 @@ func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, co
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
 	}); err != nil || resp.StatusCode != 201 {
-		return validateResponse(err, resp, "creating comment")
+		return validateResponse(ctx, err, resp, "creating comment")
 	}
 	return nil
 }
@@ -420,7 +397,7 @@ func (c GitHubClient) ListArtifactsFunc(ctx context.Context, wr *github.Workflow
 	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
 	for {
 		artifacts, resp, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, opt)
-		if err := handleGithubResponse(ctx, resp, err); err != nil {
+		if err := validateResponse(ctx, err, resp, "list workflow artifacts"); err != nil {
 			return err
 		}
 		for _, artifact := range artifacts.Artifacts {
@@ -440,7 +417,22 @@ func (c GitHubClient) ListArtifactsFunc(ctx context.Context, wr *github.Workflow
 	return nil
 }
 
-func validateResponse(err error, resp *github.Response, action string) error {
+func validateResponse(ctx context.Context, err error, resp *github.Response, action string) error {
+	// resp may be nil if err is nonempty. However, err may contain a rate limit
+	// error so we have to inspect for rate limiting if resp is non-nil
+	if resp != nil {
+		githubErr := github.CheckResponse(resp.Response)
+		if githubErr != nil {
+			rateLimited, delay := checkRateLimiting(ctx, githubErr)
+			// if we were not rate limited, return err
+			if !rateLimited {
+				return err
+			}
+			// For now we don't handle rate limiting, just log that we got rate
+			// limited and what the delay from github is
+			return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
+		}
+	}
 	if err != nil {
 		if resp != nil {
 			return fmt.Errorf("failed to %s: %w %v", action, err, resp.Status)
