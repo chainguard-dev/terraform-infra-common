@@ -118,29 +118,6 @@ func checkRateLimiting(_ context.Context, githubErr error) (bool, time.Duration)
 	return isRateLimited, delay
 }
 
-// handleGithubResponse handles the github response and error returned by most
-// API calls. It will handle checking for rate limiting as well as any errors
-// returned by the API.
-func handleGithubResponse(ctx context.Context, resp *github.Response, err error) error {
-	// resp may be nil if err is nonempty. However, err may contain a rate limit
-	// error so we have to inspect for rate limiting if resp is non-nil
-	if resp != nil {
-		githubErr := github.CheckResponse(resp.Response)
-		if githubErr != nil {
-			rateLimited, delay := checkRateLimiting(ctx, githubErr)
-			// if we were not rate limited, return err
-			if !rateLimited {
-				return err
-			}
-			// For now we don't handle rate limiting, just log that we got rate
-			// limited and what the delay from github is
-			return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
-		}
-	}
-	// err is nil or contains an error
-	return err
-}
-
 func (c GitHubClient) AddLabel(ctx context.Context, pr *github.PullRequest, label string) error {
 	log := clog.FromContext(ctx)
 
@@ -420,7 +397,7 @@ func (c GitHubClient) ListArtifactsFunc(ctx context.Context, wr *github.Workflow
 	owner, repo := *wr.Repository.Owner.Login, *wr.Repository.Name
 	for {
 		artifacts, resp, err := c.inner.Actions.ListWorkflowRunArtifacts(ctx, owner, repo, *wr.ID, opt)
-		if err := handleGithubResponse(ctx, resp, err); err != nil {
+		if err := validateResponse(ctx, err, resp, "list workflow artifacts"); err != nil {
 			return err
 		}
 		for _, artifact := range artifacts.Artifacts {
