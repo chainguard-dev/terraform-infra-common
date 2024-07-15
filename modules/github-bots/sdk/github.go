@@ -441,6 +441,21 @@ func (c GitHubClient) ListArtifactsFunc(ctx context.Context, wr *github.Workflow
 }
 
 func validateResponse(err error, resp *github.Response, action string) error {
+	// resp may be nil if err is nonempty. However, err may contain a rate limit
+	// error so we have to inspect for rate limiting if resp is non-nil
+	if resp != nil {
+		githubErr := github.CheckResponse(resp.Response)
+		if githubErr != nil {
+			rateLimited, delay := checkRateLimiting(ctx, githubErr)
+			// if we were not rate limited, return err
+			if !rateLimited {
+				return err
+			}
+			// For now we don't handle rate limiting, just log that we got rate
+			// limited and what the delay from github is
+			return fmt.Errorf("hit rate limiting: delay returned from GitHub %v", delay.Seconds())
+		}
+	}
 	if err != nil {
 		if resp != nil {
 			return fmt.Errorf("failed to %s: %w %v", action, err, resp.Status)
