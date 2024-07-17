@@ -113,7 +113,7 @@ jobs:
           github_token: ${{ secrets.github_token }}
           fail_on_error: true
 
-      - uses: reviewdog/action-misspell@278e1b3c7dd09d2827fa080919a40db73ccafe24 # v1.22.0
+      - uses: reviewdog/action-misspell@ef8b22c1cca06c8d306fc6be302c3dab0f6ca12f # v1.23.0
         if: ${{ always() }}
         with:
           github_token: ${{ secrets.github_token }}
