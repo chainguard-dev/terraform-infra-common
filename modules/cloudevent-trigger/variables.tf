@@ -11,6 +11,12 @@ variable "broker" {
   type        = string
 }
 
+variable "raw_filter" {
+  description = "Raw PubSub filter to apply, ignores other variables. https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax"
+  type        = string
+  default     = ""
+}
+
 variable "filter" {
   description = <<EOD
 A Knative Trigger-style filter over the cloud event attributes.

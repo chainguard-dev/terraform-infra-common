@@ -105,7 +105,7 @@ resource "google_pubsub_subscription" "this" {
 
   ack_deadline_seconds = var.ack_deadline_seconds
 
-  filter = join(" AND ", local.filter-elements)
+  filter = var.raw_filter == "" ? join(" AND ", local.filter-elements) : var.raw_filter
 
   push_config {
     push_endpoint = module.authorize-delivery.uri
