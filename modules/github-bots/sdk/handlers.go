@@ -34,6 +34,12 @@ func (r IssueCommentHandler) EventType() EventType {
 	return IssueCommentEvent
 }
 
+type PushHandler func(ctx context.Context, pre github.PushEvent) error
+
+func (r PushHandler) EventType() EventType {
+	return PushEvent
+}
+
 type WorkflowRunArtifactHandler func(ctx context.Context, wre github.WorkflowRunEvent) error
 
 func (r WorkflowRunArtifactHandler) EventType() EventType {
@@ -47,6 +53,7 @@ const (
 	PullRequestEvent  EventType = "dev.chainguard.github.pull_request"
 	WorkflowRunEvent  EventType = "dev.chainguard.github.workflow_run"
 	IssueCommentEvent EventType = "dev.chainguard.github.issue_comment"
+	PushEvent         EventType = "dev.chainguard.github.push"
 
 	// LoFo events
 	WorkflowRunArtifactEvent EventType = "dev.chainguard.lofo.workflow_run_artifacts"

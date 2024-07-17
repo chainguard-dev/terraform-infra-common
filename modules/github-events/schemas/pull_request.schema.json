@@ -72,6 +72,16 @@
    {
     "fields": [
      {
+      "name": "login",
+      "type": "STRING"
+     }
+    ],
+    "name": "organization",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
       "name": "number",
       "type": "INTEGER"
      },
