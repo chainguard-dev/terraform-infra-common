@@ -29,7 +29,7 @@ resource "google_monitoring_alert_policy" "pubsub_unacked_messages" {
 
       comparison = "COMPARISON_GT"
       duration   = "0s"
-      filter     = "resource.type = \"pubsub_subscription\" AND metric.type = \"pubsub.googleapis.com/subscription/num_unacked_messages_by_region\" AND metadata.system_labels.name = monitoring.regex.full_match(\"${var.subscription_prefix}-[^.]*\")"
+      filter     = "resource.type = \"pubsub_subscription\" AND metric.type = \"pubsub.googleapis.com/subscription/num_unacked_messages_by_region\" AND metadata.system_labels.name = monitoring.regex.full_match(\"${var.subscription_prefix}-[^-]*\")"
 
       trigger {
         count = "1"
