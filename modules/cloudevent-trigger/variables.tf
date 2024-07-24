@@ -109,9 +109,3 @@ variable "ack_deadline_seconds" {
   type        = number
   default     = 300
 }
-
-variable "dead_letter_queue_alert_enabled" {
-  description = "Whether to enable the dead letter queue alert"
-  type        = bool
-  default     = true
-}

@@ -365,3 +365,39 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
   enabled = "true"
   project = var.project_id
 }
+
+resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
+  alert_strategy {
+    auto_close = "3600s" // 1 hour
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_MAX"
+      }
+
+      comparison = "COMPARISON_GT"
+      duration   = "0s"
+      filter     = "metric.type=\"pubsub.googleapis.com/topic/send_request_count\" resource.type=\"pubsub_topic\" metadata.system_labels.\"name\"=~\".*-dlq-.*\""
+
+      trigger {
+        count = "1"
+      }
+
+      // TODO: make configurable later
+      threshold_value = 1
+    }
+
+    display_name = "Dead-letter queue messages above 1"
+  }
+  display_name = "Dead-letter queue messages above 1"
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}

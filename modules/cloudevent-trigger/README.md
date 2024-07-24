@@ -100,7 +100,6 @@ No requirements.
 | Name | Type |
 |------|------|
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
-| [google_monitoring_alert_policy.pubsub_dead_letter_queue_messages](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_pubsub_subscription.dead-letter-pull-sub](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription_iam_binding.allow-pubsub-to-ack](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription_iam_binding) | resource |
@@ -116,7 +115,6 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_ack_deadline_seconds"></a> [ack\_deadline\_seconds](#input\_ack\_deadline\_seconds) | The deadline for acking a message. | `number` | `300` | no |
 | <a name="input_broker"></a> [broker](#input\_broker) | The name of the pubsub topic we are using as a broker. | `string` | n/a | yes |
-| <a name="input_dead_letter_queue_alert_enabled"></a> [dead\_letter\_queue\_alert\_enabled](#input\_dead\_letter\_queue\_alert\_enabled) | Whether to enable the dead letter queue alert | `bool` | `true` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | A Knative Trigger-style filter over the cloud event attributes.<br><br>This is normally used to filter relevant event types, for example:<br><br>  { "type" : "dev.chainguard.foo" }<br><br>In this case, only events with a type attribute of "dev.chainguard.foo" will be delivered. | `map(string)` | `{}` | no |
 | <a name="input_filter_has_attributes"></a> [filter\_has\_attributes](#input\_filter\_has\_attributes) | A Knative Trigger-style filter over the cloud event attribute prefixes.<br><br>This can be used to filter on the presence of an event attribute, for example:<br><br>  ["location"]<br><br>In this case, any event with a type attribute of "location" will be delivered. | `list(string)` | `[]` | no |
 | <a name="input_filter_not_has_attributes"></a> [filter\_not\_has\_attributes](#input\_filter\_not\_has\_attributes) | A Knative Trigger-style filter over the cloud event attribute prefixes.<br><br>This can be used to filter on the absence of an event attribute, for example:<br><br>  ["location"]<br><br>In this case, any event with a type attribute of "location" will NOT be delivered. | `list(string)` | `[]` | no |
