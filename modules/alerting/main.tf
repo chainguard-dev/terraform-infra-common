@@ -382,7 +382,12 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
 
       comparison = "COMPARISON_GT"
       duration   = "0s"
-      filter     = "metric.type=\"pubsub.googleapis.com/topic/send_request_count\" resource.type=\"pubsub_topic\" metadata.system_labels.\"name\"=~\".*-dlq-.*\""
+      filter     = <<EOT
+        metric.type="pubsub.googleapis.com/topic/send_request_count"
+        resource.type="pubsub_topic"
+        metadata.system_labels."name"=~".*-dlq-.*"
+        ${var.dlq_filter}
+      EOT
 
       trigger {
         count = "1"
