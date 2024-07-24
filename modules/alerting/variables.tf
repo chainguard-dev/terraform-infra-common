@@ -61,3 +61,9 @@ variable "failure_rate_exclude_services" {
   type        = list(string)
   default     = []
 }
+
+variable "dlq_filter" {
+  description = "additional filter to apply to dlq alert policy"
+  type        = string
+  default     = ""
+}
