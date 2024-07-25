@@ -65,9 +65,7 @@ No requirements.
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_audit-serviceaccount"></a> [audit-serviceaccount](#module\_audit-serviceaccount) | ../audit-serviceaccount | n/a |
+No modules.
 
 ## Resources
 

@@ -6,11 +6,6 @@ terraform {
 }
 
 moved {
-  from = module.audit-serviceaccount
-  to   = module.this.module.audit-serviceaccount
-}
-
-moved {
   from = google_project_iam_member.metrics-writer
   to   = module.this.google_project_iam_member.metrics-writer
 }
