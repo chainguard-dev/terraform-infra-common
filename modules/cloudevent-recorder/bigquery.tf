@@ -74,20 +74,6 @@ resource "google_service_account_iam_binding" "provisioner-acts-as-import-identi
   members            = [var.provisioner]
 }
 
-module "audit-import-serviceaccount" {
-  source = "../audit-serviceaccount"
-
-  project_id      = var.project_id
-  service-account = google_service_account.import-identity.email
-
-  # The absence of authorized identities here means that
-  # nothing is authorized to act as this service account.
-  # Note: BigQuery DTS's usage doesn't show up in the
-  # audit logs.
-
-  notification_channels = var.notification_channels
-}
-
 // Create a BQ DTS job for each of the regions x types pulling from the appropriate buckets and paths.
 resource "google_bigquery_data_transfer_config" "import-job" {
   for_each = local.regional-types

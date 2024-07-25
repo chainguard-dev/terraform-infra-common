@@ -1,16 +1,3 @@
-module "audit-serviceaccount" {
-  source = "../audit-serviceaccount"
-
-  project_id      = var.project_id
-  service-account = var.service_account
-
-  # The absence of authorized identities here means that
-  # nothing is authorized to act as this service account.
-  # Note: Cloud Run's usage doesn't show up in the audit logs.
-
-  notification_channels = var.notification_channels
-}
-
 resource "google_project_iam_member" "metrics-writer" {
   project = var.project_id
   role    = "roles/monitoring.metricWriter"

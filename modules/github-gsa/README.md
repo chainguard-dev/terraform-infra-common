@@ -42,9 +42,7 @@ No requirements.
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_audit-usage"></a> [audit-usage](#module\_audit-usage) | ../audit-serviceaccount | n/a |
+No modules.
 
 ## Resources
 
