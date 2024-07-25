@@ -385,7 +385,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
       filter     = <<EOT
         metric.type="pubsub.googleapis.com/topic/send_request_count"
         resource.type="pubsub_topic"
-        metadata.system_labels."name"=~".*-dlq-.*"
+        metadata.system_labels."name"=monitoring.regex.full_match(".*-dlq-.*")
         ${var.dlq_filter}
       EOT
 
