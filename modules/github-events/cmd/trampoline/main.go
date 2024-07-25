@@ -73,11 +73,23 @@ func main() {
 		log = log.With("event-type", t)
 		log.Debugf("forwarding event: %s", t)
 
+		// Extract the organization and repo name from the request body, to set in the subject.
+		// This enables subscribers to filter on the subject if they only care about certain repos.
+		var body struct {
+			Repo struct {
+				FullName string `json:"full_name"`
+			} `json:"repository"`
+		}
+		if err := json.Unmarshal(payload, &body); err != nil {
+			log.Errorf("failed to unmarshal payload: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		event := cloudevents.NewEvent()
 		event.SetType(t)
 		event.SetSource(r.Host)
-		// TODO: Extract organization and repo to set in subject, for better filtering.
-		// event.SetSubject(fmt.Sprintf("%s/%s", org, repo))
+		event.SetSubject(body.Repo.FullName)
 		if err := event.SetData(cloudevents.ApplicationJSON, struct {
 			When time.Time       `json:"when"`
 			Body json.RawMessage `json:"body"`
