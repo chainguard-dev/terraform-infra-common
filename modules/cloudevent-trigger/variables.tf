@@ -84,7 +84,7 @@ variable "private-service" {
 variable "max_delivery_attempts" {
   description = "The maximum number of delivery attempts for any event."
   type        = number
-  default     = 100
+  default     = 20
 }
 
 variable "notification_channels" {
