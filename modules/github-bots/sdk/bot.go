@@ -98,7 +98,7 @@ func Serve(b Bot) {
 			}
 		}()
 
-		logger.Info("handling event", "type", event.Type())
+		logger.Debug("handling event", "type", event.Type())
 
 		// dispatch event to n handlers
 		if handler, ok := b.Handlers[EventType(event.Type())]; ok {
