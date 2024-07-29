@@ -301,6 +301,16 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
   }
 
   label_extractors = {
@@ -358,6 +368,16 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
   }
 
   label_extractors = {
