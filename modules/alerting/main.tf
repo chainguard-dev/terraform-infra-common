@@ -290,13 +290,32 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
   project = var.project_id
 }
 
+resource "google_logging_metric" "cloud-run-scaling-failure" {
+  name   = "cloud_run_scaling_failure"
+  filter = <<EOT
+        resource.type="cloud_run_revision"
+        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload:"The request was aborted because there was no available instance."
+      EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+  }
+}
+
 resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
-  # In the absence of data, incident will auto-close after an hour
+  # In the absence of data, incident will auto-close after an daily
   alert_strategy {
-    auto_close = "3600s"
+    auto_close = "86400s"
 
     notification_rate_limit {
-      period = "3600s" // re-alert hourly if condition still valid.
+      period = "86400s" // re-alert daily if condition still valid.
     }
   }
 
@@ -328,13 +347,32 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
   project = var.project_id
 }
 
+resource "google_logging_metric" "cloud-run-failed-req" {
+  name   = "cloud_run_failed_req"
+  filter = <<EOT
+        resource.type="cloud_run_revision"
+        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
+      EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+  }
+}
+
 resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
-  # In the absence of data, incident will auto-close after an hour
+  # In the absence of data, incident will auto-close after an daily
   alert_strategy {
-    auto_close = "3600s"
+    auto_close = "86400s"
 
     notification_rate_limit {
-      period = "3600s" // re-alert hourly if condition still valid.
+      period = "86400s" // re-alert daily if condition still valid.
     }
   }
 
