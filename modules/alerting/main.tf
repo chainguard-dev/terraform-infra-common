@@ -294,7 +294,7 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   name   = "cloud_run_scaling_failure"
   filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request was aborted because there was no available instance."
       EOT
@@ -328,7 +328,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
     condition_matched_log {
       filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request was aborted because there was no available instance."
         ${var.scaling_issue_filter}
@@ -351,7 +351,7 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   name   = "cloud_run_failed_req"
   filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
       EOT
@@ -385,7 +385,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
     condition_matched_log {
       filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/prod-enforce-fabc/logs/run.googleapis.com%2Frequests"
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
         ${var.failed_req_filter}
