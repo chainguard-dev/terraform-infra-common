@@ -7,7 +7,7 @@ go 1.22.5
 replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2
 
 require (
-	chainguard.dev/sdk v0.1.21
+	chainguard.dev/sdk v0.1.22
 	cloud.google.com/go/bigquery v1.62.0
 	cloud.google.com/go/compute/metadata v0.5.0
 	cloud.google.com/go/profiler v0.4.1
