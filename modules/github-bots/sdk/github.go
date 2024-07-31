@@ -475,16 +475,17 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
+	auth := &gitHttp.BasicAuth{
+		Username: "notchecked", // username is not checked, only the token in the password field is used.
+		Password: tok.AccessToken,
+	}
 
 	// git clone <repo>
 	// git fetch origin <ref>:<ref>
 	// git checkout <ref>
 	r, err := git.PlainCloneContext(ctx, destDir, false, &git.CloneOptions{
-		URL: repo,
-		Auth: &gitHttp.BasicAuth{
-			Username: "notchecked", // username is not checked, only the token in the password field is used.
-			Password: tok.AccessToken,
-		},
+		URL:  repo,
+		Auth: auth,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone repository: %w", err)
@@ -494,10 +495,7 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 		RefSpecs:  []config.RefSpec{config.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
 		Depth:     0,
 		Tags:      git.NoTags,
-		Auth: &gitHttp.BasicAuth{
-			Username: "notchecked", // username is not checked, only the token in the password field is used.
-			Password: tok.AccessToken,
-		},
+		Auth:      auth,
 	}); errors.Is(err, git.NoErrAlreadyUpToDate) {
 		log.Info("local repository already up to date")
 	} else if err != nil {
