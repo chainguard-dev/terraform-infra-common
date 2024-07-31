@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	bufra "github.com/avvmoto/buf-readerat"
@@ -20,6 +19,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/octosts"
 	"github.com/google/go-github/v61/github"
 	"golang.org/x/oauth2"
+	"golang.org/x/time/rate"
 )
 
 // NewGitHubClient creates a new GitHub client, using a new token from OctoSTS,
@@ -32,6 +32,7 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubCl
 		org:        org,
 		repo:       repo,
 		policyName: policyName,
+		sometimes:  rate.Sometimes{Interval: 30 * time.Minute},
 	}
 	return GitHubClient{
 		inner: github.NewClient(oauth2.NewClient(ctx, ts)),
@@ -43,15 +44,15 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubCl
 
 type tokenSource struct {
 	org, repo, policyName string
-	once                  sync.Once
+	sometimes             rate.Sometimes
 	tok                   *oauth2.Token
 	err                   error
 }
 
 func (ts *tokenSource) Token() (*oauth2.Token, error) {
-	// The token is only fetched once, and is cached for future calls.
-	// It's not refreshed, and will expire eventually.
-	ts.once.Do(func() {
+	// The token is refreshed periodically. Previous tokens are revoked before
+	// returning the new refreshed one.
+	ts.sometimes.Do(func() {
 		ctx := context.Background()
 		clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
 		otok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
@@ -60,9 +61,16 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 		// token field
 		if err != nil {
 			ts.tok, ts.err = nil, err
-		} else {
-			ts.tok, ts.err = &oauth2.Token{AccessToken: otok}, nil
+			return
 		}
+
+		// If there's a previous token, revoke it.
+		if ts.tok != nil {
+			if err := octosts.Revoke(ctx, ts.tok.AccessToken); err != nil {
+				clog.FromContext(ctx).Errorf("failed to revoke token: %v", err)
+			}
+		}
+		ts.tok, ts.err = &oauth2.Token{AccessToken: otok}, nil
 	})
 	return ts.tok, ts.err
 }

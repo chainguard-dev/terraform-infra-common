@@ -186,6 +186,7 @@ func Serve(b Bot) {
 					return err
 				}
 				return nil
+
 			case PushHandler:
 				logger.Debug("handling push event")
 
