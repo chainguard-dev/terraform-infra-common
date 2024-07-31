@@ -8,11 +8,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 	"time"
 
 	bufra "github.com/avvmoto/buf-readerat"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/snabb/httpreaderat"
 
 	"github.com/chainguard-dev/clog"
@@ -449,6 +454,61 @@ func validateResponse(ctx context.Context, err error, resp *github.Response, act
 	}
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("failed to %s: %v", action, resp.Status)
+	}
+	return nil
+}
+
+// CloneRepo clones the repository into a destination directory, and checks out a ref.
+//
+// ref should be "refs/heads/<branch>" or "refs/tags/<tag>" or "refs/pull/<pr>/merge" or a commit SHA.
+func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) error {
+	log := clog.FromContext(ctx)
+
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.ts.org, c.ts.repo)
+	tok, err := c.ts.Token()
+	if err != nil {
+		return fmt.Errorf("failed to get token: %w", err)
+	}
+
+	// git clone <repo>
+	// git fetch origin <ref>:<ref>
+	// git checkout <ref>
+	r, err := git.PlainCloneContext(ctx, destDir, false, &git.CloneOptions{
+		URL: repo,
+		Auth: &gitHttp.BasicAuth{
+			Username: "notchecked", // username is not checked, only the token in the password field is used.
+			Password: tok.AccessToken,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to clone repository: %w", err)
+	}
+	if err := r.FetchContext(ctx, &git.FetchOptions{
+		RemoteURL: repo,
+		RefSpecs:  []config.RefSpec{config.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
+		Depth:     0,
+		Tags:      git.NoTags,
+		Auth: &gitHttp.BasicAuth{
+			Username: "notchecked", // username is not checked, only the token in the password field is used.
+			Password: tok.AccessToken,
+		},
+	}); errors.Is(err, git.NoErrAlreadyUpToDate) {
+		log.Info("local repository already up to date")
+	} else if err != nil {
+		return fmt.Errorf("failed to fetch repository: %w", err)
+	}
+	wt, err := r.Worktree()
+	if err != nil {
+		return fmt.Errorf("failed to get worktree: %w", err)
+	}
+	if err := wt.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.ReferenceName(ref),
+	}); err != nil {
+		return fmt.Errorf("failed to checkout ref %s: %w", ref, err)
 	}
 	return nil
 }
