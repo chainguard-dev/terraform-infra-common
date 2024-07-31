@@ -461,17 +461,19 @@ func validateResponse(ctx context.Context, err error, resp *github.Response, act
 // CloneRepo clones the repository into a destination directory, and checks out a ref.
 //
 // ref should be "refs/heads/<branch>" or "refs/tags/<tag>" or "refs/pull/<pr>/merge" or a commit SHA.
-func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) error {
+//
+// It returns the git.Repository object for the cloned repository.
+func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.Repository, error) {
 	log := clog.FromContext(ctx)
 
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
 	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.ts.org, c.ts.repo)
 	tok, err := c.ts.Token()
 	if err != nil {
-		return fmt.Errorf("failed to get token: %w", err)
+		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 
 	// git clone <repo>
@@ -485,7 +487,7 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) error 
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to clone repository: %w", err)
+		return nil, fmt.Errorf("failed to clone repository: %w", err)
 	}
 	if err := r.FetchContext(ctx, &git.FetchOptions{
 		RemoteURL: repo,
@@ -499,16 +501,16 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) error 
 	}); errors.Is(err, git.NoErrAlreadyUpToDate) {
 		log.Info("local repository already up to date")
 	} else if err != nil {
-		return fmt.Errorf("failed to fetch repository: %w", err)
+		return nil, fmt.Errorf("failed to fetch repository: %w", err)
 	}
 	wt, err := r.Worktree()
 	if err != nil {
-		return fmt.Errorf("failed to get worktree: %w", err)
+		return nil, fmt.Errorf("failed to get worktree: %w", err)
 	}
 	if err := wt.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.ReferenceName(ref),
 	}); err != nil {
-		return fmt.Errorf("failed to checkout ref %s: %w", ref, err)
+		return nil, fmt.Errorf("failed to checkout ref %s: %w", ref, err)
 	}
-	return nil
+	return r, nil
 }
