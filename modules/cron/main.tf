@@ -32,6 +32,7 @@ resource "ko_build" "image" {
 
 resource "google_cloud_run_v2_job" "job" {
   provider = google-beta
+  project  = var.project_id
 
   name     = "${var.name}-cron"
   location = var.region
