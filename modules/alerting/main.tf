@@ -434,7 +434,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period   = "60s"
+        alignment_period   = "600s"
         per_series_aligner = "ALIGN_MAX"
       }
 
