@@ -4,14 +4,14 @@ go 1.22.5
 
 // This is to allow pubsub tracing to happen
 // Remove once function in normal release
-replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.37.0-beta.otel.trace2
+replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.42.0-beta.otel.trace
 
 require (
 	chainguard.dev/sdk v0.1.22
 	cloud.google.com/go/bigquery v1.62.0
 	cloud.google.com/go/compute/metadata v0.5.0
 	cloud.google.com/go/profiler v0.4.1
-	cloud.google.com/go/pubsub v1.40.0
+	cloud.google.com/go/pubsub v1.41.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.1
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/chainguard-dev/clog v1.4.0
