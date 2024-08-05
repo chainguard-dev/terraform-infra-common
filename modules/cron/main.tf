@@ -30,6 +30,24 @@ resource "ko_build" "image" {
   env         = var.ko_build_env
 }
 
+resource "google_project_iam_member" "metrics-writer" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${var.service_account}"
+}
+
+resource "google_project_iam_member" "trace-writer" {
+  project = var.project_id
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${var.service_account}"
+}
+
+resource "google_project_iam_member" "profiler-writer" {
+  project = var.project_id
+  role    = "roles/cloudprofiler.agent"
+  member  = "serviceAccount:${var.service_account}"
+}
+
 resource "google_cloud_run_v2_job" "job" {
   provider = google-beta
   project  = var.project_id
