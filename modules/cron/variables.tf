@@ -160,3 +160,9 @@ variable "success_alert_alignment_period_seconds" {
   type        = number
   default     = 0
 }
+
+variable "otel_collector_image" {
+  type        = string
+  default     = "chainguard/opentelemetry-collector-contrib:latest"
+  description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub."
+}
