@@ -212,6 +212,10 @@ resource "google_project_iam_member" "authorize-list" {
   member  = each.key
 }
 
+locals {
+  env_list_body = join(",", [for e in var.scheduled_env_overrides : "{\"name\": ${e.name}, \"value\": ${e.value}}"])
+}
+
 resource "google_cloud_scheduler_job" "cron" {
   paused = var.paused
 
@@ -222,6 +226,10 @@ resource "google_cloud_scheduler_job" "cron" {
   http_target {
     http_method = "POST"
     uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/${google_cloud_run_v2_job.job.name}:run"
+    // Override body ref:
+    //   https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job#body
+    //   https://cloud.google.com/run/docs/reference/rest/v2/projects.locations.jobs/run#request-body
+    body = length(var.scheduled_env_overrides) == 0 ? null : base64encode("{\"overrides\": { \"containerOverrides\": [ { \"name\": ${var.name}-1, \"env\" [ ${local.env_list_body} ] } ] } }")
 
     oauth_token {
       service_account_email = google_service_account.delivery.email
