@@ -161,6 +161,12 @@ variable "success_alert_alignment_period_seconds" {
   default     = 0
 }
 
+variable "enable_otel_sidecar" {
+  description = "Enable otel sidecar for metrics"
+  type        = bool
+  default     = false
+}
+
 variable "otel_collector_image" {
   type        = string
   default     = "chainguard/opentelemetry-collector-contrib:latest"
