@@ -132,13 +132,17 @@ resource "google_cloud_run_v2_job" "job" {
           }
         }
       }
-      containers {
-        image = var.otel_collector_image
-        // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
-        args = ["--config=env:OTEL_CONFIG"]
-        env {
-          name  = "OTEL_CONFIG"
-          value = file("${path.module}/otel-config/config.yaml")
+
+      dynamic "containers" {
+        for_each = var.enable_otel_sidecar ? [1] : []
+        content {
+          image = var.otel_collector_image
+          // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
+          args = ["--config=env:OTEL_CONFIG"]
+          env {
+            name  = "OTEL_CONFIG"
+            value = file("${path.module}/otel-config/config.yaml")
+          }
         }
       }
 
