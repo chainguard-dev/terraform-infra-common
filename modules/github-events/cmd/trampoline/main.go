@@ -71,25 +71,26 @@ func main() {
 		}
 		t = "dev.chainguard.github." + t
 		log = log.With("event-type", t)
-		log.Debugf("forwarding event: %s", t)
 
-		// Extract the organization and repo name from the request body, to set in the subject.
-		// This enables subscribers to filter on the subject if they only care about certain repos.
-		var body struct {
-			Repo struct {
+		var msg struct {
+			Action     string `json:"action"`
+			Repository struct {
 				FullName string `json:"full_name"`
 			} `json:"repository"`
 		}
-		if err := json.Unmarshal(payload, &body); err != nil {
-			log.Errorf("failed to unmarshal payload: %v", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		if err := json.Unmarshal(payload, &msg); err != nil {
+			log.Warnf("failed to unmarshal payload; action and subject will be unset: %v", err)
+		} else {
+			log = log.With("action", msg.Action, "repo", msg.Repository.FullName)
 		}
+
+		log.Debugf("forwarding event: %s", t)
 
 		event := cloudevents.NewEvent()
 		event.SetType(t)
 		event.SetSource(r.Host)
-		event.SetSubject(body.Repo.FullName)
+		event.SetSubject(msg.Repository.FullName)
+		event.SetExtension("action", msg.Action)
 		if err := event.SetData(cloudevents.ApplicationJSON, struct {
 			When time.Time       `json:"when"`
 			Body json.RawMessage `json:"body"`

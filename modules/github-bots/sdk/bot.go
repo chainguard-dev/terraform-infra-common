@@ -24,6 +24,7 @@ type contextKey string
 const (
 	ContextKeyAttributes contextKey = "ce-attributes"
 	ContextKeyType       contextKey = "ce-type"
+	ContextKeySubject    contextKey = "ce-subject"
 )
 
 type Bot struct {
@@ -98,7 +99,9 @@ func Serve(b Bot) {
 			}
 		}()
 
-		logger.Debug("handling event", "type", event.Type())
+		logger.With("type", event.Type(),
+			"subject", event.Subject(),
+			"action", event.Extensions()["action"]).Debug("handling event")
 
 		// dispatch event to n handlers
 		if handler, ok := b.Handlers[EventType(event.Type())]; ok {
@@ -110,6 +113,7 @@ func Serve(b Bot) {
 			// add existing event attributes to context so they can be used by the handlers
 			ctx = context.WithValue(ctx, ContextKeyAttributes, event.Extensions())
 			ctx = context.WithValue(ctx, ContextKeyType, event.Type())
+			ctx = context.WithValue(ctx, ContextKeySubject, event.Subject())
 
 			switch h := handler.(type) {
 			case WorkflowRunArtifactHandler:

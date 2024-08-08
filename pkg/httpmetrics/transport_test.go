@@ -10,7 +10,7 @@ import (
 )
 
 func TestTransport(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	s := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		t.Log("got request")
 	}))
 	defer s.Close()
