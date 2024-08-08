@@ -31,4 +31,10 @@ resource "google_compute_subnetwork" "regional" {
   network       = google_compute_network.this.id
   region        = each.key
   ip_cidr_range = cidrsubnet(var.cidr, 8, var.netnum_offset + each.value)
+
+  log_config {
+    aggregation_interval = "INTERVAL_15_MIN"
+    flow_sampling        = 1.0
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
