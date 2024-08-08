@@ -11,7 +11,7 @@ import (
 
 func TestServerMetrics(t *testing.T) {
 	handler := "test"
-	http.Handle("/", Handler(handler, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/", Handler(handler, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})))
 	srv := httptest.NewServer(http.DefaultServeMux)

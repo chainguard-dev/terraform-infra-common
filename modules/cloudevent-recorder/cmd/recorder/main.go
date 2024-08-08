@@ -45,7 +45,7 @@ func main() {
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
-	if err := c.StartReceiver(ctx, func(ctx context.Context, event cloudevents.Event) error {
+	if err := c.StartReceiver(ctx, func(_ context.Context, event cloudevents.Event) error {
 		dir := filepath.Join(env.LogPath, event.Type())
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
