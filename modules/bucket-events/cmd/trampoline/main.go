@@ -25,8 +25,8 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	Port       int    `envconfig:"PORT" default:"8080" required:"true"`
-	IngressURI string `envconfig:"INGRESS_URI" required:"true"`
+	Port       int    `env:"PORT" default:"8080" required:"true"`
+	IngressURI string `env:"INGRESS_URI" required:"true"`
 }{})
 
 var eventTypes = map[string]string{

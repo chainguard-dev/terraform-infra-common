@@ -25,9 +25,9 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	Port          int    `envconfig:"PORT" default:"8080" required:"true"`
-	IngressURI    string `envconfig:"EVENT_INGRESS_URI" required:"true"`
-	WebhookSecret string `envconfig:"WEBHOOK_SECRET" required:"true"`
+	Port          int    `env:"PORT" default:"8080" required:"true"`
+	IngressURI    string `env:"EVENT_INGRESS_URI" required:"true"`
+	WebhookSecret string `env:"WEBHOOK_SECRET" required:"true"`
 }{})
 
 func main() {
