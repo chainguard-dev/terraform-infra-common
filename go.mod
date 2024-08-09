@@ -22,6 +22,7 @@ require (
 	github.com/google/go-github/v61 v61.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.19.1
+	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.28.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
