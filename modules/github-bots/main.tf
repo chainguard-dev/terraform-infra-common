@@ -49,7 +49,7 @@ module "cloudevent-trigger" {
   source   = "../cloudevent-trigger"
 
   project_id                = var.project_id
-  name                      = "bot-trigger-${var.name}"
+  name                      = "bot-${var.name}"
   broker                    = var.broker[each.key]
   raw_filter                = var.raw_filter
   filter                    = local.combined_filter
