@@ -24,7 +24,7 @@ import (
 	"google.golang.org/api/storage/v1"
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Port       int    `envconfig:"PORT" default:"8080" required:"true"`
 	IngressURI string `envconfig:"INGRESS_URI" required:"true"`
 }{})

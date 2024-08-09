@@ -24,7 +24,7 @@ import (
 	"github.com/sethvargo/go-envconfig"
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Port          int    `envconfig:"PORT" default:"8080" required:"true"`
 	IngressURI    string `envconfig:"EVENT_INGRESS_URI" required:"true"`
 	WebhookSecret string `envconfig:"WEBHOOK_SECRET" required:"true"`

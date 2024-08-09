@@ -22,7 +22,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Port    int    `envconfig:"PORT" default:"8080" required:"true"`
 	LogPath string `envconfig:"LOG_PATH" required:"true"`
 }{})

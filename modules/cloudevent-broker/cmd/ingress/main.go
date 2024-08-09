@@ -36,7 +36,7 @@ const (
 	maxRetry   = 3
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Port  int    `envconfig:"PORT" default:"8080" required:"true"`
 	Topic string `envconfig:"PUBSUB_TOPIC" required:"true"`
 }{})

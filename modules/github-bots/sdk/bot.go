@@ -60,7 +60,7 @@ func (b *Bot) RegisterHandler(handler EventHandlerFunc) {
 	b.Handlers[etype] = handler
 }
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Port int `envconfig:"PORT" default:"8080" required:"true"`
 }{})
 

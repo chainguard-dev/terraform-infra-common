@@ -19,7 +19,7 @@ import (
 	"syscall"
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Bucket        string        `envconfig:"BUCKET" required:"true"`
 	FlushInterval time.Duration `envconfig:"FLUSH_INTERVAL" default:"3m"`
 	LogPath       string        `envconfig:"LOG_PATH" required:"true"`

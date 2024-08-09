@@ -30,7 +30,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	MetricsPort int `envconfig:"METRICS_PORT" default:"2112"`
 
 	// https://cloud.google.com/run/docs/container-contract#services-env-vars

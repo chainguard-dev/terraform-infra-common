@@ -24,7 +24,7 @@ const (
 	maxRetry   = 3
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Host string `envconfig:"HOST" default:"http://0.0.0.0" required:"true"`
 	Port int    `envconfig:"PORT" default:"8080" required:"true"`
 

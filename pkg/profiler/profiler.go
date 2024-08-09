@@ -15,7 +15,7 @@ import (
 	"github.com/chainguard-dev/clog"
 )
 
-var env = envconfig.MustProcess(context.Background(), struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	EnableProfiler bool `envconfig:"ENABLE_PROFILER" default:"false" required:"false"`
 }{})
 
