@@ -20,15 +20,14 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/sethvargo/go-envconfig"
 	"google.golang.org/api/storage/v1"
-
-	"github.com/kelseyhightower/envconfig"
 )
 
-type envConfig struct {
+var env = envconfig.MustProcess(context.Background(), struct {
 	Port       int    `envconfig:"PORT" default:"8080" required:"true"`
 	IngressURI string `envconfig:"INGRESS_URI" required:"true"`
-}
+}{})
 
 var eventTypes = map[string]string{
 	"OBJECT_FINALIZE":        "dev.chainguard.storage.object.finalize",
@@ -38,11 +37,6 @@ var eventTypes = map[string]string{
 }
 
 func main() {
-	var env envConfig
-	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %s", err)
-	}
-
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 

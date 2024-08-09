@@ -14,7 +14,7 @@ import (
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/go-github/v61/github"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 )
 
 // Define a type for keys used in context to prevent key collisions.

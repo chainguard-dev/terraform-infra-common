@@ -20,8 +20,8 @@ require (
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v61 v61.0.0
-	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.19.1
+	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.28.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
@@ -79,6 +79,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect

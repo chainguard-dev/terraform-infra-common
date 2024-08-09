@@ -13,7 +13,7 @@ import (
 	"syscall"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
@@ -22,18 +22,13 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
 )
 
-type envConfig struct {
+var env = envconfig.MustProcess(context.Background(), struct {
 	Port    int    `envconfig:"PORT" default:"8080" required:"true"`
 	LogPath string `envconfig:"LOG_PATH" required:"true"`
-}
+}{})
 
 func main() {
 	profiler.SetupProfiler()
-
-	var env envConfig
-	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %v", err)
-	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()

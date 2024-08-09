@@ -15,10 +15,10 @@ import (
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	gcpclog "github.com/chainguard-dev/clog/gcp"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sethvargo/go-envconfig"
 	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -30,17 +30,16 @@ import (
 	"google.golang.org/api/option"
 )
 
+var env = envconfig.MustProcess(context.Background(), struct {
+	MetricsPort int `envconfig:"METRICS_PORT" default:"2112"`
+
+	// https://cloud.google.com/run/docs/container-contract#services-env-vars
+	KnativeServiceName  string `envconfig:"K_SERVICE" default:"unknown"`
+	KnativeRevisionName string `envconfig:"K_REVISION" default:"unknown"`
+}{})
+
 // ServeMetrics serves the metrics endpoint if the METRICS_PORT env var is set.
 func ServeMetrics() {
-	// Start the metrics server on the metrics port, if defined.
-	var env struct {
-		MetricsPort int `envconfig:"METRICS_PORT" default:"2112" required:"true"`
-	}
-	if err := envconfig.Process("", &env); err != nil {
-		slog.Error("Failed to process environment variables", "error", err)
-		return
-	}
-
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 	srv := &http.Server{
@@ -89,21 +88,11 @@ var (
 	)
 )
 
-// https://cloud.google.com/run/docs/container-contract#services-env-vars
-var env struct {
-	KnativeServiceName  string `envconfig:"K_SERVICE" default:"unknown"`
-	KnativeRevisionName string `envconfig:"K_REVISION" default:"unknown"`
-}
-
 func init() {
 	// Set the global metric provider to a no-op so that any metrics created from otelgrpc interceptors
 	// are disabled to prevent memory leaks.
 	// See https://github.com/open-telemetry/opentelemetry-go-contrib/issues/4226
 	otel.SetMeterProvider(noop.MeterProvider{})
-
-	if err := envconfig.Process("", &env); err != nil {
-		slog.Warn("Failed to process environment variables", "error", err)
-	}
 }
 
 // Handler wraps a given http handler in standard metrics handlers.

@@ -19,7 +19,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
@@ -36,21 +36,16 @@ const (
 	maxRetry   = 3
 )
 
-type envConfig struct {
+var env = envconfig.MustProcess(context.Background(), struct {
 	Port  int    `envconfig:"PORT" default:"8080" required:"true"`
 	Topic string `envconfig:"PUBSUB_TOPIC" required:"true"`
-}
+}{})
 
 func main() {
 	profiler.SetupProfiler()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-
-	var env envConfig
-	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %s", err)
-	}
 
 	go httpmetrics.ServeMetrics()
 	defer httpmetrics.SetupTracer(ctx)()
