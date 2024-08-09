@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 
 	"github.com/chainguard-dev/clog"
-	_ "github.com/chainguard-dev/clog/gcp/init"
+	_ "github.com/chainguard-dev/clog/gcp/init" // enable GCP logging
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
