@@ -16,7 +16,7 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	EnableProfiler bool `envconfig:"ENABLE_PROFILER" default:"false" required:"false"`
+	EnableProfiler bool `env:"ENABLE_PROFILER" default:"false" required:"false"`
 }{})
 
 func SetupProfiler() {

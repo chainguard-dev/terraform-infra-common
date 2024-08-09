@@ -31,11 +31,11 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	MetricsPort int `envconfig:"METRICS_PORT" default:"2112"`
+	MetricsPort int `env:"METRICS_PORT" default:"2112"`
 
 	// https://cloud.google.com/run/docs/container-contract#services-env-vars
-	KnativeServiceName  string `envconfig:"K_SERVICE" default:"unknown"`
-	KnativeRevisionName string `envconfig:"K_REVISION" default:"unknown"`
+	KnativeServiceName  string `env:"K_SERVICE" default:"unknown"`
+	KnativeRevisionName string `env:"K_REVISION" default:"unknown"`
 }{})
 
 // ServeMetrics serves the metrics endpoint if the METRICS_PORT env var is set.
