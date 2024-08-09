@@ -21,21 +21,16 @@ import (
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/go-github/v61/github"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 )
 
-type envConfig struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Port          int    `envconfig:"PORT" default:"8080" required:"true"`
 	IngressURI    string `envconfig:"EVENT_INGRESS_URI" required:"true"`
 	WebhookSecret string `envconfig:"WEBHOOK_SECRET" required:"true"`
-}
+}{})
 
 func main() {
-	var env envConfig
-	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %s", err)
-	}
-
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 

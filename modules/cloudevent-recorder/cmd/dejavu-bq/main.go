@@ -15,7 +15,7 @@ import (
 	"github.com/chainguard-dev/clog"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 	"google.golang.org/api/iterator"
 )
 
@@ -24,7 +24,7 @@ const (
 	maxRetry   = 3
 )
 
-type envConfig struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Host string `envconfig:"HOST" default:"http://0.0.0.0" required:"true"`
 	Port int    `envconfig:"PORT" default:"8080" required:"true"`
 
@@ -36,9 +36,9 @@ type envConfig struct {
 
 	// QueryWindow is the window to look for release failures
 	Query string `envconfig:"QUERY" required:"true"`
-}
+}{})
 
-func Publish(ctx context.Context, env envConfig, event cloudevents.Event) error {
+func Publish(ctx context.Context, event cloudevents.Event) error {
 	// TODO: Add idtoken back?
 	ceclient, err := cloudevents.NewClientHTTP(
 		cloudevents.WithTarget(fmt.Sprintf("%s:%d", env.Host, env.Port)),
@@ -57,12 +57,6 @@ func Publish(ctx context.Context, env envConfig, event cloudevents.Event) error 
 }
 
 func main() {
-	var env envConfig
-	if err := envconfig.Process("", &env); err != nil {
-		clog.Errorf("failed to process env var: %s", err)
-		return
-	}
-
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	log := clog.FromContext(ctx)
@@ -121,7 +115,7 @@ func main() {
 
 		// TODO: Time based publishing if we care about replaying using the
 		// timestamps in the dataset
-		if err := Publish(ctx, env, event); err != nil {
+		if err := Publish(ctx, event); err != nil {
 			log.Errorf("Publishing event: %v", err)
 			// Try to process next events
 		}

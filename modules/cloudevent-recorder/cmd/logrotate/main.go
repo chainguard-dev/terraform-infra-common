@@ -14,24 +14,19 @@ import (
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/rotate"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 
 	"syscall"
 )
 
-type rotateConfig struct {
+var env = envconfig.MustProcess(context.Background(), &struct {
 	Bucket        string        `envconfig:"BUCKET" required:"true"`
 	FlushInterval time.Duration `envconfig:"FLUSH_INTERVAL" default:"3m"`
 	LogPath       string        `envconfig:"LOG_PATH" required:"true"`
-}
+}{})
 
 func main() {
-	var rc rotateConfig
-	if err := envconfig.Process("", &rc); err != nil {
-		clog.Fatalf("Error processing environment: %v", err)
-	}
-
-	uploader := rotate.NewUploader(rc.LogPath, rc.Bucket, rc.FlushInterval)
+	uploader := rotate.NewUploader(env.LogPath, env.Bucket, env.FlushInterval)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()

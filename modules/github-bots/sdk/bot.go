@@ -3,18 +3,17 @@ package sdk
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"runtime/debug"
 
 	"github.com/chainguard-dev/clog"
-	"github.com/chainguard-dev/clog/gcp"
+	_ "github.com/chainguard-dev/clog/gcp/init" // enable GCP logging
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/go-github/v61/github"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/sethvargo/go-envconfig"
 )
 
 // Define a type for keys used in context to prevent key collisions.
@@ -61,18 +60,14 @@ func (b *Bot) RegisterHandler(handler EventHandlerFunc) {
 	b.Handlers[etype] = handler
 }
 
+var env = envconfig.MustProcess(context.Background(), &struct {
+	Port int `envconfig:"PORT" default:"8080" required:"true"`
+}{})
+
 func Serve(b Bot) {
-	var env struct {
-		Port int `envconfig:"PORT" default:"8080" required:"true"`
-	}
-	if err := envconfig.Process("", &env); err != nil {
-		clog.Fatalf("failed to process env var: %s", err)
-	}
 	ctx := context.Background()
 
-	slog.SetDefault(slog.New(gcp.NewHandler(slog.LevelInfo)))
-
-	logger := clog.FromContext(ctx)
+	log := clog.FromContext(ctx)
 
 	http.DefaultTransport = httpmetrics.Transport
 	go httpmetrics.ServeMetrics()
@@ -89,7 +84,7 @@ func Serve(b Bot) {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
 
-	logger.Infof("starting bot %s receiver on port %d", b.Name, env.Port)
+	log.Infof("starting bot %s receiver on port %d", b.Name, env.Port)
 	if err := c.StartReceiver(ctx, func(ctx context.Context, event cloudevents.Event) error {
 		clog.FromContext(ctx).With("event", event).Debugf("received event")
 
@@ -99,7 +94,7 @@ func Serve(b Bot) {
 			}
 		}()
 
-		logger.With("type", event.Type(),
+		log.With("type", event.Type(),
 			"subject", event.Subject(),
 			"action", event.Extensions()["action"]).Debug("handling event")
 
@@ -117,91 +112,91 @@ func Serve(b Bot) {
 
 			switch h := handler.(type) {
 			case WorkflowRunArtifactHandler:
-				logger.Debug("handling workflow run artifact event")
+				log.Debug("handling workflow run artifact event")
 
 				var wre schemas.Wrapper[github.WorkflowRunEvent]
 				if err := event.DataAs(&wre); err != nil {
-					logger.Errorf("failed to unmarshal workflow run event: %v", err)
+					log.Errorf("failed to unmarshal workflow run event: %v", err)
 					return err
 				}
 
 				if err := h(ctx, wre.Body); err != nil {
-					logger.Errorf("failed to handle workflow run event: %v", err)
+					log.Errorf("failed to handle workflow run event: %v", err)
 					return err
 				}
 				return nil
 
 			case WorkflowRunHandler:
-				logger.Debug("handling workflow run event")
+				log.Debug("handling workflow run event")
 
 				var wre schemas.Wrapper[github.WorkflowRunEvent]
 				if err := event.DataAs(&wre); err != nil {
-					logger.Errorf("failed to unmarshal workflow run event: %v", err)
+					log.Errorf("failed to unmarshal workflow run event: %v", err)
 					return err
 				}
 
 				if err := h(ctx, wre.Body); err != nil {
-					logger.Errorf("failed to handle workflow run event: %v", err)
+					log.Errorf("failed to handle workflow run event: %v", err)
 					return err
 				}
 				return nil
 
 			case WorkflowRunLogsHandler:
-				logger.Debug("handling workflow run logs event")
+				log.Debug("handling workflow run logs event")
 
 				var wre schemas.Wrapper[github.WorkflowRunEvent]
 				if err := event.DataAs(&wre); err != nil {
-					logger.Errorf("failed to unmarshal workflow run with logs event: %v", err)
+					log.Errorf("failed to unmarshal workflow run with logs event: %v", err)
 					return err
 				}
 
 				if err := h(ctx, wre.Body); err != nil {
-					logger.Errorf("failed to handle workflow run with logs event: %v", err)
+					log.Errorf("failed to handle workflow run with logs event: %v", err)
 					return err
 				}
 				return nil
 
 			case PullRequestHandler:
-				logger.Debug("handling pull request event")
+				log.Debug("handling pull request event")
 
 				var pre schemas.Wrapper[github.PullRequestEvent]
 				if err := event.DataAs(&pre); err != nil {
-					logger.Errorf("failed to unmarshal pull request event: %v", err)
+					log.Errorf("failed to unmarshal pull request event: %v", err)
 					return err
 				}
 
 				if err := h(ctx, pre.Body); err != nil {
-					logger.Errorf("failed to handle pull request event: %v", err)
+					log.Errorf("failed to handle pull request event: %v", err)
 					return err
 				}
 				return nil
 
 			case IssueCommentHandler:
-				logger.Debug("handling issue comment event")
+				log.Debug("handling issue comment event")
 
 				var ice schemas.Wrapper[github.IssueCommentEvent]
 				if err := event.DataAs(&ice); err != nil {
-					logger.Errorf("failed to unmarshal issue comment event: %v", err)
+					log.Errorf("failed to unmarshal issue comment event: %v", err)
 					return err
 				}
 
 				if err := h(ctx, ice.Body); err != nil {
-					logger.Errorf("failed to handle issue comment event: %v", err)
+					log.Errorf("failed to handle issue comment event: %v", err)
 					return err
 				}
 				return nil
 
 			case PushHandler:
-				logger.Debug("handling push event")
+				log.Debug("handling push event")
 
 				var pe schemas.Wrapper[github.PushEvent]
 				if err := event.DataAs(&pe); err != nil {
-					logger.Errorf("failed to unmarshal push event: %v", err)
+					log.Errorf("failed to unmarshal push event: %v", err)
 					return err
 				}
 
 				if err := h(ctx, pe.Body); err != nil {
-					logger.Errorf("failed to handle push event: %v", err)
+					log.Errorf("failed to handle push event: %v", err)
 					return err
 				}
 				return nil
