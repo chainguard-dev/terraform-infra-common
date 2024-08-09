@@ -14,7 +14,7 @@ require (
 	cloud.google.com/go/pubsub v1.41.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.1
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
-	github.com/chainguard-dev/clog v1.4.0
+	github.com/chainguard-dev/clog v1.4.1-0.20240809013403-b42aea849e0d
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.11.0
 	github.com/go-git/go-git/v5 v5.12.0
