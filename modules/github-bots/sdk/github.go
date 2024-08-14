@@ -32,7 +32,7 @@ import (
 //
 // A new token is created for each client, and is not refreshed. It can be
 // revoked with Close.
-func NewGitHubClient(_ context.Context, org, repo, policyName string) GitHubClient {
+func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubClient {
 	ts := &tokenSource{
 		org:        org,
 		repo:       repo,
@@ -42,10 +42,20 @@ func NewGitHubClient(_ context.Context, org, repo, policyName string) GitHubClie
 
 	// Don't use oauth2.NewClient because it always wraps with oauth2.ReuseTokenSource,
 	// which doesn't work well with our auto-revoking octo token source, and we already
-	// reuse tokens ourselves.
+	// reuse tokens ourselves. Unfortunately, oauth2 can smuggle a configured transport
+	// via the oauth2.HTTPClient context key, so we have to use oauth2.NewClient to get
+	// at the http.Client. So we default to http.DefaultClient.Transport, but we use the
+	// base that gets returned by NewClient if it's an oauth2.Transport. Sorry. There are
+	// tests that abuse this.
+	base := http.DefaultClient.Transport
+	unused := oauth2.NewClient(ctx, ts)
+	if tr, ok := unused.Transport.(*oauth2.Transport); ok {
+		base = tr.Base
+	}
+
 	hc := &http.Client{
 		Transport: &oauth2.Transport{
-			Base:   http.DefaultClient.Transport,
+			Base:   base,
 			Source: ts,
 		},
 	}
