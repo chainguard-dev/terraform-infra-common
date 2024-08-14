@@ -89,6 +89,22 @@ variable "memory" {
   description = "The memory limit for the job."
 }
 
+variable "task_count" {
+  type        = number
+  default     = 1
+  description = "The number of tasks to run. "
+}
+
+variable "parallelism" {
+  type        = number
+  default     = 1
+  description = "The number of parallel jobs to run. Must be <= task_count"
+  validation {
+    condition     = var.parallelism <= var.task_count
+    error_message = "parallelism must be less than or equal to task_count"
+  }
+}
+
 variable "vpc_access" {
   default = null
   type = object({
