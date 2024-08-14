@@ -86,6 +86,15 @@ variable "containers" {
       name       = string
       mount_path = string
     })), [])
+    startup_probe = optional(
+      object({
+        initial_delay_seconds = optional(number, 0)
+        timeout_seconds       = optional(number, 1)
+        period_seconds        = optional(number, 10)
+        failure_threshold     = optional(number, 3)
+      }),
+      {}
+    )
   }))
 }
 

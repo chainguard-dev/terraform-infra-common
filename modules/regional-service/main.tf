@@ -136,6 +136,7 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
 
+      startup_probe = local.main_container.startup_probe
     }
 
     // Now the sidecar containers can be added.
@@ -188,6 +189,8 @@ resource "google_cloud_run_v2_service" "this" {
             mount_path = volume_mounts.value.mount_path
           }
         }
+
+        startup_probe = containers.value.startup_probe
       }
     }
     containers {

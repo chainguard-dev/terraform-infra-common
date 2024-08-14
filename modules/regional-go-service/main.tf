@@ -54,6 +54,7 @@ module "this" {
       env           = container.env
       regional-env  = container.regional-env
       volume_mounts = container.volume_mounts
+      startup_probe = container.startup_probe
     }
   }
 
