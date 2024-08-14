@@ -60,6 +60,9 @@ resource "google_cloud_run_v2_job" "job" {
   launch_stage = var.vpc_access != null ? "BETA" : null
 
   template {
+    parallelism = var.parallelism
+    task_count  = var.task_count
+
     template {
       execution_environment = var.execution_environment
       service_account       = var.service_account
