@@ -32,7 +32,7 @@ import (
 //
 // A new token is created for each client, and is not refreshed. It can be
 // revoked with Close.
-func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubClient {
+func NewGitHubClient(_ context.Context, org, repo, policyName string) GitHubClient {
 	ts := &tokenSource{
 		org:        org,
 		repo:       repo,
