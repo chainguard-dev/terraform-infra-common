@@ -24,7 +24,6 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/octosts"
 	"github.com/google/go-github/v61/github"
 	"golang.org/x/oauth2"
-	"golang.org/x/time/rate"
 )
 
 // NewGitHubClient creates a new GitHub client, using a new token from OctoSTS,
@@ -37,31 +36,9 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubCl
 		org:        org,
 		repo:       repo,
 		policyName: policyName,
-		sometimes:  rate.Sometimes{Interval: 30 * time.Minute},
 	}
-
-	// Don't use oauth2.NewClient because it always wraps with oauth2.ReuseTokenSource,
-	// which doesn't work well with our auto-revoking octo token source, and we already
-	// reuse tokens ourselves. Unfortunately, oauth2 can smuggle a configured transport
-	// via the oauth2.HTTPClient context key, so we have to use oauth2.NewClient to get
-	// at the http.Client. So we default to http.DefaultClient.Transport, but we use the
-	// base that gets returned by NewClient if it's an oauth2.Transport. Sorry. There are
-	// tests that abuse this.
-	base := http.DefaultClient.Transport
-	unused := oauth2.NewClient(ctx, ts)
-	if tr, ok := unused.Transport.(*oauth2.Transport); ok {
-		base = tr.Base
-	}
-
-	hc := &http.Client{
-		Transport: &oauth2.Transport{
-			Base:   base,
-			Source: ts,
-		},
-	}
-
 	return GitHubClient{
-		inner: github.NewClient(hc),
+		inner: github.NewClient(oauth2.NewClient(ctx, ts)),
 		ts:    ts,
 		// TODO: Make this configurable?
 		bufSize: 1024 * 1024, // 1MB buffer for requests
@@ -69,36 +46,32 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubCl
 }
 
 type tokenSource struct {
-	org, repo, policyName string
-	sometimes             rate.Sometimes
-	tok                   *oauth2.Token
-	err                   error
+	org, repo, policyName, tok string
 }
 
 func (ts *tokenSource) Token() (*oauth2.Token, error) {
-	// The token is refreshed periodically. Previous tokens are revoked before
-	// returning the new refreshed one.
-	ts.sometimes.Do(func() {
-		ctx := context.Background()
-		clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
-		otok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
+	ctx := context.Background()
+	clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
+	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
+	if err != nil {
+		return nil, err
+	}
 
-		// Explicitly set the token to nil rather than a struct with an empty
-		// token field
-		if err != nil {
-			ts.tok, ts.err = nil, err
-			return
+	// If there's a previous token, attempt to revoke it.
+	if ts.tok != "" {
+		if err := octosts.Revoke(ctx, ts.tok); err != nil {
+			// This isn't an error, but we should log it.
+			clog.FromContext(ctx).Warnf("failed to revoke token: %v", err)
 		}
+	}
 
-		// If there's a previous token, revoke it.
-		if ts.tok != nil {
-			if err := octosts.Revoke(ctx, ts.tok.AccessToken); err != nil {
-				clog.FromContext(ctx).Errorf("failed to revoke token: %v", err)
-			}
-		}
-		ts.tok, ts.err = &oauth2.Token{AccessToken: otok}, nil
-	})
-	return ts.tok, ts.err
+	ts.tok = tok
+	return &oauth2.Token{
+		AccessToken: tok,
+		// We don't actually know when it will expire, but it's probably in 1
+		// hour, and we want to refresh it before it expires.
+		Expiry: time.Now().Add(45 * time.Minute),
+	}, nil
 }
 
 type GitHubClient struct {
@@ -110,14 +83,14 @@ type GitHubClient struct {
 func (c GitHubClient) Client() *github.Client { return c.inner }
 
 func (c GitHubClient) Close(ctx context.Context) error {
-	if c.ts.tok == nil {
+	if c.ts.tok == "" {
 		return nil // If there's no token, there's nothing to revoke.
 	}
 
 	// We don't want to cancel the context, as we want to revoke the token even if the context is done.
 	ctx = context.WithoutCancel(ctx)
 
-	if err := octosts.Revoke(ctx, c.ts.tok.AccessToken); err != nil {
+	if err := octosts.Revoke(ctx, c.ts.tok); err != nil {
 		// Callers might just `defer c.Close()` so we log the error here too
 		clog.FromContext(ctx).Errorf("failed to revoke token: %v", err)
 		return fmt.Errorf("revoking token: %w", err)
