@@ -38,11 +38,8 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubCl
 		policyName: policyName,
 	}
 	return GitHubClient{
-		inner: github.NewClient(oauth2.NewClient(ctx,
-			// We don't actually know when it will expire, but it's probably in 1
-			// hour, and we want to refresh it before it expires.
-			oauth2.ReuseTokenSourceWithExpiry(nil, ts, 45*time.Minute))),
-		ts: ts,
+		inner: github.NewClient(oauth2.NewClient(ctx, ts)),
+		ts:    ts,
 		// TODO: Make this configurable?
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 	}
@@ -69,7 +66,12 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 	}
 
 	ts.tok = tok
-	return &oauth2.Token{AccessToken: tok}, nil
+	return &oauth2.Token{
+		AccessToken: tok,
+		// We don't actually know when it will expire, but it's probably in 1
+		// hour, and we want to refresh it before it expires.
+		Expiry: time.Now().Add(45 * time.Minute),
+	}, nil
 }
 
 type GitHubClient struct {
