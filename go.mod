@@ -1,17 +1,13 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.22.5
-
-// This is to allow pubsub tracing to happen
-// Remove once function in normal release
-replace cloud.google.com/go/pubsub => cloud.google.com/go/pubsub v1.42.0-beta.otel.trace
+go 1.23.0
 
 require (
 	chainguard.dev/sdk v0.1.23
 	cloud.google.com/go/bigquery v1.62.0
 	cloud.google.com/go/compute/metadata v0.5.0
 	cloud.google.com/go/profiler v0.4.1
-	cloud.google.com/go/pubsub v1.41.0
+	cloud.google.com/go/pubsub v1.42.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.1
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/chainguard-dev/clog v1.5.0
@@ -32,7 +28,6 @@ require (
 	gocloud.dev v0.39.0
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 	golang.org/x/oauth2 v0.22.0
-	golang.org/x/time v0.6.0
 	google.golang.org/api v0.192.0
 )
 
@@ -109,6 +104,7 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/genproto v0.0.0-20240812133136-8ffd90a71988 // indirect
