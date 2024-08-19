@@ -32,16 +32,18 @@ import (
 // A new token is created for each client, and is not refreshed. It can be
 // revoked with Close.
 func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubClient {
-	ts := &tokenSource{
+	ts := oauth2.ReuseTokenSource(nil, &tokenSource{
 		org:        org,
 		repo:       repo,
 		policyName: policyName,
-	}
+	})
 	return GitHubClient{
 		inner: github.NewClient(oauth2.NewClient(ctx, ts)),
 		ts:    ts,
 		// TODO: Make this configurable?
 		bufSize: 1024 * 1024, // 1MB buffer for requests
+		org:     org,
+		repo:    repo,
 	}
 }
 
@@ -75,22 +77,29 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 }
 
 type GitHubClient struct {
-	inner   *github.Client
-	ts      *tokenSource
-	bufSize int
+	inner     *github.Client
+	ts        oauth2.TokenSource
+	org, repo string
+	bufSize   int
 }
 
 func (c GitHubClient) Client() *github.Client { return c.inner }
 
 func (c GitHubClient) Close(ctx context.Context) error {
-	if c.ts.tok == "" {
-		return nil // If there's no token, there's nothing to revoke.
+	log := clog.FromContext(ctx)
+
+	// TODO: We shouldn't get a token here if it's the first time, just to revoke it.
+	tok, err := c.ts.Token()
+	if err != nil {
+		// Callers might just `defer c.Close()` so we log the error here too
+		log.Warnf("failed to get token for revocation: %v", err)
+		return fmt.Errorf("getting token for revocation: %w", err)
 	}
 
 	// We don't want to cancel the context, as we want to revoke the token even if the context is done.
 	ctx = context.WithoutCancel(ctx)
 
-	if err := octosts.Revoke(ctx, c.ts.tok); err != nil {
+	if err := octosts.Revoke(ctx, tok.AccessToken); err != nil {
 		// Callers might just `defer c.Close()` so we log the error here too
 		clog.FromContext(ctx).Errorf("failed to revoke token: %v", err)
 		return fmt.Errorf("revoking token: %w", err)
@@ -464,11 +473,12 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.ts.org, c.ts.repo)
 	tok, err := c.ts.Token()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
+
+	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo)
 	auth := &gitHttp.BasicAuth{
 		Username: "notchecked", // username is not checked, only the token in the password field is used.
 		Password: tok.AccessToken,
