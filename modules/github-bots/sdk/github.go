@@ -465,13 +465,9 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 	}
 
 	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.ts.org, c.ts.repo)
-	tok, err := c.ts.Token()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get token: %w", err)
-	}
 	auth := &gitHttp.BasicAuth{
 		Username: "notchecked", // username is not checked, only the token in the password field is used.
-		Password: tok.AccessToken,
+		Password: c.ts.tok,
 	}
 
 	// git clone <repo>
