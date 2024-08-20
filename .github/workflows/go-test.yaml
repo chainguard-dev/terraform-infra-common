@@ -44,7 +44,8 @@ jobs:
         go-version-file: './go.mod'
         check-latest: true
 
-    - run: |
+    - name: Test
+      run: |
         # Exclude running unit tests against third_party repos.
         go test -race ./...
 

@@ -27,8 +27,8 @@ cloud.google.com/go/monitoring v1.20.4 h1:zwcViK7mT9SV0kzKqLOI3spRadvsmvw/R9z1MH
 cloud.google.com/go/monitoring v1.20.4/go.mod h1:v7F/UcLRw15EX7xq565N7Ae5tnYEE28+Cl717aTXG4c=
 cloud.google.com/go/profiler v0.4.1 h1:Q7+lOvikTGMJ/IAWocpYYGit4SIIoILmVZfEEWTORSY=
 cloud.google.com/go/profiler v0.4.1/go.mod h1:LBrtEX6nbvhv1w/e5CPZmX9ajGG9BGLtGbv56Tg4SHs=
-cloud.google.com/go/pubsub v1.42.0-beta.otel.trace h1:7n/CymiBOE5Rpv5RAlWonqYxCn0QazRQKfF4FNc/S1Y=
-cloud.google.com/go/pubsub v1.42.0-beta.otel.trace/go.mod h1:L2f61+4yMjo64DIchoLYCiqqCo/WSeTFcYqM65mDWCM=
+cloud.google.com/go/pubsub v1.42.0 h1:PVTbzorLryFL5ue8esTS2BfehUs0ahyNOY9qcd+HMOs=
+cloud.google.com/go/pubsub v1.42.0/go.mod h1:KADJ6s4MbTwhXmse/50SebEhE4SmUwHi48z3/dHar1Y=
 cloud.google.com/go/storage v1.43.0 h1:CcxnSohZwizt4LCzQHWvBf1/kvtHUn7gk9QERXPyXFs=
 cloud.google.com/go/storage v1.43.0/go.mod h1:ajvxEa7WmZS1PxvKRq4bq0tFT3vMd502JwstCcYv0Q0=
 cloud.google.com/go/trace v1.10.12 h1:GoGZv1iAXEa73HgSGNjRl2vKqp5/f2AeKqErRFXA2kg=
