@@ -20,9 +20,9 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	Bucket        string        `env:"BUCKET" required:"true"`
-	FlushInterval time.Duration `env:"FLUSH_INTERVAL" default:"3m"`
-	LogPath       string        `env:"LOG_PATH" required:"true"`
+	Bucket        string        `env:"BUCKET, required"`
+	FlushInterval time.Duration `env:"FLUSH_INTERVAL, default=3m"`
+	LogPath       string        `env:"LOG_PATH, required"`
 }{})
 
 func main() {

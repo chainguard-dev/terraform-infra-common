@@ -23,8 +23,8 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	Port    int    `env:"PORT" default:"8080" required:"true"`
-	LogPath string `env:"LOG_PATH" required:"true"`
+	Port    int    `env:"PORT, default=8080"`
+	LogPath string `env:"LOG_PATH, required"`
 }{})
 
 func main() {

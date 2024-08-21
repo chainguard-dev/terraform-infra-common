@@ -25,11 +25,11 @@ const (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	Host string `env:"HOST" default:"http://0.0.0.0" required:"true"`
-	Port int    `env:"PORT" default:"8080" required:"true"`
+	Host string `env:"HOST, default=http://0.0.0.0"`
+	Port int    `env:"PORT, default=8080"`
 
-	EventType   string `env:"EVENT_TYPE" default:"dev.chainguard.not_specified.not_specified" required:"true"`
-	EventSource string `env:"EVENT_SOURCE" default:"github.com" required:"true"`
+	EventType   string `env:"EVENT_TYPE, default=dev.chainguard.not_specified.not_specified"`
+	EventSource string `env:"EVENT_SOURCE, default=github.com"`
 
 	// Project is the GCP project where the dataset lives
 	Project string `env:"PROJECT" required:"true"`
