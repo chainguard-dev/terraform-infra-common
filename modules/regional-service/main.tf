@@ -28,6 +28,10 @@ locals {
     for key, value in var.containers : key => value if length(value.ports) > 0
   }
 
+  default_labels = {
+    "regional-service" : var.name
+  }
+
   main_container_idx = keys(local.has_port)[0]
   main_container     = local.has_port[local.main_container_idx]
 }
@@ -47,7 +51,7 @@ resource "google_cloud_run_v2_service" "this" {
   project  = var.project_id
   name     = var.name
   location = each.key
-  labels   = var.labels
+  labels   = merge(var.labels, local.default_labels)
   ingress  = var.ingress
 
   launch_stage = "BETA" // Needed for vpc_access below
