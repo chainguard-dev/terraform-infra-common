@@ -37,7 +37,7 @@ const (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-	Port  int    `env:"PORT, default:8080"`
+	Port  int    `env:"PORT, default=8080"`
 	Topic string `env:"PUBSUB_TOPIC, required"`
 }{})
 
