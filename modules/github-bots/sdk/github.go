@@ -473,12 +473,12 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
+	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo)
 	tok, err := c.ts.Token()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 
-	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo)
 	auth := &gitHttp.BasicAuth{
 		Username: "notchecked", // username is not checked, only the token in the password field is used.
 		Password: tok.AccessToken,

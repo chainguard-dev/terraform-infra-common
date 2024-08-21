@@ -61,7 +61,11 @@ func (b *Bot) RegisterHandler(handler EventHandlerFunc) {
 }
 
 var env = envconfig.MustProcess(context.Background(), &struct {
+<<<<<<< Updated upstream
 	Port int `env:"PORT, default=8080"`
+=======
+	Port int `env:"PORT,default=8080"`
+>>>>>>> Stashed changes
 }{})
 
 func Serve(b Bot) {

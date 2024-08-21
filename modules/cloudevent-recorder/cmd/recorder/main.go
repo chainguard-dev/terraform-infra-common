@@ -23,8 +23,13 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
+<<<<<<< Updated upstream
 	Port    int    `env:"PORT, default=8080"`
 	LogPath string `env:"LOG_PATH, required"`
+=======
+	Port    int    `env:"PORT,default=8080"`
+	LogPath string `env:"LOG_PATH,required"`
+>>>>>>> Stashed changes
 }{})
 
 func main() {

@@ -25,8 +25,13 @@ const (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
+<<<<<<< Updated upstream
 	Host string `env:"HOST, default=http://0.0.0.0"`
 	Port int    `env:"PORT, default=8080"`
+=======
+	Host string `env:"HOST,default=http://0.0.0.0"`
+	Port int    `env:"PORT,default=8080"`
+>>>>>>> Stashed changes
 
 	EventType   string `env:"EVENT_TYPE, default=dev.chainguard.not_specified.not_specified"`
 	EventSource string `env:"EVENT_SOURCE, default=github.com"`

@@ -20,9 +20,15 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
+<<<<<<< Updated upstream
 	Bucket        string        `env:"BUCKET, required"`
 	FlushInterval time.Duration `env:"FLUSH_INTERVAL, default=3m"`
 	LogPath       string        `env:"LOG_PATH, required"`
+=======
+	Bucket        string        `env:"BUCKET,required"`
+	FlushInterval time.Duration `env:"FLUSH_INTERVAL,default=3m"`
+	LogPath       string        `env:"LOG_PATH,required"`
+>>>>>>> Stashed changes
 }{})
 
 func main() {
