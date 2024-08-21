@@ -135,16 +135,6 @@ resource "google_cloud_run_v2_service" "this" {
           mount_path = volume_mounts.value.mount_path
         }
       }
-
-      dynamic "startup_probe" {
-        for_each = local.main_container.startup_probe != null ? { "" : local.main_container.startup_probe } : {}
-        content {
-          initial_delay_seconds = startup_probe.value.initial_delay_seconds
-          timeout_seconds       = startup_probe.value.timeout_seconds
-          period_seconds        = startup_probe.value.period_seconds
-          failure_threshold     = startup_probe.value.failure_threshold
-        }
-      }
     }
 
     // Now the sidecar containers can be added.
@@ -195,16 +185,6 @@ resource "google_cloud_run_v2_service" "this" {
           content {
             name       = volume_mounts.value.name
             mount_path = volume_mounts.value.mount_path
-          }
-        }
-
-        dynamic "startup_probe" {
-          for_each = containers.value.startup_probe != null ? { "" : containers.value.startup_probe } : {}
-          content {
-            initial_delay_seconds = startup_probe.value.initial_delay_seconds
-            timeout_seconds       = startup_probe.value.timeout_seconds
-            period_seconds        = startup_probe.value.period_seconds
-            failure_threshold     = startup_probe.value.failure_threshold
           }
         }
       }
