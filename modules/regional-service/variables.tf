@@ -88,12 +88,23 @@ variable "containers" {
     })), [])
     startup_probe = optional(
       object({
-        initial_delay_seconds = optional(number, 0)
-        timeout_seconds       = optional(number, 1)
-        period_seconds        = optional(number, 10)
-        failure_threshold     = optional(number, 3)
+        initial_delay_seconds = optional(number)
+        timeout_seconds       = optional(number)
+        period_seconds        = optional(number)
+        failure_threshold     = optional(number)
+        http_get = optional(object({
+          path = optional(string)
+          port = optional(number)
+        }), null)
+        tcp_socket = optional(object({
+          port = optional(number)
+        }), null)
+        grpc = optional(object({
+          port    = optional(number)
+          service = optional(string)
+        }), null)
       }),
-      {}
+      null
     )
   }))
 }
