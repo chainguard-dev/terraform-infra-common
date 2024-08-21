@@ -25,15 +25,9 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-<<<<<<< Updated upstream
 	Port          int    `env:"PORT, default=8080"`
 	IngressURI    string `env:"EVENT_INGRESS_URI, required"`
 	WebhookSecret string `env:"WEBHOOK_SECRET, required"`
-=======
-	Port          int    `env:"PORT,default=8080"`
-	IngressURI    string `env:"EVENT_INGRESS_URI,required"`
-	WebhookSecret string `env:"WEBHOOK_SECRET,required"`
->>>>>>> Stashed changes
 }{})
 
 func main() {

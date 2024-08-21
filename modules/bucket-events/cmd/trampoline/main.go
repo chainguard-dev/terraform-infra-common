@@ -25,13 +25,8 @@ import (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-<<<<<<< Updated upstream
 	Port       int    `env:"PORT, default=8080"`
 	IngressURI string `env:"INGRESS_URI, required"`
-=======
-	Port       int    `env:"PORT,default=8080"`
-	IngressURI string `env:"INGRESS_URI,required"`
->>>>>>> Stashed changes
 }{})
 
 var eventTypes = map[string]string{

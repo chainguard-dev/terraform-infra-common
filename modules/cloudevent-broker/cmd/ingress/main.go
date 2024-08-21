@@ -37,13 +37,8 @@ const (
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
-<<<<<<< Updated upstream
 	Port  int    `env:"PORT, default:8080"`
 	Topic string `env:"PUBSUB_TOPIC, required"`
-=======
-	Port  int    `env:"PORT,default=8080"`
-	Topic string `env:"PUBSUB_TOPIC,required"`
->>>>>>> Stashed changes
 }{})
 
 func main() {
