@@ -7,6 +7,7 @@ variable "primary_align" { default = "ALIGN_RATE" }
 variable "primary_reduce" { default = "REDUCE_NONE" }
 variable "secondary_align" { default = "ALIGN_NONE" }
 variable "secondary_reduce" { default = "REDUCE_NONE" }
+variable "thresholds" { default = [] }
 
 // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart
 output "widget" {
@@ -36,6 +37,12 @@ output "widget" {
           }
         }
       }]
+      thresholds = [
+        for threshold in var.thresholds : {
+          value = threshold
+          targetAxis = "Y1"
+        }
+      ],
       timeshiftDuration = "0s"
       yAxis = {
         label = "y1Axis"
