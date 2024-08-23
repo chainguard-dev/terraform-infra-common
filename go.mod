@@ -28,13 +28,13 @@ require (
 	gocloud.dev v0.39.0
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 	golang.org/x/oauth2 v0.22.0
-	google.golang.org/api v0.193.0
+	google.golang.org/api v0.194.0
 )
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.5 // indirect
 	cloud.google.com/go v0.115.1 // indirect
-	cloud.google.com/go/auth v0.9.0 // indirect
+	cloud.google.com/go/auth v0.9.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/iam v1.1.13 // indirect
 	cloud.google.com/go/storage v1.43.0 // indirect
