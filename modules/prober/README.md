@@ -113,6 +113,7 @@ No requirements.
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | n/a | yes |
 | <a name="input_period"></a> [period](#input\_period) | The period for the prober in seconds. | `string` | `"300s"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the prober. | `string` | n/a | yes |
+| <a name="input_regional-env"></a> [regional-env](#input\_regional-env) | A list of object that provides a map env per region. | <pre>list(object({<br>    name  = string<br>    value = map(string)<br>  }))</pre> | `[]` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_secret_env"></a> [secret\_env](#input\_secret\_env) | A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret\_key=secret\_name) | `map` | `{}` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as. | `string` | n/a | yes |

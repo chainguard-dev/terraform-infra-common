@@ -65,6 +65,15 @@ variable "env" {
   description = "A map of custom environment variables (e.g. key=value)"
 }
 
+variable "regional-env" {
+  default     = []
+  description = "A list of object that provides a map env per region."
+  type = list(object({
+    name  = string
+    value = map(string)
+  }))
+}
+
 variable "secret_env" {
   default     = {}
   description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name)"
