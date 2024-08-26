@@ -73,6 +73,7 @@ resource "google_compute_backend_service" "public-services" {
   dynamic "iap" {
     for_each = var.iap[*]
     content {
+      enabled              = true
       oauth2_client_id     = iap.value["oauth2_client_id"]
       oauth2_client_secret = iap.value["oauth2_client_secret"]
     }

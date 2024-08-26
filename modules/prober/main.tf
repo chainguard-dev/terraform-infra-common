@@ -57,7 +57,8 @@ module "this" {
               }
             }
           }
-        ])
+      ])
+      regional-env = var.regional-env
       resources = {
         limits = {
           cpu    = var.cpu
