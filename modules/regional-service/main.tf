@@ -64,6 +64,8 @@ resource "google_cloud_run_v2_service" "this" {
     }
     max_instance_request_concurrency = var.scaling.max_instance_request_concurrency
     execution_environment            = var.execution_environment
+    labels                           = merge(var.labels, local.default_labels)
+
     vpc_access {
       network_interfaces {
         network    = each.value.network
