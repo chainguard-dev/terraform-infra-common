@@ -41,10 +41,10 @@ module "this" {
       }
       ports = [{ container_port = 8080 }]
       env = concat([{
-        // This is a shared secret with the uptime check, which must be
-        // passed in an Authorization header for the probe to do work.
-        name  = "AUTHORIZATION"
-        value = random_password.secret.result
+          // This is a shared secret with the uptime check, which must be
+          // passed in an Authorization header for the probe to do work.
+          name  = "AUTHORIZATION"
+          value = random_password.secret.result
         }],
         [for k, v in var.env : { name = k, value = v }],
         [
