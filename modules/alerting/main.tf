@@ -74,6 +74,7 @@ resource "google_monitoring_alert_policy" "oom" {
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
       }
     }
@@ -102,13 +103,14 @@ resource "google_monitoring_alert_policy" "panic" {
 
     condition_matched_log {
       filter = <<EOT
-        resource.type="cloud_run_revision"
+        resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
         severity=ERROR
         textPayload=~"panic: .*"
       EOT
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
       }
     }
@@ -138,12 +140,13 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
 
     condition_matched_log {
       filter = <<EOT
-        resource.type="cloud_run_revision"
+        resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
         jsonPayload.stacktrace:"runtime.gopanic"
       EOT
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
       }
     }
@@ -173,12 +176,13 @@ resource "google_monitoring_alert_policy" "fatal" {
 
     condition_matched_log {
       filter = <<EOT
-        resource.type="cloud_run_revision"
+        resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
         textPayload:"fatal error: "
       EOT
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
       }
     }
