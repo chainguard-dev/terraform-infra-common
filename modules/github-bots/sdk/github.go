@@ -20,8 +20,8 @@ import (
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/snabb/httpreaderat"
 
+	"chainguard.dev/sdk/octosts"
 	"github.com/chainguard-dev/clog"
-	"github.com/chainguard-dev/terraform-infra-common/pkg/octosts"
 	"github.com/google/go-github/v61/github"
 	"golang.org/x/oauth2"
 )
