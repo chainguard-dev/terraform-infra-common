@@ -200,6 +200,39 @@ func Serve(b Bot) {
 					return err
 				}
 				return nil
+
+			case CheckRunHandler:
+				log.Debug("handling check_run event")
+
+				var pe schemas.Wrapper[github.CheckRunEvent]
+				if err := event.DataAs(&pe); err != nil {
+					log.Errorf("failed to unmarshal push event: %v", err)
+					return err
+				}
+
+				if err := h(ctx, pe.Body); err != nil {
+					log.Errorf("failed to handle check_run event: %v", err)
+					return err
+				}
+				return nil
+
+			case CheckSuiteHandler:
+				log.Debug("handling check_suite event")
+
+				var pe schemas.Wrapper[github.CheckSuiteEvent]
+				if err := event.DataAs(&pe); err != nil {
+					log.Errorf("failed to unmarshal check_suite event: %v", err)
+					return err
+				}
+
+				if err := h(ctx, pe.Body); err != nil {
+					log.Errorf("failed to handle check_suite event: %v", err)
+					return err
+				}
+				return nil
+
+			default:
+				return fmt.Errorf("unknown handler type %T", handler)
 			}
 		}
 

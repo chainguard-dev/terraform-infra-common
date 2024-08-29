@@ -46,14 +46,28 @@ func (r WorkflowRunArtifactHandler) EventType() EventType {
 	return WorkflowRunArtifactEvent
 }
 
+type CheckRunHandler func(ctx context.Context, pre github.CheckRunEvent) error
+
+func (r CheckRunHandler) EventType() EventType {
+	return CheckRunEvent
+}
+
+type CheckSuiteHandler func(ctx context.Context, pre github.CheckSuiteEvent) error
+
+func (r CheckSuiteHandler) EventType() EventType {
+	return CheckSuiteEvent
+}
+
 type EventType string
 
 const (
-	// Github events (https://github.com/chainguard-dev/terraform-infra-common/tree/main/modules/github-events)
+	// GitHub events (https://github.com/chainguard-dev/terraform-infra-common/tree/main/modules/github-events)
 	PullRequestEvent  EventType = "dev.chainguard.github.pull_request"
 	WorkflowRunEvent  EventType = "dev.chainguard.github.workflow_run"
 	IssueCommentEvent EventType = "dev.chainguard.github.issue_comment"
 	PushEvent         EventType = "dev.chainguard.github.push"
+	CheckRunEvent     EventType = "dev.chainguard.github.check_run"
+	CheckSuiteEvent   EventType = "dev.chainguard.github.check_suite"
 
 	// LoFo events
 	WorkflowRunArtifactEvent EventType = "dev.chainguard.lofo.workflow_run_artifacts"
