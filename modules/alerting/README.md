@@ -29,6 +29,7 @@ No modules.
 | [google_monitoring_alert_policy.pubsub_dead_letter_queue_messages](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.service_failure_rate_eventing](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.service_failure_rate_non_eventing](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.sigkill](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 
 ## Inputs
 
@@ -46,6 +47,7 @@ No modules.
 | <a name="input_oom_filter"></a> [oom\_filter](#input\_oom\_filter) | additional filter to apply to oom alert policy | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_scaling_issue_filter"></a> [scaling\_issue\_filter](#input\_scaling\_issue\_filter) | additional filter to apply to scaling issue alert policy | `string` | `""` | no |
+| <a name="input_sigkill_filter"></a> [sigkill\_filter](#input\_sigkill\_filter) | additional filter to apply to sigkill alert policy | `string` | `""` | no |
 
 ## Outputs
 

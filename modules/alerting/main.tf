@@ -85,6 +85,45 @@ resource "google_monitoring_alert_policy" "oom" {
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 }
 
+resource "google_monitoring_alert_policy" "signal" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert once an hour if condition still valid.
+    }
+  }
+
+  display_name = "Signal Alert"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Signal Alert"
+
+    condition_matched_log {
+      filter = <<EOT
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+        severity=WARNING
+        textPayload=~"^Container terminated on signal [^01]+\.$"
+        ${var.signal_filter}
+        -resource.labels.service_name:"-ing-vuln"
+      EOT
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
+        "location"      = "EXTRACT(resource.labels.location)"
+        "signal"        = "REGEXP_EXTRACT(textPayload, \"^Container terminated on signal ([^01]+)\\.$\")"
+      }
+    }
+  }
+
+  enabled = true
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
 resource "google_monitoring_alert_policy" "panic" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
