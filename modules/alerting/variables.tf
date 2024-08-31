@@ -32,6 +32,12 @@ variable "oom_filter" {
   default     = ""
 }
 
+variable "signal_filter" {
+  description = "additional filter to apply to signal alert policy"
+  type        = string
+  default     = ""
+}
+
 variable "failed_req_filter" {
   description = "additional filter to apply to failed request alert policy"
   type        = string
