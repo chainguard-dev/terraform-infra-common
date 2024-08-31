@@ -1,5 +1,6 @@
 locals {
-  job_name = "${var.job_name}-cron"
+  base_job_name = trimsuffix(var.job_name, "-cron")
+  job_name      = "${local.base_job_name}-cron"
 }
 
 module "errgrp" {
