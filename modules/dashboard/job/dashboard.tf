@@ -1,21 +1,26 @@
+locals {
+  base_job_name = trimsuffix(var.job_name, "-cron")
+  job_name      = "${local.base_job_name}-cron"
+}
+
 module "errgrp" {
   source       = "../sections/errgrp"
   title        = "Job Error Reporting"
   project_id   = var.project_id
-  service_name = var.job_name
+  service_name = local.job_name
 }
 
 module "logs" {
   source = "../sections/logs"
   title  = "Job Logs"
-  filter = ["resource.type=\"cloud_run_job\""]
+  filter = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${local.job_name}\""]
 }
 
 module "resources" {
   source                = "../sections/resources"
   title                 = "Resources"
-  filter                = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${var.job_name}\""]
-  cloudrun_name         = var.job_name
+  filter                = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${local.job_name}\""]
+  cloudrun_name         = local.job_name
   notification_channels = var.notification_channels
 }
 
@@ -38,7 +43,7 @@ resource "google_monitoring_dashboard" "dashboard" {
     }, var.labels)
     dashboardFilters = [{
       filterType  = "RESOURCE_LABEL"
-      stringValue = var.job_name
+      stringValue = local.job_name
       labelKey    = "job_name"
     }]
 
