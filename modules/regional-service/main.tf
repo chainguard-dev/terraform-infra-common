@@ -1,4 +1,6 @@
 module "audit-serviceaccount" {
+  count = var.enable_lasers ? 1 : 0  
+
   source = "../audit-serviceaccount"
 
   project_id      = var.project_id

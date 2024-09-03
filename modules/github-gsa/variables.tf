@@ -50,3 +50,9 @@ variable "notification_channels" {
   description = "The list of notification channels to alert when the service account is misused."
   type        = list(string)
 }
+
+variable "enable_lasers" {
+  description = "Whether to enable alert policy for abnormal access to resource."
+  type        = bool
+  default     = false
+}

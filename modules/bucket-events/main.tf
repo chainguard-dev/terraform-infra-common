@@ -56,6 +56,8 @@ resource "google_service_account_iam_binding" "allow-pubsub-to-mint-tokens" {
 }
 
 module "audit-delivery-serviceaccount" {
+  count = var.enable_laser ? 1 : 0 
+
   source = "../audit-serviceaccount"
 
   project_id      = var.project_id

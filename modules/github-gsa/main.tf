@@ -136,6 +136,8 @@ resource "google_service_account_iam_binding" "allow-impersonation" {
 // Create an auditing policy to ensure that tokens are only issued for identities
 // matching our expectations.
 module "audit-usage" {
+  count = var.enable_lasers ? 1 : 0
+
   source = "../audit-serviceaccount"
 
   project_id      = var.project_id
