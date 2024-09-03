@@ -30,6 +30,8 @@ data "google_client_openid_userinfo" "me" {}
 
 // Create an alert policy to notify if the secret is accessed by an unauthorized entity.
 resource "google_monitoring_alert_policy" "anomalous-secret-access" {
+  count = var.enable_lasers ? 1 : 0
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
