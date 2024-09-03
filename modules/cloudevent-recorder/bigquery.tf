@@ -76,7 +76,7 @@ resource "google_service_account_iam_binding" "provisioner-acts-as-import-identi
 
 module "audit-import-serviceaccount" {
   count = var.enable_lasers ? 1 : 0
-  
+
   source = "../audit-serviceaccount"
 
   project_id      = var.project_id

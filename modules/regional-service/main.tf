@@ -1,5 +1,5 @@
 module "audit-serviceaccount" {
-  count = var.enable_lasers ? 1 : 0  
+  count = var.enable_lasers ? 1 : 0
 
   source = "../audit-serviceaccount"
 
