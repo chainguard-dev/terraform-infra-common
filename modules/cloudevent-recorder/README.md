@@ -93,6 +93,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_audit-import-serviceaccount"></a> [audit-import-serviceaccount](#module\_audit-import-serviceaccount) | ../audit-serviceaccount | n/a |
 | <a name="module_recorder-dashboard"></a> [recorder-dashboard](#module\_recorder-dashboard) | ../dashboard/cloudevent-receiver | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 | <a name="module_triggers"></a> [triggers](#module\_triggers) | ../cloudevent-trigger | n/a |

@@ -70,7 +70,10 @@ No requirements.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_audit-cronjob-serviceaccount"></a> [audit-cronjob-serviceaccount](#module\_audit-cronjob-serviceaccount) | ../audit-serviceaccount | n/a |
+| <a name="module_audit-delivery-serviceaccount"></a> [audit-delivery-serviceaccount](#module\_audit-delivery-serviceaccount) | ../audit-serviceaccount | n/a |
 
 ## Resources
 
