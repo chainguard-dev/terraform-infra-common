@@ -59,6 +59,7 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_audit_refspec"></a> [audit\_refspec](#input\_audit\_refspec) | The regular expression to use for auditing the refspec component when using '*' | `string` | `""` | no |
 | <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | The regular expression to use for auditing the workflow ref component when using '*' | `string` | `""` | no |
+| <a name="input_enable_lasers"></a> [enable\_lasers](#input\_enable\_lasers) | Whether to enable alert policy for abnormal access to resource. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the service account. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when the service account is misused. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
