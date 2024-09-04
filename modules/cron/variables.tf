@@ -89,18 +89,19 @@ variable "memory" {
   description = "The memory limit for the job."
 }
 
-variable "task_count" {
-  type        = number
-  default     = 1
-  description = "The number of tasks to run. "
-}
+variable "task_run_config" {
+  type = object({
+    task_count  = number
+    parallelism = number
+  })
+  default = {
+    task_count  = 1
+    parallelism = 1
+  }
+  description = "for task_count is the number of tasks to run. and for parallelism is the number of parallel jobs to run. Must be <= task_count"
 
-variable "parallelism" {
-  type        = number
-  default     = 1
-  description = "The number of parallel jobs to run. Must be <= task_count"
   validation {
-    condition     = var.parallelism <= var.task_count
+    condition     = var.task_run_config.parallelism <= var.task_run_config.task_count
     error_message = "parallelism must be less than or equal to task_count"
   }
 }
