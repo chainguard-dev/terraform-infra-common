@@ -23,6 +23,7 @@ module "this" {
   project_id = var.project_id
   name       = local.service_name
   regions    = var.regions
+  scaling    = var.scaling
 
   // If we're using GCLB then disallow external traffic,
   // otherwise allow the prober URI to be used directly.
