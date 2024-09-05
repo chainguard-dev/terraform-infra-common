@@ -16,7 +16,7 @@ require (
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v61 v61.0.0
-	github.com/prometheus/client_golang v1.20.2
+	github.com/prometheus/client_golang v1.20.3
 	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.29.0
@@ -27,7 +27,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.29.0
 	gocloud.dev v0.39.0
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
-	golang.org/x/oauth2 v0.22.0
+	golang.org/x/oauth2 v0.23.0
 	google.golang.org/api v0.196.0
 )
 
