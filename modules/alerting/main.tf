@@ -364,12 +364,12 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
 }
 
 resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
-  # In the absence of data, incident will auto-close after an daily
+  # In the absence of data, incident will auto-close after an hour
   alert_strategy {
-    auto_close = "86400s"
+    auto_close = "3600s"
 
     notification_rate_limit {
-      period = "86400s" // re-alert daily if condition still valid.
+      period = "3600s" // re-alert hourly if condition still valid.
     }
   }
 
@@ -431,12 +431,12 @@ resource "google_logging_metric" "cloud-run-failed-req" {
 }
 
 resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
-  # In the absence of data, incident will auto-close after an daily
+  # In the absence of data, incident will auto-close after an hour
   alert_strategy {
-    auto_close = "86400s"
+    auto_close = "3600s"
 
     notification_rate_limit {
-      period = "86400s" // re-alert daily if condition still valid.
+      period = "3600s" // re-alert hourly if condition still valid.
     }
   }
 
