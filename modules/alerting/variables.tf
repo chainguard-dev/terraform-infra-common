@@ -73,3 +73,9 @@ variable "dlq_filter" {
   type        = string
   default     = ""
 }
+
+variable "panic_filter" {
+  description = "additional filter to apply to panic alert policy"
+  type        = string
+  default     = ""
+}
