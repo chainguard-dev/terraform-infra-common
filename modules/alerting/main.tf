@@ -145,6 +145,7 @@ resource "google_monitoring_alert_policy" "panic" {
         resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
         severity=ERROR
         textPayload=~"panic: .*"
+        ${var.panic_filter}
       EOT
 
       label_extractors = {
