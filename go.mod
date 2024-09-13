@@ -1,6 +1,7 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.23.0
+go 1.23.1
+
 require (
 	chainguard.dev/sdk v0.1.25
 	cloud.google.com/go/bigquery v1.62.0
