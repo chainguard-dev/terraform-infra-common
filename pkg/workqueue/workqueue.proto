@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+// This is actually github.com/chainguard-dev/terraform-infra-common/pkg/workqueue but the codegen
+// doesn't translate properly.
+option go_package = "github.com/chainguard-dev/workqueue";
+
+package chainguard.workqueue;
+
+service WorkqueueService {
+  rpc Process(ProcessRequest) returns (ProcessResponse) {}
+}
+
+message ProcessRequest {
+  string key = 1;
+}
+
+message ProcessResponse {}
