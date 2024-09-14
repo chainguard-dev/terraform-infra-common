@@ -1,8 +1,6 @@
 syntax = "proto3";
 
-// This is actually github.com/chainguard-dev/terraform-infra-common/pkg/workqueue but the codegen
-// doesn't translate properly.
-option go_package = "github.com/chainguard-dev/workqueue";
+option go_package = "github.com/chainguard-dev/terraform-infra-common/pkg/workqueue";
 
 package chainguard.workqueue;
 
