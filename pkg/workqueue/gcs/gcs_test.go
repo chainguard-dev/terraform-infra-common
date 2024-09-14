@@ -27,15 +27,15 @@ func TestWorkQueue(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	conformance.TestSemantics(t, func(u uint) workqueue.Interface {
+	conformance.TestSemantics(t, func(u int) workqueue.Interface {
 		return NewWorkQueue(client.Bucket(bucket), u)
 	})
 
-	conformance.TestConcurrency(t, func(u uint) workqueue.Interface {
+	conformance.TestConcurrency(t, func(u int) workqueue.Interface {
 		return NewWorkQueue(client.Bucket(bucket), u)
 	})
 
-	conformance.TestDurability(t, func(u uint) workqueue.Interface {
+	conformance.TestDurability(t, func(u int) workqueue.Interface {
 		return NewWorkQueue(client.Bucket(bucket), u)
 	})
 }

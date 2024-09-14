@@ -17,7 +17,7 @@ import (
 
 // NewWorkQueue creates a new in-memory workqueue.
 // This is intended for testing, and is not suitable for production use.
-func NewWorkQueue(limit uint) workqueue.Interface {
+func NewWorkQueue(limit int) workqueue.Interface {
 	return &wq{
 		limit: limit,
 
@@ -27,7 +27,7 @@ func NewWorkQueue(limit uint) workqueue.Interface {
 }
 
 type wq struct {
-	limit uint
+	limit int
 
 	// rw guards the key sets.
 	rw    sync.RWMutex
@@ -38,7 +38,7 @@ type wq struct {
 var _ workqueue.Interface = (*wq)(nil)
 
 // Queue implements workqueue.Interface.
-func (w *wq) Queue(ctx context.Context, key string) error {
+func (w *wq) Queue(_ context.Context, key string) error {
 	w.rw.Lock()
 	defer w.rw.Unlock()
 	if _, ok := w.queue[key]; !ok {
@@ -48,7 +48,7 @@ func (w *wq) Queue(ctx context.Context, key string) error {
 }
 
 // Enumerate implements workqueue.Interface.
-func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
+func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
 	w.rw.RLock()
 	defer w.rw.RUnlock()
 	wip := make([]workqueue.ObservedInProgressKey, 0, len(w.wip))
@@ -76,7 +76,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 		sort.Slice(qd, func(i, j int) bool {
 			return qd[i].ts.Before(qd[j].ts)
 		})
-		if len(qd) > int(w.limit) {
+		if len(qd) > w.limit {
 			qd = qd[:w.limit]
 		}
 	}
@@ -108,7 +108,7 @@ func (o *inProgressKey) Name() string {
 }
 
 // Requeue implements workqueue.InProgressKey.
-func (o *inProgressKey) Requeue(ctx context.Context) error {
+func (o *inProgressKey) Requeue(_ context.Context) error {
 	if o.ownerCancel != nil {
 		o.ownerCancel()
 	}
@@ -127,7 +127,7 @@ func (o *inProgressKey) IsOrphaned() bool {
 }
 
 // Complete implements workqueue.OwnedInProgressKey.
-func (o *inProgressKey) Complete(ctx context.Context) error {
+func (o *inProgressKey) Complete(_ context.Context) error {
 	o.ownerCancel()
 	o.wq.rw.Lock()
 	defer o.wq.rw.Unlock()

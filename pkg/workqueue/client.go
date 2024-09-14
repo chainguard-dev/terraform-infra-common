@@ -44,6 +44,8 @@ func NewWorkqueueClient(ctx context.Context, endpoint string, addlOpts ...grpc.D
 		}))
 	}
 
+	opts = append(opts, addlOpts...)
+
 	conn, err := grpc.NewClient(target, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("NewWorkqueueClient: failed to connect to the server: %w", err)

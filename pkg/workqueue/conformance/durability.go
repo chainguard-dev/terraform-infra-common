@@ -15,7 +15,7 @@ import (
 // Unlike the other tests, this one is only expected for implementations that
 // have some degree of durability.  For instance, the in-memory implementation
 // will not pass this test.
-func TestDurability(t *testing.T, ctor func(uint) workqueue.Interface) {
+func TestDurability(t *testing.T, ctor func(int) workqueue.Interface) {
 	ctx := context.Background()
 
 	// Queue some stuff

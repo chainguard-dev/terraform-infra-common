@@ -32,7 +32,7 @@ type ClientInterface interface {
 }
 
 // NewWorkQueue creates a new GCS-backed workqueue.
-func NewWorkQueue(client ClientInterface, limit uint) workqueue.Interface {
+func NewWorkQueue(client ClientInterface, limit int) workqueue.Interface {
 	return &wq{
 		client: client,
 		limit:  limit,
@@ -41,7 +41,7 @@ func NewWorkQueue(client ClientInterface, limit uint) workqueue.Interface {
 
 type wq struct {
 	client ClientInterface
-	limit  uint
+	limit  int
 }
 
 var _ workqueue.Interface = (*wq)(nil)
@@ -137,7 +137,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				}
 				return qd[i].Created.Before(qd[j].Created)
 			})
-			if len(qd) > int(w.limit) {
+			if len(qd) > w.limit {
 				qd = qd[:w.limit]
 			}
 			queued++
@@ -273,7 +273,7 @@ func (o *inProgressKey) startHeartbeat(ctx context.Context) {
 					o.rw.Lock()
 					defer o.rw.Unlock()
 
-					if attrs, err := o.client.Object(o.attrs.Name).If(storage.Conditions{
+					attrs, err := o.client.Object(o.attrs.Name).If(storage.Conditions{
 						// We are the only ones that should be updating the object,
 						// so if we see anything manipulate the object, then assume
 						// that we've lost ownership and cancel the context to
@@ -283,12 +283,12 @@ func (o *inProgressKey) startHeartbeat(ctx context.Context) {
 						Metadata: map[string]string{
 							expirationMetadataKey: time.Now().UTC().Add(3 * RefreshInterval).Format(time.RFC3339),
 						},
-					}); err != nil {
+					})
+					if err != nil {
 						return err
-					} else {
-						// This is what we're guarding with the write lock.
-						o.attrs = attrs
 					}
+					// This is what we're guarding with the write lock.
+					o.attrs = attrs
 					return nil
 				}(); err != nil {
 					clog.ErrorContextf(ctx, "Failed to update expiration: %v", err)

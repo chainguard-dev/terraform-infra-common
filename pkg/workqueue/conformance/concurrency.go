@@ -19,7 +19,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue/dispatcher"
 )
 
-func TestConcurrency(t *testing.T, ctor func(uint) workqueue.Interface) {
+func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 	wq := ctor(5)
 	if wq == nil {
 		t.Fatal("NewWorkQueue returned nil")
@@ -27,11 +27,11 @@ func TestConcurrency(t *testing.T, ctor func(uint) workqueue.Interface) {
 
 	inflight := int32(0)
 
-	var cb dispatcher.Callback = func(ctx context.Context, key string) error {
-		new := atomic.AddInt32(&inflight, 1)
+	var cb dispatcher.Callback = func(_ context.Context, key string) error {
+		newVal := atomic.AddInt32(&inflight, 1)
 		defer atomic.AddInt32(&inflight, -1)
-		if new > 5 {
-			t.Errorf("Too many inflight: %d", new)
+		if newVal > 5 {
+			t.Errorf("Too many inflight: %d", newVal)
 		}
 
 		t.Logf("Processing %q", key)

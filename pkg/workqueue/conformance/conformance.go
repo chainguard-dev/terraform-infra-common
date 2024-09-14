@@ -14,7 +14,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 )
 
-func TestSemantics(t *testing.T, ctor func(uint) workqueue.Interface) {
+func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	wq := ctor(5)
 	if wq == nil {
 		t.Fatal("NewWorkQueue returned nil")
