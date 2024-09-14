@@ -31,6 +31,7 @@ jobs:
           - github-wif-provider
           - github-gsa
           - github-events
+          - workqueue
 
     steps:
       - name: Harden Runner

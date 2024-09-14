@@ -12,7 +12,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 )
 
-func Handler(wq workqueue.Interface, concurrency uint, f Callback) http.Handler {
+func Handler(wq workqueue.Interface, concurrency int, f Callback) http.Handler {
 	return &handler{
 		wq:          wq,
 		concurrency: concurrency,
@@ -25,7 +25,7 @@ type handler struct {
 	doWait sync.Mutex
 
 	wq          workqueue.Interface
-	concurrency uint
+	concurrency int
 	f           Callback
 }
 
