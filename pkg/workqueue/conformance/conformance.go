@@ -51,6 +51,23 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 		t.Errorf("Expected %d queued keys, got %d", want, got)
 	}
 
+	// Queue the same key!
+	if err := wq.Queue(ctx, "foo"); err != nil {
+		t.Fatalf("Queue failed: %v", err)
+	}
+
+	// We should see exactly the same results.
+	wip, qd, err = wq.Enumerate(ctx)
+	if err != nil {
+		t.Fatalf("Enumerate failed: %v", err)
+	}
+	if want, got := 0, len(wip); want != got {
+		t.Errorf("Expected %d in-progress keys, got %d", want, got)
+	}
+	if want, got := 1, len(qd); want != got {
+		t.Errorf("Expected %d queued keys, got %d", want, got)
+	}
+
 	// Queue a new key!
 	time.Sleep(1 * time.Millisecond)
 	if err := wq.Queue(ctx, "bar"); err != nil {
