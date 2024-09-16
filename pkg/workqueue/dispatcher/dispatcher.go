@@ -99,7 +99,7 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 			}
 
 			// Attempt to perform the actual reconciler invocation.
-			if err := f(ctx, oip.Name()); err != nil {
+			if err := f(oip.Context(), oip.Name()); err != nil {
 				clog.WarnContextf(ctx, "Failed callback for key %q: %v", oip.Name(), err)
 
 				// Requeue if it fails (stops heartbeat).
