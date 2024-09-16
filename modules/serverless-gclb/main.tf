@@ -88,6 +88,7 @@ resource "google_compute_backend_service" "public-services" {
     content {
       oauth2_client_id     = iap.value["oauth2_client_id"]
       oauth2_client_secret = iap.value["oauth2_client_secret"]
+      enabled              = iap.value["enabled"]
     }
   }
 }
