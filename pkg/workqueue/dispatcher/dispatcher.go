@@ -33,14 +33,14 @@ func ServiceCallback(client workqueue.WorkqueueServiceClient) Callback {
 type Future func() error
 
 // Handle is a synchronous form of HandleAsync.
-func Handle(ctx context.Context, wq workqueue.Interface, concurrency uint, f Callback) error {
+func Handle(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback) error {
 	return HandleAsync(ctx, wq, concurrency, f)()
 }
 
 // HandleAsync initiates a single iteration of the dispatcher, possibly invoking
 // the callback for several different keys.  It returns a future that can be
 // used to block on the result.
-func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency uint, f Callback) Future {
+func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback) Future {
 	// Enumerate the state of the queue.
 	wip, next, err := wq.Enumerate(ctx)
 	if err != nil {
@@ -65,7 +65,7 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency uint, 
 	// We explicitly check this here because if nWIP grows larger than
 	// concurrency then the subtraction below will underflow and we'll
 	// start to queue work without bounds.
-	nWIP := uint(len(activeKeys))
+	nWIP := len(activeKeys)
 	if nWIP >= concurrency {
 		return eg.Wait // Should generally be a no-op.
 	}
@@ -73,7 +73,7 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency uint, 
 	// Attempt to launch a new piece of work for each open slot we have available
 	// which is: N - active.
 	openSlots := concurrency - nWIP
-	idx, launched := 0, uint(0)
+	idx, launched := 0, 0
 	for ; idx < len(next) && launched < openSlots; idx++ {
 		nextKey := next[idx]
 
