@@ -2,11 +2,11 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 4.79, < 6"
+      version = ">= 4.79"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 4.79, < 6"
+      version = ">= 4.79"
     }
   }
 }
@@ -88,6 +88,7 @@ resource "google_compute_backend_service" "public-services" {
     content {
       oauth2_client_id     = iap.value["oauth2_client_id"]
       oauth2_client_secret = iap.value["oauth2_client_secret"]
+      enabled              = iap.value["enabled"]
     }
   }
 }

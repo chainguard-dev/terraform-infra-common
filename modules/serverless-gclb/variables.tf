@@ -40,6 +40,7 @@ variable "iap" {
   type = object({
     oauth2_client_id     = string
     oauth2_client_secret = string
+    enabled              = optional(bool, true)
   })
   default = null
 }
