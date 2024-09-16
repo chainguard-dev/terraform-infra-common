@@ -47,7 +47,19 @@ jobs:
     - name: Test
       run: |
         # Exclude running unit tests against third_party repos.
-        go test -race ./...
+        go test -race -timeout=5m ./...
+
+    - run: |
+        cd "$(mktemp -d)"
+        wget -O protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v28.1/protoc-28.1-linux-x86_64.zip
+        unzip protoc.zip -d .
+        chmod +x ./bin/protoc
+        echo "$(pwd)/bin" >> "$GITHUB_PATH"
+
+    - run: |
+        cd "$(mktemp -d)"
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
     - name: Ensure generated files are up-to-date
       run: go generate ./...
