@@ -70,14 +70,14 @@ module "serverless-gclb" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.79, < 6 |
-| <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | >= 4.79, < 6 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.79 |
+| <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | >= 4.79 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | >= 4.79, < 6 |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 4.79 |
 
 ## Modules
 
