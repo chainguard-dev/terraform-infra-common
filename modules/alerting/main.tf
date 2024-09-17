@@ -508,3 +508,42 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   enabled = "true"
   project = var.project_id
 }
+
+resource "google_monitoring_alert_policy" "timeout" {
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert once an hour if condition still valid.
+    }
+  }
+
+  display_name = "Timeout Alert"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Timeout Alert"
+
+    condition_matched_log {
+      filter = <<EOT
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
+        ${var.timeout_filter}
+        -resource.labels.service_name:"-ing-vuln"
+      EOT
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
+        "location"      = "EXTRACT(resource.labels.location)"
+        "latency"       = "EXTRACT(httpRequest.latency)"
+      }
+    }
+  }
+
+  enabled = true
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
