@@ -96,7 +96,7 @@ func init() {
 }
 
 // Handler wraps a given http handler in standard metrics handlers.
-func Handler(name string, handler http.Handler) http.Handler {
+func Handler(name string, handler http.Handler) http.HandlerFunc {
 	verify := extractCloudRunCaller()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
