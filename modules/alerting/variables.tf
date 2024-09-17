@@ -79,3 +79,9 @@ variable "panic_filter" {
   type        = string
   default     = ""
 }
+
+variable "timeout_filter" {
+  description = "additional filter to apply to timeout alert policy"
+  type        = string
+  default     = ""
+}

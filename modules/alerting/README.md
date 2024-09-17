@@ -30,6 +30,7 @@ No modules.
 | [google_monitoring_alert_policy.service_failure_rate_eventing](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.service_failure_rate_non_eventing](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.signal](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.timeout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 
 ## Inputs
 
@@ -49,6 +50,7 @@ No modules.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_scaling_issue_filter"></a> [scaling\_issue\_filter](#input\_scaling\_issue\_filter) | additional filter to apply to scaling issue alert policy | `string` | `""` | no |
 | <a name="input_signal_filter"></a> [signal\_filter](#input\_signal\_filter) | additional filter to apply to signal alert policy | `string` | `""` | no |
+| <a name="input_timeout_filter"></a> [timeout\_filter](#input\_timeout\_filter) | additional filter to apply to timeout alert policy | `string` | `""` | no |
 
 ## Outputs
 
