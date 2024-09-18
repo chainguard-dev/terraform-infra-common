@@ -44,6 +44,8 @@ module "this" {
   ingress    = var.ingress
   egress     = var.egress
 
+  deletion_protection = var.deletion_protection
+
   service_account = var.service_account
   containers = {
     for name, container in var.containers : name => {
