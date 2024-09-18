@@ -42,6 +42,12 @@ variable "service_account" {
   description = "The service account as which to run the service."
 }
 
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}
+
 variable "containers" {
   description = "The containers to run in the service.  Each container will be run in each region."
   type = map(object({
