@@ -85,3 +85,15 @@ variable "timeout_filter" {
   type        = string
   default     = ""
 }
+
+variable "dockerhub_ratelimit_filter" {
+  description = "additional filter to apply to dockerhub ratelimit alert policy"
+  type        = string
+  default     = ""
+}
+
+variable "github_ratelimit_filter" {
+  description = "additional filter to apply to github ratelimit alert policy"
+  type        = string
+  default     = ""
+}

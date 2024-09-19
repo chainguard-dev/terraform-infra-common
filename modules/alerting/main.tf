@@ -538,7 +538,78 @@ resource "google_monitoring_alert_policy" "timeout" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "latency"       = "EXTRACT(httpRequest.latency)"
+      }
+    }
+  }
+
+  enabled = true
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
+resource "google_monitoring_alert_policy" "dockerhub_ratelimit" {
+  # In the absence of data, incident will auto-close after an 12 hours
+  alert_strategy {
+    auto_close = "43200s"
+
+    notification_rate_limit {
+      period = "43200s" // re-alert once every 12 hours if condition still valid.
+    }
+  }
+
+  display_name = "DockerHub RateLimit"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "DockerHub RateLimit"
+
+    condition_matched_log {
+      filter = <<EOT
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+        severity>=WARNING
+        textPayload:"You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit"
+        ${var.dockerhub_ratelimit_filter}
+      EOT
+
+      label_extractors = {
+        "service_name" = "EXTRACT(resource.labels.service_name)"
+        "job_name"     = "EXTRACT(resource.labels.job_name)"
+      }
+    }
+  }
+
+  enabled = true
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
+resource "google_monitoring_alert_policy" "github_ratelimit" {
+  # In the absence of data, incident will auto-close after an 12 hours
+  alert_strategy {
+    auto_close = "43200s"
+
+    notification_rate_limit {
+      period = "43200s" // re-alert once every 12 hours if condition still valid.
+    }
+  }
+
+  display_name = "GitHub RateLimit"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "GitHub RateLimit"
+
+    condition_matched_log {
+      filter = <<EOT
+        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+        severity>=WARNING
+        textPayload:"You have exceeded a secondary rate limit and have been temporarily blocked from content creation"
+        ${var.github_ratelimit_filter}
+      EOT
+
+      label_extractors = {
+        "service_name" = "EXTRACT(resource.labels.service_name)"
+        "job_name"     = "EXTRACT(resource.labels.job_name)"
       }
     }
   }
