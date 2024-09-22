@@ -509,7 +509,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   project = var.project_id
 }
 
-resource "google_monitoring_alert_policy" "timeout" {
+resource "google_monitoring_alert_policy" "cloudrun_timeout" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -538,12 +538,145 @@ resource "google_monitoring_alert_policy" "timeout" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "latency"       = "EXTRACT(httpRequest.latency)"
       }
     }
   }
 
-  enabled = true
+  enabled = false
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
+resource "google_logging_metric" "cloudrun_timeout" {
+  name   = "cloudrun_timeout"
+  filter = <<EOT
+    resource.type="cloud_run_revision"
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+    severity=ERROR
+    textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+  }
+}
+
+resource "google_logging_metric" "dockerhub_ratelimit" {
+  name   = "dockerhub_ratelimit"
+  filter = <<EOT
+    (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    severity>=WARNING
+    textPayload:"You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+    labels {
+      key         = "job_name"
+      value_type  = "STRING"
+      description = "name of job."
+    }
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+    "job_name"     = "EXTRACT(resource.labels.job_name)"
+  }
+}
+
+resource "google_logging_metric" "github_ratelimit" {
+  name   = "github_ratelimit"
+  filter = <<EOT
+    (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    severity>=WARNING
+    textPayload:"You have exceeded a secondary rate limit and have been temporarily blocked from content creation"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+    labels {
+      key         = "job_name"
+      value_type  = "STRING"
+      description = "name of job."
+    }
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+    "job_name"     = "EXTRACT(resource.labels.job_name)"
+  }
+}
+
+resource "google_logging_metric" "r2_same_ratelimit" {
+  name   = "r2_same_ratelimit"
+  filter = <<EOT
+    (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    severity>=WARNING
+    textPayload:"Reduce your concurrent request rate for the same object"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+    labels {
+      key         = "job_name"
+      value_type  = "STRING"
+      description = "name of job."
+    }
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+    "job_name"     = "EXTRACT(resource.labels.job_name)"
+  }
 }
