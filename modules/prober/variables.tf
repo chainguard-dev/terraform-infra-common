@@ -171,7 +171,7 @@ variable "service_timeout_seconds" {
   default     = "300"
 }
 
-variable "selected_region" {
+variable "selected_regions" {
   // https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.uptimeCheckConfigs#UptimeCheckRegion
   description = "List of uptime check region, minimum 3. Valid [USA (has 3 regions), EUROPE, SOUTH_AMERICA, ASIA_PACIFIC, USA_OREGON, USA_IOWA, USA_VIRGINIA]"
   type        = list(string)
