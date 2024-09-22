@@ -164,3 +164,9 @@ variable "scaling" {
   })
   default = {}
 }
+
+variable "service_timeout_seconds" {
+  description = "The timeout set on the cloud run service routing the uptime check request."
+  type        = number
+  default     = "300"
+}

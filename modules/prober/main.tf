@@ -32,6 +32,8 @@ module "this" {
   // Different probers have different egress requirements.
   egress = var.egress
 
+  request_timeout_seconds = var.service_timeout_seconds
+
   service_account = var.service_account
   containers = {
     "prober" = {
@@ -41,12 +43,14 @@ module "this" {
         base_image  = var.base_image
       }
       ports = [{ container_port = 8080 }]
-      env = concat([{
+      env = concat([
+        {
           // This is a shared secret with the uptime check, which must be
           // passed in an Authorization header for the probe to do work.
           name  = "AUTHORIZATION"
           value = random_password.secret.result
-        }],
+        }
+        ],
         [for k, v in var.env : { name = k, value = v }],
         [
           for k, v in var.secret_env : {
