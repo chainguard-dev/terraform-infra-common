@@ -547,74 +547,107 @@ resource "google_monitoring_alert_policy" "timeout" {
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 }
 
-resource "google_monitoring_alert_policy" "dockerhub_ratelimit" {
-  # In the absence of data, incident will auto-close after an 12 hours
-  alert_strategy {
-    auto_close = "43200s"
-
-    notification_rate_limit {
-      period = "43200s" // re-alert once every 12 hours if condition still valid.
+resource "google_logging_metric" "dockerhub_ratelimit" {
+  name   = "dockerhub_ratelimit"
+  filter = <<EOT
+    (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    severity>=WARNING
+    textPayload:"You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+    labels {
+      key         = "job_name"
+      value_type  = "STRING"
+      description = "name of job."
     }
   }
 
-  display_name = "DockerHub RateLimit"
-  combiner     = "OR"
-
-  conditions {
-    display_name = "DockerHub RateLimit"
-
-    condition_matched_log {
-      filter = <<EOT
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
-        severity>=WARNING
-        textPayload:"You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit"
-        ${var.dockerhub_ratelimit_filter}
-      EOT
-
-      label_extractors = {
-        "service_name" = "EXTRACT(resource.labels.service_name)"
-        "job_name"     = "EXTRACT(resource.labels.job_name)"
-      }
-    }
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+    "job_name"     = "EXTRACT(resource.labels.job_name)"
   }
-
-  enabled = true
-
-  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 }
 
-resource "google_monitoring_alert_policy" "github_ratelimit" {
-  # In the absence of data, incident will auto-close after an 12 hours
-  alert_strategy {
-    auto_close = "43200s"
-
-    notification_rate_limit {
-      period = "43200s" // re-alert once every 12 hours if condition still valid.
+resource "google_logging_metric" "github_ratelimit" {
+  name   = "github_ratelimit"
+  filter = <<EOT
+    (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    severity>=WARNING
+    textPayload:"You have exceeded a secondary rate limit and have been temporarily blocked from content creation"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+    labels {
+      key         = "job_name"
+      value_type  = "STRING"
+      description = "name of job."
     }
   }
 
-  display_name = "GitHub RateLimit"
-  combiner     = "OR"
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+    "job_name"     = "EXTRACT(resource.labels.job_name)"
+  }
+}
 
-  conditions {
-    display_name = "GitHub RateLimit"
-
-    condition_matched_log {
-      filter = <<EOT
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
-        severity>=WARNING
-        textPayload:"You have exceeded a secondary rate limit and have been temporarily blocked from content creation"
-        ${var.github_ratelimit_filter}
-      EOT
-
-      label_extractors = {
-        "service_name" = "EXTRACT(resource.labels.service_name)"
-        "job_name"     = "EXTRACT(resource.labels.job_name)"
-      }
+resource "google_logging_metric" "r2_same_ratelimit" {
+  name   = "r2_same_ratelimit"
+  filter = <<EOT
+    (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    severity>=WARNING
+    textPayload:"Reduce your concurrent request rate for the same object"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+    labels {
+      key         = "job_name"
+      value_type  = "STRING"
+      description = "name of job."
     }
   }
 
-  enabled = true
-
-  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+    "job_name"     = "EXTRACT(resource.labels.job_name)"
+  }
 }
