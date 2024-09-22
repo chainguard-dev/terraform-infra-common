@@ -97,10 +97,11 @@ data "google_cloud_run_v2_service" "this" {
 resource "google_monitoring_uptime_check_config" "regional_uptime_check" {
   count = local.use_gclb ? 0 : 1
 
-  display_name = "${var.name}-uptime-regional"
-  project      = var.project_id
-  timeout      = var.timeout
-  period       = var.period
+  display_name     = "${var.name}-uptime-regional"
+  project          = var.project_id
+  timeout          = var.timeout
+  period           = var.period
+  selected_regions = var.selected_regions
 
   http_check {
     path         = "/"
@@ -137,10 +138,11 @@ resource "google_monitoring_uptime_check_config" "regional_uptime_check" {
 resource "google_monitoring_uptime_check_config" "global_uptime_check" {
   count = local.use_gclb ? 1 : 0
 
-  display_name = "${var.name}-uptime-global"
-  project      = var.project_id
-  timeout      = var.timeout
-  period       = var.period
+  display_name     = "${var.name}-uptime-global"
+  project          = var.project_id
+  timeout          = var.timeout
+  period           = var.period
+  selected_regions = var.selected_regions
 
   http_check {
     path         = "/"
