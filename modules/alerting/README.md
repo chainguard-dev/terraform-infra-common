@@ -19,12 +19,14 @@ No modules.
 |------|------|
 | [google_logging_metric.cloud-run-failed-req](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_logging_metric.cloud-run-scaling-failure](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
+| [google_logging_metric.cloudrun_timeout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_logging_metric.dockerhub_ratelimit](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_logging_metric.github_ratelimit](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_logging_metric.r2_same_ratelimit](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_monitoring_alert_policy.bad-rollout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.cloud-run-failed-req](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.cloud-run-scaling-failure](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.cloudrun_timeout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.fatal](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.oom](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.panic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
@@ -33,7 +35,6 @@ No modules.
 | [google_monitoring_alert_policy.service_failure_rate_eventing](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.service_failure_rate_non_eventing](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.signal](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
-| [google_monitoring_alert_policy.timeout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 
 ## Inputs
 

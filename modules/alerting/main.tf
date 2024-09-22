@@ -509,7 +509,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   project = var.project_id
 }
 
-resource "google_monitoring_alert_policy" "timeout" {
+resource "google_monitoring_alert_policy" "cloudrun_timeout" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -542,9 +542,38 @@ resource "google_monitoring_alert_policy" "timeout" {
     }
   }
 
-  enabled = true
+  enabled = false
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
+resource "google_logging_metric" "cloudrun_timeout" {
+  name   = "cloudrun_timeout"
+  filter = <<EOT
+    resource.type="cloud_run_revision"
+    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+    severity=ERROR
+    textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "location"
+      value_type  = "STRING"
+      description = "location of service."
+    }
+    labels {
+      key         = "service_name"
+      value_type  = "STRING"
+      description = "name of service."
+    }
+  }
+
+  label_extractors = {
+    "location"     = "EXTRACT(resource.labels.location)"
+    "service_name" = "EXTRACT(resource.labels.service_name)"
+  }
 }
 
 resource "google_logging_metric" "dockerhub_ratelimit" {
