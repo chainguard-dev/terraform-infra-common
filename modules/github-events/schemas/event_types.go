@@ -228,3 +228,46 @@ type IssueComment struct {
 	PatchURL bigquery.NullString    `json:"patch_url,omitempty" bigquery:"patch_url"`
 	MergedAt bigquery.NullTimestamp `json:"merged_at,omitempty" bigquery:"merged_at"`
 }
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#CheckRunEvent
+type CheckRunEvent struct {
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	CheckRun     CheckRun            `json:"check_run,omitempty" bigquery:"check_run"`
+	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#CheckRun
+type CheckRun struct {
+	ID           bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	HeadSHA      bigquery.NullString    `json:"head_sha,omitempty" bigquery:"head_sha"`
+	Status       bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
+	Conclusion   bigquery.NullString    `json:"conclusion,omitempty" bigquery:"conclusion"`
+	StartedAt    bigquery.NullTimestamp `json:"started_at,omitempty" bigquery:"started_at"`
+	CompletedAt  bigquery.NullTimestamp `json:"completed_at,omitempty" bigquery:"completed_at"`
+	Name         bigquery.NullString    `json:"name,omitempty" bigquery:"name"`
+	CheckSuite   *CheckSuite            `json:"check_suite,omitempty" bigquery:"check_suite"`
+	PullRequests []PullRequest          `json:"pull_requests,omitempty" bigquery:"pull_requests"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#CheckSuite
+type CheckSuite struct {
+	ID           bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	HeadSHA      bigquery.NullString    `json:"head_sha,omitempty" bigquery:"head_sha"`
+	Status       bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
+	Conclusion   bigquery.NullString    `json:"conclusion,omitempty" bigquery:"conclusion"`
+	CreatedAt    bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt    bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
+	Repository   Repository             `json:"repository,omitempty" bigquery:"repository"`
+	PullRequests []PullRequest          `json:"pull_requests,omitempty" bigquery:"pull_requests"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#CheckSuiteEvent
+type CheckSuiteEvent struct {
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	CheckSuite   *CheckSuite         `json:"check_suite,omitempty" bigquery:"check_suite"`
+	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+}
