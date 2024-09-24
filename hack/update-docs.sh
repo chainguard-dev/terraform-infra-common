@@ -3,7 +3,7 @@
 set -o errexit
 
 # Find all directories containing .tf files
-directories=$(find . -name '*.tf' -exec dirname {} \;)
+directories=$(find . -name '*.tf' -not -path "./.*" -exec dirname {} \;)
 
 # Check if the find command found any directories
 if [[ -z "${directories}" ]]; then

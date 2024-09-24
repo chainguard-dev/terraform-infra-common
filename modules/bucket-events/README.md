@@ -118,13 +118,13 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_bucket"></a> [bucket](#input\_bucket) | The name of the bucket to watch for events. The region where the bucket is located will be the region where the Pub/Sub topic and trampoline service will be created. The bucket must be in a region that is in the set of regions passed to the regions variable. | `string` | n/a | yes |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
-| <a name="input_gcs_event_types"></a> [gcs\_event\_types](#input\_gcs\_event\_types) | The types of GCS events to watch for (https://cloud.google.com/storage/docs/pubsub-notifications#payload). | `list(string)` | <pre>[<br>  "OBJECT_FINALIZE",<br>  "OBJECT_METADATA_UPDATE",<br>  "OBJECT_DELETE",<br>  "OBJECT_ARCHIVE"<br>]</pre> | no |
-| <a name="input_ingress"></a> [ingress](#input\_ingress) | An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events. | <pre>object({<br>    name = string<br>  })</pre> | n/a | yes |
+| <a name="input_gcs_event_types"></a> [gcs\_event\_types](#input\_gcs\_event\_types) | The types of GCS events to watch for (https://cloud.google.com/storage/docs/pubsub-notifications#payload). | `list(string)` | <pre>[<br/>  "OBJECT_FINALIZE",<br/>  "OBJECT_METADATA_UPDATE",<br/>  "OBJECT_DELETE",<br/>  "OBJECT_ARCHIVE"<br/>]</pre> | no |
+| <a name="input_ingress"></a> [ingress](#input\_ingress) | An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events. | <pre>object({<br/>    name = string<br/>  })</pre> | n/a | yes |
 | <a name="input_max_delivery_attempts"></a> [max\_delivery\_attempts](#input\_max\_delivery\_attempts) | The maximum number of delivery attempts for any event. | `number` | `5` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
-| <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. The bucket must be in one of these regions. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
+| <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. The bucket must be in one of these regions. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 
 ## Outputs
 
