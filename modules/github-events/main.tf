@@ -117,5 +117,8 @@ output "recorder-schemas" {
     "dev.chainguard.github.check_suite" : {
       schema = file("${path.module}/schemas/check_suite.schema.json")
     }
+    "dev.chainguard.github.projects_v2_item" : {
+      schema = file("${path.module}/schemas/projects_v2_item.schema.json")
+    }
   }
 }
