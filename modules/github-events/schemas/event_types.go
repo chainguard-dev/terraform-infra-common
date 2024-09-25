@@ -271,3 +271,25 @@ type CheckSuiteEvent struct {
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
 }
+
+// https://github.com/google/go-github/blob/v60.0.0/github/event_types.go#L1085
+type ProjectV2Item struct {
+	ID            bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	NodeID        bigquery.NullString    `json:"node_id,omitempty" bigquery:"node_id"`
+	ProjectNodeID bigquery.NullString    `json:"project_node_id,omitempty" bigquery:"project_node_id"`
+	ContentNodeID bigquery.NullString    `json:"content_node_id,omitempty" bigquery:"content_node_id"`
+	ContentType   bigquery.NullString    `json:"content_type,omitempty" bigquery:"content_type"`
+	Creator       *User                  `json:"creator,omitempty" bigquery:"creator"`
+	CreatedAt     bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt     bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
+	ArchivedAt    bigquery.NullTimestamp `json:"archived_at,omitempty" bigquery:"archived_at"`
+}
+
+// https://github.com/google/go-github/blob/v60.0.0/github/event_types.go#L1062
+type ProjectsV2ItemEvent struct {
+	Action        bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	Changes       bigquery.NullJSON   `json:"changes,omitempty" bigquery:"changes"`
+	ProjectV2Item *ProjectV2Item      `json:"projects_v2_item,omitempty" bigquery:"projects_v2_item"`
+	Organization  *Organization       `json:"organization,omitempty" bigquery:"organization"`
+	Sender        *User               `json:"sender,omitempty" bigquery:"sender"`
+}
