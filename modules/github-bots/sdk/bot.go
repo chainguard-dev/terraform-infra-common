@@ -231,6 +231,21 @@ func Serve(b Bot) {
 				}
 				return nil
 
+			case ProjectsV2ItemHandler:
+				log.Debug("handling projects_v2_item event")
+
+				var pie schemas.Wrapper[ProjectsV2ItemEvent]
+				if err := event.DataAs(&pie); err != nil {
+					log.Errorf("failed to unmarshal projects_v2_item event: %v", err)
+					return err
+				}
+
+				if err := h(ctx, pie.Body); err != nil {
+					log.Errorf("failed to handle projects_v2_item event: %v", err)
+					return err
+				}
+				return nil
+
 			default:
 				return fmt.Errorf("unknown handler type %T", handler)
 			}
