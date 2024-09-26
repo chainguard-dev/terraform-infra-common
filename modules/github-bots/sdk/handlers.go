@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/go-github/v61/github"
 )
@@ -58,16 +59,47 @@ func (r CheckSuiteHandler) EventType() EventType {
 	return CheckSuiteEvent
 }
 
+type ProjectsV2ItemHandler func(ctx context.Context, pie ProjectsV2ItemEvent) error
+
+func (r ProjectsV2ItemHandler) EventType() EventType {
+	return ProjectsV2ItemEventType
+}
+
+// https://github.com/google/go-github/blob/v60.0.0/github/event_types.go#L1062
+//
+// ProjectsV2ItemEvent represents a project_v2_item event. It's copied from go-github since
+// their version only supports the `archived` action.
+type ProjectsV2ItemEvent struct {
+	Action        string               `json:"action,omitempty"`
+	Changes       json.RawMessage      `json:"changes,omitempty"`
+	ProjectV2Item *ProjectV2Item       `json:"projects_v2_item,omitempty"`
+	Organization  *github.Organization `json:"organization,omitempty"`
+	Sender        *github.User         `json:"sender,omitempty"`
+}
+
+// https://github.com/google/go-github/blob/v60.0.0/github/event_types.go#L1085
+type ProjectV2Item struct {
+	ID            int64             `json:"id,omitempty"`
+	NodeID        string            `json:"node_id,omitempty"`
+	ProjectNodeID string            `json:"project_node_id,omitempty"`
+	ContentNodeID string            `json:"content_node_id,omitempty"`
+	ContentType   string            `json:"content_type,omitempty"`
+	CreatedAt     *github.Timestamp `json:"created_at,omitempty"`
+	UpdatedAt     *github.Timestamp `json:"updated_at,omitempty"`
+	ArchivedAt    *github.Timestamp `json:"archived_at,omitempty"`
+}
+
 type EventType string
 
 const (
 	// GitHub events (https://github.com/chainguard-dev/terraform-infra-common/tree/main/modules/github-events)
-	PullRequestEvent  EventType = "dev.chainguard.github.pull_request"
-	WorkflowRunEvent  EventType = "dev.chainguard.github.workflow_run"
-	IssueCommentEvent EventType = "dev.chainguard.github.issue_comment"
-	PushEvent         EventType = "dev.chainguard.github.push"
-	CheckRunEvent     EventType = "dev.chainguard.github.check_run"
-	CheckSuiteEvent   EventType = "dev.chainguard.github.check_suite"
+	PullRequestEvent        EventType = "dev.chainguard.github.pull_request"
+	WorkflowRunEvent        EventType = "dev.chainguard.github.workflow_run"
+	IssueCommentEvent       EventType = "dev.chainguard.github.issue_comment"
+	PushEvent               EventType = "dev.chainguard.github.push"
+	CheckRunEvent           EventType = "dev.chainguard.github.check_run"
+	CheckSuiteEvent         EventType = "dev.chainguard.github.check_suite"
+	ProjectsV2ItemEventType EventType = "dev.chainguard.github.projects_v2_item"
 
 	// LoFo events
 	WorkflowRunArtifactEvent EventType = "dev.chainguard.lofo.workflow_run_artifacts"
