@@ -32,6 +32,8 @@ module "this" {
 
   ingress = var.service-ingress
 
+  deletion_protection = var.deletion_protection
+
   service_account = google_service_account.service.email
   containers = {
     "trampoline" = {
