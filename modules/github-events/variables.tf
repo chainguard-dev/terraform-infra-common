@@ -14,6 +14,12 @@ variable "regions" {
   }))
 }
 
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}
+
 variable "ingress" {
   description = "An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events."
   type = object({
