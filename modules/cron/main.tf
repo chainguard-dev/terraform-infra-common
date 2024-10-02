@@ -59,6 +59,8 @@ resource "google_cloud_run_v2_job" "job" {
   # BETA in order to use it.
   launch_stage = var.vpc_access != null ? "BETA" : null
 
+  deletion_protection = var.deletion_protection
+
   template {
     parallelism = var.parallelism
     task_count  = var.task_count

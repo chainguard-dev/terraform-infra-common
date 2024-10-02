@@ -117,3 +117,9 @@ variable "enable_profiler" {
   default     = false
   description = "Enable cloud profiler."
 }
+
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}

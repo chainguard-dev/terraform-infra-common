@@ -17,6 +17,8 @@ module "service" {
 
   enable_profiler = var.enable_profiler
 
+  deletion_protection = var.deletion_protection
+
   notification_channels = var.notification_channels
 }
 
