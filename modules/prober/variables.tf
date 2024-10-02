@@ -177,3 +177,9 @@ variable "selected_regions" {
   type        = list(string)
   default     = null
 }
+
+variable "security-policy" {
+  description = "The security policy associated with the prober backend service."
+  type        = string
+  default     = null
+}

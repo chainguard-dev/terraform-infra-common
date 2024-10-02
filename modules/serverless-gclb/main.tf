@@ -121,6 +121,8 @@ resource "google_compute_url_map" "public-service" {
       default_service = google_compute_backend_service.public-services[path_matcher.key].id
     }
   }
+
+  security_policy = var.security-policy
 }
 
 // Create an HTTPS proxy for our URL map.

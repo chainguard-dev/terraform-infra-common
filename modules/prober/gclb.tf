@@ -25,4 +25,6 @@ module "gclb" {
       name = local.service_name
     }
   }
+
+  security-policy = var.security-policy
 }
