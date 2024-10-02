@@ -31,20 +31,26 @@ import (
 //
 // A new token is created for each client, and is not refreshed. It can be
 // revoked with Close.
-func NewGitHubClient(ctx context.Context, org, repo, policyName string) GitHubClient {
+func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...GitHubClientOption) GitHubClient {
 	ts := oauth2.ReuseTokenSource(nil, &tokenSource{
 		org:        org,
 		repo:       repo,
 		policyName: policyName,
 	})
-	return GitHubClient{
-		inner: github.NewClient(oauth2.NewClient(ctx, ts)),
-		ts:    ts,
-		// TODO: Make this configurable?
+
+	client := GitHubClient{
+		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
+		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
 		repo:    repo,
 	}
+
+	for _, opt := range opts {
+		opt(&client)
+	}
+
+	return client
 }
 
 type tokenSource struct {
@@ -74,6 +80,25 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 		// hour, and we want to refresh it before it expires.
 		Expiry: time.Now().Add(45 * time.Minute),
 	}, nil
+}
+
+// GitHubClientOption configures the client, these are ran after the default setup.
+type GitHubClientOption func(*GitHubClient)
+
+func WithSecondaryRateLimitWaiter() GitHubClientOption {
+	return func(c *GitHubClient) {
+		c.inner.Client().Transport = NewSecondaryRateLimitWaiterClient(
+			&oauth2.Transport{
+				Base: c.inner.Client().Transport,
+			},
+		).Transport
+	}
+}
+
+func WithBufferSize(bufSize int) GitHubClientOption {
+	return func(c *GitHubClient) {
+		c.bufSize = bufSize
+	}
 }
 
 type GitHubClient struct {
