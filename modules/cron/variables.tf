@@ -197,3 +197,9 @@ variable "scheduled_env_overrides" {
   default     = []
   description = "List of env object overrides."
 }
+
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}
