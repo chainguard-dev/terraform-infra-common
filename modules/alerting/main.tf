@@ -397,7 +397,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
-  enabled = "true"
+  enabled = var.enable_scaling_alerts
   project = var.project_id
 }
 
@@ -464,7 +464,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
-  enabled = "true"
+  enabled = var.enable_scaling_alerts
   project = var.project_id
 }
 

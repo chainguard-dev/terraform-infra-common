@@ -85,3 +85,14 @@ variable "timeout_filter" {
   type        = string
   default     = ""
 }
+
+variable "enable_scaling_alerts" {
+  description = <<EOT
+  Whether to enable scaling alerts.
+  When logs appear with
+    "The request was aborted because there was no available instance." or
+    "The request failed because either the HTTP response was malformed or connection to the instance had an error."
+EOT
+  type        = bool
+  default     = false
+}
