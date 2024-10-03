@@ -44,3 +44,9 @@ variable "iap" {
   })
   default = null
 }
+
+variable "security-policy" {
+  description = "The security policy associated with the backend service."
+  type        = string
+  default     = null
+}
