@@ -41,7 +41,7 @@ data "google_project" "project" { project_id = var.project_id }
 
 // Create an alert policy to notify if the secret is accessed by an unauthorized entity.
 resource "google_monitoring_alert_policy" "anomalous-secret-access" {
-  count = len(var.notification_channels) > 0 ? 1 : 0
+  count = length(var.notification_channels) > 0 ? 1 : 0
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -82,7 +82,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
     }
   }
 
-  notification_channels = var.notification-channels
+  notification_channels = var.notification_channels
 
   enabled = "true"
   project = var.project_id

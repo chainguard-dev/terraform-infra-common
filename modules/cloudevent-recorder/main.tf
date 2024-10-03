@@ -51,7 +51,7 @@ resource "google_storage_bucket" "recorder" {
 data "google_client_openid_userinfo" "me" {}
 
 resource "google_monitoring_alert_policy" "bucket-access" {
-  count = len(var.notification_channels) > 0 ? 1 : 0
+  count = length(var.notification_channels) > 0 ? 1 : 0
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
