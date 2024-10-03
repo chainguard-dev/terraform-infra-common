@@ -109,9 +109,3 @@ variable "ack_deadline_seconds" {
   type        = number
   default     = 300
 }
-
-variable "enable_lasers" {
-  description = "Whether to enable alert policy for abnormal access to resource."
-  type        = bool
-  default     = false
-}

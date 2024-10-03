@@ -180,9 +180,3 @@ variable "enable_profiler" {
   default     = false
   description = "Enable cloud profiler."
 }
-
-variable "enable_lasers" {
-  description = "Whether to enable alert policy for abnormal access to resource."
-  type        = bool
-  default     = false
-}

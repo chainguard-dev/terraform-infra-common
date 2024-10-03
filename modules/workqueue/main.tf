@@ -18,7 +18,7 @@ resource "google_storage_bucket_iam_binding" "authorize-access" {
   for_each = var.regions
 
   bucket = google_storage_bucket.workqueue[each.key].name
-  role = "roles/storage.admin"
+  role   = "roles/storage.admin"
   members = [
     "serviceAccount:${google_service_account.receiver.email}",
     "serviceAccount:${google_service_account.dispatcher.email}",
@@ -48,7 +48,7 @@ resource "google_pubsub_topic_iam_binding" "gcs-publishes-to-topic" {
 resource "google_storage_notification" "object-change-notifications" {
   for_each = var.regions
 
-  depends_on = [ google_pubsub_topic_iam_binding.gcs-publishes-to-topic ]
+  depends_on = [google_pubsub_topic_iam_binding.gcs-publishes-to-topic]
 
   bucket         = google_storage_bucket.workqueue[each.key].name
   payload_format = "JSON_API_V1"

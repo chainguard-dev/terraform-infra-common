@@ -143,9 +143,3 @@ variable "flush_interval" {
   type        = string
   default     = ""
 }
-
-variable "enable_lasers" {
-  description = "Whether to enable alert policy for abnormal access to resource."
-  type        = bool
-  default     = false
-}

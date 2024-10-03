@@ -89,7 +89,6 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_data"></a> [data](#input\_data) | The data to place in the secret. | `string` | n/a | yes |
-| <a name="input_enable_lasers"></a> [enable\_lasers](#input\_enable\_lasers) | Whether to enable alert policy for abnormal access to resource. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the secret. | `string` | n/a | yes |
 | <a name="input_notification-channels"></a> [notification-channels](#input\_notification-channels) | The channels to notify if the configuration data is improperly accessed. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |

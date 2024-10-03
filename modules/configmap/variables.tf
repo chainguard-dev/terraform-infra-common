@@ -21,9 +21,3 @@ variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)
 }
-
-variable "enable_lasers" {
-  description = "Whether to enable alert policy for abnormal access to resource."
-  type        = bool
-  default     = false
-}

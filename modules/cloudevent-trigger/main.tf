@@ -31,7 +31,7 @@ resource "google_service_account_iam_binding" "allow-pubsub-to-mint-tokens" {
 }
 
 module "audit-trigger-serviceaccount" {
-  count = var.enable_lasers ? 1 : 0
+  count = len(var.notification_channels) > 0 ? 1 : 0
 
   source = "../audit-serviceaccount"
 

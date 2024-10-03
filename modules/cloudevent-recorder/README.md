@@ -137,7 +137,6 @@ No requirements.
 | <a name="input_cloud_storage_config_max_bytes"></a> [cloud\_storage\_config\_max\_bytes](#input\_cloud\_storage\_config\_max\_bytes) | The maximum bytes that can be written to a Cloud Storage file before a new file is created. Min 1 KB, max 10 GiB. | `number` | `1000000000` | no |
 | <a name="input_cloud_storage_config_max_duration"></a> [cloud\_storage\_config\_max\_duration](#input\_cloud\_storage\_config\_max\_duration) | The maximum duration that can elapse before a new Cloud Storage file is created. Min 1 minute, max 10 minutes, default 5 minutes. | `number` | `300` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable deletion protection on data resources. | `bool` | `true` | no |
-| <a name="input_enable_lasers"></a> [enable\_lasers](#input\_enable\_lasers) | Whether to enable alert policy for abnormal access to resource. | `bool` | `false` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
 | <a name="input_flush_interval"></a> [flush\_interval](#input\_flush\_interval) | Flush interval for logrotate, as a duration string. | `string` | `""` | no |
 | <a name="input_ignore_unknown_values"></a> [ignore\_unknown\_values](#input\_ignore\_unknown\_values) | Whether to ignore unknown values in the data, when transferring data to BigQuery. | `bool` | `false` | no |
