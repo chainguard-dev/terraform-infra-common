@@ -48,7 +48,7 @@ module "work-added" {
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
     "metric.label.\"service_name\"=\"${var.name}-rcv\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\""]
+  group_by_fields  = ["metric.label.\"service_name\""]
   primary_align    = "ALIGN_RATE"
   primary_reduce   = "REDUCE_NONE"
   secondary_align  = "ALIGN_NONE"
