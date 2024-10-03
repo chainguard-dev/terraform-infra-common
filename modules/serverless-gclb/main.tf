@@ -91,6 +91,8 @@ resource "google_compute_backend_service" "public-services" {
       enabled              = iap.value["enabled"]
     }
   }
+
+  security_policy = var.security-policy
 }
 
 // Create a URL map that routes each hostname to the appropriate backend service.
@@ -121,8 +123,6 @@ resource "google_compute_url_map" "public-service" {
       default_service = google_compute_backend_service.public-services[path_matcher.key].id
     }
   }
-
-  security_policy = var.security-policy
 }
 
 // Create an HTTPS proxy for our URL map.
