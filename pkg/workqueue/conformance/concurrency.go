@@ -27,7 +27,7 @@ func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 
 	inflight := int32(0)
 
-	var cb dispatcher.Callback = func(_ context.Context, key string) error {
+	var cb dispatcher.Callback = func(_ context.Context, key string, _ workqueue.Options) error {
 		newVal := atomic.AddInt32(&inflight, 1)
 		defer atomic.AddInt32(&inflight, -1)
 		if newVal > 5 {
@@ -75,7 +75,7 @@ func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Failed to generate random number: %v", err)
 		}
 
-		if err := wq.Queue(ctx, bi.String()); err != nil {
+		if err := wq.Queue(ctx, bi.String(), workqueue.Options{}); err != nil {
 			t.Fatalf("Queue failed: %v", err)
 		}
 		time.Sleep(10 * time.Millisecond)

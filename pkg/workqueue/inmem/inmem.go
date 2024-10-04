@@ -22,7 +22,7 @@ func NewWorkQueue(limit int) workqueue.Interface {
 		limit: limit,
 
 		wip:   make(map[string]struct{}, limit),
-		queue: make(map[string]time.Time, 10),
+		queue: make(map[string]queueItem, 10),
 	}
 }
 
@@ -32,17 +32,29 @@ type wq struct {
 	// rw guards the key sets.
 	rw    sync.RWMutex
 	wip   map[string]struct{}
-	queue map[string]time.Time
+	queue map[string]queueItem
+}
+
+type queueItem struct {
+	queued   time.Time
+	priority int64
 }
 
 var _ workqueue.Interface = (*wq)(nil)
 
 // Queue implements workqueue.Interface.
-func (w *wq) Queue(_ context.Context, key string) error {
+func (w *wq) Queue(_ context.Context, key string, opts workqueue.Options) error {
 	w.rw.Lock()
 	defer w.rw.Unlock()
-	if _, ok := w.queue[key]; !ok {
-		w.queue[key] = time.Now().UTC()
+	if qi, ok := w.queue[key]; !ok {
+		w.queue[key] = queueItem{
+			queued:   time.Now().UTC(),
+			priority: opts.Priority,
+		}
+	} else if qi.priority < opts.Priority {
+		// Raise the priority of the queued item.
+		qi.priority = opts.Priority
+		w.queue[key] = qi
 	}
 	return nil
 }
@@ -53,8 +65,9 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 	defer w.rw.RUnlock()
 	wip := make([]workqueue.ObservedInProgressKey, 0, len(w.wip))
 	qd := make([]struct {
-		key string
-		ts  time.Time
+		key      string
+		priority int64
+		ts       time.Time
 	}, 0, w.limit+1)
 
 	for k := range w.wip {
@@ -67,14 +80,19 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 	// Collect the top "limit" queued keys.
 	for k, ts := range w.queue {
 		qd = append(qd, struct {
-			key string
-			ts  time.Time
+			key      string
+			priority int64
+			ts       time.Time
 		}{
-			key: k,
-			ts:  ts,
+			key:      k,
+			priority: ts.priority,
+			ts:       ts.queued,
 		})
 		sort.Slice(qd, func(i, j int) bool {
-			return qd[i].ts.Before(qd[j].ts)
+			if qd[i].priority == qd[j].priority {
+				return qd[i].ts.Before(qd[j].ts)
+			}
+			return qd[i].priority > qd[j].priority
 		})
 		if len(qd) > w.limit {
 			qd = qd[:w.limit]
@@ -84,16 +102,18 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 	qk := make([]workqueue.QueuedKey, 0, len(qd))
 	for _, q := range qd {
 		qk = append(qk, &queuedKey{
-			wq:  w,
-			key: q.key,
+			wq:       w,
+			key:      q.key,
+			priority: q.priority,
 		})
 	}
 	return wip, qk, nil
 }
 
 type inProgressKey struct {
-	wq  *wq
-	key string
+	wq       *wq
+	key      string
+	priority int64
 
 	ownerCtx    context.Context
 	ownerCancel context.CancelFunc
@@ -107,6 +127,11 @@ func (o *inProgressKey) Name() string {
 	return o.key
 }
 
+// Priority implements workqueue.Key.
+func (o *inProgressKey) Priority() int64 {
+	return o.priority
+}
+
 // Requeue implements workqueue.InProgressKey.
 func (o *inProgressKey) Requeue(_ context.Context) error {
 	if o.ownerCancel != nil {
@@ -114,8 +139,15 @@ func (o *inProgressKey) Requeue(_ context.Context) error {
 	}
 	o.wq.rw.Lock()
 	defer o.wq.rw.Unlock()
-	if _, ok := o.wq.queue[o.key]; !ok {
-		o.wq.queue[o.key] = time.Now().UTC()
+	if qi, ok := o.wq.queue[o.key]; !ok {
+		o.wq.queue[o.key] = queueItem{
+			queued:   time.Now().UTC(),
+			priority: o.Priority(),
+		}
+	} else if qi.priority < o.Priority() {
+		// Raise the priority of the queued item.
+		qi.priority = o.Priority()
+		o.wq.queue[o.key] = qi
 	}
 	delete(o.wq.wip, o.key)
 	return nil
@@ -141,8 +173,9 @@ func (o *inProgressKey) Context() context.Context {
 }
 
 type queuedKey struct {
-	wq  *wq
-	key string
+	wq       *wq
+	key      string
+	priority int64
 }
 
 var _ workqueue.QueuedKey = (*queuedKey)(nil)
@@ -150,6 +183,11 @@ var _ workqueue.QueuedKey = (*queuedKey)(nil)
 // Name implements workqueue.Key.
 func (q *queuedKey) Name() string {
 	return q.key
+}
+
+// Priority implements workqueue.Key.
+func (q *queuedKey) Priority() int64 {
+	return q.priority
 }
 
 // Start implements workqueue.QueuedKey.
@@ -172,6 +210,7 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	return &inProgressKey{
 		wq:          q.wq,
 		key:         q.key,
+		priority:    q.Priority(),
 		ownerCtx:    ctx,
 		ownerCancel: cancel,
 	}, nil

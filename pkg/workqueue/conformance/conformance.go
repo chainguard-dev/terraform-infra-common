@@ -35,7 +35,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	}
 
 	// Queue a key!
-	if err := wq.Queue(ctx, "foo"); err != nil {
+	if err := wq.Queue(ctx, "foo", workqueue.Options{}); err != nil {
 		t.Fatalf("Queue failed: %v", err)
 	}
 
@@ -52,7 +52,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	}
 
 	// Queue the same key!
-	if err := wq.Queue(ctx, "foo"); err != nil {
+	if err := wq.Queue(ctx, "foo", workqueue.Options{}); err != nil {
 		t.Fatalf("Queue failed: %v", err)
 	}
 
@@ -70,11 +70,59 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 
 	// Queue a new key!
 	time.Sleep(1 * time.Millisecond)
-	if err := wq.Queue(ctx, "bar"); err != nil {
+	if err := wq.Queue(ctx, "bar", workqueue.Options{}); err != nil {
 		t.Fatalf("Queue failed: %v", err)
 	}
 
 	// After we queue something, we should have two things queued.
+	wip, qd, err = wq.Enumerate(ctx)
+	if err != nil {
+		t.Fatalf("Enumerate failed: %v", err)
+	}
+	if want, got := 0, len(wip); want != got {
+		t.Errorf("Expected %d in-progress keys, got %d", want, got)
+	}
+	if want, got := 2, len(qd); want != got {
+		t.Fatalf("Expected %d queued keys, got %d", want, got)
+	}
+	if want, got := "foo", qd[0].Name(); want != got {
+		t.Errorf("Expected first queued key to be %q, got %q", want, got)
+	}
+
+	// Queue the same key with higher priority!
+	time.Sleep(1 * time.Millisecond)
+	if err := wq.Queue(ctx, "bar", workqueue.Options{
+		Priority: 1000,
+	}); err != nil {
+		t.Fatalf("Queue failed: %v", err)
+	}
+
+	// After queuing with a higher priority, we should see the later key at the
+	// front of the queue.
+	wip, qd, err = wq.Enumerate(ctx)
+	if err != nil {
+		t.Fatalf("Enumerate failed: %v", err)
+	}
+	if want, got := 0, len(wip); want != got {
+		t.Errorf("Expected %d in-progress keys, got %d", want, got)
+	}
+	if want, got := 2, len(qd); want != got {
+		t.Fatalf("Expected %d queued keys, got %d", want, got)
+	}
+	if want, got := "bar", qd[0].Name(); want != got {
+		t.Errorf("Expected first queued key to be %q, got %q", want, got)
+	}
+
+	// Queue the original key with higher priority!
+	time.Sleep(1 * time.Millisecond)
+	if err := wq.Queue(ctx, "foo", workqueue.Options{
+		Priority: 1000,
+	}); err != nil {
+		t.Fatalf("Queue failed: %v", err)
+	}
+
+	// After queuing with a higher priority, we should see the first key retake
+	// its position at the front of the queue.
 	wip, qd, err = wq.Enumerate(ctx)
 	if err != nil {
 		t.Fatalf("Enumerate failed: %v", err)
@@ -136,7 +184,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	}
 
 	// Queue the in-progress key.
-	if err := wq.Queue(ctx, owned.Name()); err != nil {
+	if err := wq.Queue(ctx, owned.Name(), workqueue.Options{}); err != nil {
 		t.Fatalf("Queue failed: %v", err)
 	}
 
@@ -219,11 +267,43 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 		t.Errorf("Expected first queued key to be %q, got %q", want, got)
 	}
 
+	// Queue a new key, but with a high priority.
+	time.Sleep(1 * time.Millisecond)
+	if err := wq.Queue(ctx, "foo", workqueue.Options{
+		Priority: 1001,
+	}); err != nil {
+		t.Fatalf("Queue failed: %v", err)
+	}
+
+	// Now we should just have the one key queued.
+	wip, qd, err = wq.Enumerate(ctx)
+	if err != nil {
+		t.Fatalf("Enumerate failed: %v", err)
+	}
+	if want, got := 0, len(wip); want != got {
+		t.Errorf("Expected %d in-progress keys, got %d", want, got)
+	}
+	if want, got := 2, len(qd); want != got {
+		t.Errorf("Expected %d queued keys, got %d", want, got)
+	}
+	if want, got := "foo", qd[0].Name(); want != got {
+		t.Errorf("Expected first queued key to be %q, got %q", want, got)
+	}
+
+	// Process the first key
+	owned, err = qd[0].Start(ctx)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	if err := owned.Complete(ctx); err != nil {
+		t.Fatalf("Complete failed: %v", err)
+	}
+
 	// Queue more keys than the limit, and then check that we only return the
 	// expected number of keys (the limit).
 	for i := 0; i < 10; i++ {
 		time.Sleep(1 * time.Millisecond)
-		if err := wq.Queue(ctx, fmt.Sprintf("key-%d", i)); err != nil {
+		if err := wq.Queue(ctx, fmt.Sprintf("key-%d", i), workqueue.Options{}); err != nil {
 			t.Fatalf("Queue failed: %v", err)
 		}
 	}

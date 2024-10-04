@@ -59,7 +59,7 @@ func main() {
 	}
 
 	// Enqueue the key
-	if err := wq.Queue(ctx, *key); err != nil {
+	if err := wq.Queue(ctx, *key, workqueue.Options{}); err != nil {
 		log.Fatalf("Failed to enqueue key: %v", err)
 	}
 	fmt.Println("Key enqueued successfully")

@@ -59,15 +59,20 @@ const (
 	inProgressPrefix      = "in-progress/"
 	expirationMetadataKey = "lease-expiration"
 	attemptsMetadataKey   = "attempts"
+	priorityMetadataKey   = "priority"
 )
 
 // Queue implements workqueue.Interface.
-func (w *wq) Queue(ctx context.Context, key string) error {
+func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) error {
 	writer := w.client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).If(storage.Conditions{
 		DoesNotExist: true,
 	}).NewWriter(ctx)
 
 	writer.Metadata = map[string]string{
+		// Zero-pad the priority to 8 digits to ensure lexicographic ordering,
+		// so that we don't have to parse it to order things.
+		priorityMetadataKey: fmt.Sprintf("%08d", opts.Priority),
+
 		// TODO(nghia): Extract and persist things like trace headers here.
 	}
 	mAddedKeys.With(prometheus.Labels{
@@ -86,6 +91,30 @@ func (w *wq) Queue(ctx context.Context, key string) error {
 			"service_name":  env.KnativeServiceName,
 			"revision_name": env.KnativeRevisionName,
 		}).Add(1)
+
+		switch {
+		case opts.Priority > 0:
+		default:
+			// No options, so don't bother fetching the queued object.
+			return nil
+		}
+		attrs, err := w.client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Attrs(ctx)
+		if err != nil {
+			return fmt.Errorf("Attrs() = %w", err)
+		}
+
+		update := false
+		if p, ok := attrs.Metadata[priorityMetadataKey]; !ok || p < writer.Metadata[priorityMetadataKey] {
+			attrs.Metadata[priorityMetadataKey] = writer.Metadata[priorityMetadataKey]
+			update = true
+		}
+		if update {
+			if _, err := w.client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Update(ctx, storage.ObjectAttrsToUpdate{
+				Metadata: attrs.Metadata,
+			}); err != nil {
+				return fmt.Errorf("Update() = %w", err)
+			}
+		}
 	}
 	return nil
 }
@@ -111,7 +140,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	iter := w.client.Objects(ctx, nil)
 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
-	qd := make([]*storage.ObjectAttrs, 0, w.limit+1)
+	qd := make([]*queuedKey, 0, w.limit+1)
 
 	queued := 0
 	for {
@@ -121,21 +150,37 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("Next() = %w", err)
 		}
+		var priority int64
+		if p, ok := objAttrs.Metadata[priorityMetadataKey]; ok {
+			priority, err = strconv.ParseInt(p, 10, 64)
+			if err != nil {
+				clog.WarnContextf(ctx, "Failed to parse priority: %v", err)
+			}
+		}
 
 		switch {
 		case strings.HasPrefix(objAttrs.Name, inProgressPrefix):
 			wip = append(wip, &inProgressKey{
-				client: w.client,
-				attrs:  objAttrs,
+				client:   w.client,
+				attrs:    objAttrs,
+				priority: priority,
 			})
 
 		case strings.HasPrefix(objAttrs.Name, queuedPrefix):
-			qd = append(qd, objAttrs)
+			qd = append(qd, &queuedKey{
+				client:   w.client,
+				attrs:    objAttrs,
+				priority: priority,
+			})
 			sort.Slice(qd, func(i, j int) bool {
-				if qd[i].Created.Equal(qd[j].Created) {
-					return qd[i].Name < qd[j].Name
+				if lhs, rhs := qd[i].Priority(), qd[j].Priority(); lhs != rhs {
+					// First consider priority.
+					return lhs > rhs
 				}
-				return qd[i].Created.Before(qd[j].Created)
+				if !qd[i].attrs.Created.Equal(qd[j].attrs.Created) {
+					return qd[i].attrs.Created.Before(qd[j].attrs.Created)
+				}
+				return qd[i].attrs.Name < qd[j].attrs.Name
 			})
 			if len(qd) > w.limit {
 				qd = qd[:w.limit]
@@ -145,11 +190,8 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	}
 
 	qk := make([]workqueue.QueuedKey, 0, len(qd))
-	for _, objAttrs := range qd {
-		qk = append(qk, &queuedKey{
-			client: w.client,
-			attrs:  objAttrs,
-		})
+	for _, qi := range qd {
+		qk = append(qk, qi)
 	}
 
 	mInProgressKeys.With(prometheus.Labels{
@@ -168,6 +210,8 @@ type inProgressKey struct {
 	ownerCtx    context.Context
 	ownerCancel context.CancelFunc
 
+	priority int64
+
 	// Once we start to heartbeat things, then that thread may update attrs,
 	// so use the RWMutex to protect it from concurrent access.
 	rw    sync.RWMutex
@@ -182,6 +226,11 @@ func (o *inProgressKey) Name() string {
 	o.rw.RLock()
 	defer o.rw.RUnlock()
 	return strings.TrimPrefix(o.attrs.Name, inProgressPrefix)
+}
+
+// Priority implements workqueue.Key.
+func (o *inProgressKey) Priority() int64 {
+	return o.priority
 }
 
 // Requeue implements workqueue.InProgressKey.
@@ -300,8 +349,9 @@ func (o *inProgressKey) startHeartbeat(ctx context.Context) {
 }
 
 type queuedKey struct {
-	client ClientInterface
-	attrs  *storage.ObjectAttrs
+	client   ClientInterface
+	attrs    *storage.ObjectAttrs
+	priority int64
 }
 
 var _ workqueue.QueuedKey = (*queuedKey)(nil)
@@ -309,6 +359,11 @@ var _ workqueue.QueuedKey = (*queuedKey)(nil)
 // Name implements workqueue.Key.
 func (q *queuedKey) Name() string {
 	return strings.TrimPrefix(q.attrs.Name, queuedPrefix)
+}
+
+// Priority implements workqueue.Key.
+func (q *queuedKey) Priority() int64 {
+	return q.priority
 }
 
 // Start implements workqueue.QueuedKey.
@@ -357,8 +412,9 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	}
 
 	oip := &inProgressKey{
-		client: q.client,
-		attrs:  attrs,
+		client:   q.client,
+		attrs:    attrs,
+		priority: q.priority,
 	}
 
 	// start a process to heartbeat things, and set up a context that we can

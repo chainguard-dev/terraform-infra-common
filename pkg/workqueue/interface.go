@@ -10,7 +10,7 @@ import "context"
 // Interface is the interface that workqueue implementations must implement.
 type Interface interface {
 	// Queue adds an item to the workqueue.
-	Queue(ctx context.Context, key string) error
+	Queue(ctx context.Context, key string, opts Options) error
 
 	// Enumerate returns:
 	// - a list of all of the in-progress keys, and
@@ -19,10 +19,20 @@ type Interface interface {
 	Enumerate(ctx context.Context) ([]ObservedInProgressKey, []QueuedKey, error)
 }
 
+// Options is a set of options that can be passed when queuing a key.
+type Options struct {
+	// Priority is the priority of the key.
+	// Higher values are processed first.
+	Priority int64
+}
+
 // Key is a shared interface that all key types must implement.
 type Key interface {
 	// Name is the name of the key.
 	Name() string
+
+	// Priority is the priority of the key.
+	Priority() int64
 }
 
 // QueuedKey is a key that is in the queue, waiting to be processed.

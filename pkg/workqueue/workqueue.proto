@@ -9,7 +9,11 @@ service WorkqueueService {
 }
 
 message ProcessRequest {
+  // The key of the work item
   string key = 1;
+
+  // The (optional) priority of the work item, where higher numbers are processed first.
+  int64 priority = 2;
 }
 
 message ProcessResponse {}
