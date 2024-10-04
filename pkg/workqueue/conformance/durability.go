@@ -38,7 +38,7 @@ func TestDurability(t *testing.T, ctor func(int) workqueue.Interface) {
 		}
 
 		// Queue a key!
-		if err := wq.Queue(ctx, "foo"); err != nil {
+		if err := wq.Queue(ctx, "foo", workqueue.Options{}); err != nil {
 			t.Fatalf("Queue failed: %v", err)
 		}
 

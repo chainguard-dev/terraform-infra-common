@@ -74,7 +74,9 @@ type enq struct {
 }
 
 func (y *enq) Process(ctx context.Context, req *workqueue.ProcessRequest) (*workqueue.ProcessResponse, error) {
-	if err := y.wq.Queue(ctx, req.Key); err != nil {
+	if err := y.wq.Queue(ctx, req.Key, workqueue.Options{
+		Priority: req.Priority,
+	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "Queue() = %v", err)
 	}
 	return &workqueue.ProcessResponse{}, nil

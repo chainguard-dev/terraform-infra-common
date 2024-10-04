@@ -16,13 +16,14 @@ import (
 )
 
 // Callback is the function that Handle calls to process a particular key.
-type Callback func(ctx context.Context, key string) error
+type Callback func(ctx context.Context, key string, opts workqueue.Options) error
 
 // ServiceCallback returns a Callback that invokes the given service.
 func ServiceCallback(client workqueue.WorkqueueServiceClient) Callback {
-	return func(ctx context.Context, key string) error {
+	return func(ctx context.Context, key string, opts workqueue.Options) error {
 		_, err := client.Process(ctx, &workqueue.ProcessRequest{
-			Key: key,
+			Key:      key,
+			Priority: opts.Priority,
 		})
 		return err
 	}
@@ -99,7 +100,9 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 			}
 
 			// Attempt to perform the actual reconciler invocation.
-			if err := f(oip.Context(), oip.Name()); err != nil {
+			if err := f(oip.Context(), oip.Name(), workqueue.Options{
+				Priority: oip.Priority(),
+			}); err != nil {
 				clog.WarnContextf(ctx, "Failed callback for key %q: %v", oip.Name(), err)
 
 				// Requeue if it fails (stops heartbeat).
