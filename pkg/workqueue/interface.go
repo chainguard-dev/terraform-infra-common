@@ -5,7 +5,9 @@ SPDX-License-Identifier: Apache-2.0
 
 package workqueue
 
-import "context"
+import (
+	"context"
+)
 
 // Interface is the interface that workqueue implementations must implement.
 type Interface interface {
