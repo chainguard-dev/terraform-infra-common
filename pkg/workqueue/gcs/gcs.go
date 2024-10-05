@@ -72,9 +72,8 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 		// Zero-pad the priority to 8 digits to ensure lexicographic ordering,
 		// so that we don't have to parse it to order things.
 		priorityMetadataKey: fmt.Sprintf("%08d", opts.Priority),
-
-		// TODO(nghia): Extract and persist things like trace headers here.
 	}
+
 	mAddedKeys.With(prometheus.Labels{
 		"service_name":  env.KnativeServiceName,
 		"revision_name": env.KnativeRevisionName,
@@ -98,22 +97,34 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 			// No options, so don't bother fetching the queued object.
 			return nil
 		}
-		attrs, err := w.client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Attrs(ctx)
-		if err != nil {
-			return fmt.Errorf("Attrs() = %w", err)
-		}
-
-		update := false
-		if p, ok := attrs.Metadata[priorityMetadataKey]; !ok || p < writer.Metadata[priorityMetadataKey] {
-			attrs.Metadata[priorityMetadataKey] = writer.Metadata[priorityMetadataKey]
-			update = true
-		}
-		if update {
-			if _, err := w.client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Update(ctx, storage.ObjectAttrsToUpdate{
-				Metadata: attrs.Metadata,
-			}); err != nil {
-				return fmt.Errorf("Update() = %w", err)
+		if err := updateMetadata(ctx, w.client, key, writer.Metadata); err != nil {
+			if errors.Is(err, storage.ErrObjectNotExist) {
+				clog.InfoContextf(ctx, "Key %q was deleted before we could fetch the duplicate, recursing.", key)
+				return w.Queue(ctx, key, opts)
 			}
+			return fmt.Errorf("updateMetadata() = %w", err)
+		}
+	}
+	return nil
+}
+
+func updateMetadata(ctx context.Context, client ClientInterface, key string, metadata map[string]string) error {
+	attrs, err := client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Attrs(ctx)
+	if err != nil {
+		return fmt.Errorf("Attrs() = %w", err)
+	}
+
+	update := false
+	if p, ok := attrs.Metadata[priorityMetadataKey]; !ok || p < metadata[priorityMetadataKey] {
+		clog.InfoContextf(ctx, "Updating %s priority from %q to %q", key, p, metadata[priorityMetadataKey])
+		attrs.Metadata[priorityMetadataKey] = metadata[priorityMetadataKey]
+		update = true
+	}
+	if update {
+		if _, err := client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Update(ctx, storage.ObjectAttrsToUpdate{
+			Metadata: attrs.Metadata,
+		}); err != nil {
+			return fmt.Errorf("Update() = %w", err)
 		}
 	}
 	return nil
@@ -256,8 +267,17 @@ func (o *inProgressKey) Requeue(ctx context.Context) error {
 	}
 
 	_, err := copier.Run(ctx)
-	if _, err = checkPreconditionFailedOk(err); err != nil {
+	if exists, err := checkPreconditionFailedOk(err); err != nil {
 		return fmt.Errorf("Run() = %w", err)
+	} else if exists {
+		// TODO(mattmoor): Elide the stat if there's nothing to do?
+		if err := updateMetadata(ctx, o.client, key, copier.Metadata); err != nil {
+			if errors.Is(err, storage.ErrObjectNotExist) {
+				clog.InfoContextf(ctx, "Key %q was deleted before we could fetch the duplicate, recursing.", key)
+				return o.Requeue(ctx)
+			}
+			return fmt.Errorf("updateMetadata() = %w", err)
+		}
 	}
 	return o.client.Object(o.attrs.Name).Delete(ctx)
 }

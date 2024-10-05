@@ -24,18 +24,17 @@ func TestDurability(t *testing.T, ctor func(int) workqueue.Interface) {
 		if wq == nil {
 			t.Fatal("NewWorkQueue returned nil")
 		}
+		t.Cleanup(func() {
+			if err := drain(wq); err != nil {
+				t.Fatalf("Drain failed: %v", err)
+			}
+
+			// Ensure we return to an empty queue.
+			_, _ = checkQueue(t, wq, ExpectedState{})
+		})
 
 		// Before we queue anything, we should have nothing in progress or queued.
-		wip, qd, err := wq.Enumerate(ctx)
-		if err != nil {
-			t.Fatalf("Enumerate failed: %v", err)
-		}
-		if want, got := 0, len(wip); want != got {
-			t.Errorf("Expected %d in-progress keys, got %d", want, got)
-		}
-		if want, got := 0, len(qd); want != got {
-			t.Errorf("Expected %d queued keys, got %d", want, got)
-		}
+		_, _ = checkQueue(t, wq, ExpectedState{})
 
 		// Queue a key!
 		if err := wq.Queue(ctx, "foo", workqueue.Options{}); err != nil {
@@ -43,16 +42,9 @@ func TestDurability(t *testing.T, ctor func(int) workqueue.Interface) {
 		}
 
 		// After we queue something, we should have one thing queued.
-		wip, qd, err = wq.Enumerate(ctx)
-		if err != nil {
-			t.Fatalf("Enumerate failed: %v", err)
-		}
-		if want, got := 0, len(wip); want != got {
-			t.Errorf("Expected %d in-progress keys, got %d", want, got)
-		}
-		if want, got := 1, len(qd); want != got {
-			t.Errorf("Expected %d queued keys, got %d", want, got)
-		}
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
 	}
 
 	// Now with a separate instance of the workqueue, make sure it is still
@@ -63,20 +55,9 @@ func TestDurability(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatal("NewWorkQueue returned nil")
 		}
 
-		// After we queue something, we should have one thing queued.
-		wip, qd, err := wq.Enumerate(ctx)
-		if err != nil {
-			t.Fatalf("Enumerate failed: %v", err)
-		}
-		if want, got := 0, len(wip); want != got {
-			t.Errorf("Expected %d in-progress keys, got %d", want, got)
-		}
-		if want, got := 1, len(qd); want != got {
-			t.Errorf("Expected %d queued keys, got %d", want, got)
-		}
-
-		if err := drain(ctx, wq); err != nil {
-			t.Fatalf("Drain failed: %v", err)
-		}
+		// A durable workqueue should still have the item in the queue.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
 	}
 }
