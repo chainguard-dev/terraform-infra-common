@@ -85,6 +85,13 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 		concurrency: 5,
 	}
 
+	// Use this, which the implementations can adjust to a suitable delay.
+	delay := workqueue.BackoffPeriod
+
+	// Cap the maximum backoff to 2x the delay, so that tests run in a
+	// reasonable amount of time.
+	workqueue.MaximumBackoffPeriod = 2 * delay
+
 	ct.scenario("simple queue ordering", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
 		// Queue a key!
 		if err := wq.Queue(ctx, "foo", workqueue.Options{}); err != nil {
@@ -371,9 +378,265 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Requeue failed: %v", err)
 		}
 
-		// Check that the order of the queued keys has flipped.
+		// Check that "foo" has disappeared because it now has a NotBefore
+		// set due to the backoff of the requeue.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"bar"},
+		})
+
+		// Sleep for the backoff period.
+		time.Sleep(workqueue.BackoffPeriod)
+
+		// Now "foo" should be back and before "bar" because it has a higher
+		// priority.
 		_, _ = checkQueue(t, wq, ExpectedState{
 			Queued: []string{"foo", "bar"},
+		})
+	})
+
+	ct.scenario("simple not before", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Queue a key with NotBefore.
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			NotBefore: time.Now().UTC().Add(delay),
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should appear empty.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the NotBefore delay.
+		time.Sleep(delay)
+
+		// The queue should now have the key.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Queue the same key again with a NotBefore.
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			NotBefore: time.Now().UTC().Add(delay),
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should appear empty because the later NotBefore won.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Queue the same key again with a NotBefore that's twice as long.
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			NotBefore: time.Now().UTC().Add(2 * delay),
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should appear empty
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the NotBefore delay.
+		time.Sleep(delay)
+
+		// The queue should STILL appear empty because the doubled delay
+		// should have won.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the NotBefore delay one last time.
+		time.Sleep(delay)
+
+		// The queue should now have the key.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+	})
+
+	ct.scenario("queue not before with priorities", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Queue the first key without NotBefore or Priority
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			// No NotBefore or Priority
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should have the key.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Queue a second key with a short NotBefore and higher Priority
+		if err := wq.Queue(ctx, "bar", workqueue.Options{
+			NotBefore: time.Now().UTC().Add(delay),
+			Priority:  1000,
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// Initially the queue doesn't show the key
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Sleep for the NotBefore delay.
+		time.Sleep(delay)
+
+		// Now the second key appears and jumps the queue.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"bar", "foo"},
+		})
+	})
+
+	ct.scenario("requeue doesn't reset not before", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Queue a key without NotBefore set.
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			// No NotBefore.
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should have the key.
+		_, qd := checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Start processing the first key.
+		owned, err := qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// The key should now be in progress
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Queue the key again with a short NotBefore delay.
+		if err := wq.Queue(ctx, owned.Name(), workqueue.Options{
+			NotBefore: time.Now().UTC().Add(delay),
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should still have the key just in-progress.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Requeue the key.
+		if err := owned.Requeue(ctx); err != nil {
+			t.Fatalf("Requeue failed: %v", err)
+		}
+
+		// The requeue should not reset NotBefore.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the NotBefore delay.
+		time.Sleep(delay)
+
+		// Now the key should show as queued.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+	})
+
+	ct.scenario("requeuing a priority task has backoff", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Queue a key without NotBefore set, but with a Priority
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			Priority: 1000,
+			// No NotBefore.
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should have the key.
+		_, qd := checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Start processing the first key.
+		owned, err := qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// The key should now be in progress
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Requeue the key.
+		if err := owned.Requeue(ctx); err != nil {
+			t.Fatalf("Requeue failed: %v", err)
+		}
+
+		// The key shouldn't appear until the backoff period has passed.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the backoff period.
+		time.Sleep(workqueue.BackoffPeriod)
+
+		// Now the key should show as queued.
+		_, qd = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Start processing the key again.
+		owned, err = qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// The key should now be in progress
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Requeue the key.
+		if err := owned.Requeue(ctx); err != nil {
+			t.Fatalf("Requeue failed: %v", err)
+		}
+
+		// The key shouldn't appear until 2x the backoff period has passed.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the backoff period.
+		time.Sleep(workqueue.BackoffPeriod)
+
+		// The key shouldn't appear until 2x the backoff period has passed.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the backoff period AGAIN.
+		time.Sleep(workqueue.BackoffPeriod)
+
+		// Now the key should show as queued.
+		_, qd = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Start processing the key a final time.
+		owned, err = qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// The key should now be in progress
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Requeue the key.
+		if err := owned.Requeue(ctx); err != nil {
+			t.Fatalf("Requeue failed: %v", err)
+		}
+
+		// The key shouldn't appear until 2x the backoff period has passed
+		// because we capped the maximum backoff at 2x.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the backoff period.
+		time.Sleep(2 * workqueue.BackoffPeriod)
+
+		// Now the key should show as queued.
+		_, _ = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
 		})
 	})
 }

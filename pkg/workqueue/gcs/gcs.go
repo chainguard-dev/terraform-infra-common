@@ -60,7 +60,11 @@ const (
 	expirationMetadataKey = "lease-expiration"
 	attemptsMetadataKey   = "attempts"
 	priorityMetadataKey   = "priority"
+	notBeforeMetadataKey  = "not-before"
 )
+
+var noPriority = fmt.Sprintf("%08d", 0)
+var noNotBefore = time.Time{}.UTC().Format(time.RFC3339)
 
 // Queue implements workqueue.Interface.
 func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) error {
@@ -73,6 +77,7 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 		// so that we don't have to parse it to order things.
 		priorityMetadataKey: fmt.Sprintf("%08d", opts.Priority),
 	}
+	writer.Metadata[notBeforeMetadataKey] = opts.NotBefore.UTC().Format(time.RFC3339)
 
 	mAddedKeys.With(prometheus.Labels{
 		"service_name":  env.KnativeServiceName,
@@ -91,12 +96,6 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 			"revision_name": env.KnativeRevisionName,
 		}).Add(1)
 
-		switch {
-		case opts.Priority > 0:
-		default:
-			// No options, so don't bother fetching the queued object.
-			return nil
-		}
 		if err := updateMetadata(ctx, w.client, key, writer.Metadata); err != nil {
 			if errors.Is(err, storage.ErrObjectNotExist) {
 				clog.InfoContextf(ctx, "Key %q was deleted before we could fetch the duplicate, recursing.", key)
@@ -109,6 +108,23 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 }
 
 func updateMetadata(ctx context.Context, client ClientInterface, key string, metadata map[string]string) error {
+	switch {
+	case metadata[priorityMetadataKey] != noPriority:
+		// If the priority was set, then attempt to merge it with the queued
+		// key.
+		break
+
+	case metadata[notBeforeMetadataKey] != noNotBefore:
+		// If the not before was set, then attempt to merge it with the queued
+		// key.  This is largely for Queue operations, as the NotBefore is
+		// cleared when we start processing the key.
+		break
+
+	default:
+		// No options, so don't bother fetching the queued object.
+		return nil
+	}
+
 	attrs, err := client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Attrs(ctx)
 	if err != nil {
 		return fmt.Errorf("Attrs() = %w", err)
@@ -118,6 +134,11 @@ func updateMetadata(ctx context.Context, client ClientInterface, key string, met
 	if p, ok := attrs.Metadata[priorityMetadataKey]; !ok || p < metadata[priorityMetadataKey] {
 		clog.InfoContextf(ctx, "Updating %s priority from %q to %q", key, p, metadata[priorityMetadataKey])
 		attrs.Metadata[priorityMetadataKey] = metadata[priorityMetadataKey]
+		update = true
+	}
+	if ts, ok := attrs.Metadata[notBeforeMetadataKey]; ok && ts < metadata[notBeforeMetadataKey] {
+		clog.InfoContextf(ctx, "Updating %s not-before from %q to %q", key, ts, metadata[notBeforeMetadataKey])
+		attrs.Metadata[notBeforeMetadataKey] = metadata[notBeforeMetadataKey]
 		update = true
 	}
 	if update {
@@ -178,6 +199,15 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 			})
 
 		case strings.HasPrefix(objAttrs.Name, queuedPrefix):
+			if nbf, ok := objAttrs.Metadata[notBeforeMetadataKey]; ok && nbf != "" {
+				if notBefore, err := time.Parse(time.RFC3339, nbf); err != nil {
+					clog.WarnContextf(ctx, "Failed to parse not-before: %v", err)
+				} else if time.Now().UTC().Before(notBefore) {
+					clog.InfoContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
+					continue
+				}
+			}
+
 			qd = append(qd, &queuedKey{
 				client:   w.client,
 				attrs:    objAttrs,
@@ -266,11 +296,25 @@ func (o *inProgressKey) Requeue(ctx context.Context) error {
 		delete(copier.Metadata, expirationMetadataKey)
 	}
 
+	if p, ok := copier.Metadata[priorityMetadataKey]; ok && p != noPriority {
+		// If priority is set, then add a backoff to avoid higher-priority
+		// failing tasks from starving low-priority work in the queue.
+		attempts, err := strconv.Atoi(copier.Metadata[attemptsMetadataKey])
+		if err != nil {
+			clog.WarnContextf(ctx, "Malformed attempts on %s: %v", key, err)
+			attempts = 1
+		}
+		backoffDelay := time.Duration(attempts * int(workqueue.BackoffPeriod))
+		if backoffDelay > workqueue.MaximumBackoffPeriod {
+			backoffDelay = workqueue.MaximumBackoffPeriod
+		}
+		copier.Metadata[notBeforeMetadataKey] = time.Now().UTC().Add(backoffDelay).Format(time.RFC3339)
+	}
+
 	_, err := copier.Run(ctx)
 	if exists, err := checkPreconditionFailedOk(err); err != nil {
 		return fmt.Errorf("Run() = %w", err)
 	} else if exists {
-		// TODO(mattmoor): Elide the stat if there's nothing to do?
 		if err := updateMetadata(ctx, o.client, key, copier.Metadata); err != nil {
 			if errors.Is(err, storage.ErrObjectNotExist) {
 				clog.InfoContextf(ctx, "Key %q was deleted before we could fetch the duplicate, recursing.", key)
@@ -422,6 +466,10 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	} else {
 		copier.Metadata[attemptsMetadataKey] = "1"
 	}
+	// Never persist the not-before metadata to a running task.
+	// We set it to the zero value instead of deleting it so that we can assume
+	// the invariant that this key is always present and date-formatted.
+	copier.Metadata[notBeforeMetadataKey] = noNotBefore
 
 	attrs, err := copier.Run(ctx)
 	if err != nil {

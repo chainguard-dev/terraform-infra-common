@@ -7,6 +7,20 @@ package workqueue
 
 import (
 	"context"
+	"time"
+)
+
+// Note that these are variables, so that they can be modified by tests and
+// made flags in binary entrypoints.
+var (
+	// BackoffPeriod is the unit of backoff used when requeueing keys.
+	// This unit is combined with the number of attempts to determine the
+	// wait period before a key should be reprocessed.
+	BackoffPeriod = 30 * time.Second
+
+	// MaximumBackoffPeriod is a cap on the period a key must wait before
+	// being retried.
+	MaximumBackoffPeriod = 10 * time.Minute
 )
 
 // Interface is the interface that workqueue implementations must implement.
@@ -26,6 +40,10 @@ type Options struct {
 	// Priority is the priority of the key.
 	// Higher values are processed first.
 	Priority int64
+
+	// NotBefore is the earliest time that the key should be processed.
+	// When deduplicating, the oldest time is used.
+	NotBefore time.Time
 }
 
 // Key is a shared interface that all key types must implement.
