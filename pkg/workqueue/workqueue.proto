@@ -14,6 +14,9 @@ message ProcessRequest {
 
   // The (optional) priority of the work item, where higher numbers are processed first.
   int64 priority = 2;
+
+  // The (optional) delay in second to wait before processing the work item.
+  int64 delay_seconds = 3;
 }
 
 message ProcessResponse {}
