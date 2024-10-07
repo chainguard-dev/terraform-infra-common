@@ -37,7 +37,8 @@ type wq struct {
 
 type queueItem struct {
 	workqueue.Options
-	queued time.Time
+	attempts int
+	queued   time.Time
 }
 
 var _ workqueue.Interface = (*wq)(nil)
@@ -55,6 +56,10 @@ func (w *wq) Queue(_ context.Context, key string, opts workqueue.Options) error 
 		// Raise the priority of the queued item.
 		qi.Priority = opts.Priority
 		w.queue[key] = qi
+	} else if qi.NotBefore.Before(opts.NotBefore) {
+		// Update the NotBefore time.
+		qi.NotBefore = opts.NotBefore
+		w.queue[key] = qi
 	}
 	return nil
 }
@@ -66,8 +71,9 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 	wip := make([]workqueue.ObservedInProgressKey, 0, len(w.wip))
 	qd := make([]struct {
 		workqueue.Options
-		key string
-		ts  time.Time
+		key      string
+		attempts int
+		ts       time.Time
 	}, 0, w.limit+1)
 
 	for k := range w.wip {
@@ -79,14 +85,20 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 
 	// Collect the top "limit" queued keys.
 	for k, ts := range w.queue {
+		if time.Now().UTC().Before(ts.NotBefore) {
+			// Skip keys that are not ready to be processed.
+			continue
+		}
 		qd = append(qd, struct {
 			workqueue.Options
-			key string
-			ts  time.Time
+			key      string
+			attempts int
+			ts       time.Time
 		}{
-			Options: ts.Options,
-			key:     k,
-			ts:      ts.queued,
+			Options:  ts.Options,
+			key:      k,
+			attempts: ts.attempts,
+			ts:       ts.queued,
 		})
 		sort.Slice(qd, func(i, j int) bool {
 			if qd[i].Priority == qd[j].Priority {
@@ -102,9 +114,10 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 	qk := make([]workqueue.QueuedKey, 0, len(qd))
 	for _, q := range qd {
 		qk = append(qk, &queuedKey{
-			Options: q.Options,
-			wq:      w,
-			key:     q.key,
+			Options:  q.Options,
+			wq:       w,
+			key:      q.key,
+			attempts: q.attempts,
 		})
 	}
 	return wip, qk, nil
@@ -112,6 +125,8 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 
 type inProgressKey struct {
 	workqueue.Options
+
+	attempts int
 
 	wq  *wq
 	key string
@@ -138,17 +153,37 @@ func (o *inProgressKey) Requeue(_ context.Context) error {
 	if o.ownerCancel != nil {
 		o.ownerCancel()
 	}
+
+	opts := o.Options
+	// If priority is set, then add a backoff to avoid higher-priority
+	// failing tasks from starving low-priority work in the queue.
+	if opts.Priority > 0 {
+		backoffDelay := time.Duration(o.attempts * int(workqueue.BackoffPeriod))
+		if backoffDelay > workqueue.MaximumBackoffPeriod {
+			backoffDelay = workqueue.MaximumBackoffPeriod
+		}
+		opts.NotBefore = time.Now().UTC().Add(backoffDelay)
+	}
+
 	o.wq.rw.Lock()
 	defer o.wq.rw.Unlock()
 	if qi, ok := o.wq.queue[o.key]; !ok {
 		o.wq.queue[o.key] = queueItem{
-			Options: o.Options,
-			queued:  time.Now().UTC(),
+			Options:  opts,
+			attempts: o.attempts,
+			queued:   time.Now().UTC(),
 		}
-	} else if qi.Priority < o.Priority() {
-		// Raise the priority of the queued item.
-		qi.Priority = o.Priority()
-		o.wq.queue[o.key] = qi
+	} else {
+		if qi.Priority < o.Priority() {
+			// Raise the priority of the queued item.
+			qi.Priority = o.Priority()
+			o.wq.queue[o.key] = qi
+		}
+		if qi.NotBefore.Before(opts.NotBefore) {
+			// Update the NotBefore time.
+			qi.NotBefore = opts.NotBefore
+			o.wq.queue[o.key] = qi
+		}
 	}
 
 	delete(o.wq.wip, o.key)
@@ -176,6 +211,8 @@ func (o *inProgressKey) Context() context.Context {
 
 type queuedKey struct {
 	workqueue.Options
+
+	attempts int
 
 	wq  *wq
 	key string
@@ -214,6 +251,7 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 		Options:     q.Options,
 		wq:          q.wq,
 		key:         q.key,
+		attempts:    q.attempts + 1,
 		ownerCtx:    ctx,
 		ownerCancel: cancel,
 	}, nil

@@ -9,6 +9,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"cloud.google.com/go/storage"
 
@@ -21,6 +22,9 @@ func TestWorkQueue(t *testing.T) {
 	if !ok {
 		t.Skip("WORKQUEUE_GCS_TEST_BUCKET not set")
 	}
+	// Adjust this to a suitable period for testing things.
+	// The conformance tests own adjusting MaximumBackoffPeriod.
+	workqueue.BackoffPeriod = 10 * time.Second
 
 	client, err := storage.NewClient(context.Background())
 	if err != nil {
