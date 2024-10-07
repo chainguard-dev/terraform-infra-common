@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"chainguard.dev/go-grpc-kit/pkg/duplex"
 	"cloud.google.com/go/storage"
@@ -74,8 +75,14 @@ type enq struct {
 }
 
 func (y *enq) Process(ctx context.Context, req *workqueue.ProcessRequest) (*workqueue.ProcessResponse, error) {
+	var nbf time.Time
+	if req.DelaySeconds > 0 {
+		// Set the NotBefore to N seconds in the future, when specified.
+		nbf = time.Now().UTC().Add(time.Duration(req.DelaySeconds) * time.Second)
+	}
 	if err := y.wq.Queue(ctx, req.Key, workqueue.Options{
-		Priority: req.Priority,
+		Priority:  req.Priority,
+		NotBefore: nbf,
 	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "Queue() = %v", err)
 	}
