@@ -129,7 +129,10 @@ func updateMetadata(ctx context.Context, client ClientInterface, key string, met
 	if err != nil {
 		return fmt.Errorf("Attrs() = %w", err)
 	}
-
+	// Inialialize the metadata map if it's nil.
+	if attrs.Metadata == nil {
+		attrs.Metadata = make(map[string]string, 2)
+	}
 	update := false
 	if p, ok := attrs.Metadata[priorityMetadataKey]; !ok || p < metadata[priorityMetadataKey] {
 		clog.InfoContextf(ctx, "Updating %s priority from %q to %q", key, p, metadata[priorityMetadataKey])
