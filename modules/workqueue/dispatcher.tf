@@ -111,9 +111,12 @@ module "cron-trigger-calls-dispatcher" {
 resource "google_cloud_scheduler_job" "cron" {
   for_each = var.regions
 
-  name             = "${var.name}-${each.key}"
-  description      = "Periodically trigger the dispatcher to dispatch work."
-  schedule         = "*/30 * * * *"
+  name        = "${var.name}-${each.key}"
+  description = "Periodically trigger the dispatcher to dispatch work."
+  // Schedule this to run every 5 minutes.  We do this more frequently now
+  // because otherwise we risk delaying tasks with a NotBefore for up to 30m
+  // if the workqueue is otherwise idle.
+  schedule         = "*/5 * * * *"
   time_zone        = "America/New_York"
   attempt_deadline = "1800s" // The maximum
   region           = each.key
