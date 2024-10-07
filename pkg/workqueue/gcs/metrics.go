@@ -37,6 +37,13 @@ var (
 		},
 		[]string{"service_name", "revision_name"},
 	)
+	mNotBeforeKeys = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "workqueue_notbefore_keys",
+			Help: "The number of keys waiting on a 'not before' in the backlog of this workqueue.",
+		},
+		[]string{"service_name", "revision_name"},
+	)
 	mWorkLatency = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "workqueue_process_latency_seconds",

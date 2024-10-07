@@ -174,7 +174,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
 	qd := make([]*queuedKey, 0, w.limit+1)
 
-	queued := 0
+	queued, notbefore := 0, 0
 	for {
 		objAttrs, err := iter.Next()
 		if errors.Is(err, iterator.Done) {
@@ -204,6 +204,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 					clog.WarnContextf(ctx, "Failed to parse not-before: %v", err)
 				} else if time.Now().UTC().Before(notBefore) {
 					clog.InfoContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
+					notbefore++
 					continue
 				}
 			}
@@ -243,6 +244,10 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 		"service_name":  env.KnativeServiceName,
 		"revision_name": env.KnativeRevisionName,
 	}).Set(float64(queued))
+	mNotBeforeKeys.With(prometheus.Labels{
+		"service_name":  env.KnativeServiceName,
+		"revision_name": env.KnativeRevisionName,
+	}).Set(float64(notbefore))
 	return wip, qk, nil
 }
 
