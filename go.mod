@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/bigquery v1.63.1
 	cloud.google.com/go/compute/metadata v0.5.2
 	cloud.google.com/go/profiler v0.4.1
-	cloud.google.com/go/pubsub v1.43.0
+	cloud.google.com/go/pubsub v1.44.0
 	cloud.google.com/go/storage v1.44.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.2
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
