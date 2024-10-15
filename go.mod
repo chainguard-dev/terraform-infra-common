@@ -10,7 +10,7 @@ require (
 	cloud.google.com/go/profiler v0.4.1
 	cloud.google.com/go/pubsub v1.44.0
 	cloud.google.com/go/storage v1.44.0
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.2
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.24.3
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/chainguard-dev/clog v1.5.1-0.20240811185937-4c523ae4593f
 	github.com/cloudevents/sdk-go/v2 v2.15.2
@@ -18,7 +18,7 @@ require (
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v61 v61.0.0
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.31.0
@@ -33,14 +33,14 @@ require (
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/time v0.7.0
-	google.golang.org/api v0.200.0
+	google.golang.org/api v0.201.0
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
 )
 
 require (
 	cel.dev/expr v0.16.1 // indirect
-	cloud.google.com/go v0.115.1 // indirect
+	cloud.google.com/go v0.116.0 // indirect
 	cloud.google.com/go/auth v0.9.8 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/iam v1.2.1 // indirect
@@ -49,7 +49,7 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.24.2 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.2 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.48.3 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
