@@ -1,4 +1,5 @@
 resource "google_service_account" "sa" {
+  count        = var.service_account_email == "" ? 1 : 0
   account_id   = "bot-${var.name}"
   display_name = "Service Account for ${var.name}"
 }
@@ -9,7 +10,9 @@ module "service" {
   name            = var.name
   project_id      = var.project_id
   regions         = var.regions
-  service_account = google_service_account.sa.email
+
+  service_account = var.service_account_email == "" ? google_service_account.sa[0].email : var.service_account_email
+
 
   egress = "PRIVATE_RANGES_ONLY" // Makes GitHub API calls
 
