@@ -4,6 +4,11 @@ resource "google_service_account" "sa" {
   display_name = "Service Account for ${var.name}"
 }
 
+moved {
+  from = google_service_account.sa
+  to = google_service_account.sa[0]
+}
+
 module "service" {
   source = "../regional-go-service"
 
