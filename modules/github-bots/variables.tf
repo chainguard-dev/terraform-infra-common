@@ -125,7 +125,7 @@ variable "deletion_protection" {
 }
 
 variable "service_account_email" {
-  description = "The email of the service account being authorized to invoke the private Cloud Run service."
+  description = "The email of the service account being authorized to invoke the private Cloud Run service. If empty, a service account will be created and used."
   type        = string
   default     = ""
 }
