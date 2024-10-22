@@ -1,5 +1,9 @@
+locals {
+  create_service_account = var.service_account_email == ""
+}
+
 resource "google_service_account" "sa" {
-  count        = var.service_account_email == "" ? 1 : 0
+  count        = local.create_service_account ? 1 : 0
   account_id   = "bot-${var.name}"
   display_name = "Service Account for ${var.name}"
 }
