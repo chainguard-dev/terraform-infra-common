@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.6
-	chainguard.dev/sdk v0.1.27
+	chainguard.dev/sdk v0.1.28
 	cloud.google.com/go/bigquery v1.63.1
 	cloud.google.com/go/compute/metadata v0.5.2
 	cloud.google.com/go/profiler v0.4.1
@@ -104,7 +104,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.55.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.29.0 // indirect
