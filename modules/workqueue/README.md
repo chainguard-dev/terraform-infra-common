@@ -95,6 +95,7 @@ No requirements.
 | <a name="module_change-trigger-calls-dispatcher"></a> [change-trigger-calls-dispatcher](#module\_change-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../dashboard/sections/collapsible | n/a |
 | <a name="module_cron-trigger-calls-dispatcher"></a> [cron-trigger-calls-dispatcher](#module\_cron-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
+| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../dashboard/json | n/a |
 | <a name="module_dispatcher-calls-target"></a> [dispatcher-calls-target](#module\_dispatcher-calls-target) | ../authorize-private-service | n/a |
 | <a name="module_dispatcher-logs"></a> [dispatcher-logs](#module\_dispatcher-logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_dispatcher-service"></a> [dispatcher-service](#module\_dispatcher-service) | ../regional-go-service | n/a |

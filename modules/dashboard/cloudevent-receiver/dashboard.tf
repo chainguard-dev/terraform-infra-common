@@ -70,18 +70,21 @@ module "layout" {
   )
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  // This funky for_each just creates one instance when split_triggers is false
+module "dashboard-json" {
   for_each = var.split_triggers ? {} : {(var.service_name): ""}
-  dashboard_json = jsonencode({
-    displayName = "Cloud Event Receiver: ${var.service_name}"
+
+  source = "../json"
+
+  // This funky for_each just creates one instance when split_triggers is false
+  object = {
+    displayName = "Cloud Event Receiver: ${each.key}"
     labels = merge({
       "service" : ""
       "eventing" : ""
     }, var.labels)
     dashboardFilters = [{
       filterType  = "RESOURCE_LABEL"
-      stringValue = var.service_name
+      stringValue = each.key
       labelKey    = "service_name"
     }]
 
@@ -90,7 +93,13 @@ resource "google_monitoring_dashboard" "dashboard" {
       columns = module.width.size,
       tiles   = module.layout[each.key].tiles,
     }
-  })
+  }
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  for_each = var.split_triggers ? {} : {(var.service_name): ""}
+
+  dashboard_json = module.dashboard-json[each.key].json
 }
 
 // Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
@@ -118,9 +127,12 @@ module "trigger_layout" {
 // do not hit the widget limit.
 //
 // This resource is opt-in and will replace the dashboard resource above
-resource "google_monitoring_dashboard" "trigger_dashboards" {
+module "trigger-dashboard-jsons" {
   for_each = var.split_triggers ? var.triggers : {}
-  dashboard_json = jsonencode({
+
+  source = "../json"
+
+  object = {
     displayName = "Cloud Event Receiver: ${var.service_name} (${each.key})"
     labels = merge({
       "service" : ""
@@ -137,5 +149,11 @@ resource "google_monitoring_dashboard" "trigger_dashboards" {
       columns = module.width.size
       tiles   = module.trigger_layout[each.key].tiles,
     }
-  })
+  }
+}
+
+resource "google_monitoring_dashboard" "trigger_dashboards" {
+  for_each = var.split_triggers ? var.triggers : {}
+
+  dashboard_json = module.trigger-dashboard-jsons[each.key].json
 }

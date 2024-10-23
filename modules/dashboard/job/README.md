@@ -43,6 +43,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../json | n/a |
 | <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../sections/logs | n/a |

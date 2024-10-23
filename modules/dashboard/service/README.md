@@ -62,6 +62,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_alerts"></a> [alerts](#module\_alerts) | ../sections/alerts | n/a |
+| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../json | n/a |
 | <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
 | <a name="module_github"></a> [github](#module\_github) | ../sections/github | n/a |
 | <a name="module_gorm"></a> [gorm](#module\_gorm) | ../sections/gorm | n/a |

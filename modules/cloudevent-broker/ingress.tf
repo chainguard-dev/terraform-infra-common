@@ -96,7 +96,9 @@ module "layout" {
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = jsonencode({
+  source = "../dashboard/json"
+
+  object = {
     displayName = "Cloud Events Broker Ingress: ${var.name}"
     labels = {
       "service" : ""
@@ -113,5 +115,9 @@ resource "google_monitoring_dashboard" "dashboard" {
       columns = module.width.size
       tiles   = module.layout.tiles,
     }
-  })
+  }
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  dashboard_json = module.json.json
 }

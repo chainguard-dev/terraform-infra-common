@@ -47,7 +47,7 @@ module "dispatcher-service" {
         importpath  = "github.com/chainguard-dev/terraform-infra-common/modules/workqueue/cmd/dispatcher"
       }
       ports = [{
-        name = "h2c"
+        name           = "h2c"
         container_port = 8080
       }]
       env = [
@@ -99,7 +99,7 @@ module "cron-trigger-calls-dispatcher" {
 
   source = "../authorize-private-service"
 
-  depends_on = [ module.dispatcher-service ]
+  depends_on = [module.dispatcher-service]
 
   project_id = var.project_id
   region     = each.key
@@ -174,7 +174,7 @@ module "change-trigger-calls-dispatcher" {
 
   source = "../authorize-private-service"
 
-  depends_on = [ module.dispatcher-service ]
+  depends_on = [module.dispatcher-service]
 
   project_id = var.project_id
   region     = each.key
