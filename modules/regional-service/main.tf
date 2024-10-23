@@ -54,8 +54,6 @@ resource "google_cloud_run_v2_service" "this" {
   labels   = merge(var.labels, local.default_labels)
   ingress  = var.ingress
 
-  launch_stage = "BETA" // Needed for vpc_access below
-
   deletion_protection = var.deletion_protection
 
   template {
