@@ -55,10 +55,6 @@ resource "google_cloud_run_v2_job" "job" {
   name     = "${var.name}-cron"
   location = var.region
 
-  # As Direct VPC is in BETA, we need to explicitly set the launch_stage to
-  # BETA in order to use it.
-  launch_stage = var.vpc_access != null ? "BETA" : null
-
   deletion_protection = var.deletion_protection
 
   template {
@@ -166,6 +162,12 @@ resource "google_cloud_run_v2_job" "job" {
         }
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      launch_stage,
+    ]
   }
 }
 
