@@ -257,6 +257,12 @@ resource "google_cloud_run_v2_service" "this" {
       }
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      launch_stage,
+    ]
+  }
 }
 
 // Get a project number for this project ID.
