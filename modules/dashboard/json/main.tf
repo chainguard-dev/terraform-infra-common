@@ -1,6 +1,6 @@
 variable "object" {
   description = "Object to encode into JSON"
-  type        = object
+  type        = object({})
 }
 
 output "json" {

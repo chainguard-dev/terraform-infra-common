@@ -48,7 +48,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_object"></a> [object](#input\_object) | Object to encode into JSON | `object` | n/a | yes |
+| <a name="input_object"></a> [object](#input\_object) | Object to encode into JSON | `object({})` | n/a | yes |
 
 ## Outputs
 
