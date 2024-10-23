@@ -28,7 +28,7 @@ locals {
   }]
 }
 
-module "json" {
+module "dashboard-json" {
   source = "../json"
 
   object = {

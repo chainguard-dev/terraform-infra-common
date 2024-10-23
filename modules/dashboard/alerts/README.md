@@ -14,7 +14,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_alerts"></a> [alerts](#module\_alerts) | ../widgets/alert | n/a |
-| <a name="module_json"></a> [json](#module\_json) | ../json | n/a |
+| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../json | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../sections/width | n/a |
 
 ## Resources

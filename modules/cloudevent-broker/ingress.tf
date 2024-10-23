@@ -95,7 +95,7 @@ module "layout" {
   ]
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
+module "dashboard-json" {
   source = "../dashboard/json"
 
   object = {
@@ -119,5 +119,5 @@ resource "google_monitoring_dashboard" "dashboard" {
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = module.json.json
+  dashboard_json = module.dashboard-json.json
 }
