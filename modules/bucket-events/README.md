@@ -81,6 +81,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_authorize-delivery"></a> [authorize-delivery](#module\_authorize-delivery) | ../authorize-private-service | n/a |
+| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../dashboard/json | n/a |
 | <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |

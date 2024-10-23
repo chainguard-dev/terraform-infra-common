@@ -28,8 +28,10 @@ locals {
   }]
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = jsonencode({
+module "dashboard-json" {
+  source = "../json"
+
+  object = {
     displayName = var.title
     labels      = var.labels
 
@@ -38,5 +40,9 @@ resource "google_monitoring_dashboard" "dashboard" {
       columns = module.width.size,
       tiles   = local.tiles,
     }
-  })
+  }
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  dashboard_json = module.dashboard-json.json
 }

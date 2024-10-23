@@ -83,6 +83,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../json | n/a |
 | <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
 | <a name="module_github"></a> [github](#module\_github) | ../sections/github | n/a |
 | <a name="module_grpc"></a> [grpc](#module\_grpc) | ../sections/grpc | n/a |
@@ -91,6 +92,7 @@ No requirements.
 | <a name="module_logs"></a> [logs](#module\_logs) | ../sections/logs | n/a |
 | <a name="module_resources"></a> [resources](#module\_resources) | ../sections/resources | n/a |
 | <a name="module_subscription"></a> [subscription](#module\_subscription) | ../sections/subscription | n/a |
+| <a name="module_trigger-dashboard-jsons"></a> [trigger-dashboard-jsons](#module\_trigger-dashboard-jsons) | ../json | n/a |
 | <a name="module_trigger_layout"></a> [trigger\_layout](#module\_trigger\_layout) | ../sections/layout | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../sections/width | n/a |
 

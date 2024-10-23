@@ -48,7 +48,7 @@ module "work-added" {
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
     "metric.label.\"service_name\"=\"${var.name}-rcv\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\""]
+  group_by_fields  = ["metric.label.\"service_name\""]
   primary_align    = "ALIGN_RATE"
   primary_reduce   = "REDUCE_NONE"
   secondary_align  = "ALIGN_NONE"
@@ -174,8 +174,10 @@ module "layout" {
   ]
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = jsonencode({
+module "dashboard-json" {
+  source = "../dashboard/json"
+
+  object = {
     displayName = "Cloud Workqueue: ${var.name}"
     labels = {
       "service" : ""
@@ -187,5 +189,9 @@ resource "google_monitoring_dashboard" "dashboard" {
       columns = module.width.size
       tiles   = module.layout.tiles,
     }
-  })
+  }
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  dashboard_json = module.dashboard-json.json
 }

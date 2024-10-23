@@ -6,15 +6,15 @@ resource "google_service_account" "sa" {
 
 moved {
   from = google_service_account.sa
-  to = google_service_account.sa[0]
+  to   = google_service_account.sa[0]
 }
 
 module "service" {
   source = "../regional-go-service"
 
-  name            = var.name
-  project_id      = var.project_id
-  regions         = var.regions
+  name       = var.name
+  project_id = var.project_id
+  regions    = var.regions
 
   service_account = var.service_account_email == "" ? google_service_account.sa[0].email : var.service_account_email
 
