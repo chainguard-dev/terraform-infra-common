@@ -134,7 +134,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../dashboard/json | n/a |
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard | n/a |
 | <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
@@ -148,7 +148,6 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_service_account.service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [random_string.service-suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/cloud_run_v2_service) | data source |

@@ -93,7 +93,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_cloudevent-trigger"></a> [cloudevent-trigger](#module\_cloudevent-trigger) | ../cloudevent-trigger | n/a |
-| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | chainguard-dev/common/infra//modules/dashboard/cloudevent-receiver | n/a |
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard/cloudevent-receiver | n/a |
 | <a name="module_service"></a> [service](#module\_service) | ../regional-go-service | n/a |
 
 ## Resources
@@ -126,6 +126,7 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_json"></a> [json](#output\_json) | n/a |
 | <a name="output_serviceaccount-email"></a> [serviceaccount-email](#output\_serviceaccount-email) | The email of the service account for the bot. |
 | <a name="output_serviceaccount-id"></a> [serviceaccount-id](#output\_serviceaccount-id) | The ID of the service account for the bot. |
 <!-- END_TF_DOCS -->

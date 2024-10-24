@@ -85,7 +85,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../dashboard/json | n/a |
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard | n/a |
 | <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
 | <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
@@ -98,7 +98,6 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [google_pubsub_topic_iam_binding.ingress-publishes-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |

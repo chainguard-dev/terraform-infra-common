@@ -95,7 +95,7 @@ No requirements.
 | <a name="module_change-trigger-calls-dispatcher"></a> [change-trigger-calls-dispatcher](#module\_change-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../dashboard/sections/collapsible | n/a |
 | <a name="module_cron-trigger-calls-dispatcher"></a> [cron-trigger-calls-dispatcher](#module\_cron-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
-| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../dashboard/json | n/a |
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard | n/a |
 | <a name="module_dispatcher-calls-target"></a> [dispatcher-calls-target](#module\_dispatcher-calls-target) | ../authorize-private-service | n/a |
 | <a name="module_dispatcher-logs"></a> [dispatcher-logs](#module\_dispatcher-logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_dispatcher-service"></a> [dispatcher-service](#module\_dispatcher-service) | ../regional-go-service | n/a |
@@ -116,7 +116,6 @@ No requirements.
 |------|------|
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
 | [google_cloud_scheduler_job.cron](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
-| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
 | [google_pubsub_subscription.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_topic.object-change-notifications](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [google_pubsub_topic_iam_binding.gcs-publishes-to-topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |

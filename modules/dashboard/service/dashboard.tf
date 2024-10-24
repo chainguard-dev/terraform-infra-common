@@ -73,7 +73,7 @@ module "layout" {
 }
 
 module "dashboard" {
-  source = ".."
+  source = "../"
 
   object = {
     displayName = "Cloud Run Service: ${var.service_name}"
@@ -96,5 +96,5 @@ module "dashboard" {
 
 moved {
   from = google_monitoring_dashboard.dashboard
-  to = module.dashboard.google_monitoring_dashboard.dashboard
+  to   = module.dashboard.google_monitoring_dashboard.dashboard
 }

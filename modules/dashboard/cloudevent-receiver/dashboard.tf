@@ -99,12 +99,12 @@ module "dashboard" {
 
 moved {
   from = google_monitoring_dashboard.dashboard
-  to = module.trigger_dashboard.google_monitoring_dashboard.dashboard
+  to   = module.trigger_dashboard.google_monitoring_dashboard.dashboard
 }
 
 output "json" {
   value = {
-    for k,v in module.dashboard : k => v.json
+    for k, v in module.dashboard : k => v.json
   }
 }
 
@@ -116,7 +116,7 @@ output "json" {
 module "trigger_layout" {
   for_each = var.split_triggers ? var.triggers : {}
 
-  source   = "../sections/layout"
+  source = "../sections/layout"
   sections = concat([module.subscription[each.key].section],
     [
       module.errgrp.section,
@@ -161,5 +161,5 @@ module "trigger-dashboards" {
 
 moved {
   from = google_monitoring_dashboard.trigger_dashboards
-  to = module.trigger_dashboards.google_monitoring_dashboard.dashboard
+  to   = module.trigger_dashboards.google_monitoring_dashboard.dashboard
 }
