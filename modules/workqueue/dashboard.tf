@@ -174,8 +174,8 @@ module "layout" {
   ]
 }
 
-module "dashboard-json" {
-  source = "../dashboard/json"
+module "dashboard" {
+  source = "../dashboard"
 
   object = {
     displayName = "Cloud Workqueue: ${var.name}"
@@ -192,6 +192,7 @@ module "dashboard-json" {
   }
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = module.dashboard-json.json
+moved {
+  from = google_monitoring_dashboard.dashboard
+  to   = module.dashboard.google_monitoring_dashboard.dashboard
 }

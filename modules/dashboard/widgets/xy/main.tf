@@ -39,7 +39,7 @@ output "widget" {
       }]
       thresholds = [
         for threshold in var.thresholds : {
-          value = threshold
+          value      = threshold
           targetAxis = "Y1"
         }
       ],

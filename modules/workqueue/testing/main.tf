@@ -63,7 +63,7 @@ resource "kubernetes_manifest" "inmem-ksvc" {
                 },
               ]
               "ports" = [{
-                "name" = "h2c"
+                "name"          = "h2c"
                 "containerPort" = 8080
               }]
             }

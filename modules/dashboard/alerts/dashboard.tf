@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 module "alerts" {
   for_each = var.alerts
 
-  source = "../widgets/alert"
-  title = each.key
+  source     = "../widgets/alert"
+  title      = each.key
   alert_name = each.value
 }
 
@@ -20,7 +20,7 @@ locals {
   widgets = [for x in keys(var.alerts) : module.alerts[x].widget]
 
   tiles = [for x in range(length(local.widgets)) : {
-    yPos   = floor(x/2) * local.unit,
+    yPos   = floor(x / 2) * local.unit,
     xPos   = (x % local.columns) * local.unit,
     height = local.unit,
     width  = local.unit,
@@ -28,8 +28,8 @@ locals {
   }]
 }
 
-module "dashboard-json" {
-  source = "../json"
+module "dashboard" {
+  source = "../"
 
   object = {
     displayName = var.title
@@ -43,6 +43,7 @@ module "dashboard-json" {
   }
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = module.dashboard-json.json
+moved {
+  from = google_monitoring_dashboard.dashboard
+  to   = module.dashboard.google_monitoring_dashboard.dashboard
 }

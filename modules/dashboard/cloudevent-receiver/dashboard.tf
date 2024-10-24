@@ -55,7 +55,8 @@ module "width" { source = "../sections/width" }
 
 module "layout" {
   // This funky for_each just creates one instance when split_triggers is false
-  for_each = var.split_triggers ? {} : {(var.service_name): ""}
+  for_each = toset(var.split_triggers ? [] : [var.service_name])
+
   source = "../sections/layout"
   sections = concat(
     [for key in sort(keys(var.triggers)) : module.subscription[key].section],
@@ -70,10 +71,10 @@ module "layout" {
   )
 }
 
-module "dashboard-json" {
-  for_each = var.split_triggers ? {} : {(var.service_name): ""}
+module "dashboard" {
+  for_each = toset(var.split_triggers ? [] : [var.service_name])
 
-  source = "../json"
+  source = "../"
 
   // This funky for_each just creates one instance when split_triggers is false
   object = {
@@ -96,10 +97,15 @@ module "dashboard-json" {
   }
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  for_each = var.split_triggers ? {} : {(var.service_name): ""}
+moved {
+  from = google_monitoring_dashboard.dashboard
+  to   = module.trigger_dashboard.google_monitoring_dashboard.dashboard
+}
 
-  dashboard_json = module.dashboard-json[each.key].json
+output "json" {
+  value = {
+    for k, v in module.dashboard : k => v.json
+  }
 }
 
 // Google cloud has a limit of 50 widgets per dashboard so we create a dashboard
@@ -109,7 +115,8 @@ resource "google_monitoring_dashboard" "dashboard" {
 // This module is opt-in and will replace the layout module above
 module "trigger_layout" {
   for_each = var.split_triggers ? var.triggers : {}
-  source   = "../sections/layout"
+
+  source = "../sections/layout"
   sections = concat([module.subscription[each.key].section],
     [
       module.errgrp.section,
@@ -127,10 +134,10 @@ module "trigger_layout" {
 // do not hit the widget limit.
 //
 // This resource is opt-in and will replace the dashboard resource above
-module "trigger-dashboard-jsons" {
+module "trigger-dashboards" {
   for_each = var.split_triggers ? var.triggers : {}
 
-  source = "../json"
+  source = "../"
 
   object = {
     displayName = "Cloud Event Receiver: ${var.service_name} (${each.key})"
@@ -152,8 +159,7 @@ module "trigger-dashboard-jsons" {
   }
 }
 
-resource "google_monitoring_dashboard" "trigger_dashboards" {
-  for_each = var.split_triggers ? var.triggers : {}
-
-  dashboard_json = module.trigger-dashboard-jsons[each.key].json
+moved {
+  from = google_monitoring_dashboard.trigger_dashboards
+  to   = module.trigger_dashboards.google_monitoring_dashboard.dashboard
 }

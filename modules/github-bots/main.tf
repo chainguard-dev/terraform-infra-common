@@ -76,7 +76,7 @@ module "cloudevent-trigger" {
 }
 
 module "dashboard" {
-  source = "chainguard-dev/common/infra//modules/dashboard/cloudevent-receiver"
+  source = "../dashboard/cloudevent-receiver"
 
   project_id   = var.project_id
   service_name = var.name
@@ -89,4 +89,8 @@ module "dashboard" {
   }
 
   notification_channels = var.notification_channels
+}
+
+output "json" {
+  value = module.dashboard.json
 }
