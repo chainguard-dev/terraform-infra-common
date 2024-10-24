@@ -1,16 +1,24 @@
 variable "object" {
   description = "Object to encode into JSON"
-  type        = object({})
 }
 
-output "json" {
-  value = replace(replace(replace(replace(replace(replace(replace(
+locals {
+  json = replace(replace(replace(replace(replace(replace(replace(replace(
     jsonencode(var.object),
-    "\"collapsibleGroup\":{\"collapsed\":false},", ""),
+    "\"collapsed\":false", ""),
     ",\"xPos\":0", ""),
     ",\"yPos\":0", ""),
     ",\"thresholds\":[]", ""),
     ",\"crossSeriesReducer\":\"REDUCE_NONE\"", ""),
     ",\"perSeriesAligner\":\"ALIGN_NONE\"", ""),
+    "\"dashboardFilters\":[],", ""),
   ",\"groupByFields\":[]", "")
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  dashboard_json = local.json
+}
+
+output "json" {
+  value = local.json
 }

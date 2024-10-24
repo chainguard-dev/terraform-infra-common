@@ -35,8 +35,8 @@ module "layout" {
   ]
 }
 
-module "dashboard-json" {
-  source = "../json"
+module "dashboard" {
+  source = ".."
 
   object = {
     displayName = "Cloud Run Job: ${var.job_name}"
@@ -57,6 +57,7 @@ module "dashboard-json" {
   }
 }
 
-resource "google_monitoring_dashboard" "dashboard" {
-  dashboard_json = module.dashboard-json.json
+moved {
+  from = google_monitoring_dashboard.dashboard
+  to = module.dashboard.google_monitoring_dashboard.dashboard
 }
