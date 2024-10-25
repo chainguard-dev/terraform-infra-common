@@ -1,0 +1,5 @@
+{
+    "type": "external_account",
+    "audience": "https://example.com",
+    "subject_token_type": "urn:ietf:params:oauth:token-type:jwt"
+}
