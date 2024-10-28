@@ -42,7 +42,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
     }
   }
 
-  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.oncall
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
