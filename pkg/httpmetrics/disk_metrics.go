@@ -2,6 +2,7 @@ package httpmetrics
 
 import (
 	"context"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -13,7 +14,8 @@ import (
 )
 
 const (
-	DiskUsageScrapeInterval = 5 * time.Second
+	DiskUsageScrapeInterval    = 5 * time.Second
+	DiskUsageScrapeIntervalEnv = "DISK_USAGE_SCRAPE_INTERVAL"
 )
 
 var (
@@ -26,6 +28,12 @@ var (
 		[]string{"mount"},
 	)
 
+	diskUsageScrapeFailures = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "disk_usage_scrape_failures",
+			Help: "The number of failures when scraping disk usage.",
+		},
+	)
 	// So that we only start the disk usage scraper once.
 	once = new(sync.Once)
 )
@@ -46,6 +54,7 @@ func scrapeDiskUsage() map[string]uint64 {
 	if err != nil {
 		// It is better to be silent here and missing metrics, than to be spam log
 		// here, and/or panic.
+		diskUsageScrapeFailures.Inc()
 		return nil
 	}
 	usage := make(map[string]uint64, len(parts))
@@ -68,9 +77,10 @@ func scrapeDiskUsage() map[string]uint64 {
 func ScrapeDiskUsage(ctx context.Context) {
 	once.Do(func() {
 		clog.FromContext(ctx).Info("Starting disk usage scraper with interval", "interval", DiskUsageScrapeInterval)
-
+		// Check the env var for the interval.
+		interval := scrapeInterval()
 		// Start a timer to scrape disk usage every 5 seconds.
-		ticker := time.NewTicker(DiskUsageScrapeInterval)
+		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
 		for {
@@ -87,4 +97,15 @@ func ScrapeDiskUsage(ctx context.Context) {
 			}
 		}
 	})
+}
+
+func scrapeInterval() time.Duration {
+	interval := DiskUsageScrapeInterval
+
+	if s, ok := os.LookupEnv(DiskUsageScrapeIntervalEnv); ok {
+		if i, err := time.ParseDuration(s); err == nil {
+			interval = i
+		}
+	}
+	return interval
 }
