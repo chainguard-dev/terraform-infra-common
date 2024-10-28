@@ -48,6 +48,9 @@ func ServeMetrics() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go ScrapeDiskUsage(ctx)
 	if err := srv.ListenAndServe(); err != nil {
 		slog.Error("listen and serve for http /metrics", "error", err)
 	}
