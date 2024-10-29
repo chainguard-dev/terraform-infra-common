@@ -26,6 +26,18 @@ module "cpu_utilization" {
   primary_reduce = "REDUCE_PERCENTILE_99"
 }
 
+module "disk_usage" {
+  source = "../../widgets/xy"
+  title  = "Disk usage"
+  filter = concat([
+    "metric.type=\"prometheus.googleapis.com/disk_usage_bytes/gauge\"",
+    "resource.type=\"prometheus_target\"",
+    "resource.label.\"job\"=\"${var.cloudrun_name}\"",
+  ])
+  primary_align  = "ALIGN_MEAN"
+  primary_reduce = "REDUCE_PERCENTILE_99"
+}
+
 module "memory_utilization" {
   source         = "../../widgets/xy"
   title          = "Memory utilization"
@@ -109,7 +121,15 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.received_bytes.widget,
-  }]
+    },
+    {
+      yPos   = local.unit * 2,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.disk_usage.widget,
+    },
+  ]
 }
 
 module "collapsible" {
