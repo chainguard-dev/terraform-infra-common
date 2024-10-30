@@ -5,7 +5,7 @@ go 1.23.2
 require (
 	chainguard.dev/go-grpc-kit v0.17.6
 	chainguard.dev/sdk v0.1.28
-	cloud.google.com/go/bigquery v1.63.1
+	cloud.google.com/go/bigquery v1.64.0
 	cloud.google.com/go/compute/metadata v0.5.2
 	cloud.google.com/go/profiler v0.4.1
 	cloud.google.com/go/pubsub v1.45.1
