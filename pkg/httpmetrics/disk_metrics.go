@@ -90,7 +90,6 @@ func ScrapeDiskUsage(ctx context.Context) {
 				// report metrics
 				for mount, used := range usage {
 					diskUsageBytesGauge.WithLabelValues(mount).Set(float64(used))
-					clog.FromContext(ctx).Info("Disk usage reported", "mount", mount, "used", used)
 				}
 			case <-ctx.Done():
 				return
