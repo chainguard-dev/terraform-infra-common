@@ -60,6 +60,7 @@ resource "google_cloud_run_v2_job" "job" {
   template {
     parallelism = var.parallelism
     task_count  = var.task_count
+    labels      = var.labels
 
     template {
       execution_environment = var.execution_environment

@@ -129,3 +129,9 @@ variable "service_account_email" {
   type        = string
   default     = ""
 }
+
+variable "labels" {
+  description = "Labels to apply to the service."
+  type        = map(string)
+  default     = {}
+}

@@ -115,6 +115,7 @@ No requirements.
 | <a name="input_extra_filter_not_has_attributes"></a> [extra\_filter\_not\_has\_attributes](#input\_extra\_filter\_not\_has\_attributes) | Optional additional prefixes to check for presence. | `list(string)` | `[]` | no |
 | <a name="input_extra_filter_prefix"></a> [extra\_filter\_prefix](#input\_extra\_filter\_prefix) | Optional additional prefixes for filtering events. | `map(string)` | `{}` | no |
 | <a name="input_github-event"></a> [github-event](#input\_github-event) | The GitHub event type to subscribe to. | `string` | n/a | yes |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the service. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name of the bot. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
