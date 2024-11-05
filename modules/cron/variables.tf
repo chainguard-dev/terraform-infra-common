@@ -203,3 +203,9 @@ variable "deletion_protection" {
   description = "Whether to enable delete protection for the service."
   default     = true
 }
+
+variable "labels" {
+  description = "Labels to apply to the job."
+  type        = map(string)
+  default     = {}
+}
