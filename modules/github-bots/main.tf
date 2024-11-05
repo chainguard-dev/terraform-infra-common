@@ -16,8 +16,9 @@ module "service" {
   project_id = var.project_id
   regions    = var.regions
 
-  service_account = var.service_account_email == "" ? google_service_account.sa[0].email : var.service_account_email
+  labels = var.labels
 
+  service_account = var.service_account_email == "" ? google_service_account.sa[0].email : var.service_account_email
 
   egress = "PRIVATE_RANGES_ONLY" // Makes GitHub API calls
 
