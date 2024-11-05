@@ -107,6 +107,7 @@ No modules.
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the cron application. | `string` | n/a | yes |
 | <a name="input_invokers"></a> [invokers](#input\_invokers) | List of iam members invoker perimssions to invoke the job. | `list(string)` | `[]` | no |
 | <a name="input_ko_build_env"></a> [ko\_build\_env](#input\_ko\_build\_env) | A list of custom environment variables to pass to the ko build. | `list(string)` | `[]` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the job. | `map(string)` | `{}` | no |
 | <a name="input_max_retries"></a> [max\_retries](#input\_max\_retries) | The maximum number of times to retry the job. | `number` | `3` | no |
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory limit for the job. | `string` | `"512Mi"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to prefix to created resources. | `any` | n/a | yes |
