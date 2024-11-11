@@ -10,6 +10,15 @@ locals {
   ]
 }
 
+locals {
+  bad_rollout_filter = <<EOT
+resource.type="cloud_run_revision"
+severity=ERROR
+protoPayload.status.message:"Ready condition status changed to False"
+protoPayload.response.kind="Revision"
+EOT
+}
+
 // Create an alert policy to notify if the service is struggling to rollout.
 resource "google_monitoring_alert_policy" "bad-rollout" {
   # In the absence of data, incident will auto-close after an hour
@@ -24,18 +33,22 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
   display_name = "Failed Revision Rollout"
   combiner     = "OR"
 
+  documentation {
+    content = "$${metric_or_resource.labels.service_name} has failed to rollout a revision."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.bad_rollout_filter)}?project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Failed Revision Rollout"
 
     condition_matched_log {
-      filter = <<EOT
-        resource.type="cloud_run_revision"
-        severity=ERROR
-        protoPayload.status.message:"Ready condition status changed to False"
-        protoPayload.response.kind="Revision"
-      EOT
+      filter = local.bad_rollout_filter
 
       label_extractors = {
+        "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
       }
@@ -46,6 +59,15 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
 
   enabled = "true"
   project = var.project_id
+}
+
+locals {
+  oom_filter = <<EOF
+logName: "/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+severity=ERROR
+textPayload:"Consider increasing the memory limit"
+${var.oom_filter}
+EOF
 }
 
 resource "google_monitoring_alert_policy" "oom" {
@@ -61,18 +83,22 @@ resource "google_monitoring_alert_policy" "oom" {
   display_name = "OOM Alert"
   combiner     = "OR"
 
+  documentation {
+    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged an OOM."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.oom_filter)}?project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "OOM Alert"
 
     condition_matched_log {
-      filter = <<EOT
-        logName: "/logs/run.googleapis.com%2Fvarlog%2Fsystem"
-        severity=ERROR
-        textPayload:"Consider increasing the memory limit"
-        ${var.oom_filter}
-      EOT
+      filter = local.oom_filter
 
       label_extractors = {
+        "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
@@ -83,6 +109,16 @@ resource "google_monitoring_alert_policy" "oom" {
   enabled = true
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
+locals {
+  signal_filter = <<EOT
+log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+severity=WARNING
+textPayload=~"^Container terminated on signal [^01]+\.$"
+${var.signal_filter}
+-resource.labels.service_name:"-ing-vuln"
+EOT
 }
 
 resource "google_monitoring_alert_policy" "signal" {
@@ -98,19 +134,22 @@ resource "google_monitoring_alert_policy" "signal" {
   display_name = "Signal Alert"
   combiner     = "OR"
 
+  documentation {
+    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a termination signal."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.oom_filter)}?project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Signal Alert"
 
     condition_matched_log {
-      filter = <<EOT
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fvarlog%2Fsystem"
-        severity=WARNING
-        textPayload=~"^Container terminated on signal [^01]+\.$"
-        ${var.signal_filter}
-        -resource.labels.service_name:"-ing-vuln"
-      EOT
+      filter = local.signal_filter
 
       label_extractors = {
+        "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
@@ -122,6 +161,15 @@ resource "google_monitoring_alert_policy" "signal" {
   enabled = true
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+}
+
+locals {
+  panic_filter = <<EOF
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+severity=ERROR
+textPayload=~"panic: .*"
+${var.panic_filter}
+EOF
 }
 
 resource "google_monitoring_alert_policy" "panic" {
@@ -137,16 +185,19 @@ resource "google_monitoring_alert_policy" "panic" {
   display_name = "Panic log entry"
   combiner     = "OR"
 
+  documentation {
+    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a panic."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.panic_filter)}?project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Panic log entry"
 
     condition_matched_log {
-      filter = <<EOT
-        resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
-        severity=ERROR
-        textPayload=~"panic: .*"
-        ${var.panic_filter}
-      EOT
+      filter = local.panic_filter
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
@@ -160,6 +211,13 @@ resource "google_monitoring_alert_policy" "panic" {
 
   enabled = "true"
   project = var.project_id
+}
+
+locals {
+  panic_stacktrace_filter = <<EOF
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+jsonPayload.stacktrace:"runtime.gopanic"
+EOF
 }
 
 resource "google_monitoring_alert_policy" "panic-stacktrace" {
@@ -175,14 +233,19 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
   display_name = "Panic stacktrace log entry"
   combiner     = "OR"
 
+  documentation {
+    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a panic stacktrace."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.panic_stacktrace_filter)}&project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Panic stacktrace log entry"
 
     condition_matched_log {
-      filter = <<EOT
-        resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
-        jsonPayload.stacktrace:"runtime.gopanic"
-      EOT
+      filter = local.panic_stacktrace_filter
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
@@ -198,6 +261,13 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
   project = var.project_id
 }
 
+locals {
+  fatal_filter = <<EOF
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+textPayload:"fatal error: "
+EOF
+}
+
 resource "google_monitoring_alert_policy" "fatal" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -211,14 +281,19 @@ resource "google_monitoring_alert_policy" "fatal" {
   display_name = "Fatal log entry"
   combiner     = "OR"
 
+  documentation {
+    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a fatal error."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.panic_stacktrace_filter)}&project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Fatal log entry"
 
     condition_matched_log {
-      filter = <<EOT
-        resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
-        textPayload:"fatal error: "
-      EOT
+      filter = local.fatal_filter
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
@@ -326,6 +401,11 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
     EOT
+
+    links {
+      display_name = "Playbook"
+      url          = "https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/"
+    }
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
@@ -535,6 +615,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
       EOT
 
       label_extractors = {
+        "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
