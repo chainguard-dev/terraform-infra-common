@@ -209,3 +209,20 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+variable "require_squad" {
+  description = "Whether to require squad variable to be specified"
+  type        = bool
+  default     = true
+}
+
+variable "squad" {
+  description = "Labels to apply to the service."
+  type        = map(string)
+  default     = ""
+
+  validation {
+    condition     = !var.require_squad || var.squad != ""
+    error_message = "squad needs to specified or disable check by setting require_squad = false"
+  }
+}

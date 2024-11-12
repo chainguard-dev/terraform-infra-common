@@ -18,6 +18,9 @@ module "service" {
 
   labels = var.labels
 
+  squad         = var.squad
+  require_squad = var.require_squad
+
   service_account = var.service_account_email == "" ? google_service_account.sa[0].email : var.service_account_email
 
   egress = "PRIVATE_RANGES_ONLY" // Makes GitHub API calls

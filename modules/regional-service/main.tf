@@ -32,6 +32,10 @@ locals {
     "regional-service" : var.name
   }
 
+  squad_label = {
+    "squad" : var.squad
+  }
+
   main_container_idx = keys(local.has_port)[0]
   main_container     = local.has_port[local.main_container_idx]
 }
@@ -51,7 +55,7 @@ resource "google_cloud_run_v2_service" "this" {
   project  = var.project_id
   name     = var.name
   location = each.key
-  labels   = merge(var.labels, local.default_labels)
+  labels   = merge(var.labels, local.default_labels, local.squad_label)
   ingress  = var.ingress
 
   deletion_protection = var.deletion_protection
@@ -63,7 +67,7 @@ resource "google_cloud_run_v2_service" "this" {
     }
     max_instance_request_concurrency = var.scaling.max_instance_request_concurrency
     execution_environment            = var.execution_environment
-    labels                           = merge(var.labels, local.default_labels)
+    labels                           = merge(var.labels, local.default_labels, local.squad_label)
 
     vpc_access {
       network_interfaces {

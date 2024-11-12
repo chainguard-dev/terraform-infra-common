@@ -20,6 +20,9 @@ resource "google_project_service" "cloudscheduler" {
 
 locals {
   repo = var.repository != "" ? var.repository : "gcr.io/${var.project_id}/${var.name}"
+  squad_label = {
+    "squad" : var.squad
+  }
 }
 
 resource "ko_build" "image" {
@@ -60,13 +63,14 @@ resource "google_cloud_run_v2_job" "job" {
   template {
     parallelism = var.parallelism
     task_count  = var.task_count
-    labels      = var.labels
+    labels      = merge(var.labels, local.squad_label)
 
     template {
       execution_environment = var.execution_environment
       service_account       = var.service_account
       max_retries           = var.max_retries
       timeout               = var.timeout
+      labels                = merge(var.labels, local.squad_label)
       dynamic "volumes" {
         for_each = var.volumes
         content {
