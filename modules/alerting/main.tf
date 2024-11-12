@@ -476,7 +476,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
         severity=ERROR
         textPayload:"The request was aborted because there was no available instance."
         ${var.scaling_issue_filter}
-${local.squad_log_filter}
+        ${local.squad_log_filter}
       EOT
 
       label_extractors = {
@@ -544,7 +544,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
         severity=ERROR
         textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
         ${var.failed_req_filter}
-${local.squad_log_filter}
+        ${local.squad_log_filter}
       EOT
 
       label_extractors = {
@@ -623,9 +623,8 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
         severity=ERROR
         textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
         ${var.timeout_filter}
-        ${var.global_filter}
+        ${local.squad_log_filter}
         -resource.labels.service_name:"-ing-vuln"
-${local.squad_log_filter}
       EOT
 
       label_extractors = {

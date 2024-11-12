@@ -57,6 +57,7 @@ resource "google_cloud_run_v2_job" "job" {
 
   name     = "${var.name}-cron"
   location = var.region
+  labels   = merge(var.labels, local.squad_label)
 
   deletion_protection = var.deletion_protection
 
@@ -70,7 +71,6 @@ resource "google_cloud_run_v2_job" "job" {
       service_account       = var.service_account
       max_retries           = var.max_retries
       timeout               = var.timeout
-      labels                = merge(var.labels, local.squad_label)
       dynamic "volumes" {
         for_each = var.volumes
         content {

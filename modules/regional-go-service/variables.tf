@@ -181,8 +181,8 @@ variable "require_squad" {
 }
 
 variable "squad" {
-  description = "Labels to apply to the service."
-  type        = map(string)
+  description = "squad label to apply to the service."
+  type        = string
   default     = ""
 
   validation {
