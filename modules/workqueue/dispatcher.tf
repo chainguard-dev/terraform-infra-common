@@ -35,6 +35,8 @@ module "dispatcher-service" {
   name       = "${var.name}-dsp"
   regions    = var.regions
   labels     = { "service" : "workqueue-dispatcher" }
+  squad            = var.squad
+  require_squad    = var.require_squad
 
   # Give the things in the workqueue a lot of time to process the key.
   request_timeout_seconds = 3600

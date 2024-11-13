@@ -39,6 +39,8 @@ module "this" {
   name       = var.name
   regions    = var.regions
 
+  squad            = var.squad
+  require_squad    = var.require_squad
   service_account = google_service_account.recorder.email
   containers = {
     "recorder" = {

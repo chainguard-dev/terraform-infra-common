@@ -22,6 +22,8 @@ module "receiver-service" {
   name       = "${var.name}-rcv"
   regions    = var.regions
   labels     = { "service" : "workqueue-receiver" }
+  squad            = var.squad
+  require_squad    = var.require_squad
 
   service_account = google_service_account.receiver.email
   containers = {

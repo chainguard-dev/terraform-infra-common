@@ -25,6 +25,9 @@ module "this" {
   regions    = var.regions
   scaling    = var.scaling
 
+  squad            = var.squad
+  require_squad    = var.require_squad
+
   // If we're using GCLB then disallow external traffic,
   // otherwise allow the prober URI to be used directly.
   ingress = local.use_gclb ? "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER" : "INGRESS_TRAFFIC_ALL"
