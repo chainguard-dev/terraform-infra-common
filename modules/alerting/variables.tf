@@ -96,3 +96,9 @@ EOT
   type        = bool
   default     = false
 }
+
+variable "squad" {
+  description = "squad to filter on if non-empty"
+  type        = string
+  default     = ""
+}
