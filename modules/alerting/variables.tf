@@ -26,6 +26,12 @@ variable "notification_channel_email" {
   default     = ""
 }
 
+variable "notification_channel_pubsub" {
+  description = "Pubsub notification channel."
+  type        = string
+  default     = ""
+}
+
 variable "oom_filter" {
   description = "additional filter to apply to oom alert policy"
   type        = string
