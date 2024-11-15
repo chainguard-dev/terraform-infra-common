@@ -426,7 +426,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
   project = var.project_id
 }
 
+moved {
+  from = google_logging_metric.cloud-run-scaling-failure
+  to   = google_logging_metric.cloud-run-scaling-failure[0]
+}
+
 resource "google_logging_metric" "cloud-run-scaling-failure" {
+  count = var.squad == "" ? 1 : 0
+
   name   = "cloud_run_scaling_failure"
   filter = <<EOT
         resource.type="cloud_run_revision"
@@ -494,7 +501,14 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
   project = var.project_id
 }
 
+moved {
+  from = google_logging_metric.cloud-run-failed-req
+  to   = google_logging_metric.cloud-run-failed-req[0]
+}
+
 resource "google_logging_metric" "cloud-run-failed-req" {
+  count = var.squad == "" ? 1 : 0
+
   name   = "cloud_run_failed_req"
   filter = <<EOT
         resource.type="cloud_run_revision"
@@ -643,7 +657,14 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 }
 
+moved {
+  from = google_logging_metric.cloudrun_timeout
+  to   = google_logging_metric.cloudrun_timeout[0]
+}
+
 resource "google_logging_metric" "cloudrun_timeout" {
+  count = var.squad == "" ? 1 : 0
+
   name   = "cloudrun_timeout"
   filter = <<EOT
     resource.type="cloud_run_revision"
@@ -672,7 +693,14 @@ resource "google_logging_metric" "cloudrun_timeout" {
   }
 }
 
+moved {
+  from = google_logging_metric.dockerhub_ratelimit
+  to   = google_logging_metric.dockerhub_ratelimit[0]
+}
+
 resource "google_logging_metric" "dockerhub_ratelimit" {
+  count = var.squad == "" ? 1 : 0
+
   name   = "dockerhub_ratelimit"
   filter = <<EOT
     (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
@@ -707,7 +735,14 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
   }
 }
 
+moved {
+  from = google_logging_metric.github_ratelimit
+  to   = google_logging_metric.github_ratelimit[0]
+}
+
 resource "google_logging_metric" "github_ratelimit" {
+  count = var.squad == "" ? 1 : 0
+
   name   = "github_ratelimit"
   filter = <<EOT
     (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
@@ -742,7 +777,14 @@ resource "google_logging_metric" "github_ratelimit" {
   }
 }
 
+moved {
+  from = google_logging_metric.r2_same_ratelimit
+  to   = google_logging_metric.r2_same_ratelimit[0]
+}
+
 resource "google_logging_metric" "r2_same_ratelimit" {
+  count = var.squad == "" ? 1 : 0
+
   name   = "r2_same_ratelimit"
   filter = <<EOT
     (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
