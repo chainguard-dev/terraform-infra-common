@@ -541,3 +541,40 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 	}
 	return r, nil
 }
+
+// GetRelease fetches the release by tag
+func (c GitHubClient) GetRelease(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, error) {
+	release, resp, err := c.inner.Repositories.GetReleaseByTag(ctx, owner, repo, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get release by tag %s: %w", tag, err)
+	}
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("get release by tag %s", tag)); err != nil {
+		return nil, err
+	}
+	return release, nil
+}
+
+// GetFileContent fetches the content of a file at a given ref
+func (c GitHubClient) GetFileContent(ctx context.Context, owner, repo, path, ref string) (string, error) {
+	opts := &github.RepositoryContentGetOptions{
+		Ref: ref,
+	}
+
+	fileContent, _, resp, err := c.inner.Repositories.GetContents(
+		ctx,
+		owner,
+		repo,
+		path,
+		opts,
+	)
+
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("get file contents for %s at ref %s", path, ref)); err != nil {
+		return "", err
+	}
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return "", fmt.Errorf("failed to decode content: %w", err)
+	}
+
+	return content, nil
+}
