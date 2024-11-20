@@ -321,7 +321,14 @@ resource "google_monitoring_alert_policy" "fatal" {
   project = var.project_id
 }
 
+moved {
+  from = google_monitoring_alert_policy.service_failure_rate_non_eventing
+  to   = google_monitoring_alert_policy.service_failure_rate_non_eventing[0]
+}
+
 resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
+  count = var.squad == "" ? 1 : 0
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -371,7 +378,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
   project = var.project_id
 }
 
+moved {
+  from = google_monitoring_alert_policy.service_failure_rate_eventing
+  to   = google_monitoring_alert_policy.service_failure_rate_eventing[0]
+}
+
 resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
+  count = var.squad == "" ? 1 : 0
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
