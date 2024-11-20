@@ -24,8 +24,8 @@ processors:
   attributes:
     actions:
       - action: insert
-        key: squad
-        value: "SQUAD"
+        key: team
+        value: "REPLACE_ME_TEAM"
 
   batch:
     # batch metrics before sending to reduce API usage

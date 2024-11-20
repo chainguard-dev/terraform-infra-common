@@ -204,7 +204,7 @@ resource "google_cloud_run_v2_service" "this" {
       args = ["--config=env:OTEL_CONFIG"]
       env {
         name  = "OTEL_CONFIG"
-        value = replace(file("${path.module}/otel-config/config.yaml"), "SQUAD", var.squad)
+        value = replace(file("${path.module}/otel-config/config.yaml"), "REPLACE_ME_TEAM", var.squad)
       }
     }
 
