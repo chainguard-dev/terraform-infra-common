@@ -21,6 +21,12 @@ receivers:
             action: drop
 
 processors:
+  attributes:
+    actions:
+      - action: insert
+        key: team
+        value: "REPLACE_ME_TEAM"
+
   batch:
     # batch metrics before sending to reduce API usage
     send_batch_max_size: 200
