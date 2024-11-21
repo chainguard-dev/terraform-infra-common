@@ -14,6 +14,7 @@ locals {
 
 locals {
   squad_log_filter = var.squad == "" ? "" : "labels.squad=\"${var.squad}\""
+  name             = var.squad == "" ? "global" : var.squad
 }
 
 locals {
@@ -37,7 +38,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
     }
   }
 
-  display_name = "Failed Revision Rollout"
+  display_name = "Failed Revision Rollout ${local.name}"
   combiner     = "OR"
 
   documentation {
@@ -49,7 +50,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
   }
 
   conditions {
-    display_name = "Failed Revision Rollout"
+    display_name = "Failed Revision Rollout ${local.name}"
 
     condition_matched_log {
       filter = local.bad_rollout_filter
@@ -88,7 +89,7 @@ resource "google_monitoring_alert_policy" "oom" {
     }
   }
 
-  display_name = "OOM Alert"
+  display_name = "OOM Alert ${local.name}"
   combiner     = "OR"
 
   documentation {
@@ -100,7 +101,7 @@ resource "google_monitoring_alert_policy" "oom" {
   }
 
   conditions {
-    display_name = "OOM Alert"
+    display_name = "OOM Alert ${local.name}"
 
     condition_matched_log {
       filter = local.oom_filter
@@ -140,7 +141,7 @@ resource "google_monitoring_alert_policy" "signal" {
     }
   }
 
-  display_name = "Signal Alert"
+  display_name = "Signal Alert ${local.name}"
   combiner     = "OR"
 
   documentation {
@@ -152,7 +153,7 @@ resource "google_monitoring_alert_policy" "signal" {
   }
 
   conditions {
-    display_name = "Signal Alert"
+    display_name = "Signal Alert ${local.name}"
 
     condition_matched_log {
       filter = local.signal_filter
@@ -192,7 +193,7 @@ resource "google_monitoring_alert_policy" "panic" {
     }
   }
 
-  display_name = "Panic log entry"
+  display_name = "Panic log entry ${local.name}"
   combiner     = "OR"
 
   documentation {
@@ -204,7 +205,7 @@ resource "google_monitoring_alert_policy" "panic" {
   }
 
   conditions {
-    display_name = "Panic log entry"
+    display_name = "Panic log entry ${local.name}"
 
     condition_matched_log {
       filter = local.panic_filter
@@ -241,7 +242,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
     }
   }
 
-  display_name = "Panic stacktrace log entry"
+  display_name = "Panic stacktrace log entry ${local.name}"
   combiner     = "OR"
 
   documentation {
@@ -253,7 +254,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
   }
 
   conditions {
-    display_name = "Panic stacktrace log entry"
+    display_name = "Panic stacktrace log entry ${local.name}"
 
     condition_matched_log {
       filter = local.panic_stacktrace_filter
@@ -290,7 +291,7 @@ resource "google_monitoring_alert_policy" "fatal" {
     }
   }
 
-  display_name = "Fatal log entry"
+  display_name = "Fatal log entry ${local.name}"
   combiner     = "OR"
 
   documentation {
@@ -302,7 +303,7 @@ resource "google_monitoring_alert_policy" "fatal" {
   }
 
   conditions {
-    display_name = "Fatal log entry"
+    display_name = "Fatal log entry ${local.name}"
 
     condition_matched_log {
       filter = local.fatal_filter
@@ -321,14 +322,11 @@ resource "google_monitoring_alert_policy" "fatal" {
   project = var.project_id
 }
 
-moved {
-  from = google_monitoring_alert_policy.service_failure_rate_non_eventing
-  to   = google_monitoring_alert_policy.service_failure_rate_non_eventing[0]
+locals {
+  promql_squad_filter = var.squad == "" ? "" : ", team=\"${var.squad}\""
 }
 
 resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
-  count = var.squad == "" ? 1 : 0
-
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -346,22 +344,22 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type!~"dev.chainguard.*"}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
          sum by (service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (service_name)
-          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"}[5m]))
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
         > 0.0001
       EOT
     }
 
-    display_name = "cloudrun service 5xx failure rate above ${var.failure_rate_ratio_threshold}"
+    display_name = "cloudrun service 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
   }
 
-  display_name = "cloudrun service 5xx failure rate above ${var.failure_rate_ratio_threshold}"
+  display_name = "cloudrun service 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
@@ -378,14 +376,7 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
   project = var.project_id
 }
 
-moved {
-  from = google_monitoring_alert_policy.service_failure_rate_eventing
-  to   = google_monitoring_alert_policy.service_failure_rate_eventing[0]
-}
-
 resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
-  count = var.squad == "" ? 1 : 0
-
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -403,22 +394,22 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
          sum by (service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (service_name)
-          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"}[5m]))
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
         > 0.0001
       EOT
     }
 
-    display_name = "eventing services 5xx failure rate above ${var.failure_rate_ratio_threshold}"
+    display_name = "eventing services 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
   }
 
-  display_name = "eventing services 5xx failure rate above ${var.failure_rate_ratio_threshold}"
+  display_name = "eventing services 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
@@ -486,11 +477,11 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
     }
   }
 
-  display_name = "Cloud Run scaling issue"
+  display_name = "Cloud Run scaling issue ${local.name}"
   combiner     = "OR"
 
   conditions {
-    display_name = "Cloud Run scaling issue"
+    display_name = "Cloud Run scaling issue ${local.name}"
 
     condition_matched_log {
       filter = <<EOT
@@ -561,11 +552,11 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
     }
   }
 
-  display_name = "Cloud Run failed request"
+  display_name = "Cloud Run failed request ${local.name}"
   combiner     = "OR"
 
   conditions {
-    display_name = "Cloud Run failed request"
+    display_name = "Cloud Run failed request ${local.name}"
 
     condition_matched_log {
       filter = <<EOT
@@ -591,6 +582,8 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
 }
 
 resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
+  count = var.squad == "" ? 1 : 0
+
   alert_strategy {
     auto_close = "3600s" // 1 hour
   }
@@ -641,11 +634,11 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
     }
   }
 
-  display_name = "Timeout Alert"
+  display_name = "Timeout Alert ${local.name}"
   combiner     = "OR"
 
   conditions {
-    display_name = "Timeout Alert"
+    display_name = "Timeout Alert ${local.name}"
 
     condition_matched_log {
       filter = <<EOT
