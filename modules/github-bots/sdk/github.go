@@ -586,7 +586,7 @@ func (c GitHubClient) ListFiles(ctx context.Context, owner, repo, path, ref stri
 	_, dirContents, resp, err := c.inner.Repositories.GetContents(
 		ctx, owner, repo, path, opts,
 	)
-	if err := validateResponse(ctx, err, resp, fmt.Sprintf("listi file contents for %s at ref %s", path, ref)); err != nil {
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("list file contents for %s at ref %s", path, ref)); err != nil {
 		return nil, err
 	}
 
