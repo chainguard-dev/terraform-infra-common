@@ -578,3 +578,17 @@ func (c GitHubClient) GetFileContent(ctx context.Context, owner, repo, path, ref
 
 	return content, nil
 }
+
+// ListFiles lists the files in a directory at a given ref
+func (c GitHubClient) ListFiles(ctx context.Context, owner, repo, path, ref string) ([]*github.RepositoryContent, error) {
+	opts := &github.RepositoryContentGetOptions{Ref: ref}
+
+	_, dirContents, resp, err := c.inner.Repositories.GetContents(
+		ctx, owner, repo, path, opts,
+	)
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("listi file contents for %s at ref %s", path, ref)); err != nil {
+		return nil, err
+	}
+
+	return dirContents, nil
+}
