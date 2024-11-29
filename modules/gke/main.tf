@@ -32,6 +32,16 @@ resource "google_project_iam_member" "cluster" {
   member  = "serviceAccount:${google_service_account.cluster_default.email}"
 }
 
+locals {
+  default_labels = {
+    "gke" : var.name
+  }
+
+  squad_label = {
+    "squad" : var.squad
+  }
+}
+
 resource "google_container_cluster" "this" {
   name    = var.name
   project = var.project
@@ -240,8 +250,9 @@ resource "google_container_node_pool" "pools" {
       }
     }
 
-    spot   = each.value.spot
-    labels = each.value.labels
+    spot            = each.value.spot
+    labels          = each.value.labels
+    resource_labels = merge(local.default_labels, local.squad_label)
 
     dynamic "taint" {
       for_each = each.value.taints
