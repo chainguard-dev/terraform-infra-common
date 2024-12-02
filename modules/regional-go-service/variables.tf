@@ -193,7 +193,7 @@ variable "squad" {
 
 variable "otel_collector_image" {
   type        = string
-  default     = "chainguard/opentelemetry-collector-contrib:latest"
+  default     = "chainguard/opentelemetry-collector-contrib@sha256:6c1e188e3c77c0e842401c0a88ef32c30c7a6895ef212fe614f714109006f0cf"
   description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub."
 }
 
