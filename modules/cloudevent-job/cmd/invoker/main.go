@@ -36,7 +36,7 @@ var projectID string
 
 func init() {
 	var err error
-	projectID, err = metadata.ProjectID()
+	projectID, err = metadata.ProjectIDWithContext(context.Background())
 	if err != nil {
 		log.Fatalf("failed to get project ID: %v", err) //nolint:gocritic
 	}
