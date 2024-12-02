@@ -7,7 +7,6 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -74,7 +73,7 @@ func main() {
 			Name: fmt.Sprintf("projects/%s/locations/%s/jobs/%s", projectID, env.JobRegion, env.JobName),
 			Overrides: &runpb.RunJobRequest_Overrides{
 				ContainerOverrides: []*runpb.RunJobRequest_Overrides_ContainerOverride{{
-					Args: []string{"--event", base64.StdEncoding.EncodeToString(eventJSON)},
+					Args: []string{"--event", string(eventJSON)},
 				}},
 			},
 		})
