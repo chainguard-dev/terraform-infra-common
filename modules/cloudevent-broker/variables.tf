@@ -60,3 +60,9 @@ variable "squad" {
     error_message = "squad needs to specified or disable check by setting require_squad = false"
   }
 }
+
+variable "otel_collector_image" {
+  type        = string
+  default     = "otel/opentelemetry-collector-contrib:latest"
+  description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub."
+}
