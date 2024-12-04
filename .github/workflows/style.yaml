@@ -107,13 +107,13 @@ jobs:
       - uses: chainguard-dev/actions/eof-newline@538d1927b846546b620784754c33e2a1db86e217 # main
         if: ${{ always() }}
 
-      - uses: reviewdog/action-tflint@0a8c6a4cc8788c02fe181ea6b8530975688f1a33 # master
+      - uses: reviewdog/action-tflint@f17a66a19220804dfa5ba4912e1a9fe7c530fe0a # master
         if: ${{ always() }}
         with:
           github_token: ${{ secrets.github_token }}
           fail_on_error: true
 
-      - uses: reviewdog/action-misspell@ef8b22c1cca06c8d306fc6be302c3dab0f6ca12f # v1.23.0
+      - uses: reviewdog/action-misspell@6dbb2a0a90daef8df58aa6301645b59cc3253733 # v1.25.0
         if: ${{ always() }}
         with:
           github_token: ${{ secrets.github_token }}
