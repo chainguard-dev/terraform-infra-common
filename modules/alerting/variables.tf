@@ -108,3 +108,9 @@ variable "squad" {
   type        = string
   default     = ""
 }
+
+variable "global_only_alerts" {
+  description = "only enable global alerts. when true, only create alerts that are global."
+  type        = bool
+  default     = false
+}

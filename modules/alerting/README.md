@@ -46,6 +46,7 @@ No modules.
 | <a name="input_failure_rate_duration"></a> [failure\_rate\_duration](#input\_failure\_rate\_duration) | duration for condition to be active before alerting | `number` | `120` | no |
 | <a name="input_failure_rate_exclude_services"></a> [failure\_rate\_exclude\_services](#input\_failure\_rate\_exclude\_services) | List of service names to exclude from the 5xx failure rate alert | `list(string)` | `[]` | no |
 | <a name="input_failure_rate_ratio_threshold"></a> [failure\_rate\_ratio\_threshold](#input\_failure\_rate\_ratio\_threshold) | ratio threshold to alert for cloud run server failure rate. | `number` | `0.2` | no |
+| <a name="input_global_only_alerts"></a> [global\_only\_alerts](#input\_global\_only\_alerts) | only enable global alerts. when true, only create alerts that are global. | `bool` | `false` | no |
 | <a name="input_notification_channel_email"></a> [notification\_channel\_email](#input\_notification\_channel\_email) | Email notification channel. | `string` | `""` | no |
 | <a name="input_notification_channel_pagerduty"></a> [notification\_channel\_pagerduty](#input\_notification\_channel\_pagerduty) | Email notification channel. | `string` | `""` | no |
 | <a name="input_notification_channel_pubsub"></a> [notification\_channel\_pubsub](#input\_notification\_channel\_pubsub) | Pubsub notification channel. | `string` | `""` | no |
