@@ -5,23 +5,19 @@ No requirements.
 
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | n/a |
+No providers.
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_alerts"></a> [alerts](#module\_alerts) | ../widgets/alert | n/a |
-| <a name="module_dashboard-json"></a> [dashboard-json](#module\_dashboard-json) | ../json | n/a |
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../ | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../sections/width | n/a |
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| [google_monitoring_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_dashboard) | resource |
+No resources.
 
 ## Inputs
 

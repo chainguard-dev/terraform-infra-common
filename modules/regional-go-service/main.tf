@@ -44,7 +44,8 @@ module "this" {
   ingress    = var.ingress
   egress     = var.egress
 
-  deletion_protection = var.deletion_protection
+  deletion_protection  = var.deletion_protection
+  otel_collector_image = var.otel_collector_image
 
   service_account = var.service_account
   containers = {

@@ -13,6 +13,7 @@ No providers.
 |------|--------|---------|
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
 | <a name="module_cpu_utilization"></a> [cpu\_utilization](#module\_cpu\_utilization) | ../../widgets/xy | n/a |
+| <a name="module_disk_usage"></a> [disk\_usage](#module\_disk\_usage) | ../../widgets/xy | n/a |
 | <a name="module_instance_count"></a> [instance\_count](#module\_instance\_count) | ../../widgets/xy | n/a |
 | <a name="module_memory_utilization"></a> [memory\_utilization](#module\_memory\_utilization) | ../../widgets/xy | n/a |
 | <a name="module_received_bytes"></a> [received\_bytes](#module\_received\_bytes) | ../../widgets/xy | n/a |
