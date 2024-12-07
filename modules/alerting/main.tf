@@ -29,6 +29,8 @@ EOT
 
 // Create an alert policy to notify if the service is struggling to rollout.
 resource "google_monitoring_alert_policy" "bad-rollout" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -80,6 +82,8 @@ EOF
 }
 
 resource "google_monitoring_alert_policy" "oom" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -132,6 +136,8 @@ EOT
 }
 
 resource "google_monitoring_alert_policy" "signal" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -184,6 +190,8 @@ EOF
 }
 
 resource "google_monitoring_alert_policy" "panic" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -233,6 +241,8 @@ EOF
 }
 
 resource "google_monitoring_alert_policy" "panic-stacktrace" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -282,6 +292,8 @@ EOF
 }
 
 resource "google_monitoring_alert_policy" "fatal" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -327,6 +339,8 @@ locals {
 }
 
 resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -377,6 +391,8 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
 }
 
 resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -468,6 +484,8 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
 }
 
 resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -625,6 +643,8 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
 }
 
 resource "google_monitoring_alert_policy" "cloudrun_timeout" {
+  count = var.global_only_alerts ? 0 : 1
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
