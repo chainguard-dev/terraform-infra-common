@@ -10,9 +10,28 @@ flowchart LR
 This module abstracts regionalizied event-triggered Cloud Run Jobs.
 It's intended to be used with the "Broker" abstraction is described by the sibling [`cloudevent-broker`](./../cloudevent-broker/) module.
 
-This can be helpful if you need to trigger a long-running task written in Go. If you don't need a long-running Job, you should use [`cloudevent-trigger`](./../cloudevent-trigger/) instead, with a `regional-go-service` or `regional-service`.
+This can be helpful if you need to trigger a long-running task written in Go.
 
-When the Go service is invoked, it will be invoked with one argument, `--event`, which will contain the JSON-encoded raw event payload.
+When the Job is invoked, it will be invoked with one argument, `--event`, which will contain the JSON-encoded raw event payload. Any other information should be configured as an environment variable in the container spec.
+
+When the Job times out, it gets the normal shutdown signal, and the code inside it should handle this gracefully if necessary.
+
+### Limitations and Alternatives
+
+- There is no concurrency control
+  - There's currently no way to limit the number of Jobs that can be run concurrently.
+  - There's currently no way to stop a running Job when a new similar Job is triggered.
+  - There are controls for [parallel _tasks_](https://cloud.google.com/run/docs/configuring/parallelism) within a Job, but no controls for parallel Jobs.
+- [Retries](https://cloud.google.com/run/docs/configuring/max-retries) are managed by Cloud Run, and the only control available is `max_retries`
+  - There's no control for exponential backoff, or other retry strategies.
+- There's a [region-wide limit](https://cloud.google.com/run/quotas) of 1000 Job definitions, and 1000 running Job executions.
+  - See [Quotas and Limits](https://cloud.google.com/run/quotas) for more information.
+
+If you don't need a long-running Job -- if work can be expected to complete within 10 minutes -- you should use [`cloudevent-trigger`](./../cloudevent-trigger/) instead, with a `regional-go-service` or `regional-service`.
+
+If you expect lots of similar executions and want to avoid doing the same work multiple times concurrently, you should use [`workqueue`](./../workqueue/) instead. Note that `workqueue` does not support long-running Jobs over 10 minutes.
+
+### Regionalization
 
 By default, trigger services will be created in every region, and invoke Jobs in their local region. If you want to only run jobs in one region, you can set the `job.region` to a single region within the set of regions in your regional networks. This will instruct the regional trigger services to only execute the Job in that single region.
 
