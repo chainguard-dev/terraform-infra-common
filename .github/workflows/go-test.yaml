@@ -1,0 +1,69 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+
+on:
+  pull_request:
+    branches: [ 'main', 'release-*' ]
+  push:
+    branches: [ 'main', 'release-*' ]
+
+permissions:
+  contents: read
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+      with:
+        egress-policy: audit
+
+    - name: Check out code onto GOPATH
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+    # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+    - uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+      with:
+        # In order:
+        # * Module download cache
+        # * Build cache (Linux)
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Set up Go
+      uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+      with:
+        go-version-file: './go.mod'
+        check-latest: true
+        cache: false
+
+    - name: Test
+      run: |
+        # Exclude running unit tests against third_party repos.
+        go test -race -timeout=5m ./...
+
+    - run: |
+        cd "$(mktemp -d)"
+        wget -O protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v28.1/protoc-28.1-linux-x86_64.zip
+        unzip protoc.zip -d .
+        chmod +x ./bin/protoc
+        echo "$(pwd)/bin" >> "$GITHUB_PATH"
+
+    - run: |
+        cd "$(mktemp -d)"
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+
+    - name: Ensure generated files are up-to-date
+      run: go generate ./...
+    - uses: chainguard-dev/actions/nodiff@main
+      with:
+        fixup-command: go generate ./...
