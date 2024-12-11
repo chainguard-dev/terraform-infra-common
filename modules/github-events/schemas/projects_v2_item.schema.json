@@ -88,6 +88,20 @@
     ],
     "name": "sender",
     "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "app_id",
+      "type": "INTEGER"
+     }
+    ],
+    "name": "installation",
+    "type": "RECORD"
    }
   ],
   "name": "body",

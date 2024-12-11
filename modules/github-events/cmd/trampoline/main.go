@@ -86,12 +86,20 @@ func main() {
 		event.SetSource(r.Host)
 		event.SetSubject(msg.Repository.FullName)
 		event.SetExtension("action", msg.Action)
+		// Needs to be an extension to be a filterable attribute.
+		// See https://github.com/chainguard-dev/terraform-infra-common/blob/main/pkg/pubsub/cloudevent.go
+		if id := r.Header.Get("X-GitHub-Hook-ID"); id != "" {
+			event.SetExtension("github-hook-id", id)
+		}
 		if err := event.SetData(cloudevents.ApplicationJSON, struct {
-			When time.Time       `json:"when"`
-			Body json.RawMessage `json:"body"`
+			When time.Time `json:"when"`
+			// See https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers
+			Headers http.Header     `json:"headers"`
+			Body    json.RawMessage `json:"body"`
 		}{
-			When: time.Now(),
-			Body: payload,
+			When:    time.Now(),
+			Headers: r.Header,
+			Body:    payload,
 		}); err != nil {
 			log.Errorf("failed to set data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
