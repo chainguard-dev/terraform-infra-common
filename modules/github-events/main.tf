@@ -34,8 +34,8 @@ module "this" {
 
   deletion_protection = var.deletion_protection
 
-  squad            = var.squad
-  require_squad    = var.require_squad
+  squad           = var.squad
+  require_squad   = var.require_squad
   service_account = google_service_account.service.email
   containers = {
     "trampoline" = {
@@ -44,15 +44,27 @@ module "this" {
         importpath  = "./cmd/trampoline"
       }
       ports = [{ container_port = 8080 }]
-      env = [{
-        name = "WEBHOOK_SECRET"
-        value_source = {
-          secret_key_ref = {
-            secret  = module.webhook-secret.secret_id
-            version = "latest"
+      env = concat(
+        [{
+          name = "WEBHOOK_SECRET"
+          value_source = {
+            secret_key_ref = {
+              secret  = module.webhook-secret.secret_id
+              version = "latest"
+            }
           }
-        }
-      }]
+        }],
+        [for name, secret in var.additional_webhook_secrets : {
+          name = "WEBHOOK_SECRET_${upper(name)}"
+          value_source = {
+            secret_key_ref = {
+              secret  = secret.secret
+              version = secret.version
+            }
+          }
+        }],
+      )
+
       regional-env = [{
         name  = "EVENT_INGRESS_URI"
         value = { for k, v in module.trampoline-emits-events : k => v.uri }
