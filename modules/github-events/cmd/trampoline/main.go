@@ -91,15 +91,17 @@ func main() {
 		if id := r.Header.Get("X-GitHub-Hook-ID"); id != "" {
 			event.SetExtension("github-hook-id", id)
 		}
-		if err := event.SetData(cloudevents.ApplicationJSON, struct {
-			When time.Time `json:"when"`
-			// See https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers
-			Headers http.Header     `json:"headers"`
-			Body    json.RawMessage `json:"body"`
-		}{
-			When:    time.Now(),
-			Headers: r.Header,
-			Body:    payload,
+		if err := event.SetData(cloudevents.ApplicationJSON, eventData{
+			When: time.Now(),
+			Headers: &eventHeaders{
+				HookID:                 r.Header.Get("X-GitHub-Hook-ID"),
+				DeliveryID:             r.Header.Get("X-GitHub-Delivery"),
+				UserAgent:              r.Header.Get("User-Agent"),
+				Event:                  r.Header.Get("X-GitHub-Event"),
+				InstallationTargetType: r.Header.Get("X-GitHub-Installation-Target-Type"),
+				InstallationTargetID:   r.Header.Get("X-GitHub-Installation-Target-ID"),
+			},
+			Body: payload,
 		}); err != nil {
 			log.Errorf("failed to set data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -121,4 +123,22 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	clog.FatalContextf(ctx, "ListenAndServe: %v", srv.ListenAndServe())
+}
+
+type eventData struct {
+	When time.Time `json:"when,omitempty"`
+	// See https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers
+	Headers *eventHeaders   `json:"headers,omitempty"`
+	Body    json.RawMessage `json:"body,omitempty"`
+}
+
+// Relevant headers for GitHub webhook events that we want to record.
+// See https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers
+type eventHeaders struct {
+	HookID                 string `json:"hook_id,omitempty"`
+	DeliveryID             string `json:"delivery_id,omitempty"`
+	UserAgent              string `json:"user_agent,omitempty"`
+	Event                  string `json:"event,omitempty"`
+	InstallationTargetType string `json:"installation_target_type,omitempty"`
+	InstallationTargetID   string `json:"installation_target_id,omitempty"`
 }

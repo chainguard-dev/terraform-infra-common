@@ -7,8 +7,18 @@ import (
 )
 
 type Wrapper[T any] struct {
-	When time.Time
-	Body T
+	When    time.Time
+	Headers *GitHubHeaders
+	Body    T
+}
+
+type GitHubHeaders struct {
+	HookID                 bigquery.NullString `json:"hook_id,omitempty" bigquery:"hook_id"`
+	DeliveryID             bigquery.NullString `json:"delivery_id,omitempty" bigquery:"delivery_id"`
+	UserAgent              bigquery.NullString `json:"user_agent,omitempty" bigquery:"user_agent"`
+	Event                  bigquery.NullString `json:"event,omitempty" bigquery:"event"`
+	InstallationTargetType bigquery.NullString `json:"installation_target_type,omitempty" bigquery:"installation_target_type"`
+	InstallationTargetID   bigquery.NullString `json:"installation_target_id,omitempty" bigquery:"installation_target_id"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#User
