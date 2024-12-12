@@ -14,6 +14,17 @@ const (
 	truncationMessage    = "\n\n⚠️ _Summary has been truncated_"
 )
 
+type Status string
+
+const (
+	StatusQueued     Status = "queued"
+	StatusInProgress Status = "in_progress"
+	StatusCompleted  Status = "completed"
+	StatusWaiting    Status = "waiting"
+	StatusRequested  Status = "requested"
+	StatusPending    Status = "pending"
+)
+
 type Conclusion string
 
 const (
@@ -32,6 +43,7 @@ type Builder struct {
 	md            strings.Builder
 	name, headSHA string
 	Summary       string
+	Status        Status
 	Conclusion    Conclusion
 }
 
@@ -71,6 +83,7 @@ func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	cr := &github.CreateCheckRunOptions{
 		Name:    b.name,
 		HeadSHA: b.headSHA,
+		Status:  github.String(string(StatusInProgress)),
 		Output: &github.CheckRunOutput{
 			Title:   &b.Summary,
 			Summary: &b.Summary,
@@ -87,7 +100,7 @@ func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	// Providing conclusion will automatically set the status parameter to completed.
 	if b.Conclusion != "" {
 		cr.Conclusion = github.String(string(b.Conclusion))
-		cr.Status = github.String("completed")
+		cr.Status = github.String(string(StatusCompleted))
 	}
 	return cr
 }
