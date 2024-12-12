@@ -62,7 +62,6 @@ func TestCheckRun(t *testing.T) {
 	}); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
-
 }
 
 func TestWritef(t *testing.T) {
