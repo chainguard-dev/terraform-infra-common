@@ -1,0 +1,96 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "name": "changes",
+    "type": "JSON"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "node_id",
+      "type": "STRING"
+     },
+     {
+      "name": "project_node_id",
+      "type": "STRING"
+     },
+     {
+      "name": "content_node_id",
+      "type": "STRING"
+     },
+     {
+      "name": "content_type",
+      "type": "STRING"
+     },
+     {
+      "fields": [
+       {
+        "name": "login",
+        "type": "STRING"
+       },
+       {
+        "name": "type",
+        "type": "STRING"
+       }
+      ],
+      "name": "creator",
+      "type": "RECORD"
+     },
+     {
+      "name": "created_at",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "updated_at",
+      "type": "TIMESTAMP"
+     },
+     {
+      "name": "archived_at",
+      "type": "TIMESTAMP"
+     }
+    ],
+    "name": "projects_v2_item",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "login",
+      "type": "STRING"
+     }
+    ],
+    "name": "organization",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "login",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
+      "type": "STRING"
+     }
+    ],
+    "name": "sender",
+    "type": "RECORD"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]
