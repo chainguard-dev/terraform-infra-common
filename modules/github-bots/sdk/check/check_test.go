@@ -10,11 +10,13 @@ import (
 
 func TestCheckRun(t *testing.T) {
 	b := NewBuilder("name", "headSHA")
+	b.Status = StatusInProgress
 	b.Writef("test %d", 123)
 
 	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
 		Name:    "name",
 		HeadSHA: "headSHA",
+		Status:  github.String("in_progress"),
 		Output: &github.CheckRunOutput{
 			Title:   github.String("name"),
 			Summary: github.String("name"),
@@ -24,7 +26,8 @@ func TestCheckRun(t *testing.T) {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
-		Name: "name",
+		Name:   "name",
+		Status: github.String("in_progress"),
 		Output: &github.CheckRunOutput{
 			Title:   github.String("name"),
 			Summary: github.String("name"),
