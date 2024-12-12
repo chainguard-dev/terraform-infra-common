@@ -6,6 +6,36 @@
  {
   "fields": [
    {
+    "name": "hook_id",
+    "type": "STRING"
+   },
+   {
+    "name": "delivery_id",
+    "type": "STRING"
+   },
+   {
+    "name": "user_agent",
+    "type": "STRING"
+   },
+   {
+    "name": "event",
+    "type": "STRING"
+   },
+   {
+    "name": "installation_target_type",
+    "type": "STRING"
+   },
+   {
+    "name": "installation_target_id",
+    "type": "STRING"
+   }
+  ],
+  "name": "headers",
+  "type": "RECORD"
+ },
+ {
+  "fields": [
+   {
     "name": "action",
     "type": "STRING"
    },
@@ -329,6 +359,20 @@
      }
     ],
     "name": "sender",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "app_id",
+      "type": "INTEGER"
+     }
+    ],
+    "name": "installation",
     "type": "RECORD"
    }
   ],

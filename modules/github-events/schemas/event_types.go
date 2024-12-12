@@ -7,8 +7,18 @@ import (
 )
 
 type Wrapper[T any] struct {
-	When time.Time
-	Body T
+	When    time.Time
+	Headers *GitHubHeaders
+	Body    T
+}
+
+type GitHubHeaders struct {
+	HookID                 bigquery.NullString `json:"hook_id,omitempty" bigquery:"hook_id"`
+	DeliveryID             bigquery.NullString `json:"delivery_id,omitempty" bigquery:"delivery_id"`
+	UserAgent              bigquery.NullString `json:"user_agent,omitempty" bigquery:"user_agent"`
+	Event                  bigquery.NullString `json:"event,omitempty" bigquery:"event"`
+	InstallationTargetType bigquery.NullString `json:"installation_target_type,omitempty" bigquery:"installation_target_type"`
+	InstallationTargetID   bigquery.NullString `json:"installation_target_id,omitempty" bigquery:"installation_target_id"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#User
@@ -28,6 +38,14 @@ type Repository struct {
 	Name     bigquery.NullString `json:"name,omitempty" bigquery:"name"`
 	URL      bigquery.NullString `json:"url,omitempty" bigquery:"url"`
 	FullName bigquery.NullString `json:"full_name,omitempty" bigquery:"full_name"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#Installation
+type Installation struct {
+	// Installation ID
+	ID bigquery.NullInt64 `json:"id,omitempty" bigquery:"id"`
+	// App ID
+	AppID bigquery.NullInt64 `json:"app_id,omitempty" bigquery:"app_id"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestBranch
@@ -91,6 +109,8 @@ type PullRequestEvent struct {
 	// Populated when action is synchronize
 	Before bigquery.NullString `json:"before,omitempty" bigquery:"before"`
 	After  bigquery.NullString `json:"after,omitempty" bigquery:"after"`
+
+	Installation *Installation `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v61/github#PushEventRepository
@@ -119,6 +139,8 @@ type PushEvent struct {
 	Sender  User                `json:"sender,omitempty" bigquery:"sender"`
 
 	Organization Organization `json:"organization,omitempty" bigquery:"organization"`
+
+	Installation *Installation `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#Workflow
@@ -158,6 +180,7 @@ type WorkflowRunEvent struct {
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Installation *Installation       `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#IssueCommentEvent
@@ -168,6 +191,7 @@ type IssueCommentEvent struct {
 	Repo         Repository          `json:"repository,omitempty" bigquery:"repository"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+	Installation *Installation       `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#IssueEvent
@@ -187,6 +211,7 @@ type IssueEvent struct {
 	LockReason        bigquery.NullString    `json:"lock_reason,omitempty" bigquery:"lock_reason"`
 	RequestedReviewer User                   `json:"requested_reviewer,omitempty" bigquery:"requested_reviewer"`
 	ReviewRequester   User                   `json:"review_requester,omitempty" bigquery:"review_requester"`
+	Installation      *Installation          `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#Issue
@@ -236,6 +261,7 @@ type CheckRunEvent struct {
 	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Installation *Installation       `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#CheckRun
@@ -270,6 +296,7 @@ type CheckSuiteEvent struct {
 	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Installation *Installation       `json:"installation,omitempty" bigquery:"installation"`
 }
 
 // https://github.com/google/go-github/blob/v60.0.0/github/event_types.go#L1085
@@ -292,4 +319,5 @@ type ProjectsV2ItemEvent struct {
 	ProjectV2Item *ProjectV2Item      `json:"projects_v2_item,omitempty" bigquery:"projects_v2_item"`
 	Organization  *Organization       `json:"organization,omitempty" bigquery:"organization"`
 	Sender        *User               `json:"sender,omitempty" bigquery:"sender"`
+	Installation  *Installation       `json:"installation,omitempty" bigquery:"installation"`
 }
