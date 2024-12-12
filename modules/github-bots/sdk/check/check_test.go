@@ -12,24 +12,34 @@ func TestCheckRun(t *testing.T) {
 	b := NewBuilder("name", "headSHA")
 	b.Writef("test %d", 123)
 
-	if diff := cmp.Diff(b.CheckRun(), &github.CheckRun{
-		Name:    github.String("name"),
-		HeadSHA: github.String("headSHA"),
+	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
+		Name:    "name",
+		HeadSHA: "headSHA",
 		Output: &github.CheckRunOutput{
 			Title:   github.String("name"),
 			Summary: github.String("name"),
 			Text:    github.String("test 123\n"),
 		},
 	}); diff != "" {
-		t.Errorf("CheckRun() mismatch (-want +got):\n%s", diff)
+		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
+		Name: "name",
+		Output: &github.CheckRunOutput{
+			Title:   github.String("name"),
+			Summary: github.String("name"),
+			Text:    github.String("test 123\n"),
+		},
+	}); diff != "" {
+		t.Errorf("CheckRunUpdate() mismatch (-want +got):\n%s", diff)
 	}
 
 	b.Summary = "summary"
 	b.Conclusion = ConclusionSuccess
 	b.Writef("test %t", true)
-	if diff := cmp.Diff(b.CheckRun(), &github.CheckRun{
-		Name:       github.String("name"),
-		HeadSHA:    github.String("headSHA"),
+	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
+		Name:       "name",
+		HeadSHA:    "headSHA",
 		Status:     github.String("completed"),
 		Conclusion: github.String("success"),
 		Output: &github.CheckRunOutput{
@@ -38,8 +48,21 @@ func TestCheckRun(t *testing.T) {
 			Text:    github.String("test 123\ntest true\n"),
 		},
 	}); diff != "" {
-		t.Errorf("CheckRun() mismatch (-want +got):\n%s", diff)
+		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
+	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
+		Name:       "name",
+		Status:     github.String("completed"),
+		Conclusion: github.String("success"),
+		Output: &github.CheckRunOutput{
+			Title:   github.String("summary"),
+			Summary: github.String("summary"),
+			Text:    github.String("test 123\ntest true\n"),
+		},
+	}); diff != "" {
+		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
+	}
+
 }
 
 func TestWritef(t *testing.T) {
@@ -55,13 +78,13 @@ func TestWritef(t *testing.T) {
 		}
 	}
 
-	gotText := b.CheckRun().GetOutput().GetText()
+	gotText := b.CheckRunCreate().GetOutput().GetText()
 	wantLength := maxCheckOutputLength
 	if len(gotText) != wantLength {
-		t.Fatalf("CheckRun().Output.Text length = %d, want %d", len(gotText), wantLength)
+		t.Fatalf("CheckRunCreate().Output.Text length = %d, want %d", len(gotText), wantLength)
 	}
 	if !strings.HasSuffix(gotText, truncationMessage) {
 		last100 := gotText[len(gotText)-100:]
-		t.Errorf("CheckRun().Output.Text does not have truncation message, ends with %q", last100)
+		t.Errorf("CheckRunCreate().Output.Text does not have truncation message, ends with %q", last100)
 	}
 }

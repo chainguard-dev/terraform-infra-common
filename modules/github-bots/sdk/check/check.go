@@ -64,13 +64,13 @@ func (b *Builder) Writef(format string, args ...any) {
 //
 // If the Summary field is empty, it will be set to the name field.
 // If the Conclusion field is set, the CheckRun will be marked as completed.
-func (b *Builder) CheckRun() *github.CheckRun {
+func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	if b.Summary == "" {
 		b.Summary = b.name
 	}
-	cr := &github.CheckRun{
-		Name:    &b.name,
-		HeadSHA: &b.headSHA,
+	cr := &github.CreateCheckRunOptions{
+		Name:    b.name,
+		HeadSHA: b.headSHA,
 		Output: &github.CheckRunOutput{
 			Title:   &b.Summary,
 			Summary: &b.Summary,
@@ -90,4 +90,18 @@ func (b *Builder) CheckRun() *github.CheckRun {
 		cr.Status = github.String("completed")
 	}
 	return cr
+}
+
+func (b *Builder) CheckRunUpdate() *github.UpdateCheckRunOptions {
+	create := b.CheckRunCreate()
+	return &github.UpdateCheckRunOptions{
+		Name:       create.Name,
+		Status:     create.Status,
+		Conclusion: create.Conclusion,
+		Output: &github.CheckRunOutput{
+			Title:   create.GetOutput().Title,
+			Summary: create.GetOutput().Summary,
+			Text:    create.GetOutput().Text,
+		},
+	}
 }
