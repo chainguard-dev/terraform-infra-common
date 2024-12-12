@@ -1,15 +1,15 @@
 locals {
-  oncall = [
-    var.notification_channel_pagerduty,
-    var.notification_channel_email,
-    var.notification_channel_pubsub
-  ]
+  oncall = concat(
+    var.notification_channels_pagerduty,
+    var.notification_channels_email,
+    var.notification_channels_pubsub
+  )
 
-  slack = [
-    var.notification_channel_slack,
-    var.notification_channel_email,
-    var.notification_channel_pubsub
-  ]
+  slack = concat(
+    var.notification_channels_slack,
+    var.notification_channels_email,
+    var.notification_channels_pubsub
+  )
 }
 
 locals {

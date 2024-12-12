@@ -8,28 +8,28 @@ variable "notification_channels" {
   default     = []
 }
 
-variable "notification_channel_pagerduty" {
+variable "notification_channels_pagerduty" {
   description = "Email notification channel."
-  type        = string
-  default     = ""
+  type        = list(string)
+  default     = []
 }
 
-variable "notification_channel_slack" {
+variable "notification_channels_slack" {
   description = "Slack notification channel."
-  type        = string
-  default     = ""
+  type        = list(string)
+  default     = []
 }
 
-variable "notification_channel_email" {
+variable "notification_channels_email" {
   description = "Email notification channel."
-  type        = string
-  default     = ""
+  type        = list(string)
+  default     = []
 }
 
-variable "notification_channel_pubsub" {
+variable "notification_channels_pubsub" {
   description = "Pubsub notification channel."
-  type        = string
-  default     = ""
+  type        = list(string)
+  default     = []
 }
 
 variable "oom_filter" {
