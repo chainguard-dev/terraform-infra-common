@@ -43,6 +43,22 @@ variable "secret_version_adder" {
   description = "The user allowed to populate new webhook secret versions."
 }
 
+variable "additional_webhook_secrets" {
+  type = map(object({
+    secret  = string
+    version = string
+  }))
+  description = <<EOD
+Additional secrets to be used by the service.
+
+- key: Local identifier for the secret. This will be prefixed with WEBHOOK_SECRET_ in the service's environment vars.
+- secret: The name of the secret in Cloud Secret Manager. Format: {secretName} if the secret is in the same project. projects/{project}/secrets/{secretName} if the secret is in a different project.
+- version: The version of the secret to use. Can be a number or 'latest'.
+
+See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service#nested_env for related documentation.
+EOD
+}
+
 variable "service-ingress" {
   type        = string
   description = <<EOD
