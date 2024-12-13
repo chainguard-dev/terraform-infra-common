@@ -57,6 +57,7 @@ Additional secrets to be used by the service.
 
 See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service#nested_env for related documentation.
 EOD
+  default = {}
 }
 
 variable "service-ingress" {
