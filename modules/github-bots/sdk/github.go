@@ -536,6 +536,7 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 	}
 	if err := wt.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.ReferenceName(ref),
+		Force:  true, // There should not be any local changes, but just in case.
 	}); err != nil {
 		return nil, fmt.Errorf("failed to checkout ref %s: %w", ref, err)
 	}
