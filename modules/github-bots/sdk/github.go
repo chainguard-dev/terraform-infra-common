@@ -538,6 +538,11 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 		Branch: plumbing.ReferenceName(ref),
 		Force:  true, // There should not be any local changes, but just in case.
 	}); err != nil {
+		status, serr := wt.Status()
+		if serr != nil {
+			return nil, fmt.Errorf("failed to get worktree status after failed checkout: %w", errors.Join(serr, err))
+		}
+		log.With("status", status).Error("failed checkout")
 		return nil, fmt.Errorf("failed to checkout ref %s: %w", ref, err)
 	}
 	return r, nil
