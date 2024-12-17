@@ -43,4 +43,6 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     "attribute.versiontags"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.versiontagsanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false')"
   }
+
+  attribute_condition = "assertion.repository_owner == '${var.github_org}'"
 }
