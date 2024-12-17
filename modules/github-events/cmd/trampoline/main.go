@@ -11,12 +11,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
+	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/internal/secrets"
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/internal/trampoline"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
@@ -35,12 +35,7 @@ func main() {
 	defer cancel()
 
 	// Get all secrets from the environment.
-	var secrets [][]byte
-	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "WEBHOOK_SECRET") {
-			secrets = [][]byte{[]byte(os.Getenv(e))}
-		}
-	}
+	secrets := secrets.LoadFromEnv(ctx)
 
 	go httpmetrics.ServeMetrics()
 	defer httpmetrics.SetupTracer(ctx)()
