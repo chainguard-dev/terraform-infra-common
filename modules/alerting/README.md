@@ -28,6 +28,8 @@ No modules.
 | [google_monitoring_alert_policy.cloud-run-scaling-failure](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.cloudrun_timeout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.fatal](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.grpc_error_rate](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.http_error_rate](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.oom](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.panic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.panic-stacktrace](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
@@ -48,6 +50,8 @@ No modules.
 | <a name="input_failure_rate_exclude_services"></a> [failure\_rate\_exclude\_services](#input\_failure\_rate\_exclude\_services) | List of service names to exclude from the 5xx failure rate alert | `list(string)` | `[]` | no |
 | <a name="input_failure_rate_ratio_threshold"></a> [failure\_rate\_ratio\_threshold](#input\_failure\_rate\_ratio\_threshold) | ratio threshold to alert for cloud run server failure rate. | `number` | `0.2` | no |
 | <a name="input_global_only_alerts"></a> [global\_only\_alerts](#input\_global\_only\_alerts) | only enable global alerts. when true, only create alerts that are global. | `bool` | `false` | no |
+| <a name="input_grpc_error_threshold"></a> [grpc\_error\_threshold](#input\_grpc\_error\_threshold) | threshold for grpc error. | `number` | `0.25` | no |
+| <a name="input_http_error_threshold"></a> [http\_error\_threshold](#input\_http\_error\_threshold) | threshold for http error. | `number` | `0.25` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_email"></a> [notification\_channels\_email](#input\_notification\_channels\_email) | Email notification channel. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_pagerduty"></a> [notification\_channels\_pagerduty](#input\_notification\_channels\_pagerduty) | Email notification channel. | `list(string)` | `[]` | no |

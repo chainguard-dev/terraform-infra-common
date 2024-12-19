@@ -114,3 +114,15 @@ variable "global_only_alerts" {
   type        = bool
   default     = false
 }
+
+variable "http_error_threshold" {
+  description = "threshold for http error."
+  type        = number
+  default     = 0.25
+}
+
+variable "grpc_error_threshold" {
+  description = "threshold for grpc error."
+  type        = number
+  default     = 0.25
+}
