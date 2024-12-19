@@ -61,6 +61,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
         "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -115,6 +116,7 @@ resource "google_monitoring_alert_policy" "oom" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -170,6 +172,7 @@ resource "google_monitoring_alert_policy" "signal" {
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "signal"        = "REGEXP_EXTRACT(textPayload, \"^Container terminated on signal ([^01]+)\\.$\")"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -222,6 +225,7 @@ resource "google_monitoring_alert_policy" "panic" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -273,6 +277,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -324,6 +329,7 @@ resource "google_monitoring_alert_policy" "fatal" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -480,6 +486,7 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
+    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
   }
 }
 
@@ -514,6 +521,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -557,6 +565,7 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
+    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
   }
 }
 
@@ -589,6 +598,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -675,6 +685,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
@@ -717,6 +728,7 @@ resource "google_logging_metric" "cloudrun_timeout" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
+    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
   }
 }
 
@@ -759,6 +771,7 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
+    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
   }
 }
 
@@ -801,6 +814,7 @@ resource "google_logging_metric" "github_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
+    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
   }
 }
 
@@ -843,5 +857,62 @@ resource "google_logging_metric" "r2_same_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
+    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
   }
+}
+
+locals {
+  pinned_filter = <<EOF
+resource.type="cloud_run_revision"
+severity=INFO
+log_name="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fsystem_event"
+protoPayload.methodName="/Services.UpdateService"
+protoPayload.resourceName:"namespaces/${var.project_id}/services/"
+-protoPayload.response.spec.traffic.latestRevision="true"
+-protoPayload.response.status.traffic.latestRevision="true"
+${local.squad_log_filter}
+EOF
+}
+
+resource "google_monitoring_alert_policy" "pinned" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Pinned log entry ${local.name}"
+  combiner     = "OR"
+
+  documentation {
+    content = "$${metric_or_resource.labels.service_name} has logged a pinned."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.pinned_filter)}?project=${var.project_id}"
+    }
+  }
+
+  conditions {
+    display_name = "Pinned log entry ${local.name}"
+
+    condition_matched_log {
+      filter = local.pinned_filter
+
+      label_extractors = {
+        "service_name" = "EXTRACT(resource.labels.service_name)"
+        "location"     = "EXTRACT(resource.labels.location)"
+        "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+      }
+    }
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
 }
