@@ -48,7 +48,7 @@ func main() {
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		ReadHeaderTimeout: 10 * time.Second,
-		Handler:           trampoline.NewServer(ceclient, secrets),
+		Handler:           httpmetrics.Handler("trampoline", trampoline.NewServer(ceclient, secrets)),
 	}
 	clog.FatalContextf(ctx, "ListenAndServe: %v", srv.ListenAndServe())
 }
