@@ -15,7 +15,7 @@ require (
 	github.com/chainguard-dev/clog v1.5.1
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.11.0
-	github.com/go-git/go-git/v5 v5.12.0
+	github.com/go-git/go-git/v5 v5.13.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v61 v61.0.0
 	github.com/jonboulle/clockwork v0.4.0
@@ -53,7 +53,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-crypto v1.1.2 // indirect
+	github.com/ProtonMail/go-crypto v1.1.3 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
