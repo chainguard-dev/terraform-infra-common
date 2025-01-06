@@ -220,7 +220,8 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 }
 
 // AddComment adds a new comment to the given pull request.
-func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, content string) error {
+func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, botName, content string) error {
+	content = fmt.Sprintf("<!-- bot:%s -->\n\n%s", botName, content)
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
 	}); err != nil || resp.StatusCode != 201 {
