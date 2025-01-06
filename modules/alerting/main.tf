@@ -15,6 +15,7 @@ locals {
 locals {
   squad_log_filter = var.squad == "" ? "" : "labels.squad=\"${var.squad}\""
   name             = var.squad == "" ? "global" : var.squad
+  metric_filter    = var.squad == "" ? "" : "metric.labels.team=\"${var.squad}\""
 }
 
 locals {
@@ -910,6 +911,110 @@ resource "google_monitoring_alert_policy" "pinned" {
       }
     }
   }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "http_error_rate" {
+  count = var.global_only_alerts ? 0 : 1
+
+  alert_strategy {
+    auto_close = "3600s" // 1 hour
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period     = "60s"
+        cross_series_reducer = "REDUCE_MEAN"
+        per_series_aligner   = "ALIGN_RATE"
+        group_by_fields = [
+          "metric.label.team",
+          "metric.label.service_name",
+        ]
+      }
+
+      comparison = "COMPARISON_GT"
+      duration   = "300s"
+      # ignore registry service - valid 4xx use cases
+      # ignore prober - handled by prober alerts
+      # ignore 2xx and 3xx, only care 4xx and 5xx
+      filter = <<EOT
+        resource.type = "prometheus_target"
+        metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
+        metric.labels.service_name != monitoring.regex.full_match(".*-registry"
+        metric.labels.service_name != monitoring.regex.full_match("prb-.*"
+        metric.labels.code != monitoring.regex.full_match("[23].."))"
+        ${local.metric_filter}
+      EOT
+
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
+
+      trigger {
+        count = "1"
+      }
+
+      threshold_value = var.http_error_threshold
+    }
+
+    display_name = "http error rate ${local.name}"
+  }
+  display_name = "http error rate ${local.name}"
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "grpc_error_rate" {
+  count = var.global_only_alerts ? 0 : 1
+
+  alert_strategy {
+    auto_close = "3600s" // 1 hour
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period     = "60s"
+        cross_series_reducer = "REDUCE_MEAN"
+        per_series_aligner   = "ALIGN_RATE"
+        group_by_fields = [
+          "metric.label.team",
+          "metric.label.service_name",
+        ]
+      }
+
+      comparison = "COMPARISON_GT"
+      duration   = "300s"
+      # ignore OK and AlreadyExists code
+      filter = <<EOT
+        resource.type = "prometheus_target"
+        metric.type = "prometheus.googleapis.com/grpc_server_handled_total/counter"
+        metric.labels.grpc_code != monitoring.regex.full_match("OK|AlreadyExists"
+        ${local.metric_filter}
+      EOT
+
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
+
+      trigger {
+        count = "1"
+      }
+
+      threshold_value = var.grpc_error_threshold
+    }
+
+    display_name = "grpc error rate ${local.name}"
+  }
+  display_name = "grpc error rate ${local.name}"
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
