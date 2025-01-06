@@ -586,6 +586,27 @@ func (c GitHubClient) GetFileContent(ctx context.Context, owner, repo, path, ref
 	return content, nil
 }
 
+// SearchContentInFilename searches for a text in a filename in a specific repository
+func (c GitHubClient) SearchContentInFilename(ctx context.Context, owner, repo, path, content string, opt *github.ListOptions) (*github.CodeSearchResult, error) {
+	if opt == nil {
+		opt = &github.ListOptions{}
+	}
+	query := fmt.Sprintf("%s in:file filename:%s repo:%s/%s", content, path, owner, repo)
+	result, resp, err := c.inner.Search.Code(
+		ctx,
+		query,
+		&github.SearchOptions{
+			ListOptions: *opt,
+		},
+	)
+
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("search content %s in repository", content)); err != nil {
+		return &github.CodeSearchResult{}, err
+	}
+
+	return result, nil
+}
+
 // SearchFilenameInRepository searches for a filename in a specific repository
 func (c GitHubClient) SearchFilenameInRepository(ctx context.Context, owner, repo, path string, opt *github.ListOptions) (*github.CodeSearchResult, error) {
 	if opt == nil {
