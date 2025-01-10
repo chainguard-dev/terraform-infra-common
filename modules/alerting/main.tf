@@ -482,6 +482,11 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
       value_type  = "STRING"
       description = "name of service."
     }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with service"
+    }
   }
 
   label_extractors = {
@@ -560,6 +565,11 @@ resource "google_logging_metric" "cloud-run-failed-req" {
       key         = "service_name"
       value_type  = "STRING"
       description = "name of service."
+    }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with service"
     }
   }
 
@@ -724,6 +734,11 @@ resource "google_logging_metric" "cloudrun_timeout" {
       value_type  = "STRING"
       description = "name of service."
     }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with service"
+    }
   }
 
   label_extractors = {
@@ -765,6 +780,11 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
       key         = "job_name"
       value_type  = "STRING"
       description = "name of job."
+    }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with service"
     }
   }
 
@@ -809,6 +829,11 @@ resource "google_logging_metric" "github_ratelimit" {
       value_type  = "STRING"
       description = "name of job."
     }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with service"
+    }
   }
 
   label_extractors = {
@@ -851,6 +876,11 @@ resource "google_logging_metric" "r2_same_ratelimit" {
       key         = "job_name"
       value_type  = "STRING"
       description = "name of job."
+    }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with service"
     }
   }
 
@@ -947,9 +977,9 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
       filter = <<EOT
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
-        metric.labels.service_name != monitoring.regex.full_match(".*-registry"
-        metric.labels.service_name != monitoring.regex.full_match("prb-.*"
-        metric.labels.code != monitoring.regex.full_match("[23].."))"
+        metric.labels.service_name != monitoring.regex.full_match(".*-registry")
+        metric.labels.service_name != monitoring.regex.full_match("prb-.*")
+        metric.labels.code != monitoring.regex.full_match("[23]..")
         ${local.metric_filter}
       EOT
 
@@ -999,7 +1029,7 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
       filter = <<EOT
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/grpc_server_handled_total/counter"
-        metric.labels.grpc_code != monitoring.regex.full_match("OK|AlreadyExists"
+        metric.labels.grpc_code != monitoring.regex.full_match("OK|AlreadyExists")
         ${local.metric_filter}
       EOT
 
