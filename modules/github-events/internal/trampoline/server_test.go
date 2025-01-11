@@ -39,7 +39,7 @@ func TestTrampoline(t *testing.T) {
 	impl := NewServer(client, [][]byte{
 		[]byte("badsecret"), // This secret should be ignored
 		secret,
-	})
+	}, nil, nil)
 	impl.clock = clock
 
 	srv := httptest.NewServer(impl)
@@ -127,7 +127,7 @@ func sendevent(t *testing.T, client *http.Client, url string, eventType string, 
 }
 
 func TestForbidden(t *testing.T) {
-	srv := httptest.NewServer(NewServer(&fakeClient{}, nil))
+	srv := httptest.NewServer(NewServer(&fakeClient{}, nil, nil, nil))
 	defer srv.Close()
 
 	// Doesn't really matter what we send, we just want to ensure we get a forbidden response
@@ -136,6 +136,47 @@ func TestForbidden(t *testing.T) {
 		t.Fatalf("error sending event: %v", err)
 	}
 	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+}
+
+func TestWebhookIDFilter(t *testing.T) {
+	secret := []byte("hunter2")
+	srv := httptest.NewServer(NewServer(&fakeClient{}, [][]byte{secret}, []string{"doesnotmatch"}, nil))
+	defer srv.Close()
+
+	// Send an event with the requested action
+	resp, err := sendevent(t, srv.Client(), srv.URL, "check_run", nil, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+}
+
+func TestRequestedOnlyWebhook(t *testing.T) {
+	secret := []byte("hunter2")
+	srv := httptest.NewServer(NewServer(&fakeClient{}, [][]byte{secret}, nil, []string{"1234"}))
+	defer srv.Close()
+
+	// Send an event with the requested action
+	resp, err := sendevent(t, srv.Client(), srv.URL, "check_run", map[string]interface{}{
+		"action": "requested",
+	}, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+
+	// Send the same event again, but without the requested action
+	resp, err = sendevent(t, srv.Client(), srv.URL, "check_run", nil, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("unexpected status: %v", resp.Status)
 	}
 }

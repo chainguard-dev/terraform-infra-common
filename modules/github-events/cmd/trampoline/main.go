@@ -28,6 +28,16 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 	IngressURI string `env:"EVENT_INGRESS_URI, required"`
 	// Note: any environment variable starting with "WEBHOOK_SECRET" will be loaded as as a webhook secret to be checked.
 	WebhookSecret string `env:"WEBHOOK_SECRET"`
+	// If set, any matching webhook IDs will only pass through the event if the event is a requested event:
+	// - check_run.requested_action
+	// - check_run.rerequested
+	// - check_suite.requested
+	// - check_suite.rerequested
+	// This is intended to be a temporary measure to allow multiple webhooks to be sent sent to the same endpoint'
+	// while avoiding duplicate events.
+	RequestedOnly []string `env:"REQUESTED_ONLY_WEBHOOK_ID"`
+	// If set, only events from the specified webhook IDs will be processed.
+	WebhookID []string `env:"WEBHOOK_ID"`
 }{})
 
 func main() {
@@ -48,7 +58,7 @@ func main() {
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		ReadHeaderTimeout: 10 * time.Second,
-		Handler:           httpmetrics.Handler("trampoline", trampoline.NewServer(ceclient, secrets)),
+		Handler:           httpmetrics.Handler("trampoline", trampoline.NewServer(ceclient, secrets, env.WebhookID, env.RequestedOnly)),
 	}
 	clog.FatalContextf(ctx, "ListenAndServe: %v", srv.ListenAndServe())
 }

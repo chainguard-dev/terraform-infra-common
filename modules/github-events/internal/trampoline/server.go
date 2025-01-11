@@ -20,13 +20,19 @@ type Server struct {
 	client  cloudevents.Client
 	secrets [][]byte
 	clock   clockwork.Clock
+	// webhookID is an optional config that will instruct the trampoline to only listen to events coming from a specific webhook.
+	// If webhookID is empty, the trampoline will listen to all events.
+	webhookID            []string
+	requestedOnlyWebhook []string
 }
 
-func NewServer(client cloudevents.Client, secrets [][]byte) *Server {
+func NewServer(client cloudevents.Client, secrets [][]byte, webhookID []string, requestedOnlyWebhook []string) *Server {
 	return &Server{
-		client:  client,
-		secrets: secrets,
-		clock:   clockwork.NewRealClock(),
+		client:               client,
+		secrets:              secrets,
+		requestedOnlyWebhook: requestedOnlyWebhook,
+		webhookID:            webhookID,
+		clock:                clockwork.NewRealClock(),
 	}
 }
 
@@ -50,9 +56,40 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	t = "dev.chainguard.github." + t
 	log = log.With("event-type", t)
 
+	hookID := r.Header.Get("X-GitHub-Hook-ID")
+	// If webhookID is set, only listen to events from the specified webhook.
+	for _, id := range s.webhookID {
+		if hookID != id {
+			log.Warnf("ignoring event from webhook due to webhook_id %q %q", hookID, github.DeliveryID(r))
+			// Use 202 Accepted to as an ACK, but no action taken.
+			w.WriteHeader(http.StatusAccepted)
+			return
+		}
+	}
+
+	// If requestedOnlyWebhook is set, only listen to events from the specified webhook if the event is a requested event.
+	var requested bool
+	if t == "check_run" || t == "check_suite" {
+		data := struct {
+			Action string `json:"action"`
+		}{}
+		if err := json.Unmarshal(payload, &data); err != nil {
+			log.Warnf("failed to unmarshal payload; action will be unset: %v", err)
+		}
+		requested = data.Action == "requested" || data.Action == "rerequested" || data.Action == "requested_action"
+	}
+	for _, id := range s.requestedOnlyWebhook {
+		if !requested && hookID == id {
+			log.Warnf("ignoring event from webhook due to non-requested event %q %q", hookID, github.DeliveryID(r))
+			// Use 202 Accepted to as an ACK, but no action taken.
+			w.WriteHeader(http.StatusAccepted)
+			return
+		}
+	}
+
+	t = "dev.chainguard.github." + t
 	var msg struct {
 		Action     string `json:"action"`
 		Repository struct {
@@ -75,9 +112,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	event.SetExtension("action", msg.Action)
 	// Needs to be an extension to be a filterable attribute.
 	// See https://github.com/chainguard-dev/terraform-infra-common/blob/main/pkg/pubsub/cloudevent.go
-	if id := r.Header.Get("X-GitHub-Hook-ID"); id != "" {
+	if hookID != "" {
 		// Cloud Event attribute spec only allows [a-z0-9] :(
-		event.SetExtension("githubhook", id)
+		event.SetExtension("githubhook", hookID)
 	}
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
 		When: s.clock.Now(),
