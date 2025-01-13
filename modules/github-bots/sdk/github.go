@@ -14,6 +14,7 @@ import (
 	"time"
 
 	bufra "github.com/avvmoto/buf-readerat"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -40,6 +41,46 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 
 	client := GitHubClient{
 		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
+		ts:      ts,
+		bufSize: 1024 * 1024, // 1MB buffer for requests
+		org:     org,
+		repo:    repo,
+	}
+
+	for _, opt := range opts {
+		opt(&client)
+	}
+
+	return client
+}
+
+type installationTokenSource struct {
+	ctx       context.Context
+	transport *ghinstallation.Transport
+}
+
+func (ts *installationTokenSource) Token() (*oauth2.Token, error) {
+	token, err := ts.transport.Token(ts.ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+	expiry, _, err := ts.transport.Expiry()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token expiry: %w", err)
+	}
+	return &oauth2.Token{
+		AccessToken: token,
+		Expiry:      expiry,
+	}, nil
+}
+
+func NewInstallationClient(ctx context.Context, org, repo string, tr *ghinstallation.Transport, opts ...GitHubClientOption) GitHubClient {
+	ts := oauth2.ReuseTokenSource(nil, &installationTokenSource{
+		ctx:       ctx,
+		transport: tr,
+	})
+	client := GitHubClient{
+		inner:   github.NewClient(&http.Client{Transport: tr}),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -506,7 +547,8 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 
 	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo)
 	auth := &gitHttp.BasicAuth{
-		Username: "notchecked", // username is not checked, only the token in the password field is used.
+		// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#about-authentication-as-a-github-app-installation
+		Username: "x-access-token",
 		Password: tok.AccessToken,
 	}
 
