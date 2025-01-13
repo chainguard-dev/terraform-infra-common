@@ -38,6 +38,7 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 	RequestedOnly []string `env:"REQUESTED_ONLY_WEBHOOK_ID"`
 	// If set, only events from the specified webhook IDs will be processed.
 	WebhookID []string `env:"WEBHOOK_ID"`
+	OrgFilter []string `env:"GITHUB_ORGANIZATIONS_FILTER"`
 }{})
 
 func main() {
@@ -58,7 +59,12 @@ func main() {
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		ReadHeaderTimeout: 10 * time.Second,
-		Handler:           httpmetrics.Handler("trampoline", trampoline.NewServer(ceclient, secrets, env.WebhookID, env.RequestedOnly)),
+		Handler: httpmetrics.Handler("trampoline", trampoline.NewServer(ceclient, trampoline.ServerOptions{
+			Secrets:              secrets,
+			WebhookID:            env.WebhookID,
+			RequestedOnlyWebhook: env.RequestedOnly,
+			OrgFilter:            env.OrgFilter,
+		})),
 	}
 	clog.FatalContextf(ctx, "ListenAndServe: %v", srv.ListenAndServe())
 }

@@ -57,7 +57,7 @@ Additional secrets to be used by the service.
 
 See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service#nested_env for related documentation.
 EOD
-  default = {}
+  default     = {}
 }
 
 variable "service-ingress" {
@@ -92,4 +92,10 @@ variable "squad" {
     condition     = !var.require_squad || var.squad != ""
     error_message = "squad needs to specified or disable check by setting require_squad = false"
   }
+}
+
+variable "github_organizations" {
+  description = "csv string of GitHub organizations to allow."
+  type        = string
+  default     = ""
 }

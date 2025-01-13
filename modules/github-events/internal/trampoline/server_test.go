@@ -36,10 +36,13 @@ func TestTrampoline(t *testing.T) {
 
 	secret := []byte("hunter2")
 	clock := clockwork.NewFakeClock()
-	impl := NewServer(client, [][]byte{
-		[]byte("badsecret"), // This secret should be ignored
-		secret,
-	}, nil, nil)
+	opts := ServerOptions{
+		Secrets: [][]byte{
+			[]byte("badsecret"), // This secret should be ignored
+			secret,
+		},
+	}
+	impl := NewServer(client, opts)
 	impl.clock = clock
 
 	srv := httptest.NewServer(impl)
@@ -127,7 +130,7 @@ func sendevent(t *testing.T, client *http.Client, url string, eventType string, 
 }
 
 func TestForbidden(t *testing.T) {
-	srv := httptest.NewServer(NewServer(&fakeClient{}, nil, nil, nil))
+	srv := httptest.NewServer(NewServer(&fakeClient{}, ServerOptions{}))
 	defer srv.Close()
 
 	// Doesn't really matter what we send, we just want to ensure we get a forbidden response
@@ -142,7 +145,11 @@ func TestForbidden(t *testing.T) {
 
 func TestWebhookIDFilter(t *testing.T) {
 	secret := []byte("hunter2")
-	srv := httptest.NewServer(NewServer(&fakeClient{}, [][]byte{secret}, []string{"doesnotmatch"}, nil))
+	opts := ServerOptions{
+		Secrets:   [][]byte{secret},
+		WebhookID: []string{"doesnotmatch"},
+	}
+	srv := httptest.NewServer(NewServer(&fakeClient{}, opts))
 	defer srv.Close()
 
 	// Send an event with the requested action
@@ -157,12 +164,19 @@ func TestWebhookIDFilter(t *testing.T) {
 
 func TestRequestedOnlyWebhook(t *testing.T) {
 	secret := []byte("hunter2")
-	srv := httptest.NewServer(NewServer(&fakeClient{}, [][]byte{secret}, nil, []string{"1234"}))
+	opts := ServerOptions{
+		Secrets:              [][]byte{secret},
+		RequestedOnlyWebhook: []string{"1234"},
+	}
+	srv := httptest.NewServer(NewServer(&fakeClient{}, opts))
 	defer srv.Close()
 
 	// Send an event with the requested action
 	resp, err := sendevent(t, srv.Client(), srv.URL, "check_run", map[string]interface{}{
 		"action": "requested",
+		"repository": map[string]interface{}{
+			"full_name": "org/repo",
+		},
 	}, secret)
 	if err != nil {
 		t.Fatalf("error sending event: %v", err)
@@ -177,6 +191,40 @@ func TestRequestedOnlyWebhook(t *testing.T) {
 		t.Fatalf("error sending event: %v", err)
 	}
 	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+}
+
+func TestOrgFilter(t *testing.T) {
+	secret := []byte("hunter2")
+	opts := ServerOptions{
+		Secrets:   [][]byte{secret},
+		OrgFilter: []string{"org"},
+	}
+	srv := httptest.NewServer(NewServer(&fakeClient{}, opts))
+	defer srv.Close()
+
+	// Send an event with the requested action
+	resp, err := sendevent(t, srv.Client(), srv.URL, "pull_request", map[string]interface{}{
+		"action": "opened",
+	}, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+
+	resp, err = sendevent(t, srv.Client(), srv.URL, "pull_request", map[string]interface{}{
+		"action": "opened",
+		"repository": map[string]interface{}{
+			"full_name": "org/repo",
+		},
+	}, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected status: %v", resp.Status)
 	}
 }

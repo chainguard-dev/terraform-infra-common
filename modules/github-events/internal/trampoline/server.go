@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/chainguard-dev/clog"
@@ -24,14 +25,23 @@ type Server struct {
 	// If webhookID is empty, the trampoline will listen to all events.
 	webhookID            []string
 	requestedOnlyWebhook []string
+	orgFilter            []string
 }
 
-func NewServer(client cloudevents.Client, secrets [][]byte, webhookID []string, requestedOnlyWebhook []string) *Server {
+type ServerOptions struct {
+	Secrets              [][]byte
+	WebhookID            []string
+	RequestedOnlyWebhook []string
+	OrgFilter            []string
+}
+
+func NewServer(client cloudevents.Client, opts ServerOptions) *Server {
 	return &Server{
 		client:               client,
-		secrets:              secrets,
-		requestedOnlyWebhook: requestedOnlyWebhook,
-		webhookID:            webhookID,
+		secrets:              opts.Secrets,
+		requestedOnlyWebhook: opts.RequestedOnlyWebhook,
+		webhookID:            opts.WebhookID,
+		orgFilter:            opts.OrgFilter,
 		clock:                clockwork.NewRealClock(),
 	}
 }
@@ -100,6 +110,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("failed to unmarshal payload; action and subject will be unset: %v", err)
 	} else {
 		log = log.With("action", msg.Action, "repo", msg.Repository.FullName)
+	}
+
+	// Filter webhook at org level.
+	if len(s.orgFilter) > 0 {
+		found := false
+		for _, org := range s.orgFilter {
+			if strings.HasPrefix(msg.Repository.FullName, org+"/") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			log.Warnf("ignoring event from repository %q due to non-matching org", msg.Repository.FullName)
+			w.WriteHeader(http.StatusAccepted)
+			return
+		}
 	}
 
 	log.Debugf("forwarding event: %s", t)
