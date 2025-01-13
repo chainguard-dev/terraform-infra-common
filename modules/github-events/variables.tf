@@ -99,3 +99,15 @@ variable "github_organizations" {
   type        = string
   default     = ""
 }
+
+variable "requested_only_webhook_id" {
+  description = "If set, the csv IDs of the webhooks that should only receive check requested events."
+  type        = string
+  default     = ""
+}
+
+variable "webhook_id" {
+  description = "If set, the csv IDs of the webhooks that the trampoline should listen to."
+  type        = string
+  default     = ""
+}
