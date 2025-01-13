@@ -45,15 +45,21 @@ module "this" {
       }
       ports = [{ container_port = 8080 }]
       env = concat(
-        [{
-          name = "WEBHOOK_SECRET"
-          value_source = {
-            secret_key_ref = {
-              secret  = module.webhook-secret.secret_id
-              version = "latest"
+        [
+          {
+            name = "WEBHOOK_SECRET"
+            value_source = {
+              secret_key_ref = {
+                secret  = module.webhook-secret.secret_id
+                version = "latest"
+              }
             }
-          }
-        }],
+          },
+          {
+            name  = "GITHUB_ORGANIZATIONS_FILTER"
+            value = var.github_organizations
+          },
+        ],
         [for name, secret in var.additional_webhook_secrets : {
           name = "WEBHOOK_SECRET_${upper(name)}"
           value_source = {
