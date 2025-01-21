@@ -4,8 +4,8 @@ go 1.23.4
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.7
-	chainguard.dev/sdk v0.1.29
-	cloud.google.com/go/bigquery v1.65.0
+	chainguard.dev/sdk v0.1.30
+	cloud.google.com/go/bigquery v1.66.0
 	cloud.google.com/go/compute/metadata v0.6.0
 	cloud.google.com/go/profiler v0.4.2
 	cloud.google.com/go/pubsub v1.45.3
@@ -43,10 +43,10 @@ require (
 
 require (
 	cel.dev/expr v0.16.2 // indirect
-	cloud.google.com/go v0.116.0 // indirect
+	cloud.google.com/go v0.118.0 // indirect
 	cloud.google.com/go/auth v0.14.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
-	cloud.google.com/go/iam v1.2.2 // indirect
+	cloud.google.com/go/iam v1.3.1 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
 	cloud.google.com/go/trace v1.11.2 // indirect
 	dario.cat/mergo v1.0.1 // indirect
