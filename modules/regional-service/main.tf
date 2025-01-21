@@ -144,6 +144,59 @@ resource "google_cloud_run_v2_service" "this" {
           mount_path = volume_mounts.value.mount_path
         }
       }
+      dynamic "startup_probe" {
+        for_each = local.main_container.startup_probe != null ? { "" : local.main_container.startup_probe } : {}
+        content {
+          dynamic "http_get" {
+            for_each = startup_probe.value.http_get != null ? { "" : startup_probe.value.http_get } : {}
+            content {
+              path = http_get.value.path
+              port = http_get.value.port
+            }
+          }
+          dynamic "tcp_socket" {
+            for_each = startup_probe.value.tcp_socket != null ? { "" : startup_probe.value.tcp_socket } : {}
+            content {
+              port = tcp_socket.value.port
+            }
+          }
+
+          initial_delay_seconds = startup_probe.value.initial_delay_seconds
+          period_seconds        = startup_probe.value.period_seconds
+          timeout_seconds       = startup_probe.value.timeout_seconds
+          failure_threshold     = startup_probe.value.failure_threshold
+        }
+      }
+      dynamic "liveness_probe" {
+        for_each = local.main_container.liveness_probe != null ? { "" : local.main_container.liveness_probe } : {}
+        content {
+          dynamic "http_get" {
+            for_each = liveness_probe.value.http_get != null ? { "" : liveness_probe.value.http_get } : {}
+            content {
+              path = http_get.value.path
+              port = http_get.value.port
+            }
+          }
+          dynamic "tcp_socket" {
+            for_each = liveness_probe.value.tcp_socket != null ? { "" : liveness_probe.value.tcp_socket } : {}
+            content {
+              port = tcp_socket.value.port
+            }
+          }
+          dynamic "grpc" {
+            for_each = liveness_probe.value.grpc != null ? { "" : liveness_probe.value.grpc } : {}
+            content {
+              service = grpc.value.service
+              port    = grpc.value.port
+            }
+          }
+
+          initial_delay_seconds = liveness_probe.value.initial_delay_seconds
+          period_seconds        = liveness_probe.value.period_seconds
+          timeout_seconds       = liveness_probe.value.timeout_seconds
+          failure_threshold     = liveness_probe.value.failure_threshold
+        }
+      }
     }
 
     // Now the sidecar containers can be added.

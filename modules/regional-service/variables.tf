@@ -92,6 +92,44 @@ variable "containers" {
       name       = string
       mount_path = string
     })), [])
+    startup_probe = optional(object({
+      initial_delay_seconds = optional(number)
+      // GCP Terraform provider defaults differ from Cloud Run defaults.
+      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe
+      period_seconds    = optional(number, 240)
+      timeout_seconds   = optional(number, 240)
+      failure_threshold = optional(number, 1)
+      http_get = optional(object({
+        path = string
+        port = optional(number)
+      }), null)
+      tcp_socket = optional(object({
+        port = optional(number)
+      }), null)
+      grpc = optional(object({
+        service = optional(string)
+        port    = optional(number)
+      }), null)
+    }))
+    liveness_probe = optional(object({
+      initial_delay_seconds = optional(number)
+      // GCP Terraform provider defaults differ from Cloud Run defaults.
+      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe
+      period_seconds    = optional(number, 240)
+      timeout_seconds   = optional(number, 240)
+      failure_threshold = optional(number, 1)
+      http_get = optional(object({
+        path = string
+        port = optional(number)
+      }), null)
+      tcp_socket = optional(object({
+        port = optional(number)
+      }), null)
+      grpc = optional(object({
+        service = optional(string)
+        port    = optional(number)
+      }), null)
+    }))
   }))
 }
 
