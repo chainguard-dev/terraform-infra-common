@@ -160,6 +160,13 @@ resource "google_cloud_run_v2_service" "this" {
               port = tcp_socket.value.port
             }
           }
+          dynamic "grpc" {
+            for_each = startup_probe.value.grpc != null ? { "" : startup_probe.value.grpc } : {}
+            content {
+              service = grpc.value.service
+              port    = grpc.value.port
+            }
+          }
 
           initial_delay_seconds = startup_probe.value.initial_delay_seconds
           period_seconds        = startup_probe.value.period_seconds
