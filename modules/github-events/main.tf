@@ -59,6 +59,14 @@ module "this" {
             name  = "GITHUB_ORGANIZATIONS_FILTER"
             value = var.github_organizations
           },
+          {
+            name  = "REQUESTED_ONLY_WEBHOOK_ID"
+            value = var.requested_only_webhook_id
+          },
+          {
+            name  = "WEBHOOK_ID"
+            value = var.webhook_id
+          }
         ],
         [for name, secret in var.additional_webhook_secrets : {
           name = "WEBHOOK_SECRET_${upper(name)}"
