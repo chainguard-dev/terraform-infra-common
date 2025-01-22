@@ -49,13 +49,15 @@ module "this" {
   service_account = var.service_account
   containers = {
     for name, container in var.containers : name => {
-      image         = cosign_sign.this[name].signed_ref
-      args          = container.args
-      ports         = container.ports
-      resources     = container.resources
-      env           = container.env
-      regional-env  = container.regional-env
-      volume_mounts = container.volume_mounts
+      image          = cosign_sign.this[name].signed_ref
+      args           = container.args
+      ports          = container.ports
+      resources      = container.resources
+      env            = container.env
+      regional-env   = container.regional-env
+      volume_mounts  = container.volume_mounts
+      startup_probe  = container.startup_probe
+      liveness_probe = container.liveness_probe
     }
   }
 
