@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.7
-	chainguard.dev/sdk v0.1.30
+	chainguard.dev/sdk v0.1.31
 	cloud.google.com/go/bigquery v1.66.0
 	cloud.google.com/go/compute/metadata v0.6.0
 	cloud.google.com/go/profiler v0.4.2
@@ -13,7 +13,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.25.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
-	github.com/chainguard-dev/clog v1.5.1
+	github.com/chainguard-dev/clog v1.6.0
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/go-git/go-git/v5 v5.13.2
@@ -38,7 +38,7 @@ require (
 	golang.org/x/time v0.9.0
 	google.golang.org/api v0.218.0
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.3
+	google.golang.org/protobuf v1.36.4
 )
 
 require (
