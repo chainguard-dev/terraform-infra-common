@@ -4,16 +4,16 @@ go 1.23.4
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.7
-	chainguard.dev/sdk v0.1.30
+	chainguard.dev/sdk v0.1.31
 	cloud.google.com/go/bigquery v1.66.0
 	cloud.google.com/go/compute/metadata v0.6.0
 	cloud.google.com/go/profiler v0.4.2
 	cloud.google.com/go/pubsub v1.45.3
 	cloud.google.com/go/storage v1.50.0
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.25.0
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.26.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
-	github.com/chainguard-dev/clog v1.5.1
+	github.com/chainguard-dev/clog v1.6.0
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/go-git/go-git/v5 v5.13.2
@@ -38,7 +38,7 @@ require (
 	golang.org/x/time v0.9.0
 	google.golang.org/api v0.218.0
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.3
+	google.golang.org/protobuf v1.36.4
 )
 
 require (
@@ -47,12 +47,12 @@ require (
 	cloud.google.com/go/auth v0.14.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/iam v1.3.1 // indirect
-	cloud.google.com/go/monitoring v1.21.2 // indirect
-	cloud.google.com/go/trace v1.11.2 // indirect
+	cloud.google.com/go/monitoring v1.22.1 // indirect
+	cloud.google.com/go/trace v1.11.3 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.50.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.5 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
@@ -128,7 +128,7 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.27.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
+	google.golang.org/genproto v0.0.0-20250106144421-5f5ef82da422 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
