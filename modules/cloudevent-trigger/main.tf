@@ -55,6 +55,10 @@ locals {
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.suffix.result}"
 
+  labels = var.team == "" ? {} : {
+    team = var.team
+  }
+
   message_storage_policy {
     allowed_persistence_regions = [var.private-service.region]
   }

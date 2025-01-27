@@ -76,6 +76,9 @@ module "cloudevent-trigger" {
     name   = var.name
   }
 
+  team         = var.squad
+  require_team = var.require_squad
+
   notification_channels = var.notification_channels
 }
 
