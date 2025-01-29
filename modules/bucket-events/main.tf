@@ -99,6 +99,10 @@ module "authorize-delivery" {
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.delivery-suffix.result}"
 
+  labels = var.squad == "" ? {} : {
+    team = var.squad
+  }
+
   message_storage_policy {
     allowed_persistence_regions = [local.region]
   }

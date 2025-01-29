@@ -39,8 +39,8 @@ module "this" {
   name       = var.name
   regions    = var.regions
 
-  squad            = var.squad
-  require_squad    = var.require_squad
+  squad           = var.squad
+  require_squad   = var.require_squad
   service_account = google_service_account.recorder.email
   containers = {
     "recorder" = {
@@ -110,6 +110,9 @@ module "triggers" {
     region = each.value.region
     name   = var.name
   }
+
+  team         = var.squad
+  require_team = var.require_squad
 
   notification_channels = var.notification_channels
 }

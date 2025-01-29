@@ -25,6 +25,10 @@ resource "google_pubsub_topic" "dead-letter" {
 
   name = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
 
+  labels = var.squad == "" ? {} : {
+    team = var.squad
+  }
+
   message_storage_policy {
     allowed_persistence_regions = [each.value.region]
   }
