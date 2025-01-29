@@ -52,6 +52,8 @@ resource "google_container_cluster" "this" {
   location       = var.region
   node_locations = var.zones
 
+  deletion_protection = var.deletion_protection
+
   enable_intranode_visibility = true
 
   remove_default_node_pool = true
@@ -190,6 +192,17 @@ resource "google_container_cluster" "this" {
   depends_on = [google_service_account.cluster_default]
 }
 
+locals {
+  # make a map of node pool names to network configs to set defaults if not provided
+  network_configs = {
+    for k, v in var.pools : k => v.network_config != null ? v.network_config : {
+      enable_private_nodes = false
+      create_pod_range     = true
+      pod_ipv4_cidr_block  = ""
+    }
+  }
+}
+
 resource "google_container_node_pool" "pools" {
   for_each = var.pools
   provider = google-beta
@@ -200,9 +213,9 @@ resource "google_container_node_pool" "pools" {
   location = google_container_cluster.this.location
 
   network_config {
-    enable_private_nodes = false
-    create_pod_range     = true
-    pod_ipv4_cidr_block  = null
+    enable_private_nodes = local.network_configs[each.key].enable_private_nodes
+    create_pod_range     = local.network_configs[each.key].create_pod_range
+    pod_ipv4_cidr_block  = local.network_configs[each.key].pod_ipv4_cidr_block
   }
 
   node_config {

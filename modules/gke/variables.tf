@@ -52,6 +52,11 @@ variable "pools" {
       value  = string
       effect = string
     })), [])
+    network_config = optional(object({
+      enable_private_nodes = optional(bool, false)
+      create_pod_range     = optional(bool, true)
+      pod_ipv4_cidr_block  = optional(string, "")
+    }), null)
   }))
 }
 
@@ -114,4 +119,10 @@ variable "cluster_autoscaling_profile" {
   type        = string
   default     = null
   description = "cluster autoscaling profile"
+}
+
+variable "deletion_protection" {
+  type        = bool
+  default     = true
+  description = "Toggle to prevent accidental deletion of resources."
 }
