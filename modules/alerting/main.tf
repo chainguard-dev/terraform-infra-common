@@ -13,9 +13,10 @@ locals {
 }
 
 locals {
-  squad_log_filter = var.squad == "" ? "" : "labels.squad=\"${var.squad}\""
-  name             = var.squad == "" ? "global" : var.squad
-  metric_filter    = var.squad == "" ? "" : "metric.labels.team=\"${var.squad}\""
+  squad_log_filter               = var.squad == "" ? "" : "labels.squad=\"${var.squad}\""
+  name                           = var.squad == "" ? "global" : var.squad
+  squad_metric_filter            = var.squad == "" ? "" : "metric.labels.team=\"${var.squad}\""
+  squad_metric_user_label_filter = var.squad == "" ? "" : "metadata.user_labels.\"team\"=\"${var.squad}\""
 }
 
 locals {
@@ -621,7 +622,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
 }
 
 resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
-  count = var.squad == "" ? 1 : 0
+  count = var.global_only_alerts ? 0 : 1
 
   alert_strategy {
     auto_close = "3600s" // 1 hour
@@ -643,6 +644,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
         resource.type="pubsub_topic"
         metadata.system_labels."name"=monitoring.regex.full_match(".*-dlq-.*")
         ${var.dlq_filter}
+        ${local.squad_metric_user_label_filter}
       EOT
 
       trigger {
@@ -980,7 +982,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         metric.labels.service_name != monitoring.regex.full_match(".*-registry")
         metric.labels.service_name != monitoring.regex.full_match("prb-.*")
         metric.labels.code != monitoring.regex.full_match("[23]..")
-        ${local.metric_filter}
+        ${local.squad_metric_filter}
       EOT
 
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
@@ -1030,7 +1032,7 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/grpc_server_handled_total/counter"
         metric.labels.grpc_code != monitoring.regex.full_match("OK|AlreadyExists")
-        ${local.metric_filter}
+        ${local.squad_metric_filter}
       EOT
 
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
