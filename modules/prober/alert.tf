@@ -17,14 +17,14 @@ resource "google_monitoring_alert_policy" "uptime_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "300s"
+        alignment_period     = "60s"
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"
       }
 
       comparison = "COMPARISON_GT"
-      duration   = "60s"
+      duration   = var.uptime_alert_duration
       filter     = <<-EOT
         metric.type="monitoring.googleapis.com/uptime_check/check_passed"
         resource.type="uptime_url"
