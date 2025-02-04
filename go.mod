@@ -5,7 +5,7 @@ go 1.23.4
 require (
 	chainguard.dev/go-grpc-kit v0.17.7
 	chainguard.dev/sdk v0.1.31
-	cloud.google.com/go/bigquery v1.66.0
+	cloud.google.com/go/bigquery v1.66.1
 	cloud.google.com/go/compute/metadata v0.6.0
 	cloud.google.com/go/profiler v0.4.2
 	cloud.google.com/go/pubsub v1.47.0
@@ -33,9 +33,9 @@ require (
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
 	golang.org/x/net v0.34.0
-	golang.org/x/oauth2 v0.25.0
-	golang.org/x/sync v0.10.0
-	golang.org/x/time v0.9.0
+	golang.org/x/oauth2 v0.26.0
+	golang.org/x/sync v0.11.0
+	golang.org/x/time v0.10.0
 	google.golang.org/api v0.219.0
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.4
@@ -126,7 +126,7 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.27.0 // indirect
+	golang.org/x/tools v0.29.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250124145028-65684f501c47 // indirect
