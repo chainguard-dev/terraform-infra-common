@@ -14,6 +14,7 @@ locals {
 
 locals {
   squad_log_filter               = var.squad == "" ? "" : "labels.squad=\"${var.squad}\""
+  squad_proto_log_filter         = var.squad == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${var.squad}\""
   name                           = var.squad == "" ? "global" : var.squad
   squad_metric_filter            = var.squad == "" ? "" : "metric.labels.team=\"${var.squad}\""
   squad_metric_user_label_filter = var.squad == "" ? "" : "metadata.user_labels.\"team\"=\"${var.squad}\""
@@ -903,7 +904,7 @@ protoPayload.methodName="/Services.UpdateService"
 protoPayload.resourceName:"namespaces/${var.project_id}/services/"
 -protoPayload.response.spec.traffic.latestRevision="true"
 -protoPayload.response.status.traffic.latestRevision="true"
-${local.squad_log_filter}
+${local.squad_proto_log_filter}
 EOF
 }
 
