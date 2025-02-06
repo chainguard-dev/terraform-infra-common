@@ -40,6 +40,7 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 	})
 
 	client := GitHubClient{
+		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -48,11 +49,6 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 
 	for _, opt := range opts {
 		opt(&client)
-	}
-
-	// if client has not been configured withOpts then create a new client
-	if client.inner == nil {
-		client.inner = github.NewClient(oauth2.NewClient(ctx, ts))
 	}
 
 	return client
