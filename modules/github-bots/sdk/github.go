@@ -40,6 +40,7 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 	})
 
 	client := GitHubClient{
+		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
