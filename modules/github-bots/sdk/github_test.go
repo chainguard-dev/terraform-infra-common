@@ -78,6 +78,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 					"test-org",
 					"test-repo",
 					"test-policy",
+					WithSecondaryRateLimitWaiter(),
 					WithClient(testClient),
 				)
 
