@@ -51,11 +51,6 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 		opt(&client)
 	}
 
-	// if client has not been configured withOpts then create a new client
-	if client.inner == nil {
-		client.inner = github.NewClient(oauth2.NewClient(ctx, ts))
-	}
-
 	return client
 }
 
