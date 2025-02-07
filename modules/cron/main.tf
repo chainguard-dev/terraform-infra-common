@@ -97,6 +97,15 @@ resource "google_cloud_run_v2_job" "job" {
               }
             }
           }
+
+          dynamic "nfs" {
+            for_each = volumes.value.nfs != null ? { "" : volumes.value.nfs } : {}
+            content {
+              server    = nfs.value.server
+              path      = nfs.value.path
+              read_only = nfs.value.read_only
+            }
+          }
         }
       }
       containers {
