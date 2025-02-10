@@ -362,12 +362,12 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       duration            = "${var.failure_rate_duration}s"
       evaluation_interval = "60s"
 
-      // Using custom prometheus metric to avoid counting failed health check 5xx, should be a separate alert
-      // First part of the query calculates the error rate (5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
+      // Using custom prometheus metric to avoid counting failed health check non-503 5xx, should be a separate alert
+      // First part of the query calculates the error rate (non-503 5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
          sum by (service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
@@ -379,14 +379,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       EOT
     }
 
-    display_name = "cloudrun service 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
+    display_name = "cloudrun service non-503 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
   }
 
-  display_name = "cloudrun service 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
+  display_name = "cloudrun service non-503 5xx failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "Cloud Run service $${metric_or_resource.labels.service_name} had 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+    subject = "Cloud Run service $${metric_or_resource.labels.service_name} had non-503 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
 
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
@@ -394,6 +394,58 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.oncall
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_prometheus_query_language {
+      duration            = "${var.failure_rate_duration}s"
+      evaluation_interval = "60s"
+
+      // Using custom prometheus metric to avoid counting failed health check 503, should be a separate alert
+      // First part of the query calculates the error rate (503 / all) and the rate should be greater than var.failure_rate_ratio_threshold
+      // Second part ensures services has non-zero traffic over last 5 min.
+      query = <<EOT
+        (sum by (service_name)
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+         /
+         sum by (service_name)
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+        ) > ${var.failure_rate_ratio_threshold}
+        and
+        sum by (service_name)
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
+        > 0.0001
+      EOT
+    }
+
+    display_name = "cloudrun service 503 failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
+  }
+
+  display_name = "cloudrun service 503 failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
+
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "Cloud Run service $${metric_or_resource.labels.service_name} had 503 error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+
+    content = <<-EOT
+    Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
+    EOT
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
   project = var.project_id
