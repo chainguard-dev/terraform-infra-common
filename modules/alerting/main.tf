@@ -362,12 +362,12 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       duration            = "${var.failure_rate_duration}s"
       evaluation_interval = "60s"
 
-      // Using custom prometheus metric to avoid counting failed health check 5xx, should be a separate alert
+      // Using custom prometheus metric to avoid counting failed health check non-503s 5xxs, should be a separate alert
       // First part of the query calculates the error rate (5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
          sum by (service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
@@ -399,6 +399,27 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
   project = var.project_id
 }
 
+resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_prometheus_query_language {
+      duration            = "${var.failure_rate_duration}s"
+      evaluation_interval = "60s"
+
+      // Using custom prometheus metric to avoid counting failed health check 5xx, should be a separate alert
+      // First part of the query calculates the error rate (5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
+      // Second part ensures services has non-zero traffic over last 5 min.
+      query = <<EOT
+        (sum by (service_name)
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
 resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
   count = var.global_only_alerts ? 0 : 1
 
