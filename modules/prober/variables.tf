@@ -82,13 +82,13 @@ variable "secret_env" {
 variable "timeout" {
   type        = string
   default     = "60s"
-  description = "The timeout for the prober in seconds."
+  description = "The timeout for the prober in seconds. Supported values 1-60s"
 }
 
 variable "period" {
   type        = string
   default     = "300s"
-  description = "The period for the prober in seconds."
+  description = "The period for the prober in seconds. Supported values: 60s (1 minute), 300s (5 minutes), 600s (10 minutes), and 900s (15 minutes)"
 }
 
 variable "cpu" {

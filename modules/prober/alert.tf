@@ -17,7 +17,7 @@ resource "google_monitoring_alert_policy" "uptime_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "60s"
+        alignment_period     = var.period
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"

@@ -111,7 +111,7 @@ No requirements.
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory limit for the prober. | `string` | `"512Mi"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to prefix to created resources. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | n/a | yes |
-| <a name="input_period"></a> [period](#input\_period) | The period for the prober in seconds. | `string` | `"300s"` | no |
+| <a name="input_period"></a> [period](#input\_period) | The period for the prober in seconds. Supported values: 60s (1 minute), 300s (5 minutes), 600s (10 minutes), and 900s (15 minutes) | `string` | `"300s"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the prober. | `string` | n/a | yes |
 | <a name="input_regional-env"></a> [regional-env](#input\_regional-env) | A list of object that provides a map env per region. | <pre>list(object({<br/>    name  = string<br/>    value = map(string)<br/>  }))</pre> | `[]` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
@@ -126,7 +126,7 @@ No requirements.
 | <a name="input_slo_policy_link"></a> [slo\_policy\_link](#input\_slo\_policy\_link) | An optional link to the SLO policy to include in the alert documentation. | `string` | `""` | no |
 | <a name="input_slo_threshold"></a> [slo\_threshold](#input\_slo\_threshold) | The uptime percent required to meet the SLO for the service, expressed as a decimal in {0, 1} | `number` | `0.999` | no |
 | <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | `""` | no |
-| <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. | `string` | `"60s"` | no |
+| <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. Supported values 1-60s | `string` | `"60s"` | no |
 | <a name="input_uptime_alert_duration"></a> [uptime\_alert\_duration](#input\_uptime\_alert\_duration) | duration for uptime alert policy. | `string` | `"600s"` | no |
 | <a name="input_working_dir"></a> [working\_dir](#input\_working\_dir) | The working directory that contains the importpath. | `string` | n/a | yes |
 
