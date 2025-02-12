@@ -21,7 +21,7 @@ require (
 	github.com/google/go-github/v61 v61.0.0
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/prometheus/client_golang v1.20.5
-	github.com/sethvargo/go-envconfig v1.1.0
+	github.com/sethvargo/go-envconfig v1.1.1
 	github.com/shirou/gopsutil/v4 v4.25.1
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.34.0
