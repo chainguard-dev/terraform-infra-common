@@ -18,7 +18,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-github/v61 v61.0.0
+	github.com/google/go-github/v68 v68.0.0
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/prometheus/client_golang v1.21.0
 	github.com/sethvargo/go-envconfig v1.1.1
@@ -78,7 +78,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/flatbuffers v23.5.26+incompatible // indirect
-	github.com/google/go-github/v68 v68.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
