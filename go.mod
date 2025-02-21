@@ -12,7 +12,7 @@ require (
 	cloud.google.com/go/storage v1.50.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.26.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
-	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
 	github.com/chainguard-dev/clog v1.6.1
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.12.0
@@ -78,6 +78,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/flatbuffers v23.5.26+incompatible // indirect
+	github.com/google/go-github/v69 v69.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
