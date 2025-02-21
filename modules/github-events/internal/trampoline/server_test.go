@@ -88,7 +88,7 @@ func TestTrampoline(t *testing.T) {
 			Source:          *types.ParseURIRef("localhost"),
 			ID:              "5678",
 			DataContentType: cloudevents.StringOfApplicationJSON(),
-			Subject:         github.String("org/repo"),
+			Subject:         github.Ptr("org/repo"),
 			Extensions: map[string]interface{}{
 				"action":     "push",
 				"githubhook": "1234",
