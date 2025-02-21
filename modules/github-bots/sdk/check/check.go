@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v68/github"
 )
 
 // Docs for Check Run API: https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28
@@ -83,11 +83,11 @@ func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	cr := &github.CreateCheckRunOptions{
 		Name:    b.name,
 		HeadSHA: b.headSHA,
-		Status:  github.String(string(StatusInProgress)),
+		Status:  github.Ptr(string(StatusInProgress)),
 		Output: &github.CheckRunOutput{
 			Title:   &b.Summary,
 			Summary: &b.Summary,
-			Text:    github.String(b.md.String()),
+			Text:    github.Ptr(b.md.String()),
 		},
 		// Fields we don't set:
 		// - DetailsURL: sets the URL of the "Details" link at the bottom of the Check Run page. Defaults to the app's installation URL.
@@ -99,8 +99,8 @@ func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	}
 	// Providing conclusion will automatically set the status parameter to completed.
 	if b.Conclusion != "" {
-		cr.Conclusion = github.String(string(b.Conclusion))
-		cr.Status = github.String(string(StatusCompleted))
+		cr.Conclusion = github.Ptr(string(b.Conclusion))
+		cr.Status = github.Ptr(string(StatusCompleted))
 	}
 	return cr
 }

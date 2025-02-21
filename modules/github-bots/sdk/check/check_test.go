@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v68/github"
 )
 
 func TestCheckRun(t *testing.T) {
@@ -16,22 +16,22 @@ func TestCheckRun(t *testing.T) {
 	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
 		Name:    "name",
 		HeadSHA: "headSHA",
-		Status:  github.String("in_progress"),
+		Status:  github.Ptr("in_progress"),
 		Output: &github.CheckRunOutput{
-			Title:   github.String("name"),
-			Summary: github.String("name"),
-			Text:    github.String("test 123\n"),
+			Title:   github.Ptr("name"),
+			Summary: github.Ptr("name"),
+			Text:    github.Ptr("test 123\n"),
 		},
 	}); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
 		Name:   "name",
-		Status: github.String("in_progress"),
+		Status: github.Ptr("in_progress"),
 		Output: &github.CheckRunOutput{
-			Title:   github.String("name"),
-			Summary: github.String("name"),
-			Text:    github.String("test 123\n"),
+			Title:   github.Ptr("name"),
+			Summary: github.Ptr("name"),
+			Text:    github.Ptr("test 123\n"),
 		},
 	}); diff != "" {
 		t.Errorf("CheckRunUpdate() mismatch (-want +got):\n%s", diff)
@@ -43,24 +43,24 @@ func TestCheckRun(t *testing.T) {
 	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
 		Name:       "name",
 		HeadSHA:    "headSHA",
-		Status:     github.String("completed"),
-		Conclusion: github.String("success"),
+		Status:     github.Ptr("completed"),
+		Conclusion: github.Ptr("success"),
 		Output: &github.CheckRunOutput{
-			Title:   github.String("summary"),
-			Summary: github.String("summary"),
-			Text:    github.String("test 123\ntest true\n"),
+			Title:   github.Ptr("summary"),
+			Summary: github.Ptr("summary"),
+			Text:    github.Ptr("test 123\ntest true\n"),
 		},
 	}); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
 		Name:       "name",
-		Status:     github.String("completed"),
-		Conclusion: github.String("success"),
+		Status:     github.Ptr("completed"),
+		Conclusion: github.Ptr("success"),
 		Output: &github.CheckRunOutput{
-			Title:   github.String("summary"),
-			Summary: github.String("summary"),
-			Text:    github.String("test 123\ntest true\n"),
+			Title:   github.Ptr("summary"),
+			Summary: github.Ptr("summary"),
+			Text:    github.Ptr("test 123\ntest true\n"),
 		},
 	}); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)

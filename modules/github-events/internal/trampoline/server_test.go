@@ -15,7 +15,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/types"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v68/github"
 	"github.com/jonboulle/clockwork"
 )
 
@@ -88,7 +88,7 @@ func TestTrampoline(t *testing.T) {
 			Source:          *types.ParseURIRef("localhost"),
 			ID:              "5678",
 			DataContentType: cloudevents.StringOfApplicationJSON(),
-			Subject:         github.String("org/repo"),
+			Subject:         github.Ptr("org/repo"),
 			Extensions: map[string]interface{}{
 				"action":     "push",
 				"githubhook": "1234",

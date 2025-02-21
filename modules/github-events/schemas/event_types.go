@@ -113,7 +113,7 @@ type PullRequestEvent struct {
 	Installation *Installation `json:"installation,omitempty" bigquery:"installation"`
 }
 
-// https://pkg.go.dev/github.com/google/go-github/v61/github#PushEventRepository
+// https://pkg.go.dev/github.com/google/go-github/v68/github#PushEventRepository
 type PushEventRepository struct {
 	Owner    User                `json:"owner,omitempty" bigquery:"owner"`
 	Name     bigquery.NullString `json:"name,omitempty" bigquery:"name"`
@@ -122,7 +122,7 @@ type PushEventRepository struct {
 }
 
 // https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
-// https://pkg.go.dev/github.com/google/go-github/v61/github#PushEvent
+// https://pkg.go.dev/github.com/google/go-github/v68/github#PushEvent
 type PushEvent struct {
 	PushID       bigquery.NullInt64  `json:"push_id,omitempty" bigquery:"push_id"`
 	Head         bigquery.NullString `json:"head,omitempty" bigquery:"head"`
