@@ -8,7 +8,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/chainguard-dev/clog"
@@ -105,6 +104,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Repository struct {
 			FullName string `json:"full_name"`
 		} `json:"repository"`
+		Organization struct {
+			Login string `json:"login"`
+		} `json:"organization"`
 	}
 	if err := json.Unmarshal(payload, &msg); err != nil {
 		log.Warnf("failed to unmarshal payload; action and subject will be unset: %v", err)
@@ -116,7 +118,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if len(s.orgFilter) > 0 {
 		found := false
 		for _, org := range s.orgFilter {
-			if strings.HasPrefix(msg.Repository.FullName, org+"/") {
+			if msg.Organization.Login == org {
 				found = true
 				break
 			}

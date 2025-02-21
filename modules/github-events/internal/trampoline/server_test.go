@@ -177,6 +177,9 @@ func TestRequestedOnlyWebhook(t *testing.T) {
 		"repository": map[string]interface{}{
 			"full_name": "org/repo",
 		},
+		"organization": map[string]interface{}{
+			"login": "org",
+		},
 	}, secret)
 	if err != nil {
 		t.Fatalf("error sending event: %v", err)
@@ -219,6 +222,9 @@ func TestOrgFilter(t *testing.T) {
 		"action": "opened",
 		"repository": map[string]interface{}{
 			"full_name": "org/repo",
+		},
+		"organization": map[string]interface{}{
+			"login": "org",
 		},
 	}, secret)
 	if err != nil {
