@@ -126,3 +126,9 @@ variable "deletion_protection" {
   default     = true
   description = "Toggle to prevent accidental deletion of resources."
 }
+
+variable "enable_private_nodes" {
+  type        = bool
+  default     = false
+  description = "Enable private nodes by default"
+}
