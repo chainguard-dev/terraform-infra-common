@@ -72,7 +72,7 @@ func TestWritef(t *testing.T) {
 
 	// append 1 KB 100 times
 	for i := 0; i < 100; i++ {
-		b.Writef(strings.Repeat("a", 1024)) //nolint:govet
+		b.Writef("%s", strings.Repeat("a", 1024)) //nolint:govet
 
 		// The output should never exceed maxCheckOutputLength, even internally.
 		if b.md.Len() > maxCheckOutputLength {

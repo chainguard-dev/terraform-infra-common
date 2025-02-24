@@ -110,13 +110,13 @@ jobs:
         if: ${{ always() }}
         with:
           github_token: ${{ secrets.github_token }}
-          fail_on_error: true
+          fail_level: error
 
       - uses: reviewdog/action-misspell@18ffb61effb93b47e332f185216be7e49592e7e1 # v1.26.1
         if: ${{ always() }}
         with:
           github_token: ${{ secrets.github_token }}
-          fail_on_error: true
+          fail_level: error
           locale: "US"
           exclude: |
             **/go.sum
