@@ -3,6 +3,7 @@ terraform {
     ko          = { source = "ko-build/ko" }
     google      = { source = "hashicorp/google" }
     google-beta = { source = "hashicorp/google-beta" }
+    oci         = { source = "chainguard-dev/oci" }
   }
 }
 
@@ -26,11 +27,17 @@ locals {
 }
 
 resource "ko_build" "image" {
+  count       = var.importpath != "" ? 1 : 0
   importpath  = var.importpath
   working_dir = var.working_dir
   base_image  = var.base_image
   repo        = local.repo
   env         = var.ko_build_env
+}
+
+locals {
+  parsed = provider::oci::parse(var.base_image)
+  ref    = var.importpath == "" ? "${local.parsed.registry_repo}@${local.parsed.digest}" : ko_build.image[0].image_ref
 }
 
 resource "google_project_iam_member" "metrics-writer" {
@@ -109,7 +116,7 @@ resource "google_cloud_run_v2_job" "job" {
         }
       }
       containers {
-        image = ko_build.image.image_ref
+        image = local.ref
 
         resources {
           limits = {

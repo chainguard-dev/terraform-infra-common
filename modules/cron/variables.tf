@@ -35,7 +35,8 @@ variable "service_account" {
 
 variable "importpath" {
   type        = string
-  description = "The import path that contains the cron application."
+  description = "The import path that contains the cron application. Leave empty to run the unmodified base image as the application."
+  default     = ""
 }
 
 variable "ko_build_env" {

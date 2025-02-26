@@ -104,7 +104,7 @@ No modules.
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_exec"></a> [exec](#input\_exec) | Whether to execute job on modify. | `bool` | `false` | no |
 | <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment to use for the job. | `string` | `""` | no |
-| <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the cron application. | `string` | n/a | yes |
+| <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the cron application. Leave empty to run the unmodified base image as the application. | `string` | `""` | no |
 | <a name="input_invokers"></a> [invokers](#input\_invokers) | List of iam members invoker perimssions to invoke the job. | `list(string)` | `[]` | no |
 | <a name="input_ko_build_env"></a> [ko\_build\_env](#input\_ko\_build\_env) | A list of custom environment variables to pass to the ko build. | `list(string)` | `[]` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the job. | `map(string)` | `{}` | no |
