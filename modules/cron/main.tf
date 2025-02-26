@@ -36,7 +36,7 @@ resource "ko_build" "image" {
 }
 
 locals {
-  parsed = provider::oci::parse(var.base_image)
+  parsed = var.importpath == "" ? provider::oci::parse(var.base_image) : {}
   ref    = var.importpath == "" ? "${local.parsed.registry_repo}@${local.parsed.digest}" : ko_build.image[0].image_ref
 }
 
