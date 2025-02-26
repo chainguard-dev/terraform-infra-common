@@ -344,10 +344,12 @@ resource "google_monitoring_alert_policy" "fatal" {
 }
 
 locals {
+  # ignore exit 0 and 130-149 (used by build job failures)
   exit_filter = <<EOF
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 textPayload:"Container called exit("
 -textPayload="Container called exit(0)."
+-textPayload=~"Container called exit\(1[3-4]\d\)."
 ${local.squad_log_filter}
 EOF
 }
@@ -386,6 +388,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "exit_code"     = "REGEXP_EXTRACT(textPayload, \"^Container called exit\\(([0-9]+)\\)\\.$\")"
       }
     }
   }
