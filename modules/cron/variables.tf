@@ -135,6 +135,11 @@ variable "volumes" {
         path    = string
       }))
     }))
+    nfs = optional(object({
+      server    = string
+      path      = string
+      read_only = optional(bool, true)
+    }))
   }))
   default = []
 }
