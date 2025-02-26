@@ -35,7 +35,7 @@ variable "service_account" {
 
 variable "importpath" {
   type        = string
-  description = "The import path that contains the cron application. Leave empty to run the unmodified base image as the application."
+  description = "The import path that contains the cron application. Leave empty to run the unmodified base image as the application: for example, when running an `apko`-built image. This works by skipping the `ko` build and just use the base image directly in the cron job."
   default     = ""
 }
 
