@@ -13,14 +13,14 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.27.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
-	github.com/chainguard-dev/clog v1.6.1
+	github.com/chainguard-dev/clog v1.7.0
 	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/go-git/go-git/v5 v5.14.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/jonboulle/clockwork v0.5.0
-	github.com/prometheus/client_golang v1.21.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/sethvargo/go-envconfig v1.1.1
 	github.com/shirou/gopsutil/v4 v4.25.2
 	github.com/snabb/httpreaderat v1.0.1
