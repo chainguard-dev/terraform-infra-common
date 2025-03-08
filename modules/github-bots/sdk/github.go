@@ -99,7 +99,9 @@ type tokenSource struct {
 }
 
 func (ts *tokenSource) Token() (*oauth2.Token, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("get octosts token timeout"))
+	defer cancel()
+
 	clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
 	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
 	if err != nil {
@@ -108,6 +110,9 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 
 	// If there's a previous token, attempt to revoke it.
 	if ts.tok != "" {
+		ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("revoke previous token timeout"))
+		defer cancel()
+
 		if err := octosts.Revoke(ctx, ts.tok); err != nil {
 			// This isn't an error, but we should log it.
 			clog.FromContext(ctx).Warnf("failed to revoke token: %v", err)
@@ -171,7 +176,10 @@ func (c GitHubClient) Close(ctx context.Context) error {
 	}
 
 	// We don't want to cancel the context, as we want to revoke the token even if the context is done.
-	ctx = context.WithoutCancel(ctx)
+	// Re-wrap the current context with a 1 minute timeout.
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeoutCause(context.WithoutCancel(ctx), 1*time.Minute, errors.New("revoking token timeout"))
+	defer cancel()
 
 	if err := octosts.Revoke(ctx, tok.AccessToken); err != nil {
 		// Callers might just `defer c.Close()` so we log the error here too
@@ -304,7 +312,7 @@ func (c GitHubClient) GetWorkflowRunLogs(ctx context.Context, wre github.Workflo
 
 	if logsResp.StatusCode != http.StatusOK {
 		if logsResp.StatusCode == http.StatusNotFound || logsResp.StatusCode == http.StatusGone {
-			return nil, fmt.Errorf("logs not found or expired")
+			return nil, errors.New("logs not found or expired")
 		}
 		return nil, fmt.Errorf("failed to fetch logs, status %d: %s", logsResp.StatusCode, string(body))
 	}
@@ -371,7 +379,7 @@ func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre g
 		opts.Page = resp.NextPage // Update to fetch the next page
 	}
 
-	return 0, fmt.Errorf("no matching pull request found")
+	return 0, errors.New("no matching pull request found")
 }
 
 // Deprecated: Use FetchWorkflowRunArtifact instead.
