@@ -336,7 +336,7 @@ resource "google_monitoring_alert_policy" "fatal" {
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a fatal error."
     links {
       display_name = "Logs Explorer"
-      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.panic_stacktrace_filter)}&project=${var.project_id}"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.fatal_filter)}&project=${var.project_id}"
     }
   }
 
@@ -351,6 +351,62 @@ resource "google_monitoring_alert_policy" "fatal" {
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+      }
+    }
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+
+locals {
+  # ignore exit 0 and 130-149 (used by build job failures)
+  exit_filter = <<EOF
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+textPayload:"Container called exit("
+-textPayload="Container called exit(0)."
+-textPayload=~"Container called exit\(1[3-4]\d\)."
+${local.squad_log_filter}
+EOF
+}
+
+resource "google_monitoring_alert_policy" "nonzero-exitcode" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Non-zero exit code log entry ${local.name}"
+  combiner     = "OR"
+
+  documentation {
+    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a non-zero exitcode."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.exit_filter)}&project=${var.project_id}"
+    }
+  }
+
+  conditions {
+    display_name = "Non-zero exit code log entry ${local.name}"
+
+    condition_matched_log {
+      filter = local.fatal_filter
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(resource.labels.revision_name)"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
+        "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "exit_code"     = "REGEXP_EXTRACT(textPayload, \"^Container called exit\\(([0-9]+)\\)\\.$\")"
       }
     }
   }
