@@ -47,6 +47,9 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} failed to rollout"
+
     content = "$${metric_or_resource.labels.service_name} has failed to rollout a revision."
     links {
       display_name = "Logs Explorer"
@@ -101,6 +104,9 @@ resource "google_monitoring_alert_policy" "oom" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} OOM"
+
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged an OOM."
     links {
       display_name = "Logs Explorer"
@@ -156,6 +162,9 @@ resource "google_monitoring_alert_policy" "signal" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Signal $${log.extracted_label.signal}"
+
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a termination signal."
     links {
       display_name = "Logs Explorer"
@@ -211,6 +220,9 @@ resource "google_monitoring_alert_policy" "panic" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Panic"
+
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a panic."
     links {
       display_name = "Logs Explorer"
@@ -263,6 +275,9 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Panic stacktrace"
+
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a panic stacktrace."
     links {
       display_name = "Logs Explorer"
@@ -315,6 +330,9 @@ resource "google_monitoring_alert_policy" "fatal" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Fatal"
+
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a fatal error."
     links {
       display_name = "Logs Explorer"
@@ -386,7 +404,7 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "Cloud Run service $${metric_or_resource.labels.service_name} had non-503 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.service_name} had non-503 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
 
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
@@ -438,7 +456,7 @@ resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "Cloud Run service $${metric_or_resource.labels.service_name} had 503 error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.service_name} had 503 error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
 
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
@@ -490,7 +508,7 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "Eventing service $${metric_or_resource.labels.service_name} had 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+    subject = "$${metric.label.team}: Eventing service $${metric_or_resource.labels.service_name} had 5xx error rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
 
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
@@ -712,6 +730,11 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   }
   display_name = "Dead-letter queue messages above 1"
 
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${metadata.user_labels.team}: PubSub Dead-Letter-Queue: $${metadata.system_labels.name}"
+  }
+
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
@@ -754,6 +777,11 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
         "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
+  }
+
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} request timed out"
   }
 
   enabled = false
@@ -976,6 +1004,9 @@ resource "google_monitoring_alert_policy" "pinned" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} revision pinned to non-latest"
+
     content = "$${metric_or_resource.labels.service_name} has logged a pinned."
     links {
       display_name = "Logs Explorer"
@@ -1051,6 +1082,11 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
   }
   display_name = "http error rate ${local.name}"
 
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.service_name}: HTTP error rate above ${var.http_error_threshold}"
+  }
+
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
@@ -1101,6 +1137,10 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
   }
   display_name = "grpc error rate ${local.name}"
 
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.service_name}: GRPC error rate above ${var.grpc_error_threshold}"
+  }
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
   enabled = "true"
