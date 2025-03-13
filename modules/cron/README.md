@@ -79,6 +79,7 @@ No modules.
 | [google-beta_google_cloud_run_v2_job.job](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_job) | resource |
 | [google_cloud_run_v2_job_iam_binding.authorize-calls](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job_iam_binding) | resource |
 | [google_cloud_scheduler_job.cron](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
+| [google_monitoring_alert_policy.failure](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.success](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_project_iam_member.authorize-list](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
@@ -104,6 +105,9 @@ No modules.
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_exec"></a> [exec](#input\_exec) | Whether to execute job on modify. | `bool` | `false` | no |
 | <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment to use for the job. | `string` | `""` | no |
+| <a name="input_failure_alert_alignment_period_seconds"></a> [failure\_alert\_alignment\_period\_seconds](#input\_failure\_alert\_alignment\_period\_seconds) | The alignment period in seconds for the failure alert | `number` | `60` | no |
+| <a name="input_failure_alert_duration_seconds"></a> [failure\_alert\_duration\_seconds](#input\_failure\_alert\_duration\_seconds) | How long the condition must be true before triggering the alert | `number` | `0` | no |
+| <a name="input_failure_alert_enabled"></a> [failure\_alert\_enabled](#input\_failure\_alert\_enabled) | Whether to enable alerting on Cloud Run Job failures | `bool` | `false` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the cron application. Leave empty to run the unmodified base image as the application: for example, when running an `apko`-built image. This works by skipping the `ko` build and just use the base image directly in the cron job. A digest must be specified in this case. | `string` | `""` | no |
 | <a name="input_invokers"></a> [invokers](#input\_invokers) | List of iam members invoker perimssions to invoke the job. | `list(string)` | `[]` | no |
 | <a name="input_ko_build_env"></a> [ko\_build\_env](#input\_ko\_build\_env) | A list of custom environment variables to pass to the ko build. | `list(string)` | `[]` | no |
