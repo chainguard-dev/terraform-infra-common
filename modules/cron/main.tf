@@ -315,3 +315,47 @@ resource "google_monitoring_alert_policy" "success" {
   enabled = "true"
   project = var.project_id
 }
+
+resource "google_monitoring_alert_policy" "failure" {
+  count = var.failure_alert_enabled ? 1 : 0
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+  }
+
+  display_name = "Cloud Run Job Failure Alert: ${var.name}"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "Cloud Run Job Failure Detected: ${var.name}"
+
+    condition_threshold {
+      filter = <<EOT
+        resource.type = "cloud_run_job"
+        AND resource.labels.job_name = "${google_cloud_run_v2_job.job.name}"
+        AND metric.type = "run.googleapis.com/job/completed_execution_count"
+        AND metric.labels.result = "failed"
+      EOT
+
+      aggregations {
+        alignment_period     = "${var.failure_alert_alignment_period_seconds}s"
+        cross_series_reducer = "REDUCE_SUM"
+        per_series_aligner   = "ALIGN_DELTA"
+      }
+
+      comparison      = "COMPARISON_GT"
+      threshold_value = 0
+
+      duration = "${var.failure_alert_duration_seconds}s"
+      trigger {
+        count = "1"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+
+  enabled = "true"
+  project = var.project_id
+}

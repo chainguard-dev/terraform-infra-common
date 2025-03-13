@@ -232,3 +232,21 @@ variable "squad" {
     error_message = "squad needs to specified or disable check by setting require_squad = false"
   }
 }
+
+variable "failure_alert_enabled" {
+  description = "Whether to enable alerting on Cloud Run Job failures"
+  type        = bool
+  default     = false
+}
+
+variable "failure_alert_alignment_period_seconds" {
+  description = "The alignment period in seconds for the failure alert"
+  type        = number
+  default     = 60
+}
+
+variable "failure_alert_duration_seconds" {
+  description = "How long the condition must be true before triggering the alert"
+  type        = number
+  default     = 0
+}
