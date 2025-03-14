@@ -35,8 +35,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | n/a | `any` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones` | `any` | n/a | yes |
 | <a name="input_release_channel"></a> [release\_channel](#input\_release\_channel) | GKE release channel | `string` | `"REGULAR"` | no |
-| <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `true` | no |
-| <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | `""` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | n/a | `any` | n/a | yes |
 | <a name="input_zones"></a> [zones](#input\_zones) | If specified, will spread nodes across these zones | `any` | `null` | no |
 
