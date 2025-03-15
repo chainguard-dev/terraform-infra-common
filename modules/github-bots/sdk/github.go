@@ -18,6 +18,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/snabb/httpreaderat"
 
@@ -188,6 +189,24 @@ func (c GitHubClient) Close(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// GitAuth returns a go-git transport.AuthMethod using the GitHubClient's
+// credentials. This is useful for authentication in go-git operations like
+// cloning and fetching repositories.
+func (c GitHubClient) GitAuth() (transport.AuthMethod, error) {
+	tok, err := c.ts.Token()
+	if err != nil {
+		return nil, fmt.Errorf("getting token from client's token source: %w", err)
+	}
+
+	auth := &gitHttp.BasicAuth{
+		// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#about-authentication-as-a-github-app-installation
+		Username: "x-access-token",
+		Password: tok.AccessToken,
+	}
+
+	return auth, nil
 }
 
 // checkRateLimiting checks for github API rate limiting. It attempts to use
@@ -556,16 +575,10 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	tok, err := c.ts.Token()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get token: %w", err)
-	}
-
 	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo)
-	auth := &gitHttp.BasicAuth{
-		// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#about-authentication-as-a-github-app-installation
-		Username: "x-access-token",
-		Password: tok.AccessToken,
+	auth, err := c.GitAuth()
+	if err != nil {
+		return nil, fmt.Errorf("retrieving GitHub client's auth: %w", err)
 	}
 
 	// git clone <repo>
