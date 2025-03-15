@@ -209,6 +209,16 @@ func (c GitHubClient) GitAuth() (transport.AuthMethod, error) {
 	return auth, nil
 }
 
+// RepoURL returns the HTTPS git URL of the GitHubClient's configured
+// repository.
+func (c GitHubClient) RepoURL() (string, error) {
+	if c.org == "" || c.repo == "" {
+		return "", errors.New("GitHubClient is not configured with both an org and repo")
+	}
+
+	return fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo), nil
+}
+
 // checkRateLimiting checks for github API rate limiting. It attempts to use
 // the returned Retry-After header to calculate the delay returned from the API.
 //
@@ -575,7 +585,10 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	repo := fmt.Sprintf("https://github.com/%s/%s.git", c.org, c.repo)
+	repo, err := c.RepoURL()
+	if err != nil {
+		return nil, fmt.Errorf("getting repository URL: %w", err)
+	}
 	auth, err := c.GitAuth()
 	if err != nil {
 		return nil, fmt.Errorf("retrieving GitHub client's auth: %w", err)
