@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	chainguard.dev/go-grpc-kit v0.17.8
 	chainguard.dev/sdk v0.1.32
-	cloud.google.com/go/bigquery v1.66.2
+	cloud.google.com/go/bigquery v1.67.0
 	cloud.google.com/go/compute/metadata v0.6.0
 	cloud.google.com/go/profiler v0.4.2
 	cloud.google.com/go/pubsub v1.48.0
