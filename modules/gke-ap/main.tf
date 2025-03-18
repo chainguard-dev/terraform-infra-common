@@ -144,36 +144,12 @@ resource "google_container_cluster" "this" {
     delete = "30m"
   }
 
+  resource_labels = merge(local.default_labels, local.squad_label)
+
   lifecycle {
+    # https://github.com/hashicorp/terraform-provider-google/issues/6901
     ignore_changes = [initial_node_count]
   }
 
   depends_on = [google_service_account.cluster_default]
-}
-
-# Allow GKE master to hit non 443 ports for webhook/admission controllers
-#
-# https://github.com/kubernetes/kubernetes/issues/79739
-resource "google_compute_firewall" "master_webhook" {
-  project = var.project
-  network = var.network
-
-  name        = "${var.name}-master-webhook"
-  description = "Allow GKE master to hit non 443 ports for webhook/admission controllers"
-  direction   = "INGRESS"
-
-  source_ranges = ["${google_container_cluster.this.endpoint}/32"]
-  source_tags   = []
-  target_tags   = ["gke-${google_container_cluster.this.name}"]
-
-  allow {
-    protocol = "tcp"
-    ports = [
-      "8443",
-      "9443",
-      "15017",
-    ]
-  }
-
-  depends_on = [google_container_cluster.this]
 }

@@ -1,11 +1,19 @@
-variable "name" {}
+variable "name" {
+  type = string
+}
 
-variable "project" {}
+variable "project" {
+  type = string
+}
 
-variable "network" {}
+variable "network" {
+  description = "The network to deploy the cluster in."
+  type        = string
+}
 
 variable "region" {
   description = "Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones`"
+  type        = string
 }
 
 variable "squad" {
@@ -16,12 +24,12 @@ variable "squad" {
 variable "zones" {
   default     = null
   description = "If specified, will spread nodes across these zones"
+  type        = list(string)
 }
 
-variable "subnetwork" {}
-
-variable "master_ipv4_cidr_block" {
-  description = "If specified, will use this CIDR block for the master's IP address"
+variable "subnetwork" {
+  description = "The subnetwork to deploy the cluster in."
+  type        = string
 }
 
 variable "extra_roles" {

@@ -186,6 +186,7 @@ resource "google_container_cluster" "this" {
   }
 
   lifecycle {
+    # https://github.com/hashicorp/terraform-provider-google/issues/6901
     ignore_changes = [initial_node_count]
   }
 
