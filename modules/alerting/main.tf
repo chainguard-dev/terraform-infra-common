@@ -67,7 +67,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
         "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -125,7 +125,7 @@ resource "google_monitoring_alert_policy" "oom" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -184,7 +184,7 @@ resource "google_monitoring_alert_policy" "signal" {
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "signal"        = "REGEXP_EXTRACT(textPayload, \"^Container terminated on signal ([^01]+)\\.$\")"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -240,7 +240,7 @@ resource "google_monitoring_alert_policy" "panic" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -295,7 +295,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -350,7 +350,7 @@ resource "google_monitoring_alert_policy" "fatal" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -405,7 +405,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
         "exit_code"     = "REGEXP_EXTRACT(textPayload, \"^Container called exit\\\\(([0-9]+)\\\\)\\\\.$\")"
       }
     }
@@ -620,7 +620,7 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -655,7 +655,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -704,7 +704,7 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -737,7 +737,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -830,7 +830,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -883,7 +883,7 @@ resource "google_logging_metric" "cloudrun_timeout" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -931,7 +931,7 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -979,7 +979,7 @@ resource "google_logging_metric" "github_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -1027,7 +1027,7 @@ resource "google_logging_metric" "r2_same_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
