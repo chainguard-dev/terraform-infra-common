@@ -399,7 +399,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
     display_name = "Non-zero exit code log entry ${local.name}"
 
     condition_matched_log {
-      filter = local.fatal_filter
+      filter = local.exit_filter
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
