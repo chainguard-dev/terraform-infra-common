@@ -23,6 +23,7 @@ locals {
   repo = var.repository != "" ? var.repository : "gcr.io/${var.project_id}/${var.name}"
   squad_label = {
     "squad" : var.squad
+    "team" : var.squad
   }
 }
 

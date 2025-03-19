@@ -39,6 +39,7 @@ locals {
 
   squad_label = {
     "squad" : var.squad
+    "team" : var.squad
   }
 }
 
