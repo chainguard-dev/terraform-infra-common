@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
@@ -152,8 +153,16 @@ func restoreTraceparentHeader(r *http.Request) {
 	}
 }
 
+var providerOnce = sync.OnceValues(func() (*oidc.Provider, error) {
+	// I expect this takes milliseconds, so 5s is overkill but smaller than forever.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return oidc.NewProvider(ctx, "https://accounts.google.com")
+})
+
 func extractCloudRunCaller() func(context.Context, string) (string, bool) {
-	provider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
+	provider, err := providerOnce()
 	if err != nil {
 		// If we are unable to build a provider for Google, then this is likely
 		// being used somewhere other than Cloud Run, so fast-path to returning
