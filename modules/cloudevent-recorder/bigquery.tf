@@ -139,11 +139,11 @@ resource "google_monitoring_alert_policy" "bq_dts" {
         }
       }
 
-      display_name = "BQ DTS Scheduled Success Runs for ${var.name} ${conditions.key}"
+      display_name = "BQ DTS Success : ${each.key} ${conditions.key}"
     }
   }
 
-  display_name = "BQ DTS Scheduled Success Runs for ${var.name}"
+  display_name = "BQ DTS Success : ${each.key}"
 
   enabled = "true"
   project = var.project_id
