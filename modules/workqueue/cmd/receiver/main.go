@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"chainguard.dev/go-grpc-kit/pkg/duplex"
+	"chainguard.dev/go-grpc-kit/pkg/options"
 	"cloud.google.com/go/storage"
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
@@ -51,7 +52,7 @@ func main() {
 
 	switch env.Mode {
 	case "gcs":
-		cl, err := storage.NewClient(ctx)
+		cl, err := storage.NewClient(ctx, options.ClientOptions()...)
 		if err != nil {
 			log.Panicf("Failed to create client: %v", err)
 		}

@@ -23,6 +23,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
+	"chainguard.dev/go-grpc-kit/pkg/options"
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
@@ -73,7 +74,7 @@ func main() {
 		&pubsub.ClientConfig{
 			EnableOpenTelemetryTracing: true,
 		},
-		option.WithTokenSource(google.ComputeTokenSource("")))
+		append(options.ClientOptions(), option.WithTokenSource(google.ComputeTokenSource("")))...)
 	if err != nil {
 		clog.Fatalf("failed to create pubsub client, %v", err)
 	}
