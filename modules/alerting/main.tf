@@ -67,7 +67,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
         "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -80,6 +80,7 @@ resource "google_monitoring_alert_policy" "bad-rollout" {
 
 locals {
   oom_filter = <<EOF
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 logName: "/logs/run.googleapis.com%2Fvarlog%2Fsystem"
 severity=ERROR
 textPayload:"Consider increasing the memory limit"
@@ -105,7 +106,7 @@ resource "google_monitoring_alert_policy" "oom" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} OOM"
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} OOM"
 
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged an OOM."
     links {
@@ -125,7 +126,7 @@ resource "google_monitoring_alert_policy" "oom" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -137,7 +138,8 @@ resource "google_monitoring_alert_policy" "oom" {
 
 locals {
   signal_filter = <<EOT
-log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+logName="projects/${var.project_id}/logs/run.googleapis.com%2Fvarlog%2Fsystem"
 severity=WARNING
 textPayload=~"^Container terminated on signal [^01]+\.$"
 ${var.signal_filter}
@@ -163,7 +165,7 @@ resource "google_monitoring_alert_policy" "signal" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Signal $${log.extracted_label.signal}"
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} Signal $${log.extracted_label.signal}"
 
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a termination signal."
     links {
@@ -184,7 +186,7 @@ resource "google_monitoring_alert_policy" "signal" {
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "signal"        = "REGEXP_EXTRACT(textPayload, \"^Container terminated on signal ([^01]+)\\.$\")"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -221,7 +223,7 @@ resource "google_monitoring_alert_policy" "panic" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Panic"
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} Panic"
 
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a panic."
     links {
@@ -240,7 +242,7 @@ resource "google_monitoring_alert_policy" "panic" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -276,7 +278,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Panic stacktrace"
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} Panic stacktrace"
 
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a panic stacktrace."
     links {
@@ -295,7 +297,7 @@ resource "google_monitoring_alert_policy" "panic-stacktrace" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -331,7 +333,7 @@ resource "google_monitoring_alert_policy" "fatal" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} Fatal"
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} Fatal"
 
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a fatal error."
     links {
@@ -350,7 +352,7 @@ resource "google_monitoring_alert_policy" "fatal" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -388,6 +390,9 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
   combiner     = "OR"
 
   documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} exitcode $${log.extracted_label.exit_code}"
+
     content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a non-zero exitcode."
     links {
       display_name = "Logs Explorer"
@@ -405,7 +410,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
         "exit_code"     = "REGEXP_EXTRACT(textPayload, \"^Container called exit\\\\(([0-9]+)\\\\)\\\\.$\")"
       }
     }
@@ -593,7 +598,7 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   name   = "cloud_run_scaling_failure"
   filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request was aborted because there was no available instance."
       EOT
@@ -620,7 +625,7 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -645,7 +650,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
     condition_matched_log {
       filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request was aborted because there was no available instance."
         ${var.scaling_issue_filter}
@@ -655,7 +660,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -677,7 +682,7 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   name   = "cloud_run_failed_req"
   filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
       EOT
@@ -704,7 +709,7 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -727,7 +732,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
     condition_matched_log {
       filter = <<EOT
         resource.type="cloud_run_revision"
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
         ${var.failed_req_filter}
@@ -737,7 +742,7 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -817,7 +822,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
 
     condition_matched_log {
       filter = <<EOT
-        log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
         severity=ERROR
         textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
         ${var.timeout_filter}
@@ -830,7 +835,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "team"          = "EXTRACT(labels.squad)"
       }
     }
   }
@@ -856,7 +861,7 @@ resource "google_logging_metric" "cloudrun_timeout" {
   name   = "cloudrun_timeout"
   filter = <<EOT
     resource.type="cloud_run_revision"
-    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+    logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
     severity=ERROR
     textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
   EOT
@@ -883,7 +888,7 @@ resource "google_logging_metric" "cloudrun_timeout" {
   label_extractors = {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -898,7 +903,7 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
   name   = "dockerhub_ratelimit"
   filter = <<EOT
     (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
-    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    logName="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
     severity>=WARNING
     textPayload:"You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit"
   EOT
@@ -931,7 +936,7 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -946,7 +951,7 @@ resource "google_logging_metric" "github_ratelimit" {
   name   = "github_ratelimit"
   filter = <<EOT
     (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
-    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    logName="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
     severity>=WARNING
     textPayload:"You have exceeded a secondary rate limit and have been temporarily blocked from content creation"
   EOT
@@ -979,7 +984,7 @@ resource "google_logging_metric" "github_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -994,7 +999,7 @@ resource "google_logging_metric" "r2_same_ratelimit" {
   name   = "r2_same_ratelimit"
   filter = <<EOT
     (resource.type="cloud_run_job" OR resource.type="cloud_run_revision")
-    log_name="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
+    logName="projects/${var.project_id}/logs/run.googleapis.com%2Fstderr"
     severity>=WARNING
     textPayload:"Reduce your concurrent request rate for the same object"
   EOT
@@ -1027,7 +1032,7 @@ resource "google_logging_metric" "r2_same_ratelimit" {
     "location"     = "EXTRACT(resource.labels.location)"
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "job_name"     = "EXTRACT(resource.labels.job_name)"
-    "team"         = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+    "team"         = "EXTRACT(labels.squad)"
   }
 }
 
@@ -1035,7 +1040,7 @@ locals {
   pinned_filter = <<EOF
 resource.type="cloud_run_revision"
 severity=INFO
-log_name="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fsystem_event"
+logName="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fsystem_event"
 protoPayload.methodName="/Services.UpdateService"
 protoPayload.resourceName:"namespaces/${var.project_id}/services/"
 -protoPayload.response.spec.traffic.latestRevision="true"

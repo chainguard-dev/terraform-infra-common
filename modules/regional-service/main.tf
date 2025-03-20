@@ -34,6 +34,7 @@ locals {
 
   squad_label = {
     "squad" : var.squad
+    "team" : var.squad
   }
 
   main_container_idx = keys(local.has_port)[0]
