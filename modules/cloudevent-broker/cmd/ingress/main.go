@@ -74,8 +74,7 @@ func main() {
 		&pubsub.ClientConfig{
 			EnableOpenTelemetryTracing: true,
 		},
-		option.WithTokenSource(google.ComputeTokenSource(""),
-			options.ClientOptions()...))
+		append(options.ClientOptions(), option.WithTokenSource(google.ComputeTokenSource("")))...)
 	if err != nil {
 		clog.Fatalf("failed to create pubsub client, %v", err)
 	}
