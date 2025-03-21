@@ -1,7 +1,7 @@
 cel.dev/expr v0.19.2 h1:V354PbqIXr9IQdwy4SYA4xa0HXaWq1BUPAGzugBY5V4=
 cel.dev/expr v0.19.2/go.mod h1:MrpN08Q+lEBs+bGYdLxxHkZoUSsCp0nSKTs0nTymJgw=
-chainguard.dev/go-grpc-kit v0.17.9 h1:keS1oasxM0voD3J/Jagy0icy1P2qXA+QteXL8zBWciU=
-chainguard.dev/go-grpc-kit v0.17.9/go.mod h1:RPyCEjTxWAxrODH5V4vJOLy/gHRjEjVF9dzWN+LmIvo=
+chainguard.dev/go-grpc-kit v0.17.10 h1:uymMNUIBgbypeIurW25XaXvx3kbS0JpfKsJEMrS0abY=
+chainguard.dev/go-grpc-kit v0.17.10/go.mod h1:RPyCEjTxWAxrODH5V4vJOLy/gHRjEjVF9dzWN+LmIvo=
 chainguard.dev/sdk v0.1.32 h1:pZWN2irtvKMaAkgOpM3LRhuOrlpR3UGhg4F9LVWSyA8=
 chainguard.dev/sdk v0.1.32/go.mod h1:ma1I0De/7PYJz8pEhEvTPv3hbnEehZPUKSiytzv2rJU=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
