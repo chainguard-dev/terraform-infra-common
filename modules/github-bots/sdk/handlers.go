@@ -29,6 +29,12 @@ func (r WorkflowRunLogsHandler) EventType() EventType {
 	return WorkflowRunLogsEvent
 }
 
+type IssuesHandler func(ctx context.Context, ice github.IssueEvent) error
+
+func (r IssuesHandler) EventType() EventType {
+	return IssuesEvent
+}
+
 type IssueCommentHandler func(ctx context.Context, ice github.IssueCommentEvent) error
 
 func (r IssueCommentHandler) EventType() EventType {
@@ -95,6 +101,7 @@ const (
 	// GitHub events (https://github.com/chainguard-dev/terraform-infra-common/tree/main/modules/github-events)
 	PullRequestEvent        EventType = "dev.chainguard.github.pull_request"
 	WorkflowRunEvent        EventType = "dev.chainguard.github.workflow_run"
+	IssuesEvent             EventType = "dev.chainguard.github.issues"
 	IssueCommentEvent       EventType = "dev.chainguard.github.issue_comment"
 	PushEvent               EventType = "dev.chainguard.github.push"
 	CheckRunEvent           EventType = "dev.chainguard.github.check_run"

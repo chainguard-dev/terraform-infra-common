@@ -171,6 +171,21 @@ func Serve(b Bot) {
 				}
 				return nil
 
+			case IssuesHandler:
+				log.Debug("handling issue event")
+
+				var ie schemas.Wrapper[github.IssueEvent]
+				if err := event.DataAs(&ie); err != nil {
+					log.Errorf("failed to unmarshal issue event: %v", err)
+					return err
+				}
+
+				if err := h(ctx, ie.Body); err != nil {
+					log.Errorf("failed to handle issue event: %v", err)
+					return err
+				}
+				return nil
+
 			case IssueCommentHandler:
 				log.Debug("handling issue comment event")
 
