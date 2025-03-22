@@ -793,7 +793,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${metadata.user_labels.team}: PubSub Dead-Letter-Queue: $${metadata.system_labels.name}"
+    subject = "$${metadata.user_labels.team}: PubSub DLQ: $${resource.label.topic_id}"
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
