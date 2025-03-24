@@ -279,9 +279,10 @@ func (c GitHubClient) RemoveLabel(ctx context.Context, pr *github.PullRequest, l
 	return nil
 }
 
-// SetComment adds or replaces a bot comment on the given pull request.
-func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, botName, content string) error {
-	cs, _, err := c.inner.Issues.ListComments(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, nil)
+// setCommentHelper is a helper function that adds or replaces a bot comment on a GitHub issue or PR.
+// It's used by both SetComment and SetIssueComment to avoid code duplication.
+func (c GitHubClient) setCommentHelper(ctx context.Context, owner, repo string, number int, botName, content string) error {
+	cs, _, err := c.inner.Issues.ListComments(ctx, owner, repo, number, nil)
 	if err != nil {
 		return fmt.Errorf("listing comments: %w", err)
 	}
@@ -289,7 +290,7 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 
 	for _, com := range cs {
 		if strings.Contains(*com.Body, fmt.Sprintf("<!-- bot:%s -->", botName)) {
-			if _, resp, err := c.inner.Issues.EditComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *com.ID, &github.IssueComment{
+			if _, resp, err := c.inner.Issues.EditComment(ctx, owner, repo, *com.ID, &github.IssueComment{
 				Body: &content,
 			}); err != nil || resp.StatusCode != 200 {
 				return validateResponse(ctx, err, resp, "editing comment")
@@ -297,12 +298,27 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 			return nil
 		}
 	}
-	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
+	if _, resp, err := c.inner.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
 		Body: &content,
 	}); err != nil || resp.StatusCode != 201 {
 		return validateResponse(ctx, err, resp, "create comment")
 	}
 	return nil
+}
+
+// SetComment adds or replaces a bot comment on the given pull request.
+func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, botName, content string) error {
+	return c.setCommentHelper(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, botName, content)
+}
+
+// SetIssueComment adds or replaces a bot comment on the given GitHub issue.
+func (c GitHubClient) SetIssueComment(ctx context.Context, issue *github.Issue, botName, content string) error {
+	owner, repoName, err := getIssueRepoInfo(issue)
+	if err != nil {
+		return fmt.Errorf("getting repo info: %w", err)
+	}
+
+	return c.setCommentHelper(ctx, owner, repoName, issue.GetNumber(), botName, content)
 }
 
 // AddComment adds a new comment to the given pull request.
