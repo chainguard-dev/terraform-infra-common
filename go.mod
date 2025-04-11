@@ -18,12 +18,12 @@ require (
 	github.com/chainguard-dev/clog v1.7.0
 	github.com/cloudevents/sdk-go/v2 v2.16.0
 	github.com/coreos/go-oidc/v3 v3.14.1
-	github.com/go-git/go-git/v5 v5.14.0
+	github.com/go-git/go-git/v5 v5.15.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/prometheus/client_golang v1.22.0
-	github.com/sethvargo/go-envconfig v1.1.1
+	github.com/sethvargo/go-envconfig v1.2.0
 	github.com/shirou/gopsutil/v4 v4.25.3
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.35.0
@@ -61,7 +61,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/ebitengine/purego v0.8.2 // indirect
