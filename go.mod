@@ -1,8 +1,6 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.24.2
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.10
@@ -14,13 +12,13 @@ require (
 	cloud.google.com/go/storage v1.51.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.27.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
-	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.15.0
 	github.com/chainguard-dev/clog v1.7.0
 	github.com/cloudevents/sdk-go/v2 v2.16.0
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/go-git/go-git/v5 v5.15.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-github/v69 v69.0.0
+	github.com/google/go-github/v71 v71.0.0
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/sethvargo/go-envconfig v1.2.0
