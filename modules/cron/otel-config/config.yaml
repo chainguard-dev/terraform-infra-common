@@ -56,6 +56,7 @@ processors:
 
 exporters:
   googlemanagedprometheus:
+    project: "REPLACE_ME_PROJECT_ID"
     sending_queue:
       enabled: true
       # we are handling metrics for a single pod, no need to have
