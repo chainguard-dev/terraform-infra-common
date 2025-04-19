@@ -164,7 +164,8 @@ resource "google_cloud_run_v2_job" "job" {
           args = ["--config=env:OTEL_CONFIG"]
           env {
             name  = "OTEL_CONFIG"
-            value = file("${path.module}/otel-config/config.yaml")
+            value = replace(file("${path.module}/otel-config/config.yaml"),
+              "REPLACE_ME_PROJECT_ID", var.project_id)
           }
         }
       }

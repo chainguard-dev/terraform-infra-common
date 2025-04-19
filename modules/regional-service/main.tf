@@ -264,8 +264,10 @@ resource "google_cloud_run_v2_service" "this" {
       // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
       args = ["--config=env:OTEL_CONFIG"]
       env {
-        name  = "OTEL_CONFIG"
-        value = replace(file("${path.module}/otel-config/config.yaml"), "REPLACE_ME_TEAM", var.squad)
+        name = "OTEL_CONFIG"
+        value = replace(replace(file("${path.module}/otel-config/config.yaml"),
+          "REPLACE_ME_TEAM", var.squad),
+        "REPLACE_ME_PROJECT_ID", var.project_id)
       }
     }
 
