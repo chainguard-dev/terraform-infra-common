@@ -55,7 +55,7 @@ module "cloudevent-pull-trigger" {
   filter_prefix = { "subject": "foo/" }
 }
 
-// Grant your subscriber the permissions to subscribe to trigger created above. 
+// Grant your subscriber the permissions to subscribe to trigger created above.
 resource "google_pubsub_subscription_iam_member" "pull_event_subscriber" {
   subscription = module.cloudevent-pull-trigger.pull-subscription
   role         = "roles/pubsub.subscriber"
