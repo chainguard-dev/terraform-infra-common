@@ -37,6 +37,8 @@ module "this" {
 
   request_timeout_seconds = var.service_timeout_seconds
 
+  deletion_protection = var.deletion_protection
+
   service_account = var.service_account
   containers = {
     "prober" = {
