@@ -371,6 +371,7 @@ textPayload:"Container called exit("
 -textPayload="Container called exit(0)."
 -textPayload=~"Container called exit\(1[3-4]\d\)."
 ${local.squad_log_filter}
+${var.exitcode_filter}
 EOF
 }
 
