@@ -181,6 +181,10 @@ variable "success_alert_alignment_period_seconds" {
   description = "Alignment period for successful completion alert. 0 (default) to not create alert."
   type        = number
   default     = 0
+  validation {
+    condition     = var.success_alert_alignment_period_seconds <= 60 * 60 * 20
+    error_message = "Alignment period must be less than or equal to 20h (in seconds). Alert horizon (duration + alignment period) must be <= 25h, and duration is set to (alignment period)/4."
+  }
 }
 
 variable "enable_otel_sidecar" {
