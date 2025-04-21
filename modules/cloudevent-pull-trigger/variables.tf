@@ -73,23 +73,10 @@ EOD
   default     = []
 }
 
-variable "private-service" {
-  description = "The private cloud run service that is subscribing to these events."
-  type = object({
-    name   = string
-    region = string
-  })
-}
-
 variable "max_delivery_attempts" {
   description = "The maximum number of delivery attempts for any event."
   type        = number
   default     = 20
-}
-
-variable "notification_channels" {
-  description = "List of notification channels to alert."
-  type        = list(string)
 }
 
 variable "minimum_backoff" {
@@ -125,4 +112,10 @@ variable "team" {
     condition     = !var.require_team || var.team != ""
     error_message = "team needs to specified or disable check by setting require_team = false"
   }
+}
+
+variable "allowed_persistence_regions" {
+  description = "The list of allowed persistence regions for the dead-letter topic."
+  type        = list(string)
+  default     = []
 }
