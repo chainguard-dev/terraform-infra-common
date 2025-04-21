@@ -206,3 +206,9 @@ variable "squad" {
     error_message = "squad needs to specified or disable check by setting require_squad = false"
   }
 }
+
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}
