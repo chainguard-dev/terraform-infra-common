@@ -126,7 +126,7 @@ output "public-urls" {
 // so terraform will fail to delete the schema.
 //
 // The proper process for deleting or modifying a schema is in this playbook
-// https://eng.inky.wtf/docs/infra/playbooks/schema-names/
+// https://github.com/chainguard-dev/terraform-infra-common/blob/main/modules/github-events/README.md#modifying-schema-names-for-recorder
 output "recorder-schemas" {
   value = {
     "dev.chainguard.github.pull_request" : {

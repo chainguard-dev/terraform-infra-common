@@ -118,6 +118,23 @@ The event payloads produced by this module are the full GitHub webhook payloads,
 
 The schemas that describe which fields get recorded are defined in `./schemas/event_types.go`, and the BQ schemas are generated using `./cmd/schemagen`. To add fields or new types, modify the `event_types.go` file and run `go generate ./...`.
 
+## Modifying Schema Names for Recorder
+
+These schemas are used to generate bigquery table names used by the recorder. If you are adding a schema you're fine to proceed. If you are changing the name of a schema, or removing a schema, terraform will try to delete the old schema. The recorders have a parameter `deletion_protection` enabled by default so terraform will fail to delete the schema.
+
+By default the recorder has `deletion_protection` enabled. When you change the name of a schema used by the recorder ([example](https://github.com/chainguard-dev/terraform-infra-common/pull/408)) terraform will attempt to delete the old bigquery table.
+
+If the `deletion_protection` has not been disabled then you will find yourself in a state where terraform is trying to delete the resource but it cannot and you cannot set the `deletion_protection` bit for the table that needs to be deleted.
+
+**NOTE:** _Please note that terraform "deleting the table" will.. delete the table. So make sure the proper backups are in place or you don't care about the data in the table. This guide is solely to avoid the footgun of deleting or renaming a schema without first disabling `deletion_protection`._
+
+The proper way to handle this situation is
+
+1. Disable `deletion_protection` for the recorder
+2. Run terraform apply to disable the `deletion_protection` bit
+3. Make the changes to the schema name and run terraform apply
+4. Re-enable `deletion_protection` for the recorder
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
