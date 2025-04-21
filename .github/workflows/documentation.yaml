@@ -15,6 +15,7 @@ jobs:
           - bucket-events
           - cloudevent-broker
           - cloudevent-trigger
+          - cloudevent-pull-trigger
           - cloudevent-recorder
           - regional-go-service
           - regional-service
