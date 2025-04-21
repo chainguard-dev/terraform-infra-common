@@ -4,14 +4,6 @@ resource "random_string" "suffix" {
   special = false
 }
 
-// A dedicated service account for this subscription.
-resource "google_service_account" "this" {
-  project = var.project_id
-
-  account_id   = "${var.name}-${random_string.suffix.result}"
-  display_name = "Delivery account for ${var.private-service.name} in ${var.private-service.region}."
-}
-
 // Lookup the identity of the pubsub service agent.
 resource "google_project_service_identity" "pubsub" {
   provider = google-beta
@@ -37,7 +29,7 @@ resource "google_pubsub_topic" "dead-letter" {
   }
 
   message_storage_policy {
-    allowed_persistence_regions = [var.private-service.region]
+    allowed_persistence_regions = var.allowed_persistence_regions
   }
 }
 
@@ -64,8 +56,7 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   enable_message_ordering = true
 }
 
-// Configure the subscription to deliver the events matching our filter to this service
-// using the above identity to authorize the delivery..
+// Configure the subscription to the broker topic with the appropriate filter.
 resource "google_pubsub_subscription" "this" {
   name  = "${var.name}-${random_string.suffix.result}"
   topic = var.broker
