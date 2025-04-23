@@ -285,11 +285,11 @@ resource "google_monitoring_alert_policy" "success" {
     auto_close = "3600s"
   }
 
-  display_name = "Cloud Run Job Success Execcution: ${var.name}"
+  display_name = "Cloud Run Job Success Execution: ${var.name}"
   combiner     = "OR"
 
   conditions {
-    display_name = "Cloud Run Job Success Execcution: ${var.name}"
+    display_name = "Cloud Run Job Success Execution: ${var.name}"
 
     condition_absent {
       filter = <<EOT
