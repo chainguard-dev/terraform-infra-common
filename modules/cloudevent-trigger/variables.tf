@@ -6,6 +6,11 @@ variable "name" {
   type = string
 }
 
+variable "region" {
+  description = "The region in which the GCS Bucket will be created if enabling dead letter queue to send messages to the GCS bucket."
+  type        = string
+}
+
 variable "broker" {
   description = "The name of the pubsub topic we are using as a broker."
   type        = string
@@ -125,4 +130,10 @@ variable "team" {
     condition     = !var.require_team || var.team != ""
     error_message = "team needs to specified or disable check by setting require_team = false"
   }
+}
+
+variable "enable_dlq_bucket" {
+  description = "Enable the messages to sink in the bucket for the dead letter."
+  type        = bool
+  default     = false
 }
