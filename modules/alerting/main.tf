@@ -364,7 +364,6 @@ resource "google_monitoring_alert_policy" "fatal" {
 }
 
 locals {
-  # ignore exit 0 and 130-149 (used by build job failures)
   exit_filter = <<EOF
 protoPayload.methodName="/Jobs.RunJob"
 protoPayload.@type="type.googleapis.com/google.cloud.audit.AuditLog"
