@@ -40,6 +40,9 @@ module "foo-service" {
       ports = [{ container_port = 8080 }]
     }
   }
+
+  // Add your notification channels for alerting (required)
+  notification_channels = []
 }
 ```
 
