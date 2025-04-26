@@ -178,6 +178,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	qd := make([]*queuedKey, 0, w.limit+1)
 
 	queued, notbefore := 0, 0
+	maxAttempts := 0 // Track the maximum number of attempts
 	for {
 		objAttrs, err := iter.Next()
 		if errors.Is(err, iterator.Done) {
@@ -190,6 +191,15 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 			priority, err = strconv.ParseInt(p, 10, 64)
 			if err != nil {
 				clog.WarnContextf(ctx, "Failed to parse priority: %v", err)
+			}
+		}
+		// Check for attempts and track maximum
+		if att, ok := objAttrs.Metadata[attemptsMetadataKey]; ok && att != "" {
+			attempts, err := strconv.Atoi(att)
+			if err != nil {
+				clog.WarnContextf(ctx, "Failed to parse attempts: %v", err)
+			} else if attempts > maxAttempts {
+				maxAttempts = attempts
 			}
 		}
 
@@ -239,18 +249,16 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 		qk = append(qk, qi)
 	}
 
-	mInProgressKeys.With(prometheus.Labels{
+	// Set all metrics
+	labels := prometheus.Labels{
 		"service_name":  env.KnativeServiceName,
 		"revision_name": env.KnativeRevisionName,
-	}).Set(float64(len(wip)))
-	mQueuedKeys.With(prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
-	}).Set(float64(queued))
-	mNotBeforeKeys.With(prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
-	}).Set(float64(notbefore))
+	}
+	mInProgressKeys.With(labels).Set(float64(len(wip)))
+	mQueuedKeys.With(labels).Set(float64(queued))
+	mNotBeforeKeys.With(labels).Set(float64(notbefore))
+	// Set the max attempts metric
+	mMaxAttempts.With(labels).Set(float64(maxAttempts))
 	return wip, qk, nil
 }
 
