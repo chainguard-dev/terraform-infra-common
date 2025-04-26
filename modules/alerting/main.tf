@@ -586,11 +586,6 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
   project = var.project_id
 }
 
-moved {
-  from = google_logging_metric.cloud-run-scaling-failure
-  to   = google_logging_metric.cloud-run-scaling-failure[0]
-}
-
 resource "google_logging_metric" "cloud-run-scaling-failure" {
   count = var.squad == "" ? 1 : 0
 
@@ -668,11 +663,6 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
 
   enabled = var.enable_scaling_alerts
   project = var.project_id
-}
-
-moved {
-  from = google_logging_metric.cloud-run-failed-req
-  to   = google_logging_metric.cloud-run-failed-req[0]
 }
 
 resource "google_logging_metric" "cloud-run-failed-req" {
@@ -849,11 +839,6 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 }
 
-moved {
-  from = google_logging_metric.cloudrun_timeout
-  to   = google_logging_metric.cloudrun_timeout[0]
-}
-
 resource "google_logging_metric" "cloudrun_timeout" {
   count = var.squad == "" ? 1 : 0
 
@@ -889,11 +874,6 @@ resource "google_logging_metric" "cloudrun_timeout" {
     "service_name" = "EXTRACT(resource.labels.service_name)"
     "team"         = "EXTRACT(labels.squad)"
   }
-}
-
-moved {
-  from = google_logging_metric.dockerhub_ratelimit
-  to   = google_logging_metric.dockerhub_ratelimit[0]
 }
 
 resource "google_logging_metric" "dockerhub_ratelimit" {
@@ -939,11 +919,6 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
   }
 }
 
-moved {
-  from = google_logging_metric.github_ratelimit
-  to   = google_logging_metric.github_ratelimit[0]
-}
-
 resource "google_logging_metric" "github_ratelimit" {
   count = var.squad == "" ? 1 : 0
 
@@ -985,11 +960,6 @@ resource "google_logging_metric" "github_ratelimit" {
     "job_name"     = "EXTRACT(resource.labels.job_name)"
     "team"         = "EXTRACT(labels.squad)"
   }
-}
-
-moved {
-  from = google_logging_metric.r2_same_ratelimit
-  to   = google_logging_metric.r2_same_ratelimit[0]
 }
 
 resource "google_logging_metric" "r2_same_ratelimit" {

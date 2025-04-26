@@ -93,8 +93,3 @@ module "dashboard" {
     }
   }
 }
-
-moved {
-  from = google_monitoring_dashboard.dashboard
-  to   = module.dashboard.google_monitoring_dashboard.dashboard
-}
