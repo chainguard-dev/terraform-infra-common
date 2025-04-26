@@ -29,6 +29,9 @@ module "cloudevent-broker" {
   name       = "my-broker"
   project_id = var.project_id
   regions    = module.networking.regional-networks
+
+  // Add your notification channels for alerting (required)
+  notification_channels = []
 }
 
 // Authorize the "foo" service account to publish events.
