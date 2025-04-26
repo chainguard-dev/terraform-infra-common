@@ -144,6 +144,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Cloud Event attribute spec only allows [a-z0-9] :(
 		event.SetExtension("githubhook", hookID)
 	}
+
+	// Add pullrequest extension for pull request events
+	if prInfo := extractPullRequestInfo(github.WebHookType(r), payload); prInfo != "" {
+		event.SetExtension("pullrequest", prInfo)
+	}
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
 		When: s.clock.Now(),
 		Headers: &eventHeaders{
@@ -187,6 +192,32 @@ type eventHeaders struct {
 	Event                  string `json:"event,omitempty"`
 	InstallationTargetType string `json:"installation_target_type,omitempty"`
 	InstallationTargetID   string `json:"installation_target_id,omitempty"`
+}
+
+// extractPullRequestInfo extracts pull request information from GitHub payload if available
+// Returns a formatted string in the format "org/repo#number" or empty string if not a PR event
+func extractPullRequestInfo(eventType string, payload []byte) string {
+	// Only process pull_request events
+	if eventType != "pull_request" {
+		return ""
+	}
+
+	var pr struct {
+		Number     int `json:"number"`
+		Repository struct {
+			FullName string `json:"full_name"`
+		} `json:"repository"`
+	}
+
+	if err := json.Unmarshal(payload, &pr); err != nil {
+		return ""
+	}
+
+	if pr.Number > 0 && pr.Repository.FullName != "" {
+		return fmt.Sprintf("%s#%d", pr.Repository.FullName, pr.Number)
+	}
+
+	return ""
 }
 
 // ValidatePayload validates the payload of a webhook request for a given set of secrets.
