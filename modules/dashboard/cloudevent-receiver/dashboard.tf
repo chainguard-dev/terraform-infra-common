@@ -97,11 +97,6 @@ module "dashboard" {
   }
 }
 
-moved {
-  from = google_monitoring_dashboard.dashboard
-  to   = module.trigger_dashboard.google_monitoring_dashboard.dashboard
-}
-
 output "json" {
   value = {
     for k, v in module.dashboard : k => v.json
@@ -157,9 +152,4 @@ module "trigger-dashboards" {
       tiles   = module.trigger_layout[each.key].tiles,
     }
   }
-}
-
-moved {
-  from = google_monitoring_dashboard.trigger_dashboards
-  to   = module.trigger_dashboards.google_monitoring_dashboard.dashboard
 }

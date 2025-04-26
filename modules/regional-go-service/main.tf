@@ -5,21 +5,6 @@ terraform {
   }
 }
 
-moved {
-  from = google_project_iam_member.metrics-writer
-  to   = module.this.google_project_iam_member.metrics-writer
-}
-
-moved {
-  from = google_project_iam_member.trace-writer
-  to   = module.this.google_project_iam_member.trace-writer
-}
-
-moved {
-  from = google_project_iam_member.profiler-writer
-  to   = module.this.google_project_iam_member.profiler-writer
-}
-
 // Build each of the application images from source.
 resource "ko_build" "this" {
   for_each    = var.containers
@@ -73,19 +58,4 @@ module "this" {
   execution_environment   = var.execution_environment
 
   notification_channels = var.notification_channels
-}
-
-moved {
-  from = google_cloud_run_v2_service.this
-  to   = module.this.google_cloud_run_v2_service.this
-}
-
-moved {
-  from = google_monitoring_alert_policy.bad-rollout
-  to   = module.this.google_monitoring_alert_policy.bad-rollout
-}
-
-moved {
-  from = google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated
-  to   = module.this.google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated
 }
