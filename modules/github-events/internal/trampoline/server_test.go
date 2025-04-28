@@ -198,6 +198,153 @@ func TestRequestedOnlyWebhook(t *testing.T) {
 	}
 }
 
+func TestExtractPullRequestInfo(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventType string
+		payload   map[string]interface{}
+		expected  string
+	}{
+		{
+			name:      "pull_request event with valid data",
+			eventType: "pull_request",
+			payload: map[string]interface{}{
+				"number": 123,
+				"repository": map[string]interface{}{
+					"full_name": "foo/bar",
+				},
+			},
+			expected: "foo/bar#123",
+		},
+		{
+			name:      "not a pull_request event",
+			eventType: "push",
+			payload: map[string]interface{}{
+				"number": 123,
+				"repository": map[string]interface{}{
+					"full_name": "foo/bar",
+				},
+			},
+			expected: "",
+		},
+		{
+			name:      "pull_request event with missing number",
+			eventType: "pull_request",
+			payload: map[string]interface{}{
+				"repository": map[string]interface{}{
+					"full_name": "foo/bar",
+				},
+			},
+			expected: "",
+		},
+		{
+			name:      "pull_request event with missing repo",
+			eventType: "pull_request",
+			payload: map[string]interface{}{
+				"number": 123,
+			},
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Marshal the payload
+			payload, err := json.Marshal(tc.payload)
+			if err != nil {
+				t.Fatalf("Failed to marshal payload: %v", err)
+			}
+
+			// Call the function
+			result := extractPullRequestInfo(tc.eventType, payload)
+
+			// Check the result
+			if result != tc.expected {
+				t.Errorf("Expected %q, got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestPullRequestExtension(t *testing.T) {
+	client := &fakeClient{}
+	secret := []byte("hunter2")
+	clock := clockwork.NewFakeClock()
+	opts := ServerOptions{
+		Secrets: [][]byte{secret},
+	}
+	impl := NewServer(client, opts)
+	impl.clock = clock
+
+	srv := httptest.NewServer(impl)
+	defer srv.Close()
+
+	// Send a pull_request event
+	prPayload := map[string]interface{}{
+		"action": "opened",
+		"number": 123,
+		"repository": map[string]interface{}{
+			"full_name": "foo/bar",
+		},
+		"organization": map[string]interface{}{
+			"login": "foo",
+		},
+	}
+
+	resp, err := sendevent(t, srv.Client(), srv.URL, "pull_request", prPayload, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+
+	// Check that the pullrequest extension was added
+	if len(client.events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(client.events))
+	}
+
+	pullrequest, ok := client.events[0].Extensions()["pullrequest"]
+	if !ok {
+		t.Fatal("pullrequest extension not found")
+	}
+	if pullrequest != "foo/bar#123" {
+		t.Errorf("unexpected pullrequest value: %v", pullrequest)
+	}
+
+	// Reset client events
+	client.events = nil
+
+	// Send a non-pull_request event
+	nonPrPayload := map[string]interface{}{
+		"action": "push",
+		"repository": map[string]interface{}{
+			"full_name": "foo/bar",
+		},
+		"organization": map[string]interface{}{
+			"login": "foo",
+		},
+	}
+
+	resp, err = sendevent(t, srv.Client(), srv.URL, "push", nonPrPayload, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+
+	// Check that no pullrequest extension was added
+	if len(client.events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(client.events))
+	}
+
+	_, exists := client.events[0].Extensions()["pullrequest"]
+	if exists {
+		t.Fatal("pullrequest extension should not be present for non-PR events")
+	}
+}
+
 func TestOrgFilter(t *testing.T) {
 	secret := []byte("hunter2")
 	opts := ServerOptions{
