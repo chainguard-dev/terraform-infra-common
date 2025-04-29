@@ -410,7 +410,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(labels.squad)"
-        "exit_code"     = "REGEXP_EXTRACT(textPayload, \"^Container called exit\\\\(([0-9]+)\\\\)\\\\.$\")"
+        "exit_code"     = "EXTRACT(protoPayload.status.code)"
       }
     }
   }
