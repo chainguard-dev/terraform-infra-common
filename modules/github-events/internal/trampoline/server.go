@@ -149,6 +149,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if prInfo := extractPullRequestInfo(github.WebHookType(r), payload); prInfo != "" {
 		event.SetExtension("pullrequest", prInfo)
 	}
+
+	// Add merged extension for merged pull requests
+	if merged := isPullRequestMerged(github.WebHookType(r), payload); merged {
+		event.SetExtension("merged", true)
+	}
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
 		When: s.clock.Now(),
 		Headers: &eventHeaders{
@@ -218,6 +223,29 @@ func extractPullRequestInfo(eventType string, payload []byte) string {
 	}
 
 	return ""
+}
+
+// isPullRequestMerged checks if a pull request event is for a merged PR
+// Returns true if the event is a pull_request with "closed" action and merged=true
+func isPullRequestMerged(eventType string, payload []byte) bool {
+	// Only process pull_request events
+	if eventType != "pull_request" {
+		return false
+	}
+
+	var pr struct {
+		Action      string `json:"action"`
+		PullRequest struct {
+			Merged bool `json:"merged"`
+		} `json:"pull_request"`
+	}
+
+	if err := json.Unmarshal(payload, &pr); err != nil {
+		return false
+	}
+
+	// A merged PR will have action="closed" and merged=true
+	return pr.Action == "closed" && pr.PullRequest.Merged
 }
 
 // ValidatePayload validates the payload of a webhook request for a given set of secrets.

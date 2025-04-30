@@ -345,6 +345,78 @@ func TestPullRequestExtension(t *testing.T) {
 	}
 }
 
+func TestIsPullRequestMerged(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventType string
+		payload   map[string]interface{}
+		expected  bool
+	}{
+		{
+			name:      "merged pull request",
+			eventType: "pull_request",
+			payload: map[string]interface{}{
+				"action": "closed",
+				"pull_request": map[string]interface{}{
+					"merged": true,
+				},
+			},
+			expected: true,
+		},
+		{
+			name:      "closed but not merged pull request",
+			eventType: "pull_request",
+			payload: map[string]interface{}{
+				"action": "closed",
+				"pull_request": map[string]interface{}{
+					"merged": false,
+				},
+			},
+			expected: false,
+		},
+		{
+			name:      "open pull request",
+			eventType: "pull_request",
+			payload: map[string]interface{}{
+				"action": "opened",
+				"pull_request": map[string]interface{}{
+					"merged": false,
+				},
+			},
+			expected: false,
+		},
+		{
+			name:      "not a pull request event",
+			eventType: "push",
+			payload: map[string]interface{}{
+				"action": "closed",
+				"pull_request": map[string]interface{}{
+					"merged": true,
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Marshal the payload
+			payload, err := json.Marshal(tc.payload)
+			if err != nil {
+				t.Fatalf("Failed to marshal payload: %v", err)
+			}
+
+			// Call the function
+			result := isPullRequestMerged(tc.eventType, payload)
+
+			// Check the result
+			if result != tc.expected {
+				t.Errorf("Expected %v, got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
 func TestOrgFilter(t *testing.T) {
 	secret := []byte("hunter2")
 	opts := ServerOptions{
