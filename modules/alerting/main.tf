@@ -199,7 +199,7 @@ resource "google_monitoring_alert_policy" "signal" {
 locals {
   panic_filter = <<EOF
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
-severity>=DEFAULT
+severity<=ERROR
 textPayload=~"panic: .*|runtime/panic"
 ${var.panic_filter}
 ${local.squad_log_filter}
