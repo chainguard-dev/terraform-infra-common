@@ -209,7 +209,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 			name:      "pull_request event with valid data",
 			eventType: "pull_request",
 			payload: map[string]interface{}{
-				"number": 123,
+				"number": float64(123),
 				"repository": map[string]interface{}{
 					"full_name": "foo/bar",
 				},
@@ -220,7 +220,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 			name:      "not a pull_request event",
 			eventType: "push",
 			payload: map[string]interface{}{
-				"number": 123,
+				"number": float64(123),
 				"repository": map[string]interface{}{
 					"full_name": "foo/bar",
 				},
@@ -241,7 +241,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 			name:      "pull_request event with missing repo",
 			eventType: "pull_request",
 			payload: map[string]interface{}{
-				"number": 123,
+				"number": float64(123),
 			},
 			expected: "",
 		},
@@ -249,14 +249,8 @@ func TestExtractPullRequestInfo(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Marshal the payload
-			payload, err := json.Marshal(tc.payload)
-			if err != nil {
-				t.Fatalf("Failed to marshal payload: %v", err)
-			}
-
-			// Call the function
-			result := extractPullRequestInfo(tc.eventType, payload)
+			// Call the function directly with map
+			result := extractPullRequestInfo(tc.eventType, tc.payload)
 
 			// Check the result
 			if result != tc.expected {
@@ -400,14 +394,8 @@ func TestIsPullRequestMerged(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Marshal the payload
-			payload, err := json.Marshal(tc.payload)
-			if err != nil {
-				t.Fatalf("Failed to marshal payload: %v", err)
-			}
-
-			// Call the function
-			result := isPullRequestMerged(tc.eventType, payload)
+			// Call the function directly
+			result := isPullRequestMerged(tc.eventType, tc.payload)
 
 			// Check the result
 			if result != tc.expected {
