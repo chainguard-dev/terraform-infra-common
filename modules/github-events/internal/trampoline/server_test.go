@@ -202,16 +202,18 @@ func TestExtractPullRequestInfo(t *testing.T) {
 	testCases := []struct {
 		name      string
 		eventType string
-		payload   map[string]interface{}
+		payload   PayloadInfo
 		expected  string
 	}{
 		{
 			name:      "pull_request event with valid data",
 			eventType: "pull_request",
-			payload: map[string]interface{}{
-				"number": float64(123),
-				"repository": map[string]interface{}{
-					"full_name": "foo/bar",
+			payload: PayloadInfo{
+				Number: 123,
+				Repository: struct {
+					FullName string `json:"full_name,omitempty"`
+				}{
+					FullName: "foo/bar",
 				},
 			},
 			expected: "foo/bar#123",
@@ -219,10 +221,12 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		{
 			name:      "not a pull_request event",
 			eventType: "push",
-			payload: map[string]interface{}{
-				"number": float64(123),
-				"repository": map[string]interface{}{
-					"full_name": "foo/bar",
+			payload: PayloadInfo{
+				Number: 123,
+				Repository: struct {
+					FullName string `json:"full_name,omitempty"`
+				}{
+					FullName: "foo/bar",
 				},
 			},
 			expected: "",
@@ -230,9 +234,11 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		{
 			name:      "pull_request event with missing number",
 			eventType: "pull_request",
-			payload: map[string]interface{}{
-				"repository": map[string]interface{}{
-					"full_name": "foo/bar",
+			payload: PayloadInfo{
+				Repository: struct {
+					FullName string `json:"full_name,omitempty"`
+				}{
+					FullName: "foo/bar",
 				},
 			},
 			expected: "",
@@ -240,8 +246,8 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		{
 			name:      "pull_request event with missing repo",
 			eventType: "pull_request",
-			payload: map[string]interface{}{
-				"number": float64(123),
+			payload: PayloadInfo{
+				Number: 123,
 			},
 			expected: "",
 		},
@@ -249,7 +255,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Call the function directly with map
+			// Call the function directly
 			result := extractPullRequestInfo(tc.eventType, tc.payload)
 
 			// Check the result
@@ -343,16 +349,18 @@ func TestIsPullRequestMerged(t *testing.T) {
 	testCases := []struct {
 		name      string
 		eventType string
-		payload   map[string]interface{}
+		payload   PayloadInfo
 		expected  bool
 	}{
 		{
 			name:      "merged pull request",
 			eventType: "pull_request",
-			payload: map[string]interface{}{
-				"action": "closed",
-				"pull_request": map[string]interface{}{
-					"merged": true,
+			payload: PayloadInfo{
+				Action: "closed",
+				PullRequest: struct {
+					Merged bool `json:"merged,omitempty"`
+				}{
+					Merged: true,
 				},
 			},
 			expected: true,
@@ -360,10 +368,12 @@ func TestIsPullRequestMerged(t *testing.T) {
 		{
 			name:      "closed but not merged pull request",
 			eventType: "pull_request",
-			payload: map[string]interface{}{
-				"action": "closed",
-				"pull_request": map[string]interface{}{
-					"merged": false,
+			payload: PayloadInfo{
+				Action: "closed",
+				PullRequest: struct {
+					Merged bool `json:"merged,omitempty"`
+				}{
+					Merged: false,
 				},
 			},
 			expected: false,
@@ -371,10 +381,12 @@ func TestIsPullRequestMerged(t *testing.T) {
 		{
 			name:      "open pull request",
 			eventType: "pull_request",
-			payload: map[string]interface{}{
-				"action": "opened",
-				"pull_request": map[string]interface{}{
-					"merged": false,
+			payload: PayloadInfo{
+				Action: "opened",
+				PullRequest: struct {
+					Merged bool `json:"merged,omitempty"`
+				}{
+					Merged: false,
 				},
 			},
 			expected: false,
@@ -382,10 +394,12 @@ func TestIsPullRequestMerged(t *testing.T) {
 		{
 			name:      "not a pull request event",
 			eventType: "push",
-			payload: map[string]interface{}{
-				"action": "closed",
-				"pull_request": map[string]interface{}{
-					"merged": true,
+			payload: PayloadInfo{
+				Action: "closed",
+				PullRequest: struct {
+					Merged bool `json:"merged,omitempty"`
+				}{
+					Merged: true,
 				},
 			},
 			expected: false,

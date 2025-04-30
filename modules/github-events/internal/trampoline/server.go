@@ -16,6 +16,22 @@ import (
 	"github.com/jonboulle/clockwork"
 )
 
+// PayloadInfo is a minimal struct for GitHub webhook payload information,
+// containing only the fields we need to process for our needs of setting cloud event headers.
+type PayloadInfo struct {
+	Action     string `json:"action,omitempty"`
+	Number     int    `json:"number,omitempty"`
+	Repository struct {
+		FullName string `json:"full_name,omitempty"`
+	} `json:"repository,omitempty"`
+	Organization struct {
+		Login string `json:"login,omitempty"`
+	} `json:"organization,omitempty"`
+	PullRequest struct {
+		Merged bool `json:"merged,omitempty"`
+	} `json:"pull_request,omitempty"`
+}
+
 type Server struct {
 	client  cloudevents.Client
 	secrets [][]byte
@@ -79,21 +95,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Unmarshal payload to extract necessary information
-	var parsedPayload map[string]interface{}
-	if err := json.Unmarshal(payload, &parsedPayload); err != nil {
+	var info PayloadInfo
+	if err := json.Unmarshal(payload, &info); err != nil {
 		log.Warnf("failed to unmarshal payload, cloud event headers will not be set: %v", err)
-	}
-
-	// Extract action from the payload
-	action, ok := parsedPayload["action"].(string)
-	if !ok {
-		log.Warnf("failed to find action; action will be unset")
 	}
 
 	// If requestedOnlyWebhook is set, only listen to events from the specified webhook if the event is a requested event.
 	var requested bool
 	if t == "check_run" || t == "check_suite" {
-		requested = action == "requested" || action == "rerequested" || action == "requested_action"
+		requested = info.Action == "requested" || info.Action == "rerequested" || info.Action == "requested_action"
 	}
 	for _, id := range s.requestedOnlyWebhook {
 		if !requested && hookID == id {
@@ -107,22 +117,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t = "dev.chainguard.github." + t
 
 	// Extract repository and organization information
-	repoFullName := ""
-	orgLogin := ""
+	repoFullName := info.Repository.FullName
+	orgLogin := info.Organization.Login
 
-	if repo, ok := parsedPayload["repository"].(map[string]interface{}); ok {
-		if fullName, ok := repo["full_name"].(string); ok {
-			repoFullName = fullName
-		}
-	}
-
-	if org, ok := parsedPayload["organization"].(map[string]interface{}); ok {
-		if login, ok := org["login"].(string); ok {
-			orgLogin = login
-		}
-	}
-
-	log = log.With("action", action, "repo", repoFullName)
+	log = log.With("action", info.Action, "repo", repoFullName)
 
 	// Filter webhook at org level.
 	if len(s.orgFilter) > 0 {
@@ -147,7 +145,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	event.SetType(t)
 	event.SetSource(r.Host)
 	event.SetSubject(repoFullName)
-	event.SetExtension("action", action)
+	event.SetExtension("action", info.Action)
 	// Needs to be an extension to be a filterable attribute.
 	// See https://github.com/chainguard-dev/terraform-infra-common/blob/main/pkg/pubsub/cloudevent.go
 	if hookID != "" {
@@ -156,12 +154,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add pullrequest extension for pull request events
-	if prInfo := extractPullRequestInfo(github.WebHookType(r), parsedPayload); prInfo != "" {
+	if prInfo := extractPullRequestInfo(github.WebHookType(r), info); prInfo != "" {
 		event.SetExtension("pullrequest", prInfo)
 	}
 
 	// Add merged extension for merged pull requests
-	if merged := isPullRequestMerged(github.WebHookType(r), parsedPayload); merged {
+	if merged := isPullRequestMerged(github.WebHookType(r), info); merged {
 		event.SetExtension("merged", true)
 	}
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
@@ -209,57 +207,32 @@ type eventHeaders struct {
 	InstallationTargetID   string `json:"installation_target_id,omitempty"`
 }
 
-// extractPullRequestInfo extracts pull request information from already parsed GitHub payload
+// extractPullRequestInfo extracts pull request information from GitHub payload
 // Returns a formatted string in the format "org/repo#number" or empty string if not a PR event
-func extractPullRequestInfo(eventType string, parsedPayload map[string]interface{}) string {
+func extractPullRequestInfo(eventType string, info PayloadInfo) string {
 	// Only process pull_request events
 	if eventType != "pull_request" {
 		return ""
 	}
 
-	// Extract repository full name
-	repoFullName := ""
-	if repo, ok := parsedPayload["repository"].(map[string]interface{}); ok {
-		if fullName, ok := repo["full_name"].(string); ok {
-			repoFullName = fullName
-		}
-	}
-
-	// Extract PR number
-	prNum, _ := parsedPayload["number"].(float64)
-
-	if prNum > 0 && repoFullName != "" {
-		return fmt.Sprintf("%s#%d", repoFullName, int(prNum))
+	// Extract information from our typed struct
+	if info.Number > 0 && info.Repository.FullName != "" {
+		return fmt.Sprintf("%s#%d", info.Repository.FullName, info.Number)
 	}
 
 	return ""
 }
 
-// isPullRequestMerged checks if a pull request event is for a merged PR using parsed payload
+// isPullRequestMerged checks if a pull request event is for a merged PR
 // Returns true if the event is a pull_request with "closed" action and merged=true
-func isPullRequestMerged(eventType string, parsedPayload map[string]interface{}) bool {
+func isPullRequestMerged(eventType string, info PayloadInfo) bool {
 	// Only process pull_request events
 	if eventType != "pull_request" {
 		return false
 	}
 
-	// Extract action
-	action, ok := parsedPayload["action"].(string)
-	if !ok {
-		// If action is missing, it can't be a merged PR
-		return false
-	}
-
-	// Extract merged state
-	merged := false
-	if pr, ok := parsedPayload["pull_request"].(map[string]interface{}); ok {
-		if mergedValue, ok := pr["merged"].(bool); ok {
-			merged = mergedValue
-		}
-	}
-
 	// A merged PR will have action="closed" and merged=true
-	return action == "closed" && merged
+	return info.Action == "closed" && info.PullRequest.Merged
 }
 
 // ValidatePayload validates the payload of a webhook request for a given set of secrets.
