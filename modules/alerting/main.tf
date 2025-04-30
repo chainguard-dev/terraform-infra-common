@@ -200,7 +200,7 @@ locals {
   panic_filter = <<EOF
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 severity<=ERROR
-textPayload=~"panic: .*|runtime/panic"
+textPayload=~"panic: .*" OR textPayload=~"runtime/panic"
 ${var.panic_filter}
 ${local.squad_log_filter}
 EOF
