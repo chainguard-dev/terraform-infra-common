@@ -1178,6 +1178,8 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
 }
 
 resource "google_logging_metric" "violation_metric" {
+  count = var.global_only_alerts ? 1 : 0
+
   name   = "violation_metric"
   filter = <<EOT
     logName="projects/${var.project_id}/logs/monitoring.googleapis.com%2FViolationOpenEventv1"
@@ -1199,6 +1201,6 @@ resource "google_logging_metric" "violation_metric" {
 
   label_extractors = {
     "name" = "EXTRACT(labels.policy_display_name)"
-    "team" = "REGEXP_EXTRACT(labels.verbose_message, \".*team=([^ ,}]+)"
+    "team" = "REGEXP_EXTRACT(labels.verbose_message, \".*team=([^ ,}]+)\")"
   }
 }
