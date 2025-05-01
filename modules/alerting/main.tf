@@ -1176,3 +1176,29 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
   enabled = "true"
   project = var.project_id
 }
+
+resource "google_logging_metric" "violation_metric" {
+  name   = "violation_metric"
+  filter = <<EOT
+    logName="projects/${var.project_id}/logs/monitoring.googleapis.com%2FViolationOpenEventv1"
+  EOT
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "name"
+      value_type  = "STRING"
+      description = "name of policy."
+    }
+    labels {
+      key         = "team"
+      value_type  = "STRING"
+      description = "team associated with policy"
+    }
+  }
+
+  label_extractors = {
+    "name" = "EXTRACT(labels.policy_display_name)"
+    "team" = "REGEXP_EXTRACT(labels.verbose_message, \".*team=([^ ,}]+)"
+  }
+}
