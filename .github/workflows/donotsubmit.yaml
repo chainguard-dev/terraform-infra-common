@@ -7,11 +7,15 @@ on:
   pull_request:
     branches: [ 'main', 'release-*' ]
 
+permissions: {}
+
 jobs:
 
   donotsubmit:
     name: Do Not Submit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Harden Runner
