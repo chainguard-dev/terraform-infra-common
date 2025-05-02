@@ -305,7 +305,7 @@ resource "google_monitoring_alert_policy" "success" {
         per_series_aligner   = "ALIGN_MAX"
       }
 
-      duration = "${ceil(var.success_alert_alignment_period_seconds / 4)}s"
+      duration = "${var.success_alert_alignment_period_seconds}s"
       trigger {
         count = "1"
       }
