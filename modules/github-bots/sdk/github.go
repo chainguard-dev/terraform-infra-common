@@ -573,12 +573,20 @@ func validateResponse(ctx context.Context, err error, resp *github.Response, act
 	return nil
 }
 
+// CloneOpts contains options for cloning a repository.
+type CloneOpts struct {
+	// Shallow indicates whether to perform a shallow clone (depth 1).
+	Shallow bool
+}
+
 // CloneRepo clones the repository into a destination directory, and checks out a ref.
 //
 // ref should be "refs/heads/<branch>" or "refs/tags/<tag>" or "refs/pull/<pr>/merge" or a commit SHA.
+// destDir is the directory to clone the repository into. It will be created if it doesn't exist.
+// if opts is nil, a full clone will be performed.
 //
 // It returns the git.Repository object for the cloned repository.
-func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.Repository, error) {
+func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string, opts *CloneOpts) (*git.Repository, error) {
 	log := clog.FromContext(ctx)
 
 	if err := os.MkdirAll(destDir, 0755); err != nil {
@@ -604,10 +612,14 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string) (*git.
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone repository: %w", err)
 	}
+	depth := 0
+	if opts != nil && opts.Shallow {
+		depth = 1
+	}
 	if err := r.FetchContext(ctx, &git.FetchOptions{
 		RemoteURL: repo,
 		RefSpecs:  []config.RefSpec{config.RefSpec(fmt.Sprintf("+%s:%s", ref, ref))},
-		Depth:     0,
+		Depth:     depth,
 		Tags:      git.NoTags,
 		Auth:      auth,
 	}); errors.Is(err, git.NoErrAlreadyUpToDate) {
