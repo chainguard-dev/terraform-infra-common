@@ -34,12 +34,13 @@ jobs:
           scope: ${{ github.repository }}
           identity: digestabot
 
+      - name: update docs
+        run: ./hack/update-docs.sh 
+
       - uses: chainguard-dev/digestabot@43222237fd8a07dc41a06ca13e931c95ce2cedac # v1.2.2
         with:
           token: ${{ steps.octo-sts.outputs.token }}
           create-pr: true
-
-      - run: echo "PR number ${{ steps.digest-bot.outputs.pull_request_number }}"
 
       - name: Enable auto-merge
         if: ${{ steps.digest-bot.outputs.pull_request_number != '' }}
