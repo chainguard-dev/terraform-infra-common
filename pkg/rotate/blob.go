@@ -25,6 +25,14 @@ import (
 	_ "gocloud.dev/blob/gcsblob"
 )
 
+const (
+	// MaxUploadAttempt is the maximum number of attempts to upload a file
+	MaxUploadAttempt = 3
+
+	// RetryBackoffDuration is the duration to wait before retrying to upload a file
+	RetryBackoffDuration = 1 * time.Second
+)
+
 type Uploader interface {
 	Run(ctx context.Context) error
 }
@@ -111,10 +119,19 @@ func (u *uploader) Run(ctx context.Context) error {
 				processed++
 			}
 
-			if err := writer.Close(); err != nil {
-				return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
+			// retry this 3 times
+			for i := 0; i < MaxUploadAttempt; i++ {
+				if err := writer.Close(); err == nil {
+					break
+				}
+				if i == MaxUploadAttempt-1 {
+					// last attempt, no more retry
+					return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
+				}
+				clog.WarnContextf(ctx, "retrying closing blog file: %s %v", fileName, err)
+				// wait before retrying
+				time.Sleep(RetryBackoffDuration)
 			}
-
 			if deleteErr != nil {
 				return deleteErr
 			}
