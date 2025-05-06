@@ -38,6 +38,7 @@ jobs:
         run: ./hack/update-docs.sh 
 
       - uses: chainguard-dev/digestabot@43222237fd8a07dc41a06ca13e931c95ce2cedac # v1.2.2
+        id: digest-bot
         with:
           token: ${{ steps.octo-sts.outputs.token }}
           create-pr: true
