@@ -364,11 +364,13 @@ resource "google_monitoring_alert_policy" "fatal" {
 }
 
 locals {
+  # ignore exit 0 and 130-149 (used by build job failures)
   exit_filter = <<EOF
-protoPayload.methodName="/Jobs.RunJob"
-protoPayload.@type="type.googleapis.com/google.cloud.audit.AuditLog"
--protoPayload.status.code="0"
-${local.squad_proto_log_filter}
+resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+textPayload:"Container called exit("
+-textPayload="Container called exit(0)."
+-textPayload=~"Container called exit\(1[3-4]\d\)."
+${local.squad_log_filter}
 ${var.exitcode_filter}
 EOF
 }
