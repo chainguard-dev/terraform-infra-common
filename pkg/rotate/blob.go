@@ -127,11 +127,10 @@ func (u *uploader) Run(ctx context.Context) error {
 				if i == MaxUploadAttempt-1 {
 					// last attempt, no more retry
 					return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
-				} else {
-					clog.WarnContextf(ctx, "retrying closing blog file: %s %v", fileName, err)
-					// wait before retrying
-					time.Sleep(RetryBackoffDuration)
 				}
+				clog.WarnContextf(ctx, "retrying closing blog file: %s %v", fileName, err)
+				// wait before retrying
+				time.Sleep(RetryBackoffDuration)
 			}
 			if deleteErr != nil {
 				return deleteErr
