@@ -21,4 +21,6 @@ func TestWorkQueue(t *testing.T) {
 	conformance.TestSemantics(t, NewWorkQueue)
 
 	conformance.TestConcurrency(t, NewWorkQueue)
+
+	conformance.TestMaxRetry(t, NewWorkQueue)
 }

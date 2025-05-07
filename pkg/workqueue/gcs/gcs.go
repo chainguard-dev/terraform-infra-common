@@ -57,14 +57,22 @@ var RefreshInterval = 5 * time.Minute
 const (
 	queuedPrefix          = "queued/"
 	inProgressPrefix      = "in-progress/"
+	deadLetterPrefix      = "dead-letter/"
 	expirationMetadataKey = "lease-expiration"
 	attemptsMetadataKey   = "attempts"
 	priorityMetadataKey   = "priority"
 	notBeforeMetadataKey  = "not-before"
+	failedTimeMetadataKey = "failed-time"
 )
 
 var noPriority = fmt.Sprintf("%08d", 0)
 var noNotBefore = time.Time{}.UTC().Format(time.RFC3339)
+
+// Add a metric to track dead-lettered keys
+var mDeadLetteredKeys = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Name: "workqueue_dead_lettered_keys",
+	Help: "The number of keys that have been moved to the dead letter queue",
+}, []string{"service_name", "revision_name"})
 
 // Queue implements workqueue.Interface.
 func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) error {
@@ -290,6 +298,22 @@ func (o *inProgressKey) Priority() int64 {
 	return o.priority
 }
 
+// GetAttempts implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) GetAttempts() int {
+	o.rw.RLock()
+	defer o.rw.RUnlock()
+	
+	if o.attrs == nil || o.attrs.Metadata == nil {
+		return 0
+	}
+	
+	attempts, err := strconv.Atoi(o.attrs.Metadata[attemptsMetadataKey])
+	if err != nil {
+		return 0
+	}
+	return attempts
+}
+
 // Requeue implements workqueue.InProgressKey.
 func (o *inProgressKey) Requeue(ctx context.Context) error {
 	if o.ownerCancel != nil {
@@ -373,6 +397,54 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 		"revision_name": env.KnativeRevisionName,
 	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
 
+	return o.client.Object(o.attrs.Name).Delete(ctx)
+}
+
+// Fail implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) Fail(ctx context.Context) error {
+	if o.ownerCancel != nil {
+		o.ownerCancel()
+	}
+	o.rw.RLock()
+	defer o.rw.RUnlock()
+
+	key := strings.TrimPrefix(o.attrs.Name, inProgressPrefix)
+	now := time.Now().UTC()
+	timestamp := now.Format("20060102-150405.000")
+	deadLetterKey := fmt.Sprintf("%s%s-%s", deadLetterPrefix, key, timestamp)
+	
+	clog.InfoContextf(ctx, "Moving key %q to dead letter queue as %q", key, deadLetterKey)
+
+	// Copy the in-progress task to the dead letter queue with a timestamp appended
+	copier := o.client.Object(deadLetterKey).If(storage.Conditions{
+		DoesNotExist: true,
+	}).CopierFrom(o.client.Object(o.attrs.Name))
+
+	// Preserve metadata
+	copier.Metadata = o.attrs.Metadata
+	if copier.Metadata == nil {
+		copier.Metadata = make(map[string]string)
+	}
+	
+	// Clear the lease expiration when copying the object
+	delete(copier.Metadata, expirationMetadataKey)
+	
+	// Add metadata about when the key was dead-lettered
+	copier.Metadata[failedTimeMetadataKey] = now.Format(time.RFC3339)
+
+	// Create the dead letter entry
+	_, err := copier.Run(ctx)
+	if err != nil {
+		return fmt.Errorf("Failed to create dead letter entry: %w", err)
+	}
+
+	// Increment the metric for dead-lettered keys
+	mDeadLetteredKeys.With(prometheus.Labels{
+		"service_name":  env.KnativeServiceName,
+		"revision_name": env.KnativeRevisionName,
+	}).Inc()
+
+	// Delete the in-progress task
 	return o.client.Object(o.attrs.Name).Delete(ctx)
 }
 

@@ -42,4 +42,8 @@ func TestWorkQueue(t *testing.T) {
 	conformance.TestDurability(t, func(u int) workqueue.Interface {
 		return NewWorkQueue(client.Bucket(bucket), u)
 	})
+	
+	conformance.TestMaxRetry(t, func(u int) workqueue.Interface {
+		return NewWorkQueue(client.Bucket(bucket), u)
+	})
 }
