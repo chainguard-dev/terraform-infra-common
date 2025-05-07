@@ -449,7 +449,7 @@ resource "google_monitoring_alert_policy" "job-exceeding-retries" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run Job $${log.extracted_label.job_name} exceeding retries with exit code $${log.extracted_label.exit_code}"
+    subject = "$${log.extracted_label.team}: Cloud Run Job $${log.extracted_label.job_name} exceeding retries"
 
     content = "Cloud Run Job $${log.extracted_label.job_name} has reached the maximum number of retries."
     links {
@@ -465,10 +465,9 @@ resource "google_monitoring_alert_policy" "job-exceeding-retries" {
       filter = local.job_exceeding_retries_filter
 
       label_extractors = {
-        "job_name"  = "EXTRACT(protoPayload.response.metadata.name)"
-        "location"  = "EXTRACT(resource.labels.location)"
-        "team"      = "EXTRACT(protoPayload.response.metadata.labels.squad)"
-        "exit_code" = "EXTRACT(protoPayload.status.code)"
+        "job_name" = "EXTRACT(protoPayload.response.metadata.name)"
+        "location" = "EXTRACT(resource.labels.location)"
+        "team"     = "EXTRACT(protoPayload.response.metadata.labels.squad)"
       }
     }
   }
