@@ -62,6 +62,12 @@ variable "exitcode_filter" {
   default     = ""
 }
 
+variable "job_exceeding_max_retry_filter" {
+  description = "additional filter to apply to job exceeding max retry alert policy"
+  type        = string
+  default     = ""
+}
+
 variable "failure_rate_ratio_threshold" {
   description = "ratio threshold to alert for cloud run server failure rate."
   type        = number

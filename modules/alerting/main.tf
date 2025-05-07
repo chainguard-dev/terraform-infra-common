@@ -373,6 +373,15 @@ textPayload:"Container called exit("
 ${local.squad_log_filter}
 ${var.exitcode_filter}
 EOF
+
+  # Alert for Cloud Run Jobs that exceed retries
+  job_exceeding_retries_filter = <<EOF
+protoPayload.methodName="/Jobs.RunJob"
+protoPayload.@type="type.googleapis.com/google.cloud.audit.AuditLog"
+-protoPayload.status.code="0"
+${local.squad_proto_log_filter}
+${var.job_exceeding_max_retry_filter}
+EOF
 }
 
 resource "google_monitoring_alert_policy" "nonzero-exitcode" {
@@ -413,6 +422,53 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(labels.squad)"
         "exit_code"     = "EXTRACT(protoPayload.status.code)"
+      }
+    }
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "job-exceeding-retries" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Cloud Run Job exceeding retries ${local.name}"
+  combiner     = "OR"
+
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run Job $${log.extracted_label.job_name} exceeding retries with exit code $${log.extracted_label.exit_code}"
+
+    content = "Cloud Run Job $${log.extracted_label.job_name} has reached the maximum number of retries."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.job_exceeding_retries_filter)}&project=${var.project_id}"
+    }
+  }
+
+  conditions {
+    display_name = "Cloud Run Job exceeding retries ${local.name}"
+
+    condition_matched_log {
+      filter = local.job_exceeding_retries_filter
+
+      label_extractors = {
+        "job_name"  = "EXTRACT(protoPayload.response.metadata.name)"
+        "location"  = "EXTRACT(resource.labels.location)"
+        "team"      = "EXTRACT(protoPayload.response.metadata.labels.squad)"
+        "exit_code" = "EXTRACT(protoPayload.status.code)"
       }
     }
   }
