@@ -366,16 +366,16 @@ resource "google_monitoring_alert_policy" "fatal" {
 locals {
   # ignore exit 0 and 130-149 (used by build job failures)
   exit_filter = <<EOF
-resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
+resource.type="cloud_run_revision"
 textPayload:"Container called exit("
 -textPayload="Container called exit(0)."
--textPayload=~"Container called exit\(1[3-4]\d\)."
 ${local.squad_log_filter}
 ${var.exitcode_filter}
 EOF
 }
 
-resource "google_monitoring_alert_policy" "nonzero-exitcode" {
+# Alert policy for non-zero exit code for cloud run jobs and services
+resource "google_monitoring_alert_policy" "nonzero-exitcode-svc" {
   count = var.global_only_alerts ? 0 : 1
 
   # In the absence of data, incident will auto-close after an hour
@@ -387,14 +387,14 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
     }
   }
 
-  display_name = "Non-zero exit code log entry ${local.name}"
+  display_name = "Non-zero exit code cloud run service log entry ${local.name}"
   combiner     = "OR"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} exitcode $${log.extracted_label.exit_code}"
+    subject = "$${log.extracted_label.team}: Cloud Run Service $${metric_or_resource.labels.service_name} exitcode $${log.extracted_label.exit_code}"
 
-    content = "$${metric_or_resource.labels.service_name}$${metric_or_resource.labels.job_name} has logged a non-zero exitcode."
+    content = "$${metric_or_resource.labels.service_name} service has logged a non-zero exitcode."
     links {
       display_name = "Logs Explorer"
       url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.exit_filter)}&project=${var.project_id}"
@@ -402,16 +402,74 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode" {
   }
 
   conditions {
-    display_name = "Non-zero exit code log entry ${local.name}"
+    display_name = "Non-zero exit code cloud run service log entry ${local.name}"
 
     condition_matched_log {
       filter = local.exit_filter
 
       label_extractors = {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
-        "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(labels.squad)"
+        "exit_code"     = "EXTRACT(protoPayload.status.code)"
+      }
+    }
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+
+locals {
+  job_exitcode_filter = <<EOF
+resource.type="cloud_run_job"
+log_name="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fsystem_event"
+protoPayload.response.spec.template.spec.maxRetries!="0"
+-protoPayload.status.code="0"
+${local.squad_proto_log_filter}
+${var.job_exitcode_filter}
+EOF
+}
+
+resource "google_monitoring_alert_policy" "nonzero-exitcode-job" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+
+    notification_rate_limit {
+      period = "3600s" // re-alert hourly if condition still valid.
+    }
+  }
+
+  display_name = "Non-zero exit code for cloud run job log entry ${local.name}"
+  combiner     = "OR"
+
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run Job $${metric_or_resource.labels.job_name} has failed"
+
+    content = "$${metric_or_resource.labels.job_name} job has failed."
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.job_exitcode_filter)}&project=${var.project_id}"
+    }
+  }
+
+  conditions {
+    display_name = "Non-zero exit code cloud run job with log entry ${local.name}"
+
+    condition_matched_log {
+      filter = local.job_exitcode_filter
+
+      label_extractors = {
+        "revision_name" = "EXTRACT(labels.\"run.googleapis.com/execution_name\")"
+        "job_name"      = "EXTRACT(resource.labels.job_name)"
+        "location"      = "EXTRACT(resource.labels.location)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.team)"
         "exit_code"     = "EXTRACT(protoPayload.status.code)"
       }
     }
