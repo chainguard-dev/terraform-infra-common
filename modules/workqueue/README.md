@@ -21,6 +21,10 @@ module "workqueue" {
   // The number of keys to process concurrently.
   concurrent-work = 10
 
+  // Maximum number of retry attempts before a task is moved to the dead letter queue
+  // Default is 0 (unlimited retries)
+  max-retry = 5
+
   // The name of a service that implements the workqueue GRPC service above.
   reconciler-service = {
     name = "foo"
@@ -72,6 +76,30 @@ pointing at `WORKQUEUE_SERVICE` with Cloud Run authentication (see the
 	}); err != nil {
 		log.Panicf("failed to process key: %v", err)
 	}
+```
+
+## Maximum Retry and Dead Letter Queue
+
+The workqueue system supports a maximum retry limit for tasks through the `max-retry` variable. When a task fails and gets requeued, the system tracks the number of attempts. Once the maximum retry limit is reached, the task is moved to a dead letter queue instead of being requeued.
+
+- Setting `max-retry = 0` (the default) means unlimited retries
+- Setting `max-retry = 5` will move a task to the dead letter queue after 5 failed attempts
+
+Tasks in the dead letter queue are stored with their original metadata plus:
+- A timestamp in the key name to prevent collisions
+- A `failed-time` metadata field indicating when the task was moved to the dead letter queue
+
+Dead-lettered tasks can be inspected using standard GCS tools. They are stored in the workqueue bucket under the `dead-letter/` prefix.
+
+```hcl
+module "workqueue" {
+  source = "chainguard-dev/common/infra//modules/workqueue"
+
+  # ... other configuration ...
+
+  // Maximum retry limit (5 attempts before moving to dead letter queue)
+  max-retry = 5
+}
 ```
 
 
@@ -138,6 +166,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_concurrent-work"></a> [concurrent-work](#input\_concurrent-work) | The amount of concurrent work to dispatch at a given time. | `number` | n/a | yes |
+| <a name="input_max-retry"></a> [max-retry](#input\_max-retry) | The maximum number of retry attempts before a task is moved to the dead letter queue. Default of 0 means unlimited retries. | `number` | `0` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |

@@ -83,13 +83,20 @@ type ObservedInProgressKey interface {
 
 // OwnedInProgressKey is an in-progress key where we have initiated the work,
 // and own until it completes either successfully (Complete),
-// or unsuccessfully (Requeue).
+// or unsuccessfully (Requeue or Fail).
 type OwnedInProgressKey interface {
 	InProgressKey
 
 	// Complete marks the key as successfully completed, and removes it from
 	// the in-progress key set.
 	Complete(context.Context) error
+
+	// Fail permanently removes this key from the queue, indicating it has
+	// failed after exceeding the maximum retry attempts.
+	Fail(context.Context) error
+
+	// GetAttempts returns the current attempt count for the key.
+	GetAttempts() int
 
 	// Context is the context of the process heartbeating the key.
 	Context() context.Context

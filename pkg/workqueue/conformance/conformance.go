@@ -666,3 +666,95 @@ func drain(wq workqueue.Interface) error {
 		}
 	}
 }
+
+// TestMaxRetry tests the max retry functionality with Fail method
+func TestMaxRetry(t *testing.T, ctor func(int) workqueue.Interface) {
+	ct := &conformanceTester{
+		t:           t,
+		ctor:        ctor,
+		concurrency: 5,
+	}
+
+	// Use this, which the implementations can adjust to a suitable delay.
+	delay := workqueue.BackoffPeriod
+
+	// Cap the maximum backoff to 2x the delay, so that tests run in a
+	// reasonable amount of time.
+	workqueue.MaximumBackoffPeriod = 2 * delay
+
+	ct.scenario("max retry limit with fail", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Queue a key with a priority
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			Priority: 1000,
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// The queue should have the key.
+		_, qd := checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Start processing the key
+		owned, err := qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// The key should now be in progress
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Get the initial attempt count, should be 1
+		attempts := owned.GetAttempts()
+		if attempts != 1 {
+			t.Fatalf("Expected attempt count 1, got %d", attempts)
+		}
+
+		// Requeue the key to increment the retry count
+		if err := owned.Requeue(ctx); err != nil {
+			t.Fatalf("Requeue failed: %v", err)
+		}
+
+		// The key shouldn't appear until the backoff period has passed.
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the backoff period.
+		time.Sleep(workqueue.BackoffPeriod)
+
+		// Now the key should show as queued.
+		_, qd = checkQueue(t, wq, ExpectedState{
+			Queued: []string{"foo"},
+		})
+
+		// Start processing the key again
+		owned, err = qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// The key should now be in progress
+		_, _ = checkQueue(t, wq, ExpectedState{
+			WorkInProgress: []string{"foo"},
+		})
+
+		// Get the attempt count, should now be 2
+		attempts = owned.GetAttempts()
+		if attempts != 2 {
+			t.Fatalf("Expected attempt count 2, got %d", attempts)
+		}
+
+		// Now fail the key instead of requeuing it
+		if err := owned.Fail(ctx); err != nil {
+			t.Fatalf("Fail failed: %v", err)
+		}
+
+		// After failing the task, it should be removed from both queued and in-progress
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Make sure it doesn't show up again even after waiting
+		time.Sleep(2 * workqueue.BackoffPeriod)
+		_, _ = checkQueue(t, wq, ExpectedState{})
+	})
+}
