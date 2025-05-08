@@ -302,11 +302,11 @@ func (o *inProgressKey) Priority() int64 {
 func (o *inProgressKey) GetAttempts() int {
 	o.rw.RLock()
 	defer o.rw.RUnlock()
-	
+
 	if o.attrs == nil || o.attrs.Metadata == nil {
 		return 0
 	}
-	
+
 	attempts, err := strconv.Atoi(o.attrs.Metadata[attemptsMetadataKey])
 	if err != nil {
 		return 0
@@ -412,7 +412,7 @@ func (o *inProgressKey) Fail(ctx context.Context) error {
 	now := time.Now().UTC()
 	timestamp := now.Format("20060102-150405.000")
 	deadLetterKey := fmt.Sprintf("%s%s-%s", deadLetterPrefix, key, timestamp)
-	
+
 	clog.InfoContextf(ctx, "Moving key %q to dead letter queue as %q", key, deadLetterKey)
 
 	// Copy the in-progress task to the dead letter queue with a timestamp appended
@@ -425,17 +425,17 @@ func (o *inProgressKey) Fail(ctx context.Context) error {
 	if copier.Metadata == nil {
 		copier.Metadata = make(map[string]string)
 	}
-	
+
 	// Clear the lease expiration when copying the object
 	delete(copier.Metadata, expirationMetadataKey)
-	
+
 	// Add metadata about when the key was dead-lettered
 	copier.Metadata[failedTimeMetadataKey] = now.Format(time.RFC3339)
 
 	// Create the dead letter entry
 	_, err := copier.Run(ctx)
 	if err != nil {
-		return fmt.Errorf("Failed to create dead letter entry: %w", err)
+		return fmt.Errorf("failed to create dead letter entry: %w", err)
 	}
 
 	// Increment the metric for dead-lettered keys
