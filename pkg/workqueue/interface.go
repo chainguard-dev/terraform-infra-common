@@ -91,9 +91,9 @@ type OwnedInProgressKey interface {
 	// the in-progress key set.
 	Complete(context.Context) error
 
-	// Fail permanently removes this key from the queue, indicating it has
+	// Deadletter permanently removes this key from the queue, indicating it has
 	// failed after exceeding the maximum retry attempts.
-	Fail(context.Context) error
+	Deadletter(context.Context) error
 
 	// GetAttempts returns the current attempt count for the key.
 	GetAttempts() int

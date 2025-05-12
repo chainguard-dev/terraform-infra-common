@@ -387,6 +387,12 @@ func (o *inProgressKey) IsOrphaned() bool {
 	return time.Now().UTC().After(expiry)
 }
 
+// deadLetterKey returns the dead letter key for this in-progress key
+func (o *inProgressKey) deadLetterKey() string {
+	key := strings.TrimPrefix(o.attrs.Name, inProgressPrefix)
+	return fmt.Sprintf("%s%s", deadLetterPrefix, key)
+}
+
 // Complete implements workqueue.OwnedInProgressKey.
 func (o *inProgressKey) Complete(ctx context.Context) error {
 	o.ownerCancel()
@@ -398,11 +404,19 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 		"revision_name": env.KnativeRevisionName,
 	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
 
+	// Best-effort delete of the dead-letter object, if it exists.
+	deadLetterKey := o.deadLetterKey()
+	if err := o.client.Object(deadLetterKey).Delete(ctx); err != nil {
+		if !errors.Is(err, storage.ErrObjectNotExist) {
+			clog.WarnContextf(ctx, "Failed to delete dead-letter object %q: %v", deadLetterKey, err)
+		}
+	}
+
 	return o.client.Object(o.attrs.Name).Delete(ctx)
 }
 
-// Fail implements workqueue.OwnedInProgressKey.
-func (o *inProgressKey) Fail(ctx context.Context) error {
+// Deadletter implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) Deadletter(ctx context.Context) error {
 	if o.ownerCancel != nil {
 		o.ownerCancel()
 	}
@@ -410,16 +424,12 @@ func (o *inProgressKey) Fail(ctx context.Context) error {
 	defer o.rw.RUnlock()
 
 	key := strings.TrimPrefix(o.attrs.Name, inProgressPrefix)
-	now := time.Now().UTC()
-	timestamp := now.Format("20060102-150405.000")
-	deadLetterKey := fmt.Sprintf("%s%s-%s", deadLetterPrefix, key, timestamp)
+	deadLetterKey := o.deadLetterKey()
 
 	clog.InfoContextf(ctx, "Moving key %q to dead letter queue as %q", key, deadLetterKey)
 
-	// Copy the in-progress task to the dead letter queue with a timestamp appended
-	copier := o.client.Object(deadLetterKey).If(storage.Conditions{
-		DoesNotExist: true,
-	}).CopierFrom(o.client.Object(o.attrs.Name))
+	// Copy the in-progress task to the dead letter queue
+	copier := o.client.Object(deadLetterKey).CopierFrom(o.client.Object(o.attrs.Name))
 
 	// Preserve metadata
 	copier.Metadata = o.attrs.Metadata
@@ -431,7 +441,7 @@ func (o *inProgressKey) Fail(ctx context.Context) error {
 	delete(copier.Metadata, expirationMetadataKey)
 
 	// Add metadata about when the key was dead-lettered
-	copier.Metadata[failedTimeMetadataKey] = now.Format(time.RFC3339)
+	copier.Metadata[failedTimeMetadataKey] = time.Now().UTC().Format(time.RFC3339)
 
 	// Create the dead letter entry
 	_, err := copier.Run(ctx)

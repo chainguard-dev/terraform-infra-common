@@ -106,12 +106,12 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 				clog.WarnContextf(ctx, "Failed callback for key %q: %v", oip.Name(), err)
 				attempts := oip.GetAttempts()
 
-				// If maxRetry is configured and we've reached or exceeded it, use Fail() instead of Requeue()
+				// If maxRetry is configured and we've reached or exceeded it, use Deadletter() instead of Requeue()
 				if maxRetry > 0 && attempts >= maxRetry {
 					clog.InfoContextf(ctx, "Key %q has reached max retry limit (%d/%d), failing permanently",
 						oip.Name(), attempts, maxRetry)
 
-					if err := oip.Fail(ctx); err != nil {
+					if err := oip.Deadletter(ctx); err != nil {
 						return fmt.Errorf("fail(after reaching max retries) = %w", err)
 					}
 				} else {

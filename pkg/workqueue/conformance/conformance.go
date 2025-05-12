@@ -746,7 +746,7 @@ func TestMaxRetry(t *testing.T, ctor func(int) workqueue.Interface) {
 		}
 
 		// Now fail the key instead of requeuing it
-		if err := owned.Fail(ctx); err != nil {
+		if err := owned.Deadletter(ctx); err != nil {
 			t.Fatalf("Fail failed: %v", err)
 		}
 

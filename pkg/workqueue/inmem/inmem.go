@@ -195,8 +195,8 @@ func (o *inProgressKey) GetAttempts() int {
 	return o.attempts
 }
 
-// Fail implements workqueue.OwnedInProgressKey.
-func (o *inProgressKey) Fail(_ context.Context) error {
+// Deadletter implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) Deadletter(_ context.Context) error {
 	if o.ownerCancel != nil {
 		o.ownerCancel()
 	}
