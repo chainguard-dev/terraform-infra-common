@@ -309,6 +309,7 @@ func (o *inProgressKey) GetAttempts() int {
 
 	attempts, err := strconv.Atoi(o.attrs.Metadata[attemptsMetadataKey])
 	if err != nil {
+		clog.WarnContextf(o.ownerCtx, "Malformed attempts on %s: %v", o.Name(), err)
 		return 0
 	}
 	return attempts
