@@ -68,12 +68,6 @@ const (
 var noPriority = fmt.Sprintf("%08d", 0)
 var noNotBefore = time.Time{}.UTC().Format(time.RFC3339)
 
-// Add a metric to track dead-lettered keys
-var mDeadLetteredKeys = prometheus.NewCounterVec(prometheus.CounterOpts{
-	Name: "workqueue_dead_lettered_keys",
-	Help: "The number of keys that have been moved to the dead letter queue",
-}, []string{"service_name", "revision_name"})
-
 // Queue implements workqueue.Interface.
 func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) error {
 	writer := w.client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).If(storage.Conditions{
@@ -185,7 +179,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
 	qd := make([]*queuedKey, 0, w.limit+1)
 
-	queued, notbefore := 0, 0
+	queued, notbefore, deadlettered := 0, 0, 0
 	maxAttempts := 0 // Track the maximum number of attempts
 	for {
 		objAttrs, err := iter.Next()
@@ -249,6 +243,10 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				qd = qd[:w.limit]
 			}
 			queued++
+
+		case strings.HasPrefix(objAttrs.Name, deadLetterPrefix):
+			// Count the dead-lettered keys
+			deadlettered++
 		}
 	}
 
@@ -265,6 +263,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	mInProgressKeys.With(labels).Set(float64(len(wip)))
 	mQueuedKeys.With(labels).Set(float64(queued))
 	mNotBeforeKeys.With(labels).Set(float64(notbefore))
+	mDeadLetteredKeys.With(labels).Set(float64(deadlettered))
 	// Set the max attempts metric
 	mMaxAttempts.With(labels).Set(float64(maxAttempts))
 	return wip, qk, nil
@@ -448,12 +447,6 @@ func (o *inProgressKey) Deadletter(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create dead letter entry: %w", err)
 	}
-
-	// Increment the metric for dead-lettered keys
-	mDeadLetteredKeys.With(prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
-	}).Inc()
 
 	// Delete the in-progress task
 	return o.client.Object(o.attrs.Name).Delete(ctx)
