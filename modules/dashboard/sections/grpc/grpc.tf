@@ -2,7 +2,7 @@ variable "title" { type = string }
 variable "filter" { type = list(string) }
 variable "collapsed" { default = false }
 variable "service_name" { type = string }
-variable "non_error_codes" {
+variable "grpc_non_error_codes" {
   description = "List of grpc codes to not counted as error, case-sensitive."
   type        = list(string)
   default = [
