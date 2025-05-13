@@ -35,13 +35,13 @@ type Future func() error
 
 // Handle is a synchronous form of HandleAsync.
 func Handle(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback) error {
-	return HandleAsync(ctx, wq, concurrency, f)()
+	return HandleAsync(ctx, wq, concurrency, f, 0)()
 }
 
 // HandleAsync initiates a single iteration of the dispatcher, possibly invoking
 // the callback for several different keys.  It returns a future that can be
 // used to block on the result.
-func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback) Future {
+func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback, maxRetry int) Future {
 	// Enumerate the state of the queue.
 	wip, next, err := wq.Enumerate(ctx)
 	if err != nil {
@@ -104,10 +104,20 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 				Priority: oip.Priority(),
 			}); err != nil {
 				clog.WarnContextf(ctx, "Failed callback for key %q: %v", oip.Name(), err)
+				attempts := oip.GetAttempts()
 
-				// Requeue if it fails (stops heartbeat).
-				if err := oip.Requeue(ctx); err != nil {
-					return fmt.Errorf("requeue(after failed callback) = %w", err)
+				// If maxRetry is configured and we've reached or exceeded it, use Deadletter() instead of Requeue()
+				if maxRetry > 0 && attempts >= maxRetry {
+					clog.InfoContextf(ctx, "Key %q has reached max retry limit (%d/%d), failing permanently",
+						oip.Name(), attempts, maxRetry)
+
+					if err := oip.Deadletter(ctx); err != nil {
+						return fmt.Errorf("fail(after reaching max retries) = %w", err)
+					}
+				} else {
+					if err := oip.Requeue(ctx); err != nil {
+						return fmt.Errorf("requeue(after failed callback) = %w", err)
+					}
 				}
 				return nil // This isn't an error in the dispatcher itself.
 			}

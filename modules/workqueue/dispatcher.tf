@@ -61,6 +61,10 @@ module "dispatcher-service" {
           name  = "WORKQUEUE_CONCURRENCY"
           value = "${var.concurrent-work}"
         },
+        {
+          name  = "WORKQUEUE_MAX_RETRY"
+          value = "${var.max-retry}"
+        },
       ]
       regional-env = [
         {

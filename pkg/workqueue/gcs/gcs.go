@@ -57,10 +57,12 @@ var RefreshInterval = 5 * time.Minute
 const (
 	queuedPrefix          = "queued/"
 	inProgressPrefix      = "in-progress/"
+	deadLetterPrefix      = "dead-letter/"
 	expirationMetadataKey = "lease-expiration"
 	attemptsMetadataKey   = "attempts"
 	priorityMetadataKey   = "priority"
 	notBeforeMetadataKey  = "not-before"
+	failedTimeMetadataKey = "failed-time"
 )
 
 var noPriority = fmt.Sprintf("%08d", 0)
@@ -177,7 +179,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
 	qd := make([]*queuedKey, 0, w.limit+1)
 
-	queued, notbefore := 0, 0
+	queued, notbefore, deadlettered := 0, 0, 0
 	maxAttempts := 0 // Track the maximum number of attempts
 	for {
 		objAttrs, err := iter.Next()
@@ -241,6 +243,10 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				qd = qd[:w.limit]
 			}
 			queued++
+
+		case strings.HasPrefix(objAttrs.Name, deadLetterPrefix):
+			// Count the dead-lettered keys
+			deadlettered++
 		}
 	}
 
@@ -257,6 +263,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	mInProgressKeys.With(labels).Set(float64(len(wip)))
 	mQueuedKeys.With(labels).Set(float64(queued))
 	mNotBeforeKeys.With(labels).Set(float64(notbefore))
+	mDeadLetteredKeys.With(labels).Set(float64(deadlettered))
 	// Set the max attempts metric
 	mMaxAttempts.With(labels).Set(float64(maxAttempts))
 	return wip, qk, nil
@@ -288,6 +295,23 @@ func (o *inProgressKey) Name() string {
 // Priority implements workqueue.Key.
 func (o *inProgressKey) Priority() int64 {
 	return o.priority
+}
+
+// GetAttempts implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) GetAttempts() int {
+	o.rw.RLock()
+	defer o.rw.RUnlock()
+
+	if o.attrs == nil || o.attrs.Metadata == nil {
+		return 0
+	}
+
+	attempts, err := strconv.Atoi(o.attrs.Metadata[attemptsMetadataKey])
+	if err != nil {
+		clog.WarnContextf(o.ownerCtx, "Malformed attempts on %s: %v", o.Name(), err)
+		return 0
+	}
+	return attempts
 }
 
 // Requeue implements workqueue.InProgressKey.
@@ -362,6 +386,12 @@ func (o *inProgressKey) IsOrphaned() bool {
 	return time.Now().UTC().After(expiry)
 }
 
+// deadLetterKey returns the dead letter key for this in-progress key
+func (o *inProgressKey) deadLetterKey() string {
+	key := strings.TrimPrefix(o.attrs.Name, inProgressPrefix)
+	return fmt.Sprintf("%s%s", deadLetterPrefix, key)
+}
+
 // Complete implements workqueue.OwnedInProgressKey.
 func (o *inProgressKey) Complete(ctx context.Context) error {
 	o.ownerCancel()
@@ -373,6 +403,52 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 		"revision_name": env.KnativeRevisionName,
 	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
 
+	// Best-effort delete of the dead-letter object, if it exists.
+	deadLetterKey := o.deadLetterKey()
+	if err := o.client.Object(deadLetterKey).Delete(ctx); err != nil {
+		if !errors.Is(err, storage.ErrObjectNotExist) {
+			clog.WarnContextf(ctx, "Failed to delete dead-letter object %q: %v", deadLetterKey, err)
+		}
+	}
+
+	return o.client.Object(o.attrs.Name).Delete(ctx)
+}
+
+// Deadletter implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) Deadletter(ctx context.Context) error {
+	if o.ownerCancel != nil {
+		o.ownerCancel()
+	}
+	o.rw.RLock()
+	defer o.rw.RUnlock()
+
+	key := strings.TrimPrefix(o.attrs.Name, inProgressPrefix)
+	deadLetterKey := o.deadLetterKey()
+
+	clog.InfoContextf(ctx, "Moving key %q to dead letter queue as %q", key, deadLetterKey)
+
+	// Copy the in-progress task to the dead letter queue
+	copier := o.client.Object(deadLetterKey).CopierFrom(o.client.Object(o.attrs.Name))
+
+	// Preserve metadata
+	copier.Metadata = o.attrs.Metadata
+	if copier.Metadata == nil {
+		copier.Metadata = make(map[string]string)
+	}
+
+	// Clear the lease expiration when copying the object
+	delete(copier.Metadata, expirationMetadataKey)
+
+	// Add metadata about when the key was dead-lettered
+	copier.Metadata[failedTimeMetadataKey] = time.Now().UTC().Format(time.RFC3339)
+
+	// Create the dead letter entry
+	_, err := copier.Run(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create dead letter entry: %w", err)
+	}
+
+	// Delete the in-progress task
 	return o.client.Object(o.attrs.Name).Delete(ctx)
 }
 

@@ -190,6 +190,24 @@ func (o *inProgressKey) Requeue(_ context.Context) error {
 	return nil
 }
 
+// GetAttempts implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) GetAttempts() int {
+	return o.attempts
+}
+
+// Deadletter implements workqueue.OwnedInProgressKey.
+func (o *inProgressKey) Deadletter(_ context.Context) error {
+	if o.ownerCancel != nil {
+		o.ownerCancel()
+	}
+
+	// For in-memory implementation, we simply remove the task without requeueing it
+	o.wq.rw.Lock()
+	defer o.wq.rw.Unlock()
+	delete(o.wq.wip, o.key)
+	return nil
+}
+
 // IsOrphaned implements workqueue.ObservedInProgressKey.
 func (o *inProgressKey) IsOrphaned() bool {
 	return false

@@ -33,6 +33,7 @@ type envConfig struct {
 	Mode        string `env:"WORKQUEUE_MODE, required"`
 	Bucket      string `env:"WORKQUEUE_BUCKET"`
 	Target      string `env:"WORKQUEUE_TARGET, required"`
+	MaxRetry    int    `env:"WORKQUEUE_MAX_RETRY, default=0"` // 0 means unlimited retries
 }
 
 func main() {
@@ -82,7 +83,7 @@ func main() {
 	}
 	defer client.Close()
 
-	h := dispatcher.Handler(wq, env.Concurrency, dispatcher.ServiceCallback(client))
+	h := dispatcher.Handler(wq, env.Concurrency, dispatcher.ServiceCallback(client), env.MaxRetry)
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		Handler:           h2c.NewHandler(h, &http2.Server{}),

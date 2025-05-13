@@ -12,11 +12,12 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 )
 
-func Handler(wq workqueue.Interface, concurrency int, f Callback) http.Handler {
+func Handler(wq workqueue.Interface, concurrency int, f Callback, maxRetry int) http.Handler {
 	return &handler{
 		wq:          wq,
 		concurrency: concurrency,
 		f:           f,
+		maxRetry:    maxRetry,
 	}
 }
 
@@ -27,6 +28,7 @@ type handler struct {
 	wq          workqueue.Interface
 	concurrency int
 	f           Callback
+	maxRetry    int
 }
 
 var _ http.Handler = (*handler)(nil)
@@ -60,7 +62,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// We do this via a defer to ensure that it is invoked in the event of
 		// a panic during HandleAsync.
 		defer h.doWork.Unlock()
-		return HandleAsync(r.Context(), h.wq, h.concurrency, h.f)
+		return HandleAsync(r.Context(), h.wq, h.concurrency, h.f, h.maxRetry)
 	}()
 
 	// Once we have initiated the dispatch, allow other dispatches to
