@@ -138,3 +138,15 @@ variable "grpc_error_threshold" {
   type        = number
   default     = 0.25
 }
+
+variable "grpc_non_error_codes" {
+  description = "List of grpc codes to not counted as error, case-sensitive."
+  type        = list(string)
+  default = [
+    "OK",
+    "Aborted",
+    "AlreadyExists",
+    "Canceled",
+    "NotFound",
+  ]
+}
