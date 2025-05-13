@@ -16,10 +16,8 @@ module "total_request_count" {
   group_by_fields = [
     "metric.label.\"code\""
   ]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_NONE"
 }
 
 module "request_errors" {
@@ -35,10 +33,8 @@ module "request_errors" {
     "metric.label.\"table\"",
     "metric.label.\"code\"",
   ]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_NONE"
 }
 
 module "table_request_count" {
@@ -53,10 +49,8 @@ module "table_request_count" {
     "metric.label.\"table\"",
     "metric.label.\"code\"",
   ]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_NONE"
 }
 
 module "error_rate" {
@@ -84,10 +78,8 @@ module "op_request_count" {
     "metric.label.\"op\"",
     "metric.label.\"code\"",
   ]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_NONE"
 }
 
 module "open_connections" {
@@ -98,11 +90,9 @@ module "open_connections" {
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_dbstats_open_connections/gauge\"",
   ])
-  group_by_fields  = []
-  primary_align    = "ALIGN_MAX"
-  primary_reduce   = "REDUCE_SUM"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  group_by_fields = []
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_SUM"
 }
 
 locals {

@@ -6,14 +6,12 @@ variable "service_name" { type = string }
 module "width" { source = "../width" }
 
 module "request_count" {
-  source           = "../../widgets/xy"
-  title            = "Request count"
-  filter           = concat(var.filter, ["metric.type=\"run.googleapis.com/request_count\""])
-  group_by_fields  = ["metric.label.\"response_code_class\""]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  source          = "../../widgets/xy"
+  title           = "Request count"
+  filter          = concat(var.filter, ["metric.type=\"run.googleapis.com/request_count\""])
+  group_by_fields = ["metric.label.\"response_code_class\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_NONE"
 }
 
 module "failure_rate" {
@@ -51,10 +49,8 @@ module "outbound_request_count" {
     "metric.label.\"code\"",
     "metric.label.\"host\"",
   ]
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_NONE"
 }
 
 module "outbound_request_latency" {
