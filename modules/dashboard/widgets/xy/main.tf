@@ -5,9 +5,15 @@ variable "plot_type" { default = "LINE" }
 variable "alignment_period" { default = "60s" }
 variable "primary_align" { default = "ALIGN_RATE" }
 variable "primary_reduce" { default = "REDUCE_NONE" }
-variable "secondary_align" { default = "ALIGN_NONE" }
-variable "secondary_reduce" { default = "REDUCE_NONE" }
+variable "secondary_align" { default = "" }
+variable "secondary_reduce" { default = "" }
 variable "thresholds" { default = [] }
+
+locals {
+  use_secondary    = var.secondary_align != "" || var.secondary_reduce != ""
+  secondary_align  = var.secondary_align != "" ? var.secondary_align : "ALIGN_NONE"
+  secondary_reduce = var.secondary_reduce != "" ? var.secondary_reduce : "REDUCE_NONE"
+}
 
 // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart
 output "widget" {
@@ -28,12 +34,12 @@ output "widget" {
               groupByFields      = var.group_by_fields
             }
             filter = join("\n", var.filter)
-            secondaryAggregation = {
+            secondaryAggregation = local.use_secondary ? {
               alignmentPeriod    = var.alignment_period
               perSeriesAligner   = var.secondary_align
               crossSeriesReducer = var.secondary_reduce
               groupByFields      = var.group_by_fields
-            }
+            } : null
           }
         }
       }]
