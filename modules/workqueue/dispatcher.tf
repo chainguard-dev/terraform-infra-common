@@ -30,13 +30,13 @@ module "dispatcher-calls-target" {
 
 // Stand up the dispatcher service in each of our regions.
 module "dispatcher-service" {
-  source     = "../regional-go-service"
-  project_id = var.project_id
-  name       = "${var.name}-dsp"
-  regions    = var.regions
-  labels     = { "service" : "workqueue-dispatcher" }
-  squad            = var.squad
-  require_squad    = var.require_squad
+  source        = "../regional-go-service"
+  project_id    = var.project_id
+  name          = "${var.name}-dsp"
+  regions       = var.regions
+  labels        = { "service" : "workqueue-dispatcher" }
+  squad         = var.squad
+  require_squad = var.require_squad
 
   # Give the things in the workqueue a lot of time to process the key.
   request_timeout_seconds = 3600

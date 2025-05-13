@@ -17,13 +17,13 @@ resource "google_service_account" "receiver" {
 
 // Stand up the receiver service in each of our regions.
 module "receiver-service" {
-  source     = "../regional-go-service"
-  project_id = var.project_id
-  name       = "${var.name}-rcv"
-  regions    = var.regions
-  labels     = { "service" : "workqueue-receiver" }
-  squad            = var.squad
-  require_squad    = var.require_squad
+  source        = "../regional-go-service"
+  project_id    = var.project_id
+  name          = "${var.name}-rcv"
+  regions       = var.regions
+  labels        = { "service" : "workqueue-receiver" }
+  squad         = var.squad
+  require_squad = var.require_squad
 
   service_account = google_service_account.receiver.email
   containers = {
