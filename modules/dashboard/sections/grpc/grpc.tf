@@ -2,6 +2,17 @@ variable "title" { type = string }
 variable "filter" { type = list(string) }
 variable "collapsed" { default = false }
 variable "service_name" { type = string }
+variable "non_error_codes" {
+  description = "List of grpc codes to not counted as error, case-sensitive."
+  type        = list(string)
+  default = [
+    "OK",
+    "Aborted",
+    "AlreadyExists",
+    "Canceled",
+    "NotFound",
+  ]
+}
 
 module "width" { source = "../width" }
 
@@ -32,7 +43,7 @@ module "failure_rate" {
     "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   numerator_additional_filter = [
-    "metric.label.\"grpc_code\"!=monitoring.regex.full_match(\"OK|Aborted|AlreadyExists|Canceled|NotFound\")"
+    "metric.label.\"grpc_code\"!=monitoring.regex.full_match(\"${join("|", var.grpc_non_error_codes)}\")"
   ]
 }
 
