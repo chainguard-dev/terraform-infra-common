@@ -17,6 +17,19 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue/conformance"
 )
 
+func TestDeadLetterKey(t *testing.T) {
+	key := &inProgressKey{
+		attrs: &storage.ObjectAttrs{
+			Name: "in-progress/test-key",
+		},
+	}
+	got := key.deadLetterKey()
+	want := "dead-letter/test-key"
+	if got != want {
+		t.Errorf("deadLetterKey() = %q, want %q", got, want)
+	}
+}
+
 func TestWorkQueue(t *testing.T) {
 	bucket, ok := os.LookupEnv("WORKQUEUE_GCS_TEST_BUCKET")
 	if !ok {
@@ -40,6 +53,10 @@ func TestWorkQueue(t *testing.T) {
 	})
 
 	conformance.TestDurability(t, func(u int) workqueue.Interface {
+		return NewWorkQueue(client.Bucket(bucket), u)
+	})
+
+	conformance.TestMaxRetry(t, func(u int) workqueue.Interface {
 		return NewWorkQueue(client.Bucket(bucket), u)
 	})
 }

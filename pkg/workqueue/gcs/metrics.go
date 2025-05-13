@@ -81,4 +81,11 @@ var (
 		},
 		[]string{"service_name", "revision_name"},
 	)
+	mDeadLetteredKeys = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "workqueue_dead_lettered_keys",
+			Help: "The number of keys currently in the dead letter queue",
+		},
+		[]string{"service_name", "revision_name"},
+	)
 )
