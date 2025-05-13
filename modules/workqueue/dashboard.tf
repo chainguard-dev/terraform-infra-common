@@ -12,6 +12,20 @@ module "dispatcher-logs" {
   filter = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.name}-dsp\""]
 }
 
+module "dead-letter-queue" {
+  count  = var.max-retry > 0 ? 1 : 0
+  source = "../dashboard/widgets/xy"
+  title  = "Dead-letter queue size"
+  filter = [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
+    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
+  ]
+  group_by_fields = ["metric.label.\"service_name\""]
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_MAX"
+}
+
 module "work-in-progress" {
   source = "../dashboard/widgets/xy"
   title  = "Amount of work in progress"
@@ -110,7 +124,7 @@ locals {
   // N columns, unit width each  ([0, unit, 2 * unit, ...])
   col = range(0, local.columns * local.unit, local.unit)
 
-  tiles = [
+  tiles = concat([
     {
       yPos   = 0,
       xPos   = local.col[0],
@@ -152,8 +166,17 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.percent-deduped.widget,
-    },
-  ]
+    }
+    ],
+    var.max-retry > 0 ? [
+      {
+        yPos   = local.unit * 2,
+        xPos   = local.col[0],
+        height = local.unit,
+        width  = local.unit,
+        widget = module.dead-letter-queue[0].widget,
+      }
+  ] : [])
 }
 
 module "collapsible" {
