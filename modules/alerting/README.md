@@ -56,7 +56,9 @@ No modules.
 | <a name="input_failure_rate_ratio_threshold"></a> [failure\_rate\_ratio\_threshold](#input\_failure\_rate\_ratio\_threshold) | ratio threshold to alert for cloud run server failure rate. | `number` | `0.2` | no |
 | <a name="input_global_only_alerts"></a> [global\_only\_alerts](#input\_global\_only\_alerts) | only enable global alerts. when true, only create alerts that are global. | `bool` | `false` | no |
 | <a name="input_grpc_error_threshold"></a> [grpc\_error\_threshold](#input\_grpc\_error\_threshold) | threshold for grpc error. | `number` | `0.25` | no |
+| <a name="input_grpc_non_error_codes"></a> [grpc\_non\_error\_codes](#input\_grpc\_non\_error\_codes) | List of grpc codes to not counted as error, case-sensitive. | `list(string)` | <pre>[<br/>  "OK",<br/>  "Aborted",<br/>  "AlreadyExists",<br/>  "Canceled",<br/>  "NotFound"<br/>]</pre> | no |
 | <a name="input_http_error_threshold"></a> [http\_error\_threshold](#input\_http\_error\_threshold) | threshold for http error. | `number` | `0.25` | no |
+| <a name="input_job_exitcode_filter"></a> [job\_exitcode\_filter](#input\_job\_exitcode\_filter) | additional filter to apply to job exitcode alert policy | `string` | `""` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_email"></a> [notification\_channels\_email](#input\_notification\_channels\_email) | Email notification channel. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_pagerduty"></a> [notification\_channels\_pagerduty](#input\_notification\_channels\_pagerduty) | Email notification channel. | `list(string)` | `[]` | no |

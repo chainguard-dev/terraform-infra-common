@@ -1199,8 +1199,10 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
         cross_series_reducer = "REDUCE_MEAN"
         per_series_aligner   = "ALIGN_RATE"
         group_by_fields = [
-          "metric.label.team",
-          "metric.label.service_name",
+          "metric.label.\"grpc_service\"",
+          "metric.label.\"grpc_method\"",
+          "metric.label.\"grpc_code\"",
+          "resource.label.\"job\"",
         ]
       }
 
@@ -1210,7 +1212,7 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
       filter = <<EOT
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/grpc_server_handled_total/counter"
-        metric.labels.grpc_code != monitoring.regex.full_match("OK|AlreadyExists")
+        metric.labels.grpc_code != monitoring.regex.full_match("${join("|", var.grpc_non_error_codes)}")
         ${local.squad_metric_filter}
       EOT
 
