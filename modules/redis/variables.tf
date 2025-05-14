@@ -107,6 +107,16 @@ variable "reserved_ip_range" {
   default     = null
 }
 
+variable "connect_mode" {
+  description = "The connection mode of the Redis instance. Valid values: DIRECT_PEERING, PRIVATE_SERVICE_ACCESS."
+  type        = string
+  default     = "PRIVATE_SERVICE_ACCESS"
+
+  validation {
+    condition     = contains(["DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS"], var.connect_mode)
+    error_message = "Connect mode must be either DIRECT_PEERING or PRIVATE_SERVICE_ACCESS."
+  }
+}
 
 variable "authorized_network" {
   description = "The full name of the Google Compute Engine network to which the instance is connected. Must be in the format: projects/{project_id}/global/networks/{network_name}"
@@ -145,8 +155,8 @@ variable "persistence_config" {
   }
 
   validation {
-    condition     = contains(["ONE_HOUR", "SIX_HOURS", "TWELVE_HOURS", "TWENTY_FOUR_HOURS"], var.persistence_config.rdb_snapshot_period)
-    error_message = "RDB snapshot period must be ONE_HOUR, SIX_HOURS, TWELVE_HOURS, or TWENTY_FOUR_HOURS."
+    condition     = contains(["ONE_HOUR", "SIX_HOURS", "TWELVE_HOURS", "TWENTY_FOUR_HOURS"], var.persistence_config.rdb_snapshot_period) || var.persistence_config.persistence_mode == "DISABLED"
+    error_message = "When persistence mode is set to RDB, the snapshot period must be one of the following: ONE_HOUR, SIX_HOURS, TWELVE_HOURS, or TWENTY_FOUR_HOURS."
   }
 }
 

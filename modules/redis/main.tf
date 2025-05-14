@@ -56,7 +56,7 @@ resource "google_redis_instance" "default" {
   redis_version           = var.redis_version
   reserved_ip_range       = var.reserved_ip_range
 
-  connect_mode            = "PRIVATE_SERVICE_ACCESS"
+  connect_mode            = var.connect_mode
   auth_enabled            = var.auth_enabled
   transit_encryption_mode = var.transit_encryption_mode
 
