@@ -129,6 +129,7 @@ No requirements.
 | <a name="module_dispatcher-logs"></a> [dispatcher-logs](#module\_dispatcher-logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_dispatcher-service"></a> [dispatcher-service](#module\_dispatcher-service) | ../regional-go-service | n/a |
 | <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
+| <a name="module_max-attempts"></a> [max-attempts](#module\_max-attempts) | ../dashboard/widgets/xy | n/a |
 | <a name="module_percent-deduped"></a> [percent-deduped](#module\_percent-deduped) | ../dashboard/widgets/xy-ratio | n/a |
 | <a name="module_process-latency"></a> [process-latency](#module\_process-latency) | ../dashboard/widgets/latency | n/a |
 | <a name="module_receiver-logs"></a> [receiver-logs](#module\_receiver-logs) | ../dashboard/sections/logs | n/a |
