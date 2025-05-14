@@ -91,6 +91,10 @@ resource "google_redis_instance" "default" {
     rdb_snapshot_period = var.persistence_config.persistence_mode == "RDB" ? var.persistence_config.rdb_snapshot_period : null
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   labels = local.merged_labels
 }
 
