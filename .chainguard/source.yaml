@@ -8,6 +8,8 @@ spec:
         identities:
           - issuer: https://accounts.google.com
           - issuer: https://github.com/login/oauth
+          - issuer: https://token.actions.githubusercontent.com
+            subject: https://github.com/chainguard-dev/terraform-infra-common/.github/workflows/digest-bot.yaml@refs/heads/main
     - key:
         # allow commits signed by GitHub, e.g. the UI
         kms: https://github.com/web-flow.gpg
