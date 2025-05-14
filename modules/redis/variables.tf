@@ -142,21 +142,29 @@ variable "persistence_config" {
   description = "Configuration of the persistence functionality."
   type = object({
     persistence_mode    = string
-    rdb_snapshot_period = string
+    rdb_snapshot_period = optional(string)
   })
   default = {
-    persistence_mode    = "RDB"
-    rdb_snapshot_period = "TWENTY_FOUR_HOURS"
+    persistence_mode    = "DISABLED"
   }
 
+  # Check that persistence_mode is valid
   validation {
     condition     = contains(["DISABLED", "RDB"], var.persistence_config.persistence_mode)
     error_message = "Persistence mode must be either DISABLED or RDB."
   }
 
+  # Check that we have valid configurations
   validation {
-    condition     = contains(["ONE_HOUR", "SIX_HOURS", "TWELVE_HOURS", "TWENTY_FOUR_HOURS"], var.persistence_config.rdb_snapshot_period) || var.persistence_config.persistence_mode == "DISABLED"
-    error_message = "When persistence mode is set to RDB, the snapshot period must be one of the following: ONE_HOUR, SIX_HOURS, TWELVE_HOURS, or TWENTY_FOUR_HOURS."
+    condition = (
+      var.persistence_config.persistence_mode == "DISABLED" ||
+
+      (var.persistence_config.persistence_mode == "RDB" && var.persistence_config.rdb_snapshot_period == "ONE_HOUR") ||
+      (var.persistence_config.persistence_mode == "RDB" && var.persistence_config.rdb_snapshot_period == "SIX_HOURS") ||
+      (var.persistence_config.persistence_mode == "RDB" && var.persistence_config.rdb_snapshot_period == "TWELVE_HOURS") ||
+      (var.persistence_config.persistence_mode == "RDB" && var.persistence_config.rdb_snapshot_period == "TWENTY_FOUR_HOURS")
+    )
+    error_message = "When persistence_mode is RDB, rdb_snapshot_period must be one of: ONE_HOUR, SIX_HOURS, TWELVE_HOURS, or TWENTY_FOUR_HOURS."
   }
 }
 
