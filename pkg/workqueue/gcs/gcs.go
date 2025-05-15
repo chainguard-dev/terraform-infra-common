@@ -195,13 +195,16 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				clog.WarnContextf(ctx, "Failed to parse priority: %v", err)
 			}
 		}
-		// Check for attempts and track maximum
-		if att, ok := objAttrs.Metadata[attemptsMetadataKey]; ok && att != "" {
-			attempts, err := strconv.Atoi(att)
-			if err != nil {
-				clog.WarnContextf(ctx, "Failed to parse attempts: %v", err)
-			} else if attempts > maxAttempts {
-				maxAttempts = attempts
+		// Only check for max attempts if this is not a deadlettered item
+		if !strings.HasPrefix(objAttrs.Name, deadLetterPrefix) {
+			// Check for attempts and track maximum
+			if att, ok := objAttrs.Metadata[attemptsMetadataKey]; ok && att != "" {
+				attempts, err := strconv.Atoi(att)
+				if err != nil {
+					clog.WarnContextf(ctx, "Failed to parse attempts: %v", err)
+				} else if attempts > maxAttempts {
+					maxAttempts = attempts
+				}
 			}
 		}
 
