@@ -34,6 +34,7 @@ module "postgres" {
     "myapp@my-gcp-project.iam.gserviceaccount.com"
   ]
 }
+```
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
