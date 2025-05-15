@@ -23,6 +23,7 @@ module "max-attempts" {
   group_by_fields = ["metric.label.\"service_name\""]
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
+  thresholds      = var.max-retry > 0 ? [var.max-retry] : []
 }
 
 module "dead-letter-queue" {
