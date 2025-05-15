@@ -46,6 +46,7 @@ resource "google_sql_database_instance" "this" {
     ip_configuration {
       ipv4_enabled    = false
       private_network = var.network
+      ssl_mode        = "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"
     }
 
     backup_configuration {
@@ -108,6 +109,7 @@ resource "google_sql_database_instance" "replicas" {
     ip_configuration {
       ipv4_enabled    = false
       private_network = var.network
+      ssl_mode        = "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"
     }
 
     user_labels = merge(local.merged_labels, {
