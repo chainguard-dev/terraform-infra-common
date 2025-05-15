@@ -646,6 +646,62 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
   project = var.project_id
 }
 
+resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
+  count = var.global_only_alerts ? 0 : 1
+
+  # In the absence of data, incident will auto-close after an hour
+  alert_strategy {
+    auto_close = "3600s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_prometheus_query_language {
+      duration            = "${var.failure_rate_duration}s"
+      evaluation_interval = "60s"
+
+      // First part of the query calculates the error rate (non-ok grpc codes / all) and the rate should be greater than var.failure_rate_ratio_threshold
+      // Second part ensures services has non-zero traffic over last 5 min.
+      query = <<EOT
+        (sum by (service_name)
+           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}", grpc_code!~"${join("|", var.grpc_non_error_codes)}"${local.promql_squad_filter}}[1m]))
+         /
+         sum by (service_name)
+           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[1m]))
+        ) > ${var.failure_rate_ratio_threshold}
+        and
+        sum by (service_name)
+          (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[5m]))
+        > 0.0001
+      EOT
+    }
+
+    display_name = "grpc failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
+  }
+
+  display_name = "grpc failure rate above ${var.failure_rate_ratio_threshold} ${local.name}"
+
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${metric.label.team}: $${metric_or_resource.labels.job} had grpc failure rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+
+    content = <<-EOT
+    Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
+    EOT
+
+    links {
+      display_name = "Playbook"
+      url          = "https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/"
+    }
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+
 resource "google_logging_metric" "cloud-run-scaling-failure" {
   count = var.squad == "" ? 1 : 0
 
@@ -843,6 +899,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
     subject = "$${metadata.user_labels.team}: PubSub DLQ: $${resource.label.topic_id}"
+    content = "$${metadata.user_labels.team}: PubSub DLQ: $${resource.label.topic_id}"
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
@@ -892,6 +949,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
     subject = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} request timed out"
+    content = "$${log.extracted_label.team}: Cloud Run service $${metric_or_resource.labels.service_name} request timed out"
   }
 
   enabled = false
@@ -1140,8 +1198,8 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         cross_series_reducer = "REDUCE_MEAN"
         per_series_aligner   = "ALIGN_RATE"
         group_by_fields = [
-          "metric.label.team",
-          "metric.label.service_name",
+          "metric.label.\"team\"",
+          "resource.label.\"job\"",
         ]
       }
 
@@ -1174,7 +1232,8 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.service_name}: HTTP error rate above ${var.http_error_threshold}"
+    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: HTTP error rate above ${var.http_error_threshold}"
+    content = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: HTTP error rate above ${var.http_error_threshold}"
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
@@ -1202,14 +1261,14 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
           "metric.label.\"grpc_service\"",
           "metric.label.\"grpc_method\"",
           "metric.label.\"grpc_code\"",
+          "metric.label.\"team\"",
           "resource.label.\"job\"",
         ]
       }
 
       comparison = "COMPARISON_GT"
       duration   = "300s"
-      # ignore OK and AlreadyExists code
-      filter = <<EOT
+      filter     = <<EOT
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/grpc_server_handled_total/counter"
         metric.labels.grpc_code != monitoring.regex.full_match("${join("|", var.grpc_non_error_codes)}")
@@ -1231,7 +1290,8 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.service_name}: GRPC error rate above ${var.grpc_error_threshold}"
+    subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: GRPC error rate above ${var.grpc_error_threshold}"
+    content = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: GRPC error rate above ${var.grpc_error_threshold}"
   }
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
 
