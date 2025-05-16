@@ -6,6 +6,11 @@ variable "name" {
   type = string
 }
 
+variable "region" {
+  description = "The region in which the pubsub service is based."
+  type        = string
+}
+
 variable "broker" {
   description = "The name of the pubsub topic we are using as a broker."
   type        = string
@@ -118,4 +123,10 @@ variable "allowed_persistence_regions" {
   description = "The list of allowed persistence regions for the dead-letter topic."
   type        = list(string)
   default     = []
+}
+
+variable "enable_dlq_bucket" {
+  description = "Enable the messages to sink in the bucket for the dead letter."
+  type        = bool
+  default     = false
 }
