@@ -35,7 +35,8 @@ module "dead-letter-queue" {
     "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\""]
+  group_by_fields = ["metric.label.\"service_name\"", "resource.labels.\"location\""]
+  plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
 }
