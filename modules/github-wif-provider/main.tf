@@ -21,7 +21,7 @@ resource "google_iam_workload_identity_pool_provider" "this" {
   attribute_mapping = {
     # Don't use the GitHub subject because it it less specific than ours, which also captures:
     #   - The pull request number via `refs/pull/N/merge`, and
-    #   - The worflow file.
+    #   - The workflow file.
     # We don't include assertion.repository because it is redundant with the prefix on assertion.workflow_ref.
     # We use assertion.ref instead of the ref included in workflow_ref so that we get the PR number on pull_request_target PRs.
     "google.subject" = "assertion.workflow_ref.split('@')[0] + '|' + assertion.ref"
@@ -40,6 +40,8 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     "attribute.exactanyworkflow"       = "assertion.repository + '|' + assertion.ref"
     "attribute.pullrequest"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.pullrequestanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false')"
+    "attribute.pullrequesttarget"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/heads/main$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
+    "attribute.pullrequesttargetanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/heads/main$') ? 'true' : 'false')"
     "attribute.versiontags"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.versiontagsanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false')"
   }

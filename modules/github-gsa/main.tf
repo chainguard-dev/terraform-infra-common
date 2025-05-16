@@ -70,6 +70,17 @@ locals {
     "true",
   ])}"
 
+  pull-request-target = "attribute.pullrequesttarget/${join("|", [
+    var.repository,
+    "true",
+    "${var.repository}/${var.workflow_ref}",
+  ])}"
+
+  pull-request-target-any-workflow = "attribute.pullrequesttargetanyworkflow/${join("|", [
+    var.repository,
+    "true",
+  ])}"
+
   version-tags = "attribute.versiontags/${join("|", [
     var.repository,
     "true",
@@ -95,21 +106,29 @@ locals {
         local.pull-request
       )
       ) : (
-      var.refspec == "version_tags" ? (
+      var.refspec == "pull_request_target" ? (
         var.workflow_ref == "*" ? (
-          local.version-tags-any-workflow
+          local.pull-request-target-any-workflow
           ) : (
-          local.version-tags
+          local.pull-request-target
         )
         ) : (
-        var.workflow_ref == "*" ? (
-          local.exact-any-workflow
+        var.refspec == "version_tags" ? (
+          var.workflow_ref == "*" ? (
+            local.version-tags-any-workflow
+            ) : (
+            local.version-tags
+          )
           ) : (
-          local.exact
+          var.workflow_ref == "*" ? (
+            local.exact-any-workflow
+            ) : (
+            local.exact
+          )
         )
       )
-    )
-  )
+  ))
+
 }
 
 // Create the IAM binding allowing workflows to impersonate the service account.

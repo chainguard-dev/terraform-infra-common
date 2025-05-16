@@ -21,8 +21,8 @@ variable "refspec" {
   description = "The refspec to allow to federate with this identity."
   type        = string
   validation {
-    condition     = var.refspec == "*" || var.refspec == "pull_request" || var.refspec == "version_tags" || startswith(var.refspec, "refs/")
-    error_message = "Expected '*', 'pull_request', 'version_tags' or a refspec of the form 'refs/heads/main', but got '${var.refspec}'."
+    condition     = var.refspec == "*" || var.refspec == "pull_request" || var.refspec == "pull_request_target" || var.refspec == "version_tags" || startswith(var.refspec, "refs/")
+    error_message = "Expected '*', 'pull_request', 'pull_request_target', 'version_tags' or a refspec of the form 'refs/heads/main', but got '${var.refspec}'."
   }
 }
 variable "audit_refspec" {
