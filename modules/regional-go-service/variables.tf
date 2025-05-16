@@ -31,7 +31,7 @@ variable "egress" {
   description = <<EOD
 Which type of egress traffic to send through the VPC.
 
-- ALL_TRAFFIC sends all traffic through regional VPC network
+- ALL_TRAFFIC sends all traffic through regional VPC network. This should be used if service is not expected to egress to the Internet.
 - PRIVATE_RANGES_ONLY sends only traffic to private IP addresses through regional VPC network
 EOD
   default     = "ALL_TRAFFIC"
