@@ -86,6 +86,12 @@ variable "failure_rate_exclude_services" {
   default     = []
 }
 
+variable "grpc_failure_rate_exclude_services" {
+  description = "List of service names to exclude from non-grpc failure rate alert"
+  type        = list(string)
+  default     = []
+}
+
 variable "dlq_filter" {
   description = "additional filter to apply to dlq alert policy"
   type        = string
