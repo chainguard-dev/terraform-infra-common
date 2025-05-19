@@ -411,7 +411,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode-svc" {
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(labels.squad)"
-        "exit_code"     = "EXTRACT(protoPayload.status.code)"
+        "exit_code"     = "REGEXP_EXTRACT(textPayload, \"^Container called exit\\\\(([0-9]+)\\\\)\\\\.$\")"
       }
     }
   }
