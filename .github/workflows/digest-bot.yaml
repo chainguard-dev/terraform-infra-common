@@ -45,6 +45,6 @@ jobs:
 
       - name: Enable auto-merge
         if: ${{ steps.digest-bot.outputs.pull_request_number != '' }}
-        run: gh pr merge --auto --squash "https://github.com/chainguard-dev/mono/pull/${{ steps.digest-bot.outputs.pull_request_number }}"
+        run: gh pr merge --auto --squash "https://github.com/chainguard-dev/terraform-infra-common/pull/${{ steps.digest-bot.outputs.pull_request_number }}"
         env:
           GITHUB_TOKEN: ${{ steps.octo-sts.outputs.token }}
