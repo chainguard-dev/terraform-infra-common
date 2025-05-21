@@ -1,6 +1,6 @@
 # Redis Module
 
-Terraform module to create a GCP Redis instance within GCP.
+Terraform module to create a Managed Redis instance within GCP.
 
 ## Features
 
@@ -8,6 +8,7 @@ Terraform module to create a GCP Redis instance within GCP.
 - Supports high availability configurations with replica instances
 - Integrates with your existing VPC network for private connectivity
 - Enables authentication and transit encryption options
+- Automatically manages Redis AUTH credentials in Secret Manager
 - Allows for custom maintenance windows
 - Manages automatic backups with configurable snapshot periods
 - Automatically enables the required Redis API
@@ -35,6 +36,11 @@ module "redis" {
   # Network configuration - connect to existing VPC
   authorized_network = "projects/my-project-id/global/networks/my-vpc-network"
 
+  # Auth configuration
+  auth_enabled = true  # Auth credentials will automatically be stored in Secret Manager
+
+  service_account_email = "my-service@my-project-id.iam.gserviceaccount.com"
+
   # Automated backups
   persistence_config = {
     persistence_mode    = "RDB"
@@ -56,6 +62,14 @@ module "redis" {
 }
 ```
 
+## Authentication Management
+
+This module automatically manages Redis authentication credentials, when `auth_enabled = true`, the module will:
+- Create a Redis instance with authentication enabled
+- Retrieve the GCP-generated auth string
+- Store the auth string in Secret Manager with Secret name automatically set to `{name}-auth` (e.g., "my-redis-instance-auth")
+- The Secret Manager secret is created in the same project as the Redis instance
+- Make the auth string available to authorized service accounts
 
 
 <!-- BEGIN_TF_DOCS -->
@@ -87,7 +101,9 @@ limitations under the License.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_redis_auth_secret"></a> [redis\_auth\_secret](#module\_redis\_auth\_secret) | ../secret | n/a |
 
 ## Resources
 
@@ -97,6 +113,7 @@ No modules.
 | [google_project_iam_member.redis_editor_sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.redis_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_redis_instance.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/redis_instance) | resource |
+| [google_secret_manager_secret_version.auth_string](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 
 ## Inputs
 
@@ -112,6 +129,7 @@ No modules.
 | <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | Maintenance policy for an instance. | <pre>object({<br/>    day = string<br/>    start_time = object({<br/>      hours   = number<br/>      minutes = number<br/>      seconds = number<br/>      nanos   = number<br/>    })<br/>  })</pre> | `null` | no |
 | <a name="input_memory_size_gb"></a> [memory\_size\_gb](#input\_memory\_size\_gb) | Redis memory size in GiB. Minimum 1 GB, maximum 300 GB. | `number` | `1` | no |
 | <a name="input_name"></a> [name](#input\_name) | The ID of the instance or a fully qualified identifier for the instance. | `string` | n/a | yes |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_persistence_config"></a> [persistence\_config](#input\_persistence\_config) | Configuration of the persistence functionality. | <pre>object({<br/>    persistence_mode    = string<br/>    rdb_snapshot_period = optional(string)<br/>  })</pre> | <pre>{<br/>  "persistence_mode": "DISABLED"<br/>}</pre> | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The ID of the project in which the resource belongs. | `string` | n/a | yes |
 | <a name="input_read_replicas_mode"></a> [read\_replicas\_mode](#input\_read\_replicas\_mode) | Read replicas mode. Can be: READ\_REPLICAS\_DISABLED or READ\_REPLICAS\_ENABLED. | `string` | `"READ_REPLICAS_DISABLED"` | no |
@@ -119,6 +137,8 @@ No modules.
 | <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy resources to. | `string` | n/a | yes |
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replica nodes. | `number` | `0` | no |
 | <a name="input_reserved_ip_range"></a> [reserved\_ip\_range](#input\_reserved\_ip\_range) | The CIDR range of internal addresses that are reserved for this instance. | `string` | `null` | no |
+| <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new redis auth secret versions. | `string` | n/a | yes |
+| <a name="input_service_account_email"></a> [service\_account\_email](#input\_service\_account\_email) | The email of the service account that will access the secret. | `string` | n/a | yes |
 | <a name="input_squad"></a> [squad](#input\_squad) | Squad or team label applied to the instance (required). | `string` | n/a | yes |
 | <a name="input_tier"></a> [tier](#input\_tier) | The service tier of the instance. Valid values: BASIC, STANDARD\_HA. | `string` | `"STANDARD_HA"` | no |
 | <a name="input_transit_encryption_mode"></a> [transit\_encryption\_mode](#input\_transit\_encryption\_mode) | The TLS mode of the Redis instance. Valid values: DISABLED, SERVER\_AUTHENTICATION. | `string` | `"SERVER_AUTHENTICATION"` | no |
@@ -128,6 +148,8 @@ No modules.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_auth_enabled"></a> [auth\_enabled](#output\_auth\_enabled) | Whether AUTH is enabled for the Redis instance |
+| <a name="output_auth_secret_id"></a> [auth\_secret\_id](#output\_auth\_secret\_id) | The ID of the Secret Manager secret containing the Redis AUTH string |
 | <a name="output_connection_name"></a> [connection\_name](#output\_connection\_name) | The connection name of the instance to be used in connection strings. |
 | <a name="output_current_location_id"></a> [current\_location\_id](#output\_current\_location\_id) | The zone where the instance is currently located. |
 | <a name="output_host"></a> [host](#output\_host) | The IP address of the instance. |
