@@ -39,7 +39,7 @@ module "redis" {
   # Auth configuration
   auth_enabled = true  # Auth credentials will automatically be stored in Secret Manager
 
-  service_account_email = "my-service@my-project-id.iam.gserviceaccount.com"
+  secret_accessor_sa_email = "my-service@my-project-id.iam.gserviceaccount.com"
 
   # Automated backups
   persistence_config = {
@@ -138,7 +138,7 @@ limitations under the License.
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replica nodes. | `number` | `0` | no |
 | <a name="input_reserved_ip_range"></a> [reserved\_ip\_range](#input\_reserved\_ip\_range) | The CIDR range of internal addresses that are reserved for this instance. | `string` | `null` | no |
 | <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new redis auth secret versions. | `string` | n/a | yes |
-| <a name="input_service_account_email"></a> [service\_account\_email](#input\_service\_account\_email) | The email of the service account that will access the secret. | `string` | n/a | yes |
+| <a name="input_secret_accessor_sa_email"></a> [secret\_accessor\_sa\_email](#input\_secret\_accessor\_sa\_email) | The email of the service account that will access the secret. | `string` | n/a | yes |
 | <a name="input_squad"></a> [squad](#input\_squad) | Squad or team label applied to the instance (required). | `string` | n/a | yes |
 | <a name="input_tier"></a> [tier](#input\_tier) | The service tier of the instance. Valid values: BASIC, STANDARD\_HA. | `string` | `"STANDARD_HA"` | no |
 | <a name="input_transit_encryption_mode"></a> [transit\_encryption\_mode](#input\_transit\_encryption\_mode) | The TLS mode of the Redis instance. Valid values: DISABLED, SERVER\_AUTHENTICATION. | `string` | `"SERVER_AUTHENTICATION"` | no |

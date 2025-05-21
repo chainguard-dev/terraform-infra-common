@@ -118,7 +118,7 @@ module "redis_auth_secret" {
   project_id = var.project_id
   name       = "${var.name}-auth"
 
-  service-account       = var.service_account_email
+  service-account       = var.secret_accessor_sa_email
   authorized-adder      = var.secret_version_adder
   notification-channels = var.notification_channels
 

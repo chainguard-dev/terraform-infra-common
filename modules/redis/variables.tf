@@ -197,7 +197,7 @@ variable "authorized_client_editor_service_accounts" {
   default     = []
 }
 
-variable "service_account_email" {
+variable "secret_accessor_sa_email" {
   description = "The email of the service account that will access the secret."
   type        = string
 }
