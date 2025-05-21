@@ -145,7 +145,7 @@ variable "persistence_config" {
     rdb_snapshot_period = optional(string)
   })
   default = {
-    persistence_mode    = "DISABLED"
+    persistence_mode = "DISABLED"
   }
 
   # Check that persistence_mode is valid
@@ -195,4 +195,19 @@ variable "authorized_client_editor_service_accounts" {
   description = "List of service account emails that should be granted Redis editor (read-write) access"
   type        = list(string)
   default     = []
+}
+
+variable "secret_accessor_sa_email" {
+  description = "The email of the service account that will access the secret."
+  type        = string
+}
+
+variable "notification_channels" {
+  description = "List of notification channels to alert."
+  type        = list(string)
+}
+
+variable "secret_version_adder" {
+  type        = string
+  description = "The user allowed to populate new redis auth secret versions."
 }

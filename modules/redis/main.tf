@@ -46,22 +46,22 @@ resource "google_project_service" "redis_api" {
 resource "google_redis_instance" "default" {
   depends_on = [google_project_service.redis_api]
 
-  name           = var.name
-  project        = var.project_id
-  region         = var.region
-  location_id    = var.zone
+  name        = var.name
+  project     = var.project_id
+  region      = var.region
+  location_id = var.zone
 
-  tier                    = var.tier
-  memory_size_gb          = var.memory_size_gb
-  redis_version           = var.redis_version
-  reserved_ip_range       = var.reserved_ip_range
+  tier              = var.tier
+  memory_size_gb    = var.memory_size_gb
+  redis_version     = var.redis_version
+  reserved_ip_range = var.reserved_ip_range
 
   connect_mode            = var.connect_mode
   auth_enabled            = var.auth_enabled
   transit_encryption_mode = var.transit_encryption_mode
 
-  read_replicas_mode      = var.read_replicas_mode
-  replica_count           = var.replica_count
+  read_replicas_mode = var.read_replicas_mode
+  replica_count      = var.replica_count
 
   # Alternative location for HA setup
   alternative_location_id = var.alternative_location_id != "" ? var.alternative_location_id : null
@@ -98,7 +98,7 @@ resource "google_project_iam_member" "redis_client_sa" {
   for_each = toset(var.authorized_client_service_accounts)
 
   project = var.project_id
-  role    = "roles/redis.viewer"  # Read-only access by default
+  role    = "roles/redis.viewer" # Read-only access by default
   member  = "serviceAccount:${each.value}"
 }
 
@@ -106,6 +106,30 @@ resource "google_project_iam_member" "redis_editor_sa" {
   for_each = toset(var.authorized_client_editor_service_accounts)
 
   project = var.project_id
-  role    = "roles/redis.editor"  # Read-write access
+  role    = "roles/redis.editor" # Read-write access
   member  = "serviceAccount:${each.value}"
+}
+
+# Create Secret Manager secret for the auth string
+module "redis_auth_secret" {
+  source = "../secret"
+  count  = var.auth_enabled ? 1 : 0
+
+  project_id = var.project_id
+  name       = "${var.name}-auth"
+
+  service-account       = var.secret_accessor_sa_email
+  authorized-adder      = var.secret_version_adder
+  notification-channels = var.notification_channels
+
+  create_placeholder_version = false
+}
+
+# Create the initial version of the secret with the auth string
+resource "google_secret_manager_secret_version" "auth_string" {
+  count  = var.auth_enabled ? 1 : 0
+  secret = module.redis_auth_secret[0].secret_id
+
+  # Use the auth_string that GCP auto-generates
+  secret_data = google_redis_instance.default.auth_string
 }

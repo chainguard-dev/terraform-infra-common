@@ -69,3 +69,13 @@ output "rdb_snapshot_period" {
   description = "The snapshot period for RDB persistence."
   value       = var.persistence_config.persistence_mode == "RDB" ? var.persistence_config.rdb_snapshot_period : null
 }
+
+output "auth_secret_id" {
+  description = "The ID of the Secret Manager secret containing the Redis AUTH string"
+  value       = var.auth_enabled ? module.redis_auth_secret[0].secret_id : null
+}
+
+output "auth_enabled" {
+  description = "Whether AUTH is enabled for the Redis instance"
+  value       = var.auth_enabled
+}
