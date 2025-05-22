@@ -40,8 +40,8 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     "attribute.exactanyworkflow"       = "assertion.repository + '|' + assertion.ref"
     "attribute.pullrequest"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.pullrequestanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false')"
-    "attribute.pullrequesttarget"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/heads/main$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.pullrequesttargetanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/heads/main$') ? 'true' : 'false')"
+    "attribute.pullrequesttarget"            = "assertion.repository + '|' + (assertion.ref == 'refs/heads/main') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
+    "attribute.pullrequesttargetanyworkflow" = "assertion.repository + '|' + (assertion.ref == 'refs/heads/main') ? 'true' : 'false')"
     "attribute.versiontags"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.versiontagsanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false')"
   }
