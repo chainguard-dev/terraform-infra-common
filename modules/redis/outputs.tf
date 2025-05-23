@@ -79,3 +79,8 @@ output "auth_enabled" {
   description = "Whether AUTH is enabled for the Redis instance"
   value       = var.auth_enabled
 }
+
+output "server_ca_cert" {
+  description = "The server CA certificate for the Redis instance"
+  value       = google_redis_instance.default.server_ca_certs
+}
