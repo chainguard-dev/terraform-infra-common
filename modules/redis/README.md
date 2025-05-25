@@ -160,5 +160,6 @@ limitations under the License.
 | <a name="output_rdb_snapshot_period"></a> [rdb\_snapshot\_period](#output\_rdb\_snapshot\_period) | The snapshot period for RDB persistence. |
 | <a name="output_redis_version"></a> [redis\_version](#output\_redis\_version) | The version of Redis software. |
 | <a name="output_region"></a> [region](#output\_region) | The region the instance lives in. |
+| <a name="output_server_ca_cert"></a> [server\_ca\_cert](#output\_server\_ca\_cert) | The server CA certificate for the Redis instance |
 | <a name="output_uri"></a> [uri](#output\_uri) | The connection URI to be used for accessing Redis. |
 <!-- END_TF_DOCS -->
