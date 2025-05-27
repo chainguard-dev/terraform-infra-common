@@ -307,8 +307,8 @@ func instrumentHandlerCounter(counter *prometheus.CounterVec, next http.Handler)
 			"code":                       strconv.Itoa(d.Status),
 			"ce_type":                    r.Header.Get(CeTypeHeader),
 			"user_agent_browser_name":    ua.Name,
-			"user_agent_browser_version": ua.Version,
-			"user_agent_os":              ua.OS,
+			"user_agent_browser_version": ua.VersionNoShort(),
+			"user_agent_os":              ua.OSVersionNoShort(),
 		}).Inc()
 	}
 }
