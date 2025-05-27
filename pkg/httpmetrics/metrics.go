@@ -88,7 +88,7 @@ var (
 			Name: "http_request_status",
 			Help: "The number of processed events by response code",
 		},
-		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type", "email"},
+		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type", "email", "user_agent"},
 	)
 )
 
@@ -301,9 +301,10 @@ func instrumentHandlerCounter(counter *prometheus.CounterVec, next http.Handler)
 
 		next.ServeHTTP(d, r)
 		counter.With(prometheus.Labels{
-			"method":  r.Method,
-			"code":    strconv.Itoa(d.Status),
-			"ce_type": r.Header.Get(CeTypeHeader),
+			"method":     r.Method,
+			"code":       strconv.Itoa(d.Status),
+			"ce_type":    r.Header.Get(CeTypeHeader),
+			"user_agent": r.Header.Get("User-Agent"),
 		}).Inc()
 	}
 }
