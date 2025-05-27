@@ -16,6 +16,7 @@ import (
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	gcpclog "github.com/chainguard-dev/clog/gcp"
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/mileusna/useragent"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -88,7 +89,7 @@ var (
 			Name: "http_request_status",
 			Help: "The number of processed events by response code",
 		},
-		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type", "email", "user_agent"},
+		[]string{"handler", "method", "code", "service_name", "revision_name", "ce_type", "email", "user_agent_browser_name", "user_agent_browser_version", "user_agent_os"},
 	)
 )
 
@@ -300,11 +301,14 @@ func instrumentHandlerCounter(counter *prometheus.CounterVec, next http.Handler)
 		}
 
 		next.ServeHTTP(d, r)
+		ua := useragent.Parse(r.UserAgent())
 		counter.With(prometheus.Labels{
-			"method":     r.Method,
-			"code":       strconv.Itoa(d.Status),
-			"ce_type":    r.Header.Get(CeTypeHeader),
-			"user_agent": r.Header.Get("User-Agent"),
+			"method":                     r.Method,
+			"code":                       strconv.Itoa(d.Status),
+			"ce_type":                    r.Header.Get(CeTypeHeader),
+			"user_agent_browser_name":    ua.Name,
+			"user_agent_browser_version": ua.Version,
+			"user_agent_os":              ua.OS,
 		}).Inc()
 	}
 }
