@@ -664,14 +664,14 @@ resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
       // First part of the query calculates the error rate (non-ok grpc codes / all) and the rate should be greater than var.failure_rate_ratio_threshold
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
-        (sum by (service_name)
+        (sum by (job)
            (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}", grpc_code!~"${join("|", var.grpc_non_error_codes)}"${local.promql_squad_filter}}[1m]))
          /
-         sum by (service_name)
+         sum by (job)
            (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
-        sum by (service_name)
+        sum by (job)
           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[5m]))
         > 0.0001
       EOT
