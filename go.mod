@@ -9,7 +9,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.7.0
 	cloud.google.com/go/profiler v0.4.2
 	cloud.google.com/go/pubsub v1.49.0
-	cloud.google.com/go/storage v1.54.0
+	cloud.google.com/go/storage v1.55.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.28.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.15.0
@@ -44,7 +44,7 @@ require (
 
 require (
 	cel.dev/expr v0.22.1 // indirect
-	cloud.google.com/go v0.121.0 // indirect
+	cloud.google.com/go v0.121.1 // indirect
 	cloud.google.com/go/auth v0.16.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
