@@ -1,0 +1,80 @@
+name: Generate terraform docs
+
+on:
+  pull_request:
+    branches: [ 'main' ]
+
+permissions: {}
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - authorize-private-service
+          - bucket-events
+          - cloudevent-broker
+          - cloudevent-trigger
+          - cloudevent-pull-trigger
+          - cloudevent-recorder
+          - regional-go-service
+          - regional-service
+          - serverless-gclb
+          - networking
+          - dashboard/service
+          - dashboard/job
+          - dashboard/cloudevent-receiver
+          - prober
+          - cron
+          - configmap
+          - secret
+          - github-bots
+          - github-wif-provider
+          - github-gsa
+          - github-events
+          - workqueue
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: terraform-docs/gh-actions@6de6da0cefcc6b4b7a5cbea4d79d97060733093c # v1.4.1
+        with:
+          working-dir: modules/${{ matrix.module }}
+          output-file: README.md
+          output-method: inject
+          fail-on-diff: "true"
+
+      - if: failure()
+        run: cat modules/${{ matrix.module }}/README.md
+
+  conclusion:
+    permissions:
+      actions: read
+
+    needs: docs
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          egress-policy: audit
+
+      - uses: technote-space/workflow-conclusion-action@45ce8e0eb155657ab8ccf346ade734257fd196a5 # v3.0.3
+
+      - if: ${{ env.WORKFLOW_CONCLUSION == 'success' }}
+        working-directory: /tmp
+        run: echo ${{ env.WORKFLOW_CONCLUSION }} && exit 0
+
+      - if: ${{ env.WORKFLOW_CONCLUSION == 'failure' }}
+        working-directory: /tmp
+        run: echo ${{ env.WORKFLOW_CONCLUSION }} && exit 1
