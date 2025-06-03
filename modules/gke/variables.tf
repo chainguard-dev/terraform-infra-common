@@ -67,7 +67,7 @@ variable "pools" {
     network_config = optional(object({
       enable_private_nodes = optional(bool, false)
       create_pod_range     = optional(bool, true)
-      pod_ipv4_cidr_block  = optional(string, "")
+      pod_ipv4_cidr_block  = optional(string, null)
     }), null)
   }))
 }
