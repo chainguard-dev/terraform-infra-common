@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/go-github/v71/github"
+	"github.com/google/go-github/v72/github"
 )
 
 // Docs for Check Run API: https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28
