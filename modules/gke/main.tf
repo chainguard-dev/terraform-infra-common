@@ -208,7 +208,7 @@ resource "google_container_node_pool" "pools" {
     content {
       enable_private_nodes = each.value.network_config.enable_private_nodes
       create_pod_range     = each.value.network_config.create_pod_range
-      pod_ipv4_cidr_block  = each.value.network_config.pod_ip4v_cidr_block
+      pod_ipv4_cidr_block  = each.value.network_config.pod_ipv4_cidr_block
     }
   }
 
