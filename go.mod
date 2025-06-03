@@ -23,7 +23,7 @@ require (
 	github.com/mileusna/useragent v1.3.5
 	github.com/prometheus/client_golang v1.22.0
 	github.com/sethvargo/go-envconfig v1.3.0
-	github.com/shirou/gopsutil/v4 v4.25.4
+	github.com/shirou/gopsutil/v4 v4.25.5
 	github.com/snabb/httpreaderat v1.0.1
 	go.opentelemetry.io/contrib/detectors/gcp v1.36.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0
@@ -64,7 +64,7 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
-	github.com/ebitengine/purego v0.8.2 // indirect
+	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
