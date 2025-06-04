@@ -269,6 +269,15 @@ resource "google_cloud_run_v2_service" "this" {
           "REPLACE_ME_TEAM", var.squad),
         "REPLACE_ME_PROJECT_ID", var.project_id)
       }
+
+      dynamic "resources" {
+        for_each = var.otel_resources != null ? { "" : var.otel_resources } : {}
+        content {
+          limits            = resources.value.limits
+          cpu_idle          = resources.value.cpu_idle
+          startup_cpu_boost = resources.value.startup_cpu_boost
+        }
+      }
     }
 
     dynamic "volumes" {

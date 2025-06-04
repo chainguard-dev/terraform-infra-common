@@ -240,3 +240,18 @@ variable "enable_profiler" {
   default     = false
   description = "Enable cloud profiler."
 }
+
+variable "otel_resources" {
+  type = object({
+    limits = optional(object(
+      {
+        cpu    = string
+        memory = string
+      }
+    ), null)
+    cpu_idle          = optional(bool)
+    startup_cpu_boost = optional(bool)
+  })
+  default     = null
+  description = "The resource clause for otel sidecar container."
+}
