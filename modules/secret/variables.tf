@@ -13,8 +13,22 @@ variable "authorized-adder" {
 }
 
 variable "service-account" {
-  description = "The email of the service account that will access the secret."
+  description = "(Deprecated: Use service-accounts instead) The email of the service account that will access the secret."
   type        = string
+  default = ""
+}
+
+variable "service-accounts" {
+  description = "The emails of the service accounts that will access the secret."
+  type = list(string)
+  default = []
+
+  validation {
+    # To support the legacy service-account variable, ensure that either that var is
+    # non-empty, or service-accounts is non-empty.
+    condition = var.service-account != "" || length(var.service-accounts) > 0
+    error_message = "Must provide at least one value in service-accounts"
+  }
 }
 
 variable "notification-channels" {
