@@ -114,6 +114,12 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 					if err := oip.Deadletter(ctx); err != nil {
 						return fmt.Errorf("fail(after reaching max retries) = %w", err)
 					}
+				} else if d := workqueue.GetNonRetriableDetails(err); d != nil {
+					clog.InfoContextf(ctx, "Key %q is marked as non-retriable - reason: %s, err: %v", oip.Name(), d.GetMessage(), err)
+					// If the error is marked as non-retriable, we should not requeue it.
+					if err := oip.Complete(ctx); err != nil {
+						return fmt.Errorf("complete(after non-retriable error) = %w", err)
+					}
 				} else {
 					if err := oip.Requeue(ctx); err != nil {
 						return fmt.Errorf("requeue(after failed callback) = %w", err)

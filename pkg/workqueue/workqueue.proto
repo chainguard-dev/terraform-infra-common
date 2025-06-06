@@ -20,3 +20,8 @@ message ProcessRequest {
 }
 
 message ProcessResponse {}
+
+// NoRetryDetails is a marker message that indicates that the key should not be retried.
+message NoRetryDetails {
+  string message = 1; // A message describing why the key should not be retried.
+}
