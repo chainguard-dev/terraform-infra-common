@@ -118,13 +118,16 @@ module "redis_auth_secret" {
   project_id = var.project_id
   name       = "${var.name}-auth"
 
-  service-account       = var.secret_accessor_sa_email
   authorized-adder      = var.secret_version_adder
   notification-channels = var.notification_channels
 
   # Additional viewer/editor service accounts will need to access the
   # secret to retrieve the auth string to establish a connection
-  additional-service-account-accessors = concat(var.authorized_client_service_accounts, var.authorized_client_editor_service_accounts)
+  service-accounts = concat(
+    [var.secret_accessor_sa_email],
+    var.authorized_client_service_accounts,
+    var.authorized_client_editor_service_accounts,
+  )
 
   create_placeholder_version = false
 }

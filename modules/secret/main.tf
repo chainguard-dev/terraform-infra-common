@@ -22,7 +22,7 @@ resource "google_secret_manager_secret_version" "placeholder" {
 }
 
 locals {
-  accessors = [for sa in concat([var.service-account], var.additional-service-account-accessors) : "serviceAccount:${sa}"]
+  accessors = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}"]
 }
 
 // Only the service account as which the service runs should have access to the secret.
