@@ -12,6 +12,7 @@ resource "google_dns_managed_zone" "cloud-run-internal" {
   name        = "cloud-run-internal-${random_string.suffix.result}"
   dns_name    = "run.app."
   description = "This reroutes run.app requests to private.googleapis.com"
+  labels      = var.labels
 
   visibility = "private"
 
@@ -41,6 +42,7 @@ resource "google_dns_managed_zone" "private-google-apis" {
   name        = "private-google-apis-${random_string.suffix.result}"
   dns_name    = "private.googleapis.com."
   description = "This maps DNS for private.googleapis.com"
+  labels      = var.labels
 
   visibility = "private"
 

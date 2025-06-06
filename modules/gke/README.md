@@ -36,6 +36,7 @@ No modules.
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Toggle to prevent accidental deletion of resources. | `bool` | `true` | no |
 | <a name="input_enable_private_nodes"></a> [enable\_private\_nodes](#input\_enable\_private\_nodes) | Enable private nodes by default | `bool` | `false` | no |
 | <a name="input_extra_roles"></a> [extra\_roles](#input\_extra\_roles) | Extra roles to add to the cluster's default service account | `map(string)` | `{}` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the gke resources. | `map(string)` | `{}` | no |
 | <a name="input_master_ipv4_cidr_block"></a> [master\_ipv4\_cidr\_block](#input\_master\_ipv4\_cidr\_block) | If specified, will use this CIDR block for the master's IP address | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | The network to deploy the cluster in. | `string` | n/a | yes |

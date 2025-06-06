@@ -163,9 +163,9 @@ resource "google_cloud_run_v2_job" "job" {
           // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
           args = ["--config=env:OTEL_CONFIG"]
           env {
-            name  = "OTEL_CONFIG"
+            name = "OTEL_CONFIG"
             value = replace(file("${path.module}/otel-config/config.yaml"),
-              "REPLACE_ME_PROJECT_ID", var.project_id)
+            "REPLACE_ME_PROJECT_ID", var.project_id)
           }
         }
       }

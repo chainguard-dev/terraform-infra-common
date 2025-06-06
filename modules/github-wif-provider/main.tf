@@ -34,16 +34,16 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     #   - .github/workflows/secrets.yaml@refs/heads/main
     #   - .github/workflows/secrets.yaml@refs/tags/v1.0.0
     #   - .github/workflows/secrets.yaml@refs/pull/1/merge
-    "attribute.exact"                  = "assertion.repository + '|' + assertion.ref + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.exactanyref"            = "assertion.repository + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.exactanyrefanyworkflow" = "assertion.repository"
-    "attribute.exactanyworkflow"       = "assertion.repository + '|' + assertion.ref"
-    "attribute.pullrequest"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.pullrequestanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false')"
+    "attribute.exact"                        = "assertion.repository + '|' + assertion.ref + '|' + assertion.workflow_ref.split('@')[0]"
+    "attribute.exactanyref"                  = "assertion.repository + '|' + assertion.workflow_ref.split('@')[0]"
+    "attribute.exactanyrefanyworkflow"       = "assertion.repository"
+    "attribute.exactanyworkflow"             = "assertion.repository + '|' + assertion.ref"
+    "attribute.pullrequest"                  = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
+    "attribute.pullrequestanyworkflow"       = "assertion.repository + '|' + (assertion.ref.matches('^refs/pull/[0-9]+/merge$') ? 'true' : 'false')"
     "attribute.pullrequesttarget"            = "assertion.repository + '|' + (assertion.ref == 'refs/heads/main' ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.pullrequesttargetanyworkflow" = "assertion.repository + '|' + (assertion.ref == 'refs/heads/main' ? 'true' : 'false')"
-    "attribute.versiontags"            = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.versiontagsanyworkflow" = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false')"
+    "attribute.versiontags"                  = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
+    "attribute.versiontagsanyworkflow"       = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false')"
   }
 
   attribute_condition = "assertion.repository_owner == '${var.github_org}'"

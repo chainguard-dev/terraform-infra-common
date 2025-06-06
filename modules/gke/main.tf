@@ -60,6 +60,8 @@ resource "google_container_cluster" "this" {
   remove_default_node_pool = true
   initial_node_count       = 1
 
+  resource_labels = var.labels
+
   # Use Dataplane V2 (eBPF based networking)
   datapath_provider = "ADVANCED_DATAPATH"
 
@@ -257,7 +259,7 @@ resource "google_container_node_pool" "pools" {
 
     spot            = each.value.spot
     labels          = each.value.labels
-    resource_labels = merge(local.default_labels, local.squad_label)
+    resource_labels = merge(local.default_labels, local.squad_label, var.labels)
 
     dynamic "taint" {
       for_each = each.value.taints
