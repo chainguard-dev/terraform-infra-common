@@ -33,7 +33,7 @@ locals {
     team  = var.squad
   } : {}
 
-  merged_labels = merge(local.default_labels, local.squad_label)
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
 }
 
 # Enable the Redis API

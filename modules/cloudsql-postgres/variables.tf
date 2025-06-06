@@ -8,6 +8,12 @@ variable "project" {
   type        = string
 }
 
+variable "labels" {
+  description = "The resource labels to represent user-provided metadata."
+  type        = map(string)
+  default     = {}
+}
+
 variable "region" {
   description = "GCP region for the primary instance."
   type        = string

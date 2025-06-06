@@ -144,3 +144,9 @@ variable "enable_private_nodes" {
   default     = false
   description = "Enable private nodes by default"
 }
+
+variable "labels" {
+  description = "Labels to apply to the gke resources."
+  type        = map(string)
+  default     = {}
+}

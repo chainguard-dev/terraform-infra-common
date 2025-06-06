@@ -24,3 +24,9 @@ variable "netnum_offset" {
   }
   description = "cidrsubnet netnum offset for the subnet. See https://developer.hashicorp.com/terraform/language/functions/cidrsubnet for more details"
 }
+
+variable "labels" {
+  description = "Labels to apply to the networking resources."
+  type        = map(string)
+  default     = {}
+}

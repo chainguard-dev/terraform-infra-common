@@ -73,6 +73,7 @@ No modules.
 | <a name="input_edition"></a> [edition](#input\_edition) | Cloud SQL edition for the instance. Accepted values:<br/>      • "ENTERPRISE"<br/>      • "ENTERPRISE\_PLUS" | `string` | `null` | no |
 | <a name="input_enable_high_availability"></a> [enable\_high\_availability](#input\_enable\_high\_availability) | Enable regional high‑availability (REGIONAL availability\_type). | `bool` | `false` | no |
 | <a name="input_enable_point_in_time_recovery"></a> [enable\_point\_in\_time\_recovery](#input\_enable\_point\_in\_time\_recovery) | Enable point-in-time recovery (continuous WAL archiving). | `bool` | `true` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | The resource labels to represent user-provided metadata. | `map(string)` | `{}` | no |
 | <a name="input_maintenance_window_day"></a> [maintenance\_window\_day](#input\_maintenance\_window\_day) | Day of week for maintenance window (1=Mon … 7=Sun, 0 for unspecified). | `number` | `7` | no |
 | <a name="input_maintenance_window_hour"></a> [maintenance\_window\_hour](#input\_maintenance\_window\_hour) | Hour (0‑23 UTC) for the maintenance window. | `number` | `5` | no |
 | <a name="input_name"></a> [name](#input\_name) | Cloud SQL instance name (lowercase letters, numbers, and hyphens; up to 98 characters). | `string` | n/a | yes |
