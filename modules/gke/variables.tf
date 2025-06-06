@@ -150,3 +150,12 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+variable "resource_usage_export_config" {
+  description = "Config for exporting resource usage."
+  type = object({
+    bigquery_dataset_id                  = optional(string, "")
+    enable_network_egress_metering       = optional(bool, false)
+    enable_resource_consumption_metering = optional(bool, true)
+  })
+}

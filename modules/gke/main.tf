@@ -34,12 +34,12 @@ resource "google_project_iam_member" "cluster" {
 
 locals {
   default_labels = {
-    "gke" : var.name
+    "gke" = var.name
   }
 
   squad_label = {
-    "squad" : var.squad
-    "team" : var.squad
+    "squad" = var.squad
+    "team"  = var.squad
   }
 }
 
@@ -180,6 +180,18 @@ resource "google_container_cluster" "this" {
   # This can't hurt... right?
   cost_management_config {
     enabled = true
+  }
+
+  dynamic "resource_usage_export_config" {
+    for_each = var.resource_usage_export_config.bigquery_dataset_id == "" ? [] : ["placeholder"]
+
+    content {
+      enable_network_egress_metering       = var.resource_usage_export_config.enable_network_egress_metering
+      enable_resource_consumption_metering = var.resource_usage_export_config.enable_resource_consumption_metering
+      bigquery_destination {
+        dataset_id = var.resource_usage_export_config.bigquery_dataset_id
+      }
+    }
   }
 
   timeouts {
