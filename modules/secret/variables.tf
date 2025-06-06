@@ -17,6 +17,12 @@ variable "service-account" {
   type        = string
 }
 
+variable "additional-service-account-accessors" {
+  description = "Additional service accounts that will need to access the secret."
+  type = list(string)
+  default = []
+}
+
 variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)

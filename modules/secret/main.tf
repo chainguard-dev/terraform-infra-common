@@ -21,11 +21,15 @@ resource "google_secret_manager_secret_version" "placeholder" {
   }
 }
 
+locals {
+  accessors = [for sa in concat([var.service-account], var.additional-service-account-accessors) : "serviceAccount:${sa}"]
+}
+
 // Only the service account as which the service runs should have access to the secret.
 resource "google_secret_manager_secret_iam_binding" "authorize-service-access" {
   secret_id = google_secret_manager_secret.this.id
   role      = "roles/secretmanager.secretAccessor"
-  members   = ["serviceAccount:${var.service-account}"]
+  members   = local.accessors
 }
 
 // Authorize the specified identity to add new secret values.
