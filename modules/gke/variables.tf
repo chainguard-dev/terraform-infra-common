@@ -158,4 +158,5 @@ variable "resource_usage_export_config" {
     enable_network_egress_metering       = optional(bool, false)
     enable_resource_consumption_metering = optional(bool, true)
   })
+  default = {}
 }
