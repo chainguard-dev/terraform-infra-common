@@ -41,6 +41,29 @@ resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter"
   members = ["serviceAccount:${google_project_service_identity.pubsub.email}"]
 }
 
+resource "google_storage_bucket" "dlq_bucket" {
+  count = var.enable_dlq_bucket == false ? 0 : 1
+  name     = "${var.name}-dlq-bucket-${random_string.suffix.result}"
+  location = var.region
+
+  uniform_bucket_level_access = true
+}
+
+// Allow the subscription to publish to the dead letter bucket
+resource "google_storage_bucket_iam_binding" "binding_dlq_bucket" {
+  count = var.enable_dlq_bucket == false ? 0 : 1
+
+  bucket =google_storage_bucket.dlq_bucket[count.index].name
+  role   = "roles/storage.admin"
+  members = [
+    "serviceAccount:${google_project_service_identity.pubsub.email}"
+  ]
+
+  depends_on = [
+    google_storage_bucket.dlq_bucket,
+  ]
+}
+
 // Create a subscription to the dead-letter topic so dead-lettered messages
 // are retained. This also allows us to alerts based on better metrics
 // like the age or count of dead-lettered messages.
@@ -48,12 +71,21 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   name                       = google_pubsub_topic.dead-letter.name
   topic                      = google_pubsub_topic.dead-letter.name
   message_retention_duration = "86400s"
+  enable_message_ordering = true
 
   expiration_policy {
     ttl = "86400s"
   }
 
-  enable_message_ordering = true
+  dynamic "cloud_storage_config" {
+    for_each = var.enable_dlq_bucket == false ? [] : [1]
+    content {
+      bucket = google_storage_bucket.dlq_bucket.name
+
+      max_duration = "300s" # 5 minutes
+      max_messages = 1000
+    }
+  }
 }
 
 // Configure the subscription to the broker topic with the appropriate filter.
