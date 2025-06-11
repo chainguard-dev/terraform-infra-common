@@ -26,6 +26,9 @@ processors:
       - action: insert
         key: team
         value: "REPLACE_ME_TEAM"
+      - action: insert
+        key: service
+        value: "REPLACE_ME_SERVICE"
 
   batch:
     # batch metrics before sending to reduce API usage
