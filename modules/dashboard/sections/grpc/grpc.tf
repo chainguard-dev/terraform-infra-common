@@ -21,6 +21,7 @@ module "request_count" {
   title  = "Request count"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
+    "resource.type=\"prometheus_target\"",
     "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
@@ -52,6 +53,7 @@ module "incoming_latency" {
   title  = "Incoming request latency"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handling_seconds/histogram\"",
+    "resource.type=\"prometheus_target\"",
     "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
@@ -65,6 +67,7 @@ module "outbound_request_count" {
   title  = "Outbound request count"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_client_handled_total/counter\"",
+    "resource.type=\"prometheus_target\"",
     "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
@@ -81,6 +84,7 @@ module "outbound_latency" {
   title  = "Outbound request latency"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_client_handling_seconds/histogram\"",
+    "resource.type=\"prometheus_target\"",
     "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
