@@ -13,7 +13,7 @@ module "logs" {
 module "http" {
   source       = "../dashboard/sections/http"
   title        = "HTTP"
-  filter       = ["resource.type=\"cloud_run_revision\""]
+  filter       = []
   service_name = var.name
 }
 

@@ -14,7 +14,7 @@ module "logs" {
 module "http" {
   source       = "../sections/http"
   title        = "HTTP"
-  filter       = ["resource.type=\"cloud_run_revision\""]
+  filter       = []
   service_name = var.service_name
 }
 

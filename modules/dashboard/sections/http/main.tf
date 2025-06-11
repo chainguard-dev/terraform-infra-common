@@ -21,7 +21,7 @@ module "failure_rate" {
 
   common_filter = concat(var.filter, [
     "metric.type=\"run.googleapis.com/request_count\"",
-    "resource.type=\"prometheus_target\"",
+    "resource.type=\"cloud_run_revision\"",
     "resource.label.\"service_name\"=\"${var.service_name}\"",
   ])
   numerator_additional_filter = ["metric.label.\"response_code_class\"=\"5xx\""]
@@ -30,7 +30,7 @@ module "failure_rate" {
 module "incoming_latency" {
   source = "../../widgets/latency"
   title  = "Incoming request latency"
-  filter = concat(var.filter, ["metric.type=\"run.googleapis.com/request_latencies\""])
+  filter = concat(var.filter, ["resource.type=\"cloud_run_revision\"", "metric.type=\"run.googleapis.com/request_latencies\""])
 }
 
 locals {
