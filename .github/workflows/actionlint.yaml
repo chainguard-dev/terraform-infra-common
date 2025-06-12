@@ -7,11 +7,15 @@ on:
   pull_request:
     branches: [ 'main', 'release-*' ]
 
+permissions: {}
+
 jobs:
 
   action-lint:
     name: Action lint
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
 
     steps:
       - name: Harden Runner
