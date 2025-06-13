@@ -684,7 +684,7 @@ resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${metric.label.team}: $${metric.label.job} had grpc failure rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
+    subject = "$${metric.label.team}: $${resource.label.job} had grpc failure rate above ${var.failure_rate_ratio_threshold} for ${var.failure_rate_duration}s"
 
     content = <<-EOT
     Please consult the playbook entry [here](https://wiki.inky.wtf/docs/teams/engineering/enforce/playbooks/5xx/) for troubleshooting information.
