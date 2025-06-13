@@ -22,7 +22,8 @@ resource "google_secret_manager_secret_version" "placeholder" {
 }
 
 locals {
-  accessors = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != ""]
+  accessors       = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != ""]
+  accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : sa if sa != ""]
 }
 
 // Only the service account as which the service runs should have access to the secret.
@@ -71,7 +72,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
 
       -- Ignore the identity that is intended to access this.
       -(
-        protoPayload.authenticationInfo.principalEmail="${var.service-account}"
+        protoPayload.authenticationInfo.principalEmail=~"${join("|", local.accessor_emails)}"
         protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
       )
       EOT
