@@ -37,6 +37,7 @@ jobs:
           - github-wif-provider
           - github-gsa
           - github-events
+          - github-workqueue
           - workqueue
 
     steps:
