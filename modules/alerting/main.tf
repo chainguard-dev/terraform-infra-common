@@ -504,14 +504,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       // First part of the query calculates the error rate (non-503 5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
-        (sum by (service_name)
+        (sum by (team, service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
-         sum by (service_name)
+         sum by (team, service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
-        sum by (service_name)
+        sum by (team, service_name)
           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
         > 0.0001
       EOT
@@ -556,14 +556,14 @@ resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing
       // First part of the query calculates the error rate (503 / all) and the rate should be greater than var.failure_rate_ratio_threshold
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
-        (sum by (service_name)
+        (sum by (team, service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
-         sum by (service_name)
+         sum by (team, service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
-        sum by (service_name)
+        sum by (team, service_name)
           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
         > 0.0001
       EOT
@@ -608,14 +608,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
       // First part of the query calculates the error rate (5xx / all) and the rate should be greater than var.failure_rate_ratio_threshold
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
-        (sum by (service_name)
+        (sum by (team, service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
          /
-         sum by (service_name)
+         sum by (team, service_name)
            (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
-        sum by (service_name)
+        sum by (team, service_name)
           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
         > 0.0001
       EOT
