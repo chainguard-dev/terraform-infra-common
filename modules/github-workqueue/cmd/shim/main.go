@@ -56,8 +56,15 @@ func main() {
 	}
 	defer queueClient.Close()
 
-	// GitHub webhook handler
-	http.HandleFunc("/webhook", webhookHandler(logger, queueClient, cfg))
+	// Create webhook handler
+	handler := &webhookHandler{
+		logger:      logger,
+		queueClient: queueClient,
+		cfg:         cfg,
+	}
+
+	// Set up HTTP routes
+	http.HandleFunc("/webhook", handler.handleWebhook)
 
 	// Health check endpoint
 	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
@@ -83,78 +90,94 @@ func main() {
 	}
 }
 
-func webhookHandler(logger *clog.Logger, queueClient workqueue.Client, cfg Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		logger.With(
-			"method", r.Method,
-			"path", r.URL.Path,
-			"remote", r.RemoteAddr,
-		).Debug("Received webhook request")
+type webhookHandler struct {
+	logger      *clog.Logger
+	queueClient workqueue.Client
+	cfg         Config
+}
 
-		if r.Method != http.MethodPost {
-			logger.With("method", r.Method).Error("Invalid HTTP method for webhook")
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+func (h *webhookHandler) handleWebhook(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := h.logger.With(
+		"method", r.Method,
+		"path", r.URL.Path,
+		"remote", r.RemoteAddr,
+	)
 
-		// Get the event type
-		eventType := github.WebHookType(r)
-		if eventType == "" {
-			logger.Error("Missing X-GitHub-Event header")
-			http.Error(w, "Missing event type", http.StatusBadRequest)
-			return
-		}
+	logger.Debug("Received webhook request")
 
-		logger.With("event_type", eventType).Info("Processing GitHub event")
+	if r.Method != http.MethodPost {
+		logger.With("method", r.Method).Error("Invalid HTTP method for webhook")
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-		// Validate payload and parse the webhook event
-		payload, err := github.ValidatePayload(r, []byte(cfg.WebhookSecret))
-		if err != nil {
-			logger.Errorf("Failed to validate webhook signature: %v", err)
-			http.Error(w, "Invalid signature", http.StatusUnauthorized)
-			return
-		}
+	// Get the event type
+	eventType := github.WebHookType(r)
+	if eventType == "" {
+		logger.Error("Missing X-GitHub-Event header")
+		http.Error(w, "Missing event type", http.StatusBadRequest)
+		return
+	}
 
-		// Parse the webhook event
-		event, err := github.ParseWebHook(eventType, payload)
-		if err != nil {
-			logger.Errorf("Failed to parse webhook: %v", err)
-			http.Error(w, "Failed to parse webhook", http.StatusBadRequest)
-			return
-		}
+	logger.With("event_type", eventType).Info("Processing GitHub event")
 
-		// Extract resource URL from event
-		key := extractResourceURL(event, cfg.ResourceFilter, logger)
+	// Validate payload and parse the webhook event
+	payload, err := github.ValidatePayload(r, []byte(h.cfg.WebhookSecret))
+	if err != nil {
+		logger.Errorf("Failed to validate webhook signature: %v", err)
+		http.Error(w, "Invalid signature", http.StatusUnauthorized)
+		return
+	}
 
-		// Queue the work item if we have a key
-		if key != "" {
-			_, err := queueClient.Process(r.Context(), &workqueue.ProcessRequest{
-				Key:      key,
-				Priority: 0, // Default priority
-			})
-			if err != nil {
-				logger.With("key", key).Errorf("Failed to queue work item: %v", err)
-				http.Error(w, "Failed to queue work item", http.StatusInternalServerError)
-				return
-			}
+	// Parse the webhook event
+	event, err := github.ParseWebHook(eventType, payload)
+	if err != nil {
+		logger.Errorf("Failed to parse webhook: %v", err)
+		http.Error(w, "Failed to parse webhook", http.StatusBadRequest)
+		return
+	}
 
-			logger.With("key", key).Info("Successfully queued work item from webhook")
-		}
-
-		// Always return 200 OK for webhooks
+	// Extract resource URL
+	resourceURL := h.extractResourceURL(event, logger)
+	if resourceURL == "" {
+		// Event filtered or not supported
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write([]byte("OK")); err != nil {
 			logger.Errorf("Failed to write response: %v", err)
 		}
+		return
+	}
+
+	// Note: Rate limiting could be added here if needed
+	// For now, we rely on GitHub's webhook delivery rate limiting
+
+	// Queue the work item
+	_, err = h.queueClient.Process(ctx, &workqueue.ProcessRequest{
+		Key:      resourceURL,
+		Priority: 0, // Default priority
+	})
+	if err != nil {
+		logger.With("key", resourceURL).Errorf("Failed to queue work item: %v", err)
+		http.Error(w, "Failed to queue work item", http.StatusInternalServerError)
+		return
+	}
+
+	logger.With("key", resourceURL).Info("Successfully queued work item from webhook")
+
+	// Always return 200 OK for webhooks
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		logger.Errorf("Failed to write response: %v", err)
 	}
 }
 
 // extractResourceURL extracts the resource URL from various GitHub webhook events
-func extractResourceURL(event interface{}, resourceFilter string, logger *clog.Logger) string {
+func (h *webhookHandler) extractResourceURL(event interface{}, logger *clog.Logger) string {
 	switch e := event.(type) {
 	case *github.IssuesEvent:
-		if resourceFilter != "" && resourceFilter != "issues" {
-			logger.With("resource_filter", resourceFilter).Debug("Ignoring issues event due to resource filter")
+		if h.cfg.ResourceFilter != "" && h.cfg.ResourceFilter != "issues" {
+			logger.With("resource_filter", h.cfg.ResourceFilter).Debug("Ignoring issues event due to resource filter")
 			return ""
 		}
 		return fmt.Sprintf("https://github.com/%s/%s/issues/%d",
@@ -164,9 +187,9 @@ func extractResourceURL(event interface{}, resourceFilter string, logger *clog.L
 
 	case *github.IssueCommentEvent:
 		isPR := e.GetIssue().IsPullRequest()
-		if resourceFilter != "" {
-			if (isPR && resourceFilter != "pull_requests") || (!isPR && resourceFilter != "issues") {
-				logger.With("resource_filter", resourceFilter, "is_pr", isPR).Debug("Ignoring comment event due to resource filter")
+		if h.cfg.ResourceFilter != "" {
+			if (isPR && h.cfg.ResourceFilter != "pull_requests") || (!isPR && h.cfg.ResourceFilter != "issues") {
+				logger.With("resource_filter", h.cfg.ResourceFilter, "is_pr", isPR).Debug("Ignoring comment event due to resource filter")
 				return ""
 			}
 		}
@@ -181,8 +204,8 @@ func extractResourceURL(event interface{}, resourceFilter string, logger *clog.L
 			e.GetIssue().GetNumber())
 
 	case *github.PullRequestEvent:
-		if resourceFilter != "" && resourceFilter != "pull_requests" {
-			logger.With("resource_filter", resourceFilter).Debug("Ignoring pull request event due to resource filter")
+		if h.cfg.ResourceFilter != "" && h.cfg.ResourceFilter != "pull_requests" {
+			logger.With("resource_filter", h.cfg.ResourceFilter).Debug("Ignoring pull request event due to resource filter")
 			return ""
 		}
 		return fmt.Sprintf("https://github.com/%s/%s/pull/%d",
@@ -191,8 +214,8 @@ func extractResourceURL(event interface{}, resourceFilter string, logger *clog.L
 			e.GetPullRequest().GetNumber())
 
 	case *github.PullRequestReviewEvent:
-		if resourceFilter != "" && resourceFilter != "pull_requests" {
-			logger.With("resource_filter", resourceFilter).Debug("Ignoring pull request review event due to resource filter")
+		if h.cfg.ResourceFilter != "" && h.cfg.ResourceFilter != "pull_requests" {
+			logger.With("resource_filter", h.cfg.ResourceFilter).Debug("Ignoring pull request review event due to resource filter")
 			return ""
 		}
 		return fmt.Sprintf("https://github.com/%s/%s/pull/%d",
@@ -201,8 +224,8 @@ func extractResourceURL(event interface{}, resourceFilter string, logger *clog.L
 			e.GetPullRequest().GetNumber())
 
 	case *github.PullRequestReviewCommentEvent:
-		if resourceFilter != "" && resourceFilter != "pull_requests" {
-			logger.With("resource_filter", resourceFilter).Debug("Ignoring pull request review comment event due to resource filter")
+		if h.cfg.ResourceFilter != "" && h.cfg.ResourceFilter != "pull_requests" {
+			logger.With("resource_filter", h.cfg.ResourceFilter).Debug("Ignoring pull request review comment event due to resource filter")
 			return ""
 		}
 		return fmt.Sprintf("https://github.com/%s/%s/pull/%d",
@@ -211,8 +234,8 @@ func extractResourceURL(event interface{}, resourceFilter string, logger *clog.L
 			e.GetPullRequest().GetNumber())
 
 	case *github.CheckRunEvent:
-		if resourceFilter != "" && resourceFilter != "pull_requests" {
-			logger.With("resource_filter", resourceFilter).Debug("Ignoring check run event due to resource filter")
+		if h.cfg.ResourceFilter != "" && h.cfg.ResourceFilter != "pull_requests" {
+			logger.With("resource_filter", h.cfg.ResourceFilter).Debug("Ignoring check run event due to resource filter")
 			return ""
 		}
 		if len(e.GetCheckRun().PullRequests) > 0 {
@@ -224,8 +247,8 @@ func extractResourceURL(event interface{}, resourceFilter string, logger *clog.L
 		return ""
 
 	case *github.CheckSuiteEvent:
-		if resourceFilter != "" && resourceFilter != "pull_requests" {
-			logger.With("resource_filter", resourceFilter).Debug("Ignoring check suite event due to resource filter")
+		if h.cfg.ResourceFilter != "" && h.cfg.ResourceFilter != "pull_requests" {
+			logger.With("resource_filter", h.cfg.ResourceFilter).Debug("Ignoring check suite event due to resource filter")
 			return ""
 		}
 		if len(e.GetCheckSuite().PullRequests) > 0 {

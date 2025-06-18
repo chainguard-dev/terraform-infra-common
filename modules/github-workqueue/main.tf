@@ -39,6 +39,9 @@ module "shim" {
   service_account       = google_service_account.shim.email
   notification_channels = var.notification_channels
 
+  squad         = var.squad
+  require_squad = var.require_squad
+
   # Only allow traffic from load balancers (GCLB)
   ingress = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 
