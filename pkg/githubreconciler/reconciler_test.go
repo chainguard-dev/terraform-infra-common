@@ -183,9 +183,10 @@ func TestReconciler_Reconcile(t *testing.T) {
 			if r.reconcileFunc != nil {
 				origFunc := r.reconcileFunc
 				r.reconcileFunc = func(_ context.Context, res *Resource, gh *github.Client) error {
-					if res.Type == ResourceTypeIssue {
+					switch res.Type {
+					case ResourceTypeIssue:
 						issueCalled = true
-					} else if res.Type == ResourceTypePullRequest {
+					case ResourceTypePullRequest:
 						prCalled = true
 					}
 					return origFunc(ctx, res, gh)
