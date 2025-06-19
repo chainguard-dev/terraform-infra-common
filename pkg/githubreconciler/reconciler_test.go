@@ -48,38 +48,40 @@ func TestNewReconciler(t *testing.T) {
 		t.Error("Expected custom state manager to be used")
 	}
 
-	// Test with reconciler functions
-	var issueCalled, prCalled bool
-	issueFunc := func(_ context.Context, _ *Resource, _ *github.Client) error {
-		issueCalled = true
+	// Test with reconciler function
+	var reconcileCalled bool
+	var calledResourceType ResourceType
+	reconcileFunc := func(_ context.Context, res *Resource, _ *github.Client) error {
+		reconcileCalled = true
+		calledResourceType = res.Type
 		return nil
 	}
 
-	prFunc := func(_ context.Context, _ *Resource, _ *github.Client) error {
-		prCalled = true
-		return nil
+	r3 := NewReconciler(cc, WithReconciler(reconcileFunc))
+	if r3.reconcileFunc == nil {
+		t.Error("Expected reconciler to be set")
 	}
 
-	r3 := NewReconciler(cc, WithIssueReconciler(issueFunc), WithPullRequestReconciler(prFunc))
-	if r3.issueFunc == nil {
-		t.Error("Expected issue reconciler to be set")
-	}
-	if r3.prFunc == nil {
-		t.Error("Expected PR reconciler to be set")
-	}
-
-	// Test that the functions are actually the ones we provided
+	// Test that the function is actually the one we provided
 	ctx := context.Background()
-	testResource := &Resource{Owner: "test", Repo: "test", Number: 1, Type: ResourceTypeIssue}
+	testIssueResource := &Resource{Owner: "test", Repo: "test", Number: 1, Type: ResourceTypeIssue}
+	testPRResource := &Resource{Owner: "test", Repo: "test", Number: 2, Type: ResourceTypePullRequest}
 
-	r3.issueFunc(ctx, testResource, nil)
-	if !issueCalled {
-		t.Error("Expected issue function to be called")
+	r3.reconcileFunc(ctx, testIssueResource, nil)
+	if !reconcileCalled {
+		t.Error("Expected reconcile function to be called")
+	}
+	if calledResourceType != ResourceTypeIssue {
+		t.Errorf("Expected resource type to be issue, got %s", calledResourceType)
 	}
 
-	r3.prFunc(ctx, testResource, nil)
-	if !prCalled {
-		t.Error("Expected PR function to be called")
+	reconcileCalled = false
+	r3.reconcileFunc(ctx, testPRResource, nil)
+	if !reconcileCalled {
+		t.Error("Expected reconcile function to be called")
+	}
+	if calledResourceType != ResourceTypePullRequest {
+		t.Errorf("Expected resource type to be pull_request, got %s", calledResourceType)
 	}
 }
 
@@ -98,8 +100,8 @@ func TestReconciler_Reconcile(t *testing.T) {
 			name: "reconcile issue successfully",
 			url:  "https://github.com/owner/repo/issues/123",
 			setupReconciler: func(r *Reconciler) {
-				r.issueFunc = func(_ context.Context, res *Resource, _ *github.Client) error {
-					if res.Owner != "owner" || res.Repo != "repo" || res.Number != 123 {
+				r.reconcileFunc = func(_ context.Context, res *Resource, _ *github.Client) error {
+					if res.Owner != "owner" || res.Repo != "repo" || res.Number != 123 || res.Type != ResourceTypeIssue {
 						return fmt.Errorf("unexpected resource: %+v", res)
 					}
 					return nil
@@ -111,8 +113,8 @@ func TestReconciler_Reconcile(t *testing.T) {
 			name: "reconcile PR successfully",
 			url:  "https://github.com/owner/repo/pull/456",
 			setupReconciler: func(r *Reconciler) {
-				r.prFunc = func(_ context.Context, res *Resource, _ *github.Client) error {
-					if res.Owner != "owner" || res.Repo != "repo" || res.Number != 456 {
+				r.reconcileFunc = func(_ context.Context, res *Resource, _ *github.Client) error {
+					if res.Owner != "owner" || res.Repo != "repo" || res.Number != 456 || res.Type != ResourceTypePullRequest {
 						return fmt.Errorf("unexpected resource: %+v", res)
 					}
 					return nil
@@ -128,24 +130,17 @@ func TestReconciler_Reconcile(t *testing.T) {
 			wantErrContains: "parsing URL",
 		},
 		{
-			name:            "no issue reconciler configured",
+			name:            "no reconciler configured",
 			url:             "https://github.com/owner/repo/issues/123",
 			setupReconciler: func(_ *Reconciler) {},
 			wantErr:         true,
-			wantErrContains: "no reconciler configured for issue",
-		},
-		{
-			name:            "no PR reconciler configured",
-			url:             "https://github.com/owner/repo/pull/456",
-			setupReconciler: func(_ *Reconciler) {},
-			wantErr:         true,
-			wantErrContains: "no reconciler configured for pull_request",
+			wantErrContains: "no reconciler configured",
 		},
 		{
 			name: "reconciler returns error",
 			url:  "https://github.com/owner/repo/issues/123",
 			setupReconciler: func(r *Reconciler) {
-				r.issueFunc = func(_ context.Context, _ *Resource, _ *github.Client) error {
+				r.reconcileFunc = func(_ context.Context, _ *Resource, _ *github.Client) error {
 					return errors.New("reconciler error")
 				}
 			},
@@ -181,39 +176,18 @@ func TestReconciler_Reconcile(t *testing.T) {
 
 			r := NewReconciler(cc)
 
-			// Wrap functions to track calls
-			if r.issueFunc != nil {
-				origFunc := r.issueFunc
-				r.issueFunc = func(_ context.Context, res *Resource, gh *github.Client) error {
-					issueCalled = true
-					return origFunc(ctx, res, gh)
-				}
-			}
-
-			if r.prFunc != nil {
-				origFunc := r.prFunc
-				r.prFunc = func(_ context.Context, res *Resource, gh *github.Client) error {
-					prCalled = true
-					return origFunc(ctx, res, gh)
-				}
-			}
-
 			// Apply test-specific setup
 			tt.setupReconciler(r)
 
-			// If the test setup added functions, wrap them too
-			if r.issueFunc != nil && !issueCalled {
-				origFunc := r.issueFunc
-				r.issueFunc = func(_ context.Context, res *Resource, gh *github.Client) error {
-					issueCalled = true
-					return origFunc(ctx, res, gh)
-				}
-			}
-
-			if r.prFunc != nil && !prCalled {
-				origFunc := r.prFunc
-				r.prFunc = func(_ context.Context, res *Resource, gh *github.Client) error {
-					prCalled = true
+			// Wrap function to track calls
+			if r.reconcileFunc != nil {
+				origFunc := r.reconcileFunc
+				r.reconcileFunc = func(_ context.Context, res *Resource, gh *github.Client) error {
+					if res.Type == ResourceTypeIssue {
+						issueCalled = true
+					} else if res.Type == ResourceTypePullRequest {
+						prCalled = true
+					}
 					return origFunc(ctx, res, gh)
 				}
 			}
