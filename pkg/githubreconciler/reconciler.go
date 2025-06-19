@@ -53,11 +53,8 @@ func (r *Resource) String() string {
 
 // Reconciler manages the reconciliation of GitHub resources.
 type Reconciler struct {
-	// issueFunc is the reconciler for issues.
-	issueFunc ReconcilerFunc
-
-	// prFunc is the reconciler for pull requests.
-	prFunc ReconcilerFunc
+	// reconcileFunc is the reconciler for all resource types.
+	reconcileFunc ReconcilerFunc
 
 	// clientCache manages GitHub API clients per repository.
 	clientCache *ClientCache
@@ -69,17 +66,10 @@ type Reconciler struct {
 // Option configures a Reconciler.
 type Option func(*Reconciler)
 
-// WithIssueReconciler sets the reconciler function for issues.
-func WithIssueReconciler(f ReconcilerFunc) Option {
+// WithReconciler sets the reconciler function for all resource types.
+func WithReconciler(f ReconcilerFunc) Option {
 	return func(r *Reconciler) {
-		r.issueFunc = f
-	}
-}
-
-// WithPullRequestReconciler sets the reconciler function for pull requests.
-func WithPullRequestReconciler(f ReconcilerFunc) Option {
-	return func(r *Reconciler) {
-		r.prFunc = f
+		r.reconcileFunc = f
 	}
 }
 
@@ -122,23 +112,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 		return fmt.Errorf("getting GitHub client: %w", err)
 	}
 
-	// Route to the appropriate reconciler
-	var reconcileFunc ReconcilerFunc
-	switch resource.Type {
-	case ResourceTypeIssue:
-		reconcileFunc = r.issueFunc
-	case ResourceTypePullRequest:
-		reconcileFunc = r.prFunc
-	default:
-		return fmt.Errorf("unknown resource type: %s", resource.Type)
-	}
-
-	if reconcileFunc == nil {
-		return fmt.Errorf("no reconciler configured for %s", resource.Type)
+	if r.reconcileFunc == nil {
+		return fmt.Errorf("no reconciler configured")
 	}
 
 	// Execute the reconciliation
-	return reconcileFunc(ctx, resource, client)
+	return r.reconcileFunc(ctx, resource, client)
 }
 
 // GetStateManager returns the state manager for accessing state operations.
