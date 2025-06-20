@@ -141,6 +141,9 @@ output "recorder-schemas" {
     "dev.chainguard.github.issues" : {
       schema = file("${path.module}/schemas/issues.schema.json")
     }
+    "dev.chainguard.github.push" : {
+      schema = file("${path.module}/schemas/push.schema.json")
+    }
     "dev.chainguard.github.check_run" : {
       schema = file("${path.module}/schemas/check_run.schema.json")
     }
@@ -149,6 +152,12 @@ output "recorder-schemas" {
     }
     "dev.chainguard.github.projects_v2_item" : {
       schema = file("${path.module}/schemas/projects_v2_item.schema.json")
+    }
+    "dev.chainguard.github.pull_request_review" : {
+      schema = file("${path.module}/schemas/pull_request_review.schema.json")
+    }
+    "dev.chainguard.github.pull_request_review_comment" : {
+      schema = file("${path.module}/schemas/pull_request_review_comment.schema.json")
     }
   }
 }

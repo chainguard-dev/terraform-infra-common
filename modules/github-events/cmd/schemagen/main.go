@@ -29,6 +29,8 @@ func main() {
 	mustGenerate("check_run.schema.json", schemas.Wrapper[schemas.CheckRunEvent]{})
 	mustGenerate("check_suite.schema.json", schemas.Wrapper[schemas.CheckSuiteEvent]{})
 	mustGenerate("projects_v2_item.schema.json", schemas.Wrapper[schemas.ProjectsV2ItemEvent]{})
+	mustGenerate("pull_request_review.schema.json", schemas.Wrapper[schemas.PullRequestReviewEvent]{})
+	mustGenerate("pull_request_review_comment.schema.json", schemas.Wrapper[schemas.PullRequestReviewCommentEvent]{})
 }
 
 func mustGenerate[T any](path string, w schemas.Wrapper[T]) {

@@ -321,3 +321,67 @@ type ProjectsV2ItemEvent struct {
 	Sender        *User               `json:"sender,omitempty" bigquery:"sender"`
 	Installation  *Installation       `json:"installation,omitempty" bigquery:"installation"`
 }
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestReview
+type PullRequestReview struct {
+	ID                bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	NodeID            bigquery.NullString    `json:"node_id,omitempty" bigquery:"node_id"`
+	User              User                   `json:"user,omitempty" bigquery:"user"`
+	Body              bigquery.NullString    `json:"body,omitempty" bigquery:"body"`
+	State             bigquery.NullString    `json:"state,omitempty" bigquery:"state"`
+	HTMLURL           bigquery.NullString    `json:"html_url,omitempty" bigquery:"html_url"`
+	PullRequestURL    bigquery.NullString    `json:"pull_request_url,omitempty" bigquery:"pull_request_url"`
+	SubmittedAt       bigquery.NullTimestamp `json:"submitted_at,omitempty" bigquery:"submitted_at"`
+	CommitID          bigquery.NullString    `json:"commit_id,omitempty" bigquery:"commit_id"`
+	AuthorAssociation bigquery.NullString    `json:"author_association,omitempty" bigquery:"author_association"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestReviewEvent
+type PullRequestReviewEvent struct {
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	Review       PullRequestReview   `json:"review,omitempty" bigquery:"review"`
+	PullRequest  PullRequest         `json:"pull_request,omitempty" bigquery:"pull_request"`
+	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Installation *Installation       `json:"installation,omitempty" bigquery:"installation"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestComment
+type PullRequestReviewComment struct {
+	ID                  bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	NodeID              bigquery.NullString    `json:"node_id,omitempty" bigquery:"node_id"`
+	InReplyTo           bigquery.NullInt64     `json:"in_reply_to_id,omitempty" bigquery:"in_reply_to_id"`
+	Body                bigquery.NullString    `json:"body,omitempty" bigquery:"body"`
+	Path                bigquery.NullString    `json:"path,omitempty" bigquery:"path"`
+	DiffHunk            bigquery.NullString    `json:"diff_hunk,omitempty" bigquery:"diff_hunk"`
+	PullRequestReviewID bigquery.NullInt64     `json:"pull_request_review_id,omitempty" bigquery:"pull_request_review_id"`
+	Position            bigquery.NullInt64     `json:"position,omitempty" bigquery:"position"`
+	OriginalPosition    bigquery.NullInt64     `json:"original_position,omitempty" bigquery:"original_position"`
+	StartLine           bigquery.NullInt64     `json:"start_line,omitempty" bigquery:"start_line"`
+	Line                bigquery.NullInt64     `json:"line,omitempty" bigquery:"line"`
+	OriginalLine        bigquery.NullInt64     `json:"original_line,omitempty" bigquery:"original_line"`
+	OriginalStartLine   bigquery.NullInt64     `json:"original_start_line,omitempty" bigquery:"original_start_line"`
+	Side                bigquery.NullString    `json:"side,omitempty" bigquery:"side"`
+	StartSide           bigquery.NullString    `json:"start_side,omitempty" bigquery:"start_side"`
+	CommitID            bigquery.NullString    `json:"commit_id,omitempty" bigquery:"commit_id"`
+	OriginalCommitID    bigquery.NullString    `json:"original_commit_id,omitempty" bigquery:"original_commit_id"`
+	User                User                   `json:"user,omitempty" bigquery:"user"`
+	CreatedAt           bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt           bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
+	AuthorAssociation   bigquery.NullString    `json:"author_association,omitempty" bigquery:"author_association"`
+	URL                 bigquery.NullString    `json:"url,omitempty" bigquery:"url"`
+	HTMLURL             bigquery.NullString    `json:"html_url,omitempty" bigquery:"html_url"`
+	PullRequestURL      bigquery.NullString    `json:"pull_request_url,omitempty" bigquery:"pull_request_url"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#PullRequestReviewCommentEvent
+type PullRequestReviewCommentEvent struct {
+	Action       bigquery.NullString      `json:"action,omitempty" bigquery:"action"`
+	Comment      PullRequestReviewComment `json:"comment,omitempty" bigquery:"comment"`
+	PullRequest  PullRequest              `json:"pull_request,omitempty" bigquery:"pull_request"`
+	Repository   Repository               `json:"repository,omitempty" bigquery:"repository"`
+	Organization Organization             `json:"organization,omitempty" bigquery:"organization"`
+	Sender       User                     `json:"sender,omitempty" bigquery:"sender"`
+	Installation *Installation            `json:"installation,omitempty" bigquery:"installation"`
+}
