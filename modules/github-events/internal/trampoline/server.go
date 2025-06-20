@@ -23,13 +23,38 @@ type PayloadInfo struct {
 	Number     int    `json:"number,omitempty"`
 	Repository struct {
 		FullName string `json:"full_name,omitempty"`
+		Owner    struct {
+			Login string `json:"login,omitempty"`
+		} `json:"owner,omitempty"`
+		Name string `json:"name,omitempty"`
 	} `json:"repository,omitempty"`
 	Organization struct {
 		Login string `json:"login,omitempty"`
 	} `json:"organization,omitempty"`
 	PullRequest struct {
+		Number int  `json:"number,omitempty"`
 		Merged bool `json:"merged,omitempty"`
 	} `json:"pull_request,omitempty"`
+	Issue struct {
+		Number          int       `json:"number,omitempty"`
+		PullRequestInfo *struct{} `json:"pull_request,omitempty"`
+	} `json:"issue,omitempty"`
+	CheckRun struct {
+		PullRequests []struct {
+			Number int `json:"number,omitempty"`
+		} `json:"pull_requests,omitempty"`
+	} `json:"check_run,omitempty"`
+	CheckSuite struct {
+		PullRequests []struct {
+			Number int `json:"number,omitempty"`
+		} `json:"pull_requests,omitempty"`
+	} `json:"check_suite,omitempty"`
+	Comment struct {
+		ID int `json:"id,omitempty"`
+	} `json:"comment,omitempty"`
+	Review struct {
+		ID int `json:"id,omitempty"`
+	} `json:"review,omitempty"`
 }
 
 type Server struct {
@@ -85,8 +110,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	hookID := r.Header.Get("X-GitHub-Hook-ID")
 	// If webhookID is set, only listen to events from the specified webhook.
-	for _, id := range s.webhookID {
-		if hookID != id {
+	if len(s.webhookID) > 0 {
+		found := false
+		for _, id := range s.webhookID {
+			if hookID == id {
+				found = true
+				break
+			}
+		}
+		if !found {
 			log.Warnf("ignoring event from webhook due to webhook_id %q %q", hookID, github.DeliveryID(r))
 			// Use 202 Accepted to as an ACK, but no action taken.
 			w.WriteHeader(http.StatusAccepted)
@@ -114,6 +146,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Store original event type for extension extraction
+	originalEventType := t
 	t = "dev.chainguard.github." + t
 
 	// Extract repository and organization information
@@ -153,13 +187,23 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		event.SetExtension("githubhook", hookID)
 	}
 
-	// Add pullrequest extension for pull request events
-	if prInfo := extractPullRequestInfo(github.WebHookType(r), info); prInfo != "" {
+	// Add pullrequest extension for pull request events (original format)
+	if prInfo := extractPullRequestInfo(originalEventType, info); prInfo != "" {
 		event.SetExtension("pullrequest", prInfo)
 	}
 
+	// Add pullrequest-url extension for PR-related events
+	if prURL := extractPullRequestURL(originalEventType, info); prURL != "" {
+		event.SetExtension("pullrequesturl", prURL)
+	}
+
+	// Add issue-url extension for issue-related events
+	if issueURL := extractIssueURL(originalEventType, info); issueURL != "" {
+		event.SetExtension("issueurl", issueURL)
+	}
+
 	// Add merged extension for merged pull requests
-	if merged := isPullRequestMerged(github.WebHookType(r), info); merged {
+	if merged := isPullRequestMerged(originalEventType, info); merged {
 		event.SetExtension("merged", true)
 	}
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
@@ -216,10 +260,72 @@ func extractPullRequestInfo(eventType string, info PayloadInfo) string {
 	}
 
 	// Extract information from our typed struct
-	if info.Number > 0 && info.Repository.FullName != "" {
-		return fmt.Sprintf("%s#%d", info.Repository.FullName, info.Number)
+	if info.PullRequest.Number > 0 && info.Repository.FullName != "" {
+		return fmt.Sprintf("%s#%d", info.Repository.FullName, info.PullRequest.Number)
 	}
 
+	return ""
+}
+
+// extractPullRequestURL extracts the pull request URL from GitHub events that pertain to a PR
+func extractPullRequestURL(eventType string, info PayloadInfo) string {
+	owner := info.Repository.Owner.Login
+	repo := info.Repository.Name
+	if owner == "" || repo == "" {
+		return ""
+	}
+
+	var prNumber int
+	switch eventType {
+	case "pull_request":
+		prNumber = info.PullRequest.Number
+	case "pull_request_review":
+		prNumber = info.PullRequest.Number
+	case "pull_request_review_comment":
+		prNumber = info.PullRequest.Number
+	case "issue_comment":
+		// Check if this is a PR comment (issue comments can be on PRs too)
+		if info.Issue.PullRequestInfo != nil && info.Issue.Number > 0 {
+			prNumber = info.Issue.Number
+		}
+	case "check_run":
+		if len(info.CheckRun.PullRequests) > 0 {
+			prNumber = info.CheckRun.PullRequests[0].Number
+		}
+	case "check_suite":
+		if len(info.CheckSuite.PullRequests) > 0 {
+			prNumber = info.CheckSuite.PullRequests[0].Number
+		}
+	}
+
+	if prNumber > 0 {
+		return fmt.Sprintf("https://github.com/%s/%s/pull/%d", owner, repo, prNumber)
+	}
+	return ""
+}
+
+// extractIssueURL extracts the issue URL from GitHub events that pertain to an issue
+func extractIssueURL(eventType string, info PayloadInfo) string {
+	owner := info.Repository.Owner.Login
+	repo := info.Repository.Name
+	if owner == "" || repo == "" {
+		return ""
+	}
+
+	var issueNumber int
+	switch eventType {
+	case "issues":
+		issueNumber = info.Issue.Number
+	case "issue_comment":
+		// Only add issue URL if this is NOT a PR comment
+		if info.Issue.PullRequestInfo == nil && info.Issue.Number > 0 {
+			issueNumber = info.Issue.Number
+		}
+	}
+
+	if issueNumber > 0 {
+		return fmt.Sprintf("https://github.com/%s/%s/issues/%d", owner, repo, issueNumber)
+	}
 	return ""
 }
 
