@@ -99,42 +99,52 @@ func (u *uploader) Run(ctx context.Context) error {
 		}
 
 		for dir, files := range fileMap {
-			// Setup the GCS object with the filename to write to
-			writer, err := bucket.NewWriter(bgCtx, filepath.Join(dir, fileName), nil)
-			if err != nil {
-				return err
-			}
-
-			var deleteErr error
-			for _, f := range files {
-				if err := u.BufferWriteToBucket(writer, filepath.Join(u.source, dir, f)); err != nil {
-					return fmt.Errorf("failed to upload file to blobstore: %s, %w", filepath.Join(dir, fileName), err)
-				}
-				path := filepath.Join(u.source, dir, f)
-				if err = os.Remove(path); err != nil {
-					// log the error, but continue to upload the rest of the files
-					clog.WarnContextf(ctx, "failed to delete file: %s %v", path, err)
-					deleteErr = fmt.Errorf("failed to delete file: %s %w", path, err)
-				}
-				processed++
-			}
-
-			// retry this 3 times
+			// Retry up to 3 times.
+			// The entire upload is a single operation. Writes to the writer can be async and only
+			// the Close() call will block until all writes are done and surface any errors. Thus
+			// the entire block is potentially retried.
 			for i := 0; i < MaxUploadAttempt; i++ {
-				err := writer.Close()
-				if err == nil {
-					break
+				// Setup the GCS object with the filename to write to
+				writer, err := bucket.NewWriter(bgCtx, filepath.Join(dir, fileName), nil)
+				if err != nil {
+					return err
 				}
-				if i == MaxUploadAttempt-1 {
-					// last attempt, no more retry
-					return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
+
+				for _, f := range files {
+					if err := u.BufferWriteToBucket(writer, filepath.Join(u.source, dir, f)); err != nil {
+						return fmt.Errorf("failed to upload file to blobstore: %s, %w", filepath.Join(dir, fileName), err)
+					}
 				}
-				clog.WarnContextf(ctx, "retrying closing blob file: %s %v", fileName, err)
-				// wait before retrying
-				time.Sleep(RetryBackoffDuration)
-			}
-			if deleteErr != nil {
-				return deleteErr
+
+				if err := writer.Close(); err != nil {
+					if i == MaxUploadAttempt-1 {
+						// last attempt, no more retry
+						return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
+					}
+					clog.WarnContextf(ctx, "retrying closing blob file: %s %v", fileName, err)
+					// wait before retrying
+					time.Sleep(RetryBackoffDuration)
+					continue
+				}
+
+				// Only delete files after a successful upload.
+				var deleteErr error
+				for _, f := range files {
+					path := filepath.Join(u.source, dir, f)
+					if err = os.Remove(path); err != nil {
+						// log the error, but continue to upload the rest of the files
+						clog.WarnContextf(ctx, "failed to delete file: %s %v", path, err)
+						deleteErr = fmt.Errorf("failed to delete file: %s %w", path, err)
+						continue
+					}
+					processed++
+				}
+				if deleteErr != nil {
+					return deleteErr
+				}
+
+				// Successfully uploaded and deleted files, break out of the retry loop.
+				break
 			}
 		}
 
