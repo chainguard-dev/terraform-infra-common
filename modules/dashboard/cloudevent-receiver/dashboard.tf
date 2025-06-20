@@ -153,13 +153,13 @@ module "trigger-dashboards" {
       {
         # for GCP Cloud Run built-in metrics
         filterType  = "RESOURCE_LABEL"
-        stringValue = var.name
+        stringValue = var.service_name
         labelKey    = "service_name"
       },
       {
         # for Prometheus user added metrics
         filterType  = "METRIC_LABEL"
-        stringValue = var.name
+        stringValue = var.service_name
         labelKey    = "service_name"
       },
     ]
