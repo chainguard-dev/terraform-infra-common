@@ -27,7 +27,7 @@ processors:
         key: team
         value: "REPLACE_ME_TEAM"
       - action: insert
-        key: service
+        key: service_name
         value: "REPLACE_ME_SERVICE"
 
   batch:

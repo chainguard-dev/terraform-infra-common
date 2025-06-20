@@ -22,7 +22,6 @@ module "failure_rate" {
   common_filter = concat(var.filter, [
     "metric.type=\"run.googleapis.com/request_count\"",
     "resource.type=\"cloud_run_revision\"",
-    "resource.label.\"service_name\"=\"${var.service_name}\"",
   ])
   numerator_additional_filter = ["metric.label.\"response_code_class\"=\"5xx\""]
 }
@@ -44,7 +43,6 @@ module "outbound_request_count" {
   title  = "Outbound Request count"
   filter = concat(local.gmp_filter, [
     "metric.type=\"prometheus.googleapis.com/http_client_request_count_total/counter\"",
-    "metric.label.service_name=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
   ])
   group_by_fields = [
@@ -60,7 +58,6 @@ module "outbound_request_latency" {
   title  = "Outbound request latency"
   filter = concat(local.gmp_filter, [
     "metric.type=\"prometheus.googleapis.com/http_client_request_duration_seconds/histogram\"",
-    "metric.label.service_name=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
   ])
 }

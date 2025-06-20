@@ -22,7 +22,6 @@ module "request_count" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
-    "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
     "metric.label.\"grpc_service\"",
@@ -41,7 +40,6 @@ module "failure_rate" {
   common_filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
-    "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   numerator_additional_filter = [
     "metric.label.\"grpc_code\"!=monitoring.regex.full_match(\"${join("|", var.grpc_non_error_codes)}\")"
@@ -54,7 +52,6 @@ module "incoming_latency" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handling_seconds/histogram\"",
     "resource.type=\"prometheus_target\"",
-    "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
     "metric.label.\"grpc_service\"",
@@ -68,7 +65,6 @@ module "outbound_request_count" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_client_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
-    "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
     "metric.label.\"grpc_service\"",
@@ -85,7 +81,6 @@ module "outbound_latency" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_client_handling_seconds/histogram\"",
     "resource.type=\"prometheus_target\"",
-    "resource.label.\"job\"=\"${var.service_name}\"",
   ])
   group_by_fields = [
     "metric.label.\"grpc_service\"",
