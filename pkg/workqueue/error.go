@@ -8,7 +8,7 @@ func NonRetriableError(err error, reason string) error {
 	// NonRetriableError is a marker error that indicates that the key should not be retried.
 	if err == nil {
 		// No error, nothing to do.
-		return nil
+		return ni
 	}
 
 	// We ignore ok - usually happens when the error is not a gRPC error.
@@ -22,7 +22,8 @@ func NonRetriableError(err error, reason string) error {
 		return err
 	}
 
-	return s.Err()
+	// Return the error string
+	return s.Err(reason)
 }
 
 // GetNonRetriableDetails extracts the NoRetryDetails from the error if it exists.
