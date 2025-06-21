@@ -205,27 +205,6 @@ module "custom_processor" {
    - Missing or invalid extensions are logged and acknowledged (no retry)
    - Workqueue errors trigger retries via Pub/Sub redelivery
 
-## Comparison with `github-workqueue`
-
-This module is designed to replace `github-workqueue` with these advantages:
-
-| Feature | github-workqueue | cloudevents-workqueue |
-|---------|-----------------|---------------------|
-| Event Source | Direct GitHub webhooks | CloudEvents from broker |
-| Event Types | Limited GitHub events | Any CloudEvent type |
-| Filtering | By resource type only | Structured filters with exact/prefix matching |
-| Key Extraction | Hardcoded URL patterns | Configurable extension |
-| Extensibility | GitHub-specific | Works with any CloudEvents |
-
-## Migration from github-workqueue
-
-To migrate from `github-workqueue`:
-
-1. Ensure `github-events` is publishing events with appropriate extensions
-2. Deploy this module with the same workqueue target
-3. Update your GitHub webhook to point to `github-events` instead
-4. Once verified, remove the old `github-workqueue` deployment
-
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
