@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/chainguard-dev/clog"
 	"github.com/google/go-github/v72/github"
 )
 
@@ -100,6 +101,9 @@ func NewReconciler(cc *ClientCache, opts ...Option) *Reconciler {
 
 // Reconcile processes the given resource URL.
 func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
+	// Add the key to the logger context for filtering
+	ctx = clog.WithLogger(ctx, clog.FromContext(ctx).With("key", url))
+
 	// Parse the URL to extract resource information
 	resource, err := ParseURL(url)
 	if err != nil {

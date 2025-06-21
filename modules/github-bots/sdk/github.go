@@ -1,4 +1,4 @@
-package githubbot
+package sdk
 
 import (
 	"archive/zip"
