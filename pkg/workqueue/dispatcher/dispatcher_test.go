@@ -49,6 +49,13 @@ func (m *mockKey) Requeue(context.Context) error {
 	return nil
 }
 
+func (m *mockKey) RequeueWithOptions(context.Context, workqueue.Options) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.requeue++
+	return nil
+}
+
 type mockInProgressKey struct {
 	*mockKey
 }

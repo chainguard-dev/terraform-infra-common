@@ -19,7 +19,12 @@ message ProcessRequest {
   int64 delay_seconds = 3;
 }
 
-message ProcessResponse {}
+message ProcessResponse {
+  // Optional: If set, indicates the work item should be requeued after the specified delay.
+  // If not set or 0, the default behavior applies (success if no error, or exponential backoff on error).
+  // This field is only honored when the RPC returns successfully (no error).
+  int64 requeue_after_seconds = 1;
+}
 
 // NoRetryDetails is a marker message that indicates that the key should not be retried.
 message NoRetryDetails {

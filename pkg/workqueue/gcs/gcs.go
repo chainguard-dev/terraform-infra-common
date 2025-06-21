@@ -319,6 +319,12 @@ func (o *inProgressKey) GetAttempts() int {
 
 // Requeue implements workqueue.InProgressKey.
 func (o *inProgressKey) Requeue(ctx context.Context) error {
+	// Use RequeueWithOptions with an empty options struct to get default behavior
+	return o.RequeueWithOptions(ctx, workqueue.Options{})
+}
+
+// RequeueWithOptions implements workqueue.InProgressKey.
+func (o *inProgressKey) RequeueWithOptions(ctx context.Context, opts workqueue.Options) error {
 	if o.ownerCancel != nil {
 		o.ownerCancel()
 	}
@@ -333,15 +339,19 @@ func (o *inProgressKey) Requeue(ctx context.Context) error {
 
 	// Preserve metadata
 	copier.Metadata = o.attrs.Metadata
-	if copier.Metadata != nil {
-		// Clear the lease expiration when copying the object back to avoid
-		// confusion since the object is no longer in progress.
-		delete(copier.Metadata, expirationMetadataKey)
+	if copier.Metadata == nil {
+		copier.Metadata = make(map[string]string)
 	}
+	// Clear the lease expiration when copying the object back to avoid
+	// confusion since the object is no longer in progress.
+	delete(copier.Metadata, expirationMetadataKey)
 
-	if p, ok := copier.Metadata[priorityMetadataKey]; ok && p != noPriority {
-		// If priority is set, then add a backoff to avoid higher-priority
-		// failing tasks from starving low-priority work in the queue.
+	// Handle custom delay if specified
+	if opts.Delay > 0 {
+		notBefore := time.Now().UTC().Add(opts.Delay)
+		copier.Metadata[notBeforeMetadataKey] = notBefore.Format(time.RFC3339)
+	} else if p, ok := copier.Metadata[priorityMetadataKey]; ok && p != noPriority {
+		// If no custom delay and priority is set, use the standard backoff
 		attempts, err := strconv.Atoi(copier.Metadata[attemptsMetadataKey])
 		if err != nil {
 			clog.WarnContextf(ctx, "Malformed attempts on %s: %v", key, err)
@@ -354,6 +364,11 @@ func (o *inProgressKey) Requeue(ctx context.Context) error {
 		copier.Metadata[notBeforeMetadataKey] = time.Now().UTC().Add(backoffDelay).Format(time.RFC3339)
 	}
 
+	// Update priority if specified
+	if opts.Priority != 0 {
+		copier.Metadata[priorityMetadataKey] = strconv.FormatInt(opts.Priority, 10)
+	}
+
 	_, err := copier.Run(ctx)
 	if exists, err := checkPreconditionFailedOk(err); err != nil {
 		return fmt.Errorf("Run() = %w", err)
@@ -361,7 +376,7 @@ func (o *inProgressKey) Requeue(ctx context.Context) error {
 		if err := updateMetadata(ctx, o.client, key, copier.Metadata); err != nil {
 			if errors.Is(err, storage.ErrObjectNotExist) {
 				clog.InfoContextf(ctx, "Key %q was deleted before we could fetch the duplicate, recursing.", key)
-				return o.Requeue(ctx)
+				return o.RequeueWithOptions(ctx, opts)
 			}
 			return fmt.Errorf("updateMetadata() = %w", err)
 		}
