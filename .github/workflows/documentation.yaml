@@ -21,6 +21,7 @@ jobs:
           - cloudevent-trigger
           - cloudevent-pull-trigger
           - cloudevent-recorder
+          - cloudevents-workqueue
           - regional-go-service
           - regional-service
           - serverless-gclb
