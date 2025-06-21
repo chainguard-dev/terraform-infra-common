@@ -49,6 +49,12 @@ variable "enable_profiler" {
   description = "Enable cloud profiler."
 }
 
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}
+
 variable "require_squad" {
   description = "Whether to require squad variable to be specified"
   type        = bool
