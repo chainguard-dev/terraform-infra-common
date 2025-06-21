@@ -49,6 +49,12 @@ variable "squad" {
   }
 }
 
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}
+
 variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)
