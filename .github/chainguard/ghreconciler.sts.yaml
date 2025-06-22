@@ -4,6 +4,7 @@ subject: "117292703478108941530"
 
 permissions:
   checks: read
-  contents: write
+  contents: write # Enable autofix mode
   pull_requests: write
   statuses: read
+  workflows: write # Allow triggering actions when authoring commits.
