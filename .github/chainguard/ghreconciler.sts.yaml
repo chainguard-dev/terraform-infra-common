@@ -4,6 +4,6 @@ subject: "117292703478108941530"
 
 permissions:
   checks: read
-  contents: read
+  contents: write
   pull_requests: write
   statuses: read
