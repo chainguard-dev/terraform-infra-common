@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -90,6 +91,20 @@ func commentWithState(id int64, identity string, state interface{}, message stri
 	// Build comment body matching the actual format
 	var body strings.Builder
 	body.WriteString(fmt.Sprintf("<!--%s-->\n\n", identity))
+
+	// Add bot info block to match the actual implementation
+	// We use simplified values here since we're in a test environment
+	projectID := "unknown-project"
+	serviceName := "unknown-service"
+	issueURL := url.QueryEscape("https://github.com/testowner/testrepo/issues/123")
+	logsURL := fmt.Sprintf(
+		"https://console.cloud.google.com/logs/query;query=resource.type%%20%%3D%%20%%22cloud_run_revision%%22%%0Aresource.labels.service_name%%20%%3D%%20%%22%s%%22%%0AjsonPayload.key%%3D%%22%s%%22;storageScope=project;summaryFields=:false:32:beginning;duration=P2D?project=%s",
+		serviceName,
+		issueURL,
+		projectID,
+	)
+	body.WriteString(fmt.Sprintf("*Bot: %s | [View logs](%s)*\n\n---\n\n", identity, logsURL))
+
 	body.WriteString(message)
 	body.WriteString("\n\n")
 	body.WriteString(fmt.Sprintf("<!--%s-state-->\n<!--\n", identity))

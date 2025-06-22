@@ -9,22 +9,38 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"os"
 	"strings"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/chainguard-dev/clog"
 	"github.com/google/go-github/v72/github"
 )
 
 // StateManager manages reconciler state stored in GitHub comments.
 type StateManager struct {
-	identity string
+	identity    string
+	projectID   string
+	serviceName string
 }
 
 // NewStateManager creates a new state manager with the given identity.
 // The identity is used to identify comments created by this reconciler.
 func NewStateManager(identity string) *StateManager {
+	// Get project ID once at startup
+	projectID := getProjectID()
+
+	// Get service name once at startup
+	serviceName := os.Getenv("K_SERVICE")
+	if serviceName == "" {
+		serviceName = "unknown-service"
+	}
+
 	return &StateManager{
-		identity: identity,
+		identity:    identity,
+		projectID:   projectID,
+		serviceName: serviceName,
 	}
 }
 
@@ -35,17 +51,30 @@ func (sm *StateManager) Identity() string {
 
 // State wraps a typed state with resource information.
 type State[T any] struct {
-	identity string
-	client   *github.Client
-	resource *Resource
+	identity    string
+	client      *github.Client
+	resource    *Resource
+	projectID   string
+	serviceName string
 }
 
 // NewState creates a new state instance for a specific resource.
 func NewState[T any](identity string, client *github.Client, resource *Resource) *State[T] {
+	// Get project ID once at creation
+	projectID := getProjectID()
+
+	// Get service name once at creation
+	serviceName := os.Getenv("K_SERVICE")
+	if serviceName == "" {
+		serviceName = "unknown-service"
+	}
+
 	return &State[T]{
-		identity: identity,
-		client:   client,
-		resource: resource,
+		identity:    identity,
+		client:      client,
+		resource:    resource,
+		projectID:   projectID,
+		serviceName: serviceName,
 	}
 }
 
@@ -230,6 +259,10 @@ func (s *State[T]) buildCommentContent(stateJSON, message string) string {
 	content.WriteString(s.getIdentityMarker())
 	content.WriteString("\n\n")
 
+	// Bot info and logs link
+	content.WriteString(s.buildBotInfoBlock())
+	content.WriteString("\n\n---\n\n")
+
 	// User-visible message
 	content.WriteString(message)
 	content.WriteString("\n\n")
@@ -242,4 +275,40 @@ func (s *State[T]) buildCommentContent(stateJSON, message string) string {
 	content.WriteString(fmt.Sprintf("<!--/%s-state-->", s.identity))
 
 	return content.String()
+}
+
+// buildBotInfoBlock creates an italicized block with bot info and logs link.
+func (s *State[T]) buildBotInfoBlock() string {
+	// Build the issue/PR URL
+	issueURL := fmt.Sprintf("https://github.com/%s/%s/pull/%d", s.resource.Owner, s.resource.Repo, s.resource.Number)
+	if s.resource.Type == ResourceTypeIssue {
+		issueURL = fmt.Sprintf("https://github.com/%s/%s/issues/%d", s.resource.Owner, s.resource.Repo, s.resource.Number)
+	}
+
+	// URL encode the issue URL for the logs query
+	encodedURL := url.QueryEscape(issueURL)
+
+	// Build the Stackdriver logs URL
+	logsURL := fmt.Sprintf(
+		"https://console.cloud.google.com/logs/query;query=resource.type%%20%%3D%%20%%22cloud_run_revision%%22%%0Aresource.labels.service_name%%20%%3D%%20%%22%s%%22%%0AjsonPayload.key%%3D%%22%s%%22;storageScope=project;summaryFields=:false:32:beginning;duration=P2D?project=%s",
+		s.serviceName,
+		encodedURL,
+		s.projectID,
+	)
+
+	return fmt.Sprintf("*🤖: %s ([logs](%s))*", s.identity, logsURL)
+}
+
+// getProjectID retrieves the GCP project ID.
+func getProjectID() string {
+	ctx := context.Background()
+	projectID, err := metadata.ProjectIDWithContext(ctx)
+	if err != nil {
+		// Fallback to environment variable or default
+		projectID = os.Getenv("GCP_PROJECT")
+		if projectID == "" {
+			projectID = "unknown-project"
+		}
+	}
+	return projectID
 }
