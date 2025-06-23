@@ -158,6 +158,7 @@ No modules.
 | <a name="input_patch_time_utc"></a> [patch\_time\_utc](#input\_patch\_time\_utc) | Time of day in HH:MM (UTC) when patching runs. | `string` | `"03:00"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project in which to deploy the bastion host. | `string` | n/a | yes |
 | <a name="input_squad"></a> [squad](#input\_squad) | Squad or team label applied to the instance (required). | `string` | n/a | yes |
+| <a name="input_startup_script"></a> [startup\_script](#input\_startup\_script) | additional startup script snippet to execute on bastion. | `string` | `""` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnetwork name the bastion joins (must be private). | `string` | n/a | yes |
 | <a name="input_zone"></a> [zone](#input\_zone) | Compute Engine zone for the bastion VM (e.g. us-central1-a). | `string` | n/a | yes |
 
