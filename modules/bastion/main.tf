@@ -100,6 +100,7 @@ resource "google_compute_instance" "bastion" {
   }
 
   network_interface {
+    nic_type           = "GVNIC"
     network            = var.network
     subnetwork         = var.subnetwork
     subnetwork_project = var.project_id
@@ -119,6 +120,7 @@ resource "google_compute_instance" "bastion" {
   metadata = {
     enable-oslogin         = "TRUE"
     block-project-ssh-keys = "TRUE"
+    enable-oslogin-2fa     = "TRUE"
   }
 
   metadata_startup_script = local.bastion_startup
@@ -126,6 +128,11 @@ resource "google_compute_instance" "bastion" {
   tags = [local.instance_tag]
 
   allow_stopping_for_update = true
+
+  scheduling {
+    automatic_restart   = true
+    on_host_maintenance = "TERMINATE"
+  }
 
   deletion_protection = var.deletion_protection
 
