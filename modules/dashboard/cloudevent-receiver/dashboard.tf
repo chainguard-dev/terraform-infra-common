@@ -45,7 +45,7 @@ module "github" {
 module "resources" {
   source        = "../sections/resources"
   title         = "Resources"
-  filter        = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.service_name}\""]
+  filter        = []
   cloudrun_name = var.service_name
 
   notification_channels = var.notification_channels
@@ -83,11 +83,20 @@ module "dashboard" {
       "service" : ""
       "eventing" : ""
     }, var.labels)
-    dashboardFilters = [{
-      filterType  = "RESOURCE_LABEL"
-      stringValue = each.key
-      labelKey    = "service_name"
-    }]
+    dashboardFilters = [
+      {
+        # for GCP Cloud Run built-in metrics
+        filterType  = "RESOURCE_LABEL"
+        stringValue = var.service_name
+        labelKey    = "service_name"
+      },
+      {
+        # for Prometheus user added metrics
+        filterType  = "METRIC_LABEL"
+        stringValue = var.service_name
+        labelKey    = "service_name"
+      },
+    ]
 
     // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
     mosaicLayout = {
@@ -140,11 +149,20 @@ module "trigger-dashboards" {
       "service" : ""
       "eventing" : ""
     }, var.labels)
-    dashboardFilters = [{
-      filterType  = "RESOURCE_LABEL"
-      stringValue = var.service_name
-      labelKey    = "service_name"
-    }]
+    dashboardFilters = [
+      {
+        # for GCP Cloud Run built-in metrics
+        filterType  = "RESOURCE_LABEL"
+        stringValue = var.service_name
+        labelKey    = "service_name"
+      },
+      {
+        # for Prometheus user added metrics
+        filterType  = "METRIC_LABEL"
+        stringValue = var.service_name
+        labelKey    = "service_name"
+      },
+    ]
 
     // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
     mosaicLayout = {

@@ -9,7 +9,6 @@ module "total_request_count" {
   source = "../../widgets/xy"
   title  = "GORM total request count"
   filter = concat(var.filter, [
-    "resource.label.\"job\"=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -24,7 +23,6 @@ module "request_errors" {
   source = "../../widgets/xy"
   title  = "GORM error request count"
   filter = concat(var.filter, [
-    "resource.label.\"job\"=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
     "metric.label.\"code\"=monitoring.regex.full_match(\"Error.*\")",
@@ -41,7 +39,6 @@ module "table_request_count" {
   source = "../../widgets/xy"
   title  = "GORM table request count"
   filter = concat(var.filter, [
-    "resource.label.\"job\"=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -59,7 +56,6 @@ module "error_rate" {
   legend = "Non-OK / All responses"
 
   common_filter = concat(var.filter, [
-    "resource.label.\"job\"=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -70,7 +66,6 @@ module "op_request_count" {
   source = "../../widgets/xy"
   title  = "GORM op request count"
   filter = concat(var.filter, [
-    "resource.label.\"job\"=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -86,7 +81,6 @@ module "open_connections" {
   source = "../../widgets/xy"
   title  = "GORM DB open connections"
   filter = concat(var.filter, [
-    "resource.label.\"job\"=\"${var.service_name}\"",
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_dbstats_open_connections/gauge\"",
   ])
