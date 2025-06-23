@@ -92,3 +92,9 @@ variable "install_sql_proxy" {
   type        = bool
   default     = false
 }
+
+variable "startup_script" {
+  description = "additional startup script snippet to execute on bastion."
+  type        = string
+  default     = ""
+}

@@ -63,6 +63,8 @@ locals {
     AUDIT
     ,
 
+    var.startup_script,
+
     <<-COMMON
       # ------------------------------------------------------
       # Install Google Cloud Ops Agent for logging & metrics
