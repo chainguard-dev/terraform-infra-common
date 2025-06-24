@@ -44,6 +44,10 @@ type Options struct {
 	// NotBefore is the earliest time that the key should be processed.
 	// When deduplicating, the oldest time is used.
 	NotBefore time.Time
+
+	// Delay is an optional duration to wait before processing the key.
+	// This is used when requeueing with a custom delay.
+	Delay time.Duration
 }
 
 // Key is a shared interface that all key types must implement.
@@ -70,6 +74,9 @@ type InProgressKey interface {
 
 	// Requeue returns this key to the queue.
 	Requeue(context.Context) error
+
+	// RequeueWithOptions returns this key to the queue with custom options.
+	RequeueWithOptions(context.Context, Options) error
 }
 
 // ObservedInProgressKey is a key that we have observed to be in progress,

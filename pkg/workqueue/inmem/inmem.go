@@ -149,15 +149,27 @@ func (o *inProgressKey) Priority() int64 {
 }
 
 // Requeue implements workqueue.InProgressKey.
-func (o *inProgressKey) Requeue(_ context.Context) error {
+func (o *inProgressKey) Requeue(ctx context.Context) error {
+	// Use RequeueWithOptions with an empty options struct to get default behavior
+	return o.RequeueWithOptions(ctx, workqueue.Options{})
+}
+
+// RequeueWithOptions implements workqueue.InProgressKey.
+func (o *inProgressKey) RequeueWithOptions(_ context.Context, opts workqueue.Options) error {
 	if o.ownerCancel != nil {
 		o.ownerCancel()
 	}
 
-	opts := o.Options
-	// If priority is set, then add a backoff to avoid higher-priority
-	// failing tasks from starving low-priority work in the queue.
-	if opts.Priority > 0 {
+	// If no priority specified in opts, use the current priority
+	if opts.Priority == 0 {
+		opts.Priority = o.Priority()
+	}
+
+	// Handle custom delay if specified
+	if opts.Delay > 0 {
+		opts.NotBefore = time.Now().UTC().Add(opts.Delay)
+	} else if opts.Priority > 0 {
+		// If no custom delay and priority is set, use the standard backoff
 		backoffDelay := time.Duration(o.attempts * int(workqueue.BackoffPeriod))
 		if backoffDelay > workqueue.MaximumBackoffPeriod {
 			backoffDelay = workqueue.MaximumBackoffPeriod
@@ -174,16 +186,15 @@ func (o *inProgressKey) Requeue(_ context.Context) error {
 			queued:   time.Now().UTC(),
 		}
 	} else {
-		if qi.Priority < o.Priority() {
+		if qi.Priority < opts.Priority {
 			// Raise the priority of the queued item.
-			qi.Priority = o.Priority()
-			o.wq.queue[o.key] = qi
+			qi.Priority = opts.Priority
 		}
-		if qi.NotBefore.Before(opts.NotBefore) {
-			// Update the NotBefore time.
+		if opts.NotBefore.After(qi.NotBefore) {
+			// Update the NotBefore time if the new one is later.
 			qi.NotBefore = opts.NotBefore
-			o.wq.queue[o.key] = qi
 		}
+		o.wq.queue[o.key] = qi
 	}
 
 	delete(o.wq.wip, o.key)

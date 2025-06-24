@@ -1,6 +1,11 @@
 package workqueue
 
-import "google.golang.org/grpc/status"
+import (
+	"errors"
+	"time"
+
+	"google.golang.org/grpc/status"
+)
 
 // NoRetryDetails marks the error as non-retriable with the given reason.
 // If this error is returned to the dispatcher, it will not requeue the key.
@@ -43,4 +48,34 @@ func GetNonRetriableDetails(err error) *NoRetryDetails {
 		}
 	}
 	return nil
+}
+
+// requeueError is a special error type that indicates the work item should be
+// requeued with a specific delay.
+type requeueError struct {
+	delay time.Duration
+}
+
+// Error implements the error interface.
+func (e *requeueError) Error() string {
+	return "requeue requested"
+}
+
+// RequeueAfter returns an error that indicates the work item should be requeued
+// after the specified delay.
+func RequeueAfter(delay time.Duration) error {
+	return &requeueError{delay: delay}
+}
+
+// GetRequeueDelay extracts the requeue delay from an error if it's a requeue error.
+// Returns the delay and true if the error is a requeue error, or 0 and false otherwise.
+func GetRequeueDelay(err error) (time.Duration, bool) {
+	if err == nil {
+		return 0, false
+	}
+	var re *requeueError
+	if errors.As(err, &re) {
+		return re.delay, true
+	}
+	return 0, false
 }

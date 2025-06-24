@@ -8,6 +8,7 @@ package dispatcher
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/chainguard-dev/clog"
 	"golang.org/x/sync/errgroup"
@@ -21,11 +22,18 @@ type Callback func(ctx context.Context, key string, opts workqueue.Options) erro
 // ServiceCallback returns a Callback that invokes the given service.
 func ServiceCallback(client workqueue.WorkqueueServiceClient) Callback {
 	return func(ctx context.Context, key string, opts workqueue.Options) error {
-		_, err := client.Process(ctx, &workqueue.ProcessRequest{
+		resp, err := client.Process(ctx, &workqueue.ProcessRequest{
 			Key:      key,
 			Priority: opts.Priority,
 		})
-		return err
+		if err != nil {
+			return err
+		}
+		// If the response indicates a requeue with delay, return a special error
+		if resp.RequeueAfterSeconds > 0 {
+			return workqueue.RequeueAfter(time.Duration(resp.RequeueAfterSeconds) * time.Second)
+		}
+		return nil
 	}
 }
 
@@ -103,6 +111,18 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 			if err := f(oip.Context(), oip.Name(), workqueue.Options{
 				Priority: oip.Priority(),
 			}); err != nil {
+				// Check if this is a requeue error with custom delay
+				if delay, ok := workqueue.GetRequeueDelay(err); ok {
+					clog.InfoContextf(ctx, "Key %q requested requeue after %v", oip.Name(), delay)
+					if err := oip.RequeueWithOptions(ctx, workqueue.Options{
+						Priority: oip.Priority(),
+						Delay:    delay,
+					}); err != nil {
+						return fmt.Errorf("requeue(after delay request) = %w", err)
+					}
+					return nil
+				}
+
 				clog.WarnContextf(ctx, "Failed callback for key %q: %v", oip.Name(), err)
 				attempts := oip.GetAttempts()
 
