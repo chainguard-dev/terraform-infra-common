@@ -89,11 +89,14 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_authorized-adder"></a> [authorized-adder](#input\_authorized-adder) | A member-style representation of the identity authorized to add new secret values (e.g. group:oncall@my-corp.dev). | `string` | n/a | yes |
 | <a name="input_create_placeholder_version"></a> [create\_placeholder\_version](#input\_create\_placeholder\_version) | Whether to create a placeholder secret version to avoid bad reference on first deploy. | `bool` | `false` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the secret. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the secret. | `string` | n/a | yes |
 | <a name="input_notification-channels"></a> [notification-channels](#input\_notification-channels) | The channels to notify if the configuration data is improperly accessed. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
+| <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `false` | no |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | (Deprecated: Use service-accounts instead) The email of the service account that will access the secret. | `string` | `""` | no |
 | <a name="input_service-accounts"></a> [service-accounts](#input\_service-accounts) | The emails of the service accounts that will access the secret. | `list(string)` | `[]` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the secret. | `string` | `""` | no |
 
 ## Outputs
 

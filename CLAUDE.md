@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Generate code: `go generate ./...`
 - Validate Terraform: `terraform init && terraform validate`
 - Format Terraform: `terraform fmt`
+- Update Terraform docs: `bash hack/update-docs.sh`
 
 ## Code Style Guidelines
 - **Go Formatting**: Use `gofmt -s` and `goimports`
