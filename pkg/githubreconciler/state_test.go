@@ -103,7 +103,7 @@ func commentWithState(id int64, identity string, state interface{}, message stri
 		issueURL,
 		projectID,
 	)
-	body.WriteString(fmt.Sprintf("*Bot: %s | [View logs](%s)*\n\n---\n\n", identity, logsURL))
+	body.WriteString(fmt.Sprintf("*🤖: %s ([logs](%s))*\n\n---\n\n", identity, logsURL))
 
 	body.WriteString(message)
 	body.WriteString("\n\n")
