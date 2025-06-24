@@ -21,3 +21,26 @@ variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)
 }
+
+variable "labels" {
+  description = "Labels to apply to the secret."
+  type        = map(string)
+  default     = {}
+}
+
+variable "require_squad" {
+  description = "Whether to require squad variable to be specified"
+  type        = bool
+  default     = false
+}
+
+variable "squad" {
+  description = "Squad label to apply to the secret."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !var.require_squad || var.squad != ""
+    error_message = "squad must be specified or disable check by setting require_squad = false"
+  }
+}

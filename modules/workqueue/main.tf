@@ -1,5 +1,16 @@
 locals {
   sa_prefix = "${var.name}-"
+
+  default_labels = {
+    "workqueue" = var.name
+  }
+
+  squad_label = var.squad != "" ? {
+    squad = var.squad
+    team  = var.squad
+  } : {}
+
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
 }
 
 resource "google_storage_bucket" "workqueue" {
@@ -9,6 +20,7 @@ resource "google_storage_bucket" "workqueue" {
   project       = var.project_id
   location      = each.key
   force_destroy = true
+  labels        = local.merged_labels
 
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
@@ -29,6 +41,7 @@ resource "google_storage_bucket_iam_binding" "authorize-access" {
 resource "google_pubsub_topic" "object-change-notifications" {
   for_each = var.regions
   name     = "${var.name}-${each.key}"
+  labels   = local.merged_labels
 
   message_storage_policy {
     allowed_persistence_regions = [each.key]

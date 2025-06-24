@@ -1,6 +1,20 @@
+locals {
+  default_labels = {
+    "configmap" = var.name
+  }
+
+  squad_label = var.squad != "" ? {
+    squad = var.squad
+    team  = var.squad
+  } : {}
+
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
+}
+
 // Create the GCP secret to hold the configuration data.
 resource "google_secret_manager_secret" "this" {
   secret_id = var.name
+  labels    = local.merged_labels
   replication {
     auto {}
   }

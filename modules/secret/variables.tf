@@ -41,3 +41,26 @@ variable "create_placeholder_version" {
   type        = bool
   default     = false
 }
+
+variable "labels" {
+  description = "Labels to apply to the secret."
+  type        = map(string)
+  default     = {}
+}
+
+variable "require_squad" {
+  description = "Whether to require squad variable to be specified"
+  type        = bool
+  default     = true
+}
+
+variable "squad" {
+  description = "Squad label to apply to the secret."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !var.require_squad || var.squad != ""
+    error_message = "squad must be specified or disable check by setting require_squad = false"
+  }
+}
