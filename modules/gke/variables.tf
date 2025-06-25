@@ -22,13 +22,13 @@ variable "require_squad" {
 }
 
 variable "squad" {
-  description = "squad label to apply to the service."
+  description = "Squad label to apply to the service."
   type        = string
   default     = ""
 
   validation {
     condition     = !var.require_squad || var.squad != ""
-    error_message = "squad needs to specified or disable check by setting require_squad = false"
+    error_message = "Squad needs to specified or disable check by setting require_squad = false"
   }
 }
 
@@ -97,7 +97,7 @@ variable "cluster_autoscaling_cpu_limits" {
     maximum       = optional(number, 10)
   })
   default     = {}
-  description = "cluster autoscaling cpu limits"
+  description = "Cluster autoscaling cpu limits"
 }
 
 variable "cluster_autoscaling_memory_limits" {
@@ -107,7 +107,7 @@ variable "cluster_autoscaling_memory_limits" {
     maximum       = optional(number, 80)
   })
   default     = null
-  description = "cluster autoscaling memory limits"
+  description = "Cluster autoscaling memory limits"
 }
 
 variable "cluster_autoscaling_provisioning_defaults" {
@@ -124,13 +124,13 @@ variable "cluster_autoscaling_provisioning_defaults" {
     }), null)
   })
   default     = null
-  description = "cluster autoscaling provisioning defaults"
+  description = "Cluster autoscaling provisioning defaults"
 }
 
 variable "cluster_autoscaling_profile" {
   type        = string
   default     = null
-  description = "cluster autoscaling profile"
+  description = "Cluster autoscaling profile"
 }
 
 variable "deletion_protection" {
@@ -159,4 +159,10 @@ variable "resource_usage_export_config" {
     enable_resource_consumption_metering = optional(bool, true)
   })
   default = {}
+}
+
+variable "service_account_impersonation_email" {
+  type        = string
+  default     = null
+  description = "Service account email impersonation for the service account created by this module."
 }
