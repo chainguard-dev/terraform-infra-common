@@ -13,6 +13,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
 	"github.com/sethvargo/go-envconfig"
