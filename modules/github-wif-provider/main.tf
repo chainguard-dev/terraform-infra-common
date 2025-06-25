@@ -2,7 +2,11 @@ resource "google_iam_workload_identity_pool" "this" {
   project                   = var.project_id
   provider                  = google-beta
   workload_identity_pool_id = var.name
-  display_name              = "Pool for ${var.name}"
+
+  // Maximum display_name length is 32 characters. 32 - len("Pool for") = 23.
+  // https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/iam_workload_identity_pool#display_name-1
+  display_name = "Pool for ${substr(var.name, 0, min(23, length(var.name)))}"
+  description  = "Pool for ${var.name}"
 }
 
 resource "google_iam_workload_identity_pool_provider" "this" {
