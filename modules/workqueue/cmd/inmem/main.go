@@ -14,6 +14,7 @@ import (
 
 	"chainguard.dev/go-grpc-kit/pkg/duplex"
 	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/sethvargo/go-envconfig"
 	"golang.org/x/sync/errgroup"

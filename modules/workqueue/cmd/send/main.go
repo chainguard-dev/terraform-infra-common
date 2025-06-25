@@ -17,6 +17,7 @@ import (
 
 	delegate "chainguard.dev/go-grpc-kit/pkg/options"
 	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 

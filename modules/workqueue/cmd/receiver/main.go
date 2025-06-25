@@ -15,6 +15,7 @@ import (
 	"chainguard.dev/go-grpc-kit/pkg/options"
 	"cloud.google.com/go/storage"
 	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/sethvargo/go-envconfig"
 	"google.golang.org/grpc"
