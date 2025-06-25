@@ -32,6 +32,13 @@ resource "google_project_iam_member" "cluster" {
   member  = "serviceAccount:${google_service_account.cluster_default.email}"
 }
 
+resource "google_service_account_iam_member" "terraform_gke_impersonation" {
+  count              = var.service_account_impersonation_email == null ? 1 : 0
+  service_account_id = google_service_account.cluster_default.id
+  role               = "roles/iam.serviceAccountUser"
+  member             = var.service_account_impersonation_email
+}
+
 locals {
   default_labels = {
     "gke" = var.name
@@ -205,7 +212,7 @@ resource "google_container_cluster" "this" {
     ignore_changes = [initial_node_count]
   }
 
-  depends_on = [google_service_account.cluster_default]
+  depends_on = [google_service_account_iam_member.terraform_gke_impersonation]
 }
 
 resource "google_container_node_pool" "pools" {
