@@ -36,7 +36,7 @@ resource "google_service_account_iam_member" "terraform_gke_impersonation" {
   count              = var.service_account_impersonation_email == null ? 1 : 0
   service_account_id = google_service_account.cluster_default.id
   role               = "roles/iam.serviceAccountUser"
-  member             = var.service_account_impersonation_email
+  member             = "serviceAccount:${var.service_account_impersonation_email}"
 }
 
 locals {
