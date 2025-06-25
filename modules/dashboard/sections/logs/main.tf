@@ -1,13 +1,25 @@
 variable "title" { type = string }
 variable "filter" { type = list(string) }
 variable "collapsed" { default = true }
-
 module "width" { source = "../width" }
+variable "cloudrun_type" {
+  type    = string
+  default = "service"
+
+  validation {
+    condition     = contains(["service", "job"], var.cloudrun_type)
+    error_message = "Allowed values for 'cloudrun_type' are 'service' or 'job'."
+  }
+}
+
+locals {
+  filter = concat(var.filter, var.cloudrun_type == "job" ? ["resource.type=\"cloud_run_job\""] : ["resource.type=\"cloud_run_revision\""])
+}
 
 module "logs" {
   source = "../../widgets/logs"
   title  = var.title
-  filter = var.filter
+  filter = local.filter
 }
 
 locals {

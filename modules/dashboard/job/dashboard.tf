@@ -11,16 +11,18 @@ module "errgrp" {
 }
 
 module "logs" {
-  source = "../sections/logs"
-  title  = "Job Logs"
-  filter = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${local.job_name}\""]
+  source        = "../sections/logs"
+  title         = "Job Logs"
+  filter        = []
+  cloudrun_type = "job"
 }
 
 module "resources" {
   source                = "../sections/resources"
   title                 = "Resources"
-  filter                = ["resource.type=\"cloud_run_job\"", "resource.labels.job_name=\"${local.job_name}\""]
+  filter                = []
   cloudrun_name         = local.job_name
+  cloudrun_type         = "job"
   notification_channels = var.notification_channels
 }
 

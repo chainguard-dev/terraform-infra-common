@@ -5,9 +5,10 @@ module "topic" {
 }
 
 module "logs" {
-  source = "../dashboard/sections/logs"
-  title  = "Service Logs"
-  filter = ["resource.type=\"cloud_run_revision\""]
+  source        = "../dashboard/sections/logs"
+  title         = "Service Logs"
+  filter        = []
+  cloudrun_type = "service"
 }
 
 module "http" {
@@ -22,6 +23,7 @@ module "resources" {
   title         = "Resources"
   filter        = []
   cloudrun_name = var.name
+  cloudrun_type = "service"
 
   notification_channels = var.notification_channels
 }
