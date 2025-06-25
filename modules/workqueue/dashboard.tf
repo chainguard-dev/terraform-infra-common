@@ -1,15 +1,17 @@
 module "width" { source = "../dashboard/sections/width" }
 
 module "receiver-logs" {
-  source = "../dashboard/sections/logs"
-  title  = "Receiver Logs"
-  filter = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.name}-rcv\""]
+  source        = "../dashboard/sections/logs"
+  title         = "Receiver Logs"
+  filter        = ["resource.labels.service_name=\"${var.name}-rcv\""]
+  cloudrun_type = "service"
 }
 
 module "dispatcher-logs" {
-  source = "../dashboard/sections/logs"
-  title  = "Dispatcher Logs"
-  filter = ["resource.type=\"cloud_run_revision\"", "resource.labels.service_name=\"${var.name}-dsp\""]
+  source        = "../dashboard/sections/logs"
+  title         = "Dispatcher Logs"
+  filter        = ["resource.labels.service_name=\"${var.name}-dsp\""]
+  cloudrun_type = "service"
 }
 
 module "max-attempts" {

@@ -23,6 +23,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_cloudrun_type"></a> [cloudrun\_type](#input\_cloudrun\_type) | n/a | `string` | `"service"` | no |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `true` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | n/a | yes |
 | <a name="input_title"></a> [title](#input\_title) | n/a | `string` | n/a | yes |
