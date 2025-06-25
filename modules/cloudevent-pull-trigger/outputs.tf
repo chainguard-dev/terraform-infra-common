@@ -9,3 +9,9 @@ output "pull-subscription" {
   value       = google_pubsub_subscription.this.name
   description = "The name of the pull subscription, which is used to receive events from the broker."
 }
+
+output "dead-letter-gcs-bucket" {
+  depends_on  = [google_storage_bucket.dlq_bucket]
+  value       = var.enable_dlq_bucket == false ? null : google_storage_bucket.dlq_bucket[0].name
+  description = "The name of the dead-letter GCS bucket, which is used to store events that could not be delivered."
+}
