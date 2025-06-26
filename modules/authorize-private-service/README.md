@@ -35,6 +35,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_name"></a> [name](#input\_name) | The name of the Cloud Run service in this region. | `string` | n/a | yes |
+| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region in which this Cloud Run service is based. | `string` | n/a | yes |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | The email of the service account being authorized to invoke the private Cloud Run service. | `string` | n/a | yes |

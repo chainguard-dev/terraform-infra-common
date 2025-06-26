@@ -68,6 +68,7 @@ No modules.
 | <a name="input_notification_channels_slack"></a> [notification\_channels\_slack](#input\_notification\_channels\_slack) | Slack notification channel. | `list(string)` | `[]` | no |
 | <a name="input_oom_filter"></a> [oom\_filter](#input\_oom\_filter) | additional filter to apply to oom alert policy | `string` | `""` | no |
 | <a name="input_panic_filter"></a> [panic\_filter](#input\_panic\_filter) | additional filter to apply to panic alert policy | `string` | `""` | no |
+| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_scaling_issue_filter"></a> [scaling\_issue\_filter](#input\_scaling\_issue\_filter) | additional filter to apply to scaling issue alert policy | `string` | `""` | no |
 | <a name="input_signal_filter"></a> [signal\_filter](#input\_signal\_filter) | additional filter to apply to signal alert policy | `string` | `""` | no |
