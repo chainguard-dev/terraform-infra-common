@@ -9,7 +9,7 @@ locals {
   }, local.lowercase, local.lowercase)
 
   default_labels = {
-    "bucket-events" = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = var.squad != "" ? {

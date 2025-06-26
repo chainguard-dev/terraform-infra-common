@@ -27,7 +27,7 @@ locals {
   accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : sa if sa != ""]
 
   default_labels = {
-    "secret" = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = var.squad != "" ? {

@@ -17,3 +17,30 @@ provider "google" {
   project = var.project
 }
 ```
+
+## Resource Labeling Convention
+
+All modules in this repository follow a consistent labeling pattern for GCP cost allocation and resource organization:
+
+```hcl
+locals {
+  default_labels = {
+    basename(abspath(path.module)) = var.name
+  }
+
+  squad_label = var.squad != "" ? {
+    squad = var.squad
+    team  = var.squad
+  } : {}
+
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
+}
+```
+
+This pattern:
+- **Enables cost tracking** to break down each module by use
+- **Maintains consistency** across all infrastructure modules
+- **Supports team attribution** through squad/team labels
+- **Allows custom labels** via the `labels` variable
+
+The `basename(abspath(path.module))` automatically derives the module name (e.g., "gke", "redis", "workqueue") without requiring hardcoded values.

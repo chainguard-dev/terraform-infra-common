@@ -29,7 +29,7 @@ locals {
   }
 
   default_labels = {
-    "regional-service" : var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = {
