@@ -18,7 +18,7 @@ func NonRetriableError(err error, reason string) error {
 
 	// We ignore ok - usually happens when the error is not a gRPC error.
 	s, _ := status.FromError(err)
-	s, derr := s.WithDetails(&NoRetryDetails{
+	newS, derr := s.WithDetails(&NoRetryDetails{
 		Message: reason,
 	})
 	if derr != nil {
@@ -27,7 +27,7 @@ func NonRetriableError(err error, reason string) error {
 		return err
 	}
 
-	return derr // Return a wrapped error
+	return newS.Err()
 }
 
 // GetNonRetriableDetails extracts the NoRetryDetails from the error if it exists.
