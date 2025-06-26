@@ -1,6 +1,7 @@
 // Create the GCP secret to hold the configuration data.
 resource "google_secret_manager_secret" "this" {
   secret_id = var.name
+  labels    = local.merged_labels
   replication {
     auto {}
   }
@@ -24,6 +25,17 @@ resource "google_secret_manager_secret_version" "placeholder" {
 locals {
   accessors       = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != ""]
   accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : sa if sa != ""]
+
+  default_labels = {
+    "secret" = var.name
+  }
+
+  squad_label = var.squad != "" ? {
+    squad = var.squad
+    team  = var.squad
+  } : {}
+
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
 }
 
 // Only the service account as which the service runs should have access to the secret.
@@ -57,6 +69,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
 
   display_name = "Abnormal Secret Access: ${var.name}"
   combiner     = "OR"
+  user_labels  = local.merged_labels
 
   conditions {
     display_name = "Abnormal Secret Access: ${var.name}"

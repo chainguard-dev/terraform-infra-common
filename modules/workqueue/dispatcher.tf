@@ -194,8 +194,9 @@ module "change-trigger-calls-dispatcher" {
 resource "google_pubsub_subscription" "this" {
   for_each = var.regions
 
-  name  = "${var.name}-${each.key}"
-  topic = google_pubsub_topic.object-change-notifications[each.key].id
+  name   = "${var.name}-${each.key}"
+  topic  = google_pubsub_topic.object-change-notifications[each.key].id
+  labels = local.merged_labels
 
   ack_deadline_seconds = 600 // Maximum value
 

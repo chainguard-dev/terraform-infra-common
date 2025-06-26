@@ -54,4 +54,8 @@ variable "notification_channels" {
   type        = list(string)
 }
 
-// TODO(mattmoor): Allow passing labels through.
+variable "labels" {
+  description = "Labels to apply to the workqueue resources."
+  type        = map(string)
+  default     = {}
+}

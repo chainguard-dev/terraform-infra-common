@@ -60,3 +60,9 @@ variable "squad" {
     error_message = "squad needs to specified or disable check by setting require_squad = false"
   }
 }
+
+variable "labels" {
+  description = "Labels to apply to the broker resources."
+  type        = map(string)
+  default     = {}
+}

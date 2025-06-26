@@ -7,6 +7,17 @@ locals {
     "eu" : "europe-west1",
     "asia" : "asia-east1",
   }, local.lowercase, local.lowercase)
+
+  default_labels = {
+    "bucket-events" = var.name
+  }
+
+  squad_label = var.squad != "" ? {
+    squad = var.squad
+    team  = var.squad
+  } : {}
+
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
 }
 
 resource "random_string" "service-suffix" {
@@ -97,11 +108,8 @@ module "authorize-delivery" {
 }
 
 resource "google_pubsub_topic" "dead-letter" {
-  name = "${var.name}-dlq-${random_string.delivery-suffix.result}"
-
-  labels = var.squad == "" ? {} : {
-    team = var.squad
-  }
+  name   = "${var.name}-dlq-${random_string.delivery-suffix.result}"
+  labels = local.merged_labels
 
   message_storage_policy {
     allowed_persistence_regions = [local.region]
@@ -114,6 +122,7 @@ resource "google_pubsub_topic" "dead-letter" {
 resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   name                       = google_pubsub_topic.dead-letter.name
   topic                      = google_pubsub_topic.dead-letter.name
+  labels                     = local.merged_labels
   message_retention_duration = "86400s"
 
   expiration_policy {
@@ -136,8 +145,9 @@ resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter"
 resource "google_pubsub_subscription" "this" {
   depends_on = [module.this]
 
-  name  = "${var.name}-${random_string.delivery-suffix.result}"
-  topic = google_pubsub_topic.internal.id
+  name   = "${var.name}-${random_string.delivery-suffix.result}"
+  topic  = google_pubsub_topic.internal.id
+  labels = local.merged_labels
 
   // TODO: Tune this and/or make it configurable?
   ack_deadline_seconds = 300
@@ -191,7 +201,8 @@ resource "google_pubsub_topic_iam_binding" "binding" {
 
 // Creage the topic to receive the GCS events.
 resource "google_pubsub_topic" "internal" {
-  name = "${var.name}-internal"
+  name   = "${var.name}-internal"
+  labels = local.merged_labels
 
   // TODO: Tune this and/or make it configurable?
   message_retention_duration = "600s"

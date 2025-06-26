@@ -23,11 +23,8 @@ resource "google_project_service_identity" "pubsub" {
 resource "google_pubsub_topic" "dead-letter" {
   for_each = var.method == "gcs" ? local.regional-types : {}
 
-  name = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
-
-  labels = var.squad == "" ? {} : {
-    team = var.squad
-  }
+  name   = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
+  labels = local.merged_labels
 
   message_storage_policy {
     allowed_persistence_regions = [each.value.region]
@@ -50,6 +47,7 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   for_each                   = google_pubsub_topic.dead-letter
   name                       = each.value.name
   topic                      = each.value.name
+  labels                     = local.merged_labels
   message_retention_duration = "86400s"
 
   expiration_policy {
@@ -64,6 +62,7 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
 resource "google_pubsub_subscription" "this" {
   for_each = var.method == "gcs" ? local.regional-types : {}
   name     = "${var.name}-${substr(md5(each.key), 0, 6)}"
+  labels   = local.merged_labels
 
   topic = var.broker[each.value.region]
 

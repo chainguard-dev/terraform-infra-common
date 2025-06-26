@@ -3,6 +3,7 @@ resource "google_bigquery_dataset" "this" {
   project    = var.project_id
   dataset_id = "cloudevents_${replace(var.name, "-", "_")}"
   location   = var.location
+  labels     = local.merged_labels
 
   default_partition_expiration_ms = (var.retention-period) * 24 * 60 * 60 * 1000
 }
@@ -16,6 +17,7 @@ resource "google_bigquery_table" "types" {
   dataset_id = google_bigquery_dataset.this.dataset_id
   table_id   = replace(each.key, ".", "_")
   schema     = each.value.schema
+  labels     = local.merged_labels
 
   require_partition_filter = false
 
