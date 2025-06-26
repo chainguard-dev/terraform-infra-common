@@ -27,6 +27,7 @@ module "this" {
 
   squad         = var.squad
   require_squad = var.require_squad
+  product       = var.product
 
   // If we're using GCLB then disallow external traffic,
   // otherwise allow the prober URI to be used directly.

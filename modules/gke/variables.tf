@@ -166,3 +166,9 @@ variable "service_account_impersonation_email" {
   default     = null
   description = "Service account email impersonation for the service account created by this module."
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

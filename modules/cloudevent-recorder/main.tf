@@ -29,8 +29,11 @@ locals {
     squad = var.squad
     team  = var.squad
   } : {}
+  product_label = var.product != "" ? {
+    product = var.product
+  } : {}
 
-  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
+  merged_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
 }
 
 resource "random_id" "suffix" {

@@ -48,6 +48,10 @@ locals {
     "squad" = var.squad
     "team"  = var.squad
   }
+
+  product_label = var.product != "" ? {
+    product = var.product
+  } : {}
 }
 
 resource "google_container_cluster" "this" {
@@ -278,7 +282,7 @@ resource "google_container_node_pool" "pools" {
 
     spot            = each.value.spot
     labels          = each.value.labels
-    resource_labels = merge(local.default_labels, local.squad_label, var.labels)
+    resource_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
 
     dynamic "taint" {
       for_each = each.value.taints

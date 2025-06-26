@@ -16,3 +16,9 @@ variable "github_org" {
   description = "The GitHub organizantion to grant access to. Eg: 'chainguard-dev'."
   type        = string
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

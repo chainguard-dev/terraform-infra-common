@@ -212,3 +212,9 @@ variable "deletion_protection" {
   description = "Whether to enable delete protection for the service."
   default     = true
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

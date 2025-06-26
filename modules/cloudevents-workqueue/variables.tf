@@ -104,3 +104,9 @@ variable "ack_deadline_seconds" {
   type        = number
   default     = 300
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

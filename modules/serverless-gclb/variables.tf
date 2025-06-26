@@ -50,3 +50,9 @@ variable "security-policy" {
   type        = string
   default     = null
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

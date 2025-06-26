@@ -24,9 +24,10 @@ locals {
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.suffix.result}"
 
-  labels = var.team == "" ? {} : {
-    team = var.team
-  }
+  labels = merge(
+    var.team == "" ? {} : { team = var.team },
+    var.product == "" ? {} : { product = var.product }
+  )
 
   message_storage_policy {
     allowed_persistence_regions = var.allowed_persistence_regions

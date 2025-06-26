@@ -25,6 +25,9 @@ locals {
     "squad" : var.squad
     "team" : var.squad
   }
+  product_label = var.product != "" ? {
+    product = var.product
+  } : {}
 }
 
 resource "ko_build" "image" {
@@ -65,14 +68,14 @@ resource "google_cloud_run_v2_job" "job" {
 
   name     = "${var.name}-cron"
   location = var.region
-  labels   = merge(var.labels, local.squad_label)
+  labels   = merge(var.labels, local.squad_label, local.product_label, local.product_label)
 
   deletion_protection = var.deletion_protection
 
   template {
     parallelism = var.parallelism
     task_count  = var.task_count
-    labels      = merge(var.labels, local.squad_label)
+    labels      = merge(var.labels, local.squad_label, local.product_label, local.product_label)
 
     template {
       execution_environment = var.execution_environment
