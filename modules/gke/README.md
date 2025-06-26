@@ -23,16 +23,17 @@ No modules.
 | [google_container_cluster.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster) | resource |
 | [google_project_iam_member.cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_service_account.cluster_default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
+| [google_service_account_iam_member.terraform_gke_impersonation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account_iam_member) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_cluster_autoscaling"></a> [cluster\_autoscaling](#input\_cluster\_autoscaling) | Enabling of node auto-provisioning | `bool` | `false` | no |
-| <a name="input_cluster_autoscaling_cpu_limits"></a> [cluster\_autoscaling\_cpu\_limits](#input\_cluster\_autoscaling\_cpu\_limits) | cluster autoscaling cpu limits | <pre>object({<br/>    resource_type = optional(string, "cpu")<br/>    minimum       = optional(number, 4)<br/>    maximum       = optional(number, 10)<br/>  })</pre> | `{}` | no |
-| <a name="input_cluster_autoscaling_memory_limits"></a> [cluster\_autoscaling\_memory\_limits](#input\_cluster\_autoscaling\_memory\_limits) | cluster autoscaling memory limits | <pre>object({<br/>    resource_type = optional(string, "memory"),<br/>    minimum       = optional(number, 8)<br/>    maximum       = optional(number, 80)<br/>  })</pre> | `null` | no |
-| <a name="input_cluster_autoscaling_profile"></a> [cluster\_autoscaling\_profile](#input\_cluster\_autoscaling\_profile) | cluster autoscaling profile | `string` | `null` | no |
-| <a name="input_cluster_autoscaling_provisioning_defaults"></a> [cluster\_autoscaling\_provisioning\_defaults](#input\_cluster\_autoscaling\_provisioning\_defaults) | cluster autoscaling provisioning defaults | <pre>object({<br/>    disk_size = optional(number, null)<br/>    disk_type = optional(string, null)<br/>    shielded_instance_config = optional(object({<br/>      enable_secure_boot          = optional(bool, null)<br/>      enable_integrity_monitoring = optional(bool, null)<br/>    }), null)<br/>    management = optional(object({<br/>      auto_upgrade = optional(bool, null)<br/>      auto_repair  = optional(bool, null)<br/>    }), null)<br/>  })</pre> | `null` | no |
+| <a name="input_cluster_autoscaling_cpu_limits"></a> [cluster\_autoscaling\_cpu\_limits](#input\_cluster\_autoscaling\_cpu\_limits) | Cluster autoscaling cpu limits | <pre>object({<br/>    resource_type = optional(string, "cpu")<br/>    minimum       = optional(number, 4)<br/>    maximum       = optional(number, 10)<br/>  })</pre> | `{}` | no |
+| <a name="input_cluster_autoscaling_memory_limits"></a> [cluster\_autoscaling\_memory\_limits](#input\_cluster\_autoscaling\_memory\_limits) | Cluster autoscaling memory limits | <pre>object({<br/>    resource_type = optional(string, "memory"),<br/>    minimum       = optional(number, 8)<br/>    maximum       = optional(number, 80)<br/>  })</pre> | `null` | no |
+| <a name="input_cluster_autoscaling_profile"></a> [cluster\_autoscaling\_profile](#input\_cluster\_autoscaling\_profile) | Cluster autoscaling profile | `string` | `null` | no |
+| <a name="input_cluster_autoscaling_provisioning_defaults"></a> [cluster\_autoscaling\_provisioning\_defaults](#input\_cluster\_autoscaling\_provisioning\_defaults) | Cluster autoscaling provisioning defaults | <pre>object({<br/>    disk_size = optional(number, null)<br/>    disk_type = optional(string, null)<br/>    shielded_instance_config = optional(object({<br/>      enable_secure_boot          = optional(bool, null)<br/>      enable_integrity_monitoring = optional(bool, null)<br/>    }), null)<br/>    management = optional(object({<br/>      auto_upgrade = optional(bool, null)<br/>      auto_repair  = optional(bool, null)<br/>    }), null)<br/>  })</pre> | `null` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Toggle to prevent accidental deletion of resources. | `bool` | `true` | no |
 | <a name="input_enable_private_nodes"></a> [enable\_private\_nodes](#input\_enable\_private\_nodes) | Enable private nodes by default | `bool` | `false` | no |
 | <a name="input_extra_roles"></a> [extra\_roles](#input\_extra\_roles) | Extra roles to add to the cluster's default service account | `map(string)` | `{}` | no |
@@ -46,7 +47,8 @@ No modules.
 | <a name="input_release_channel"></a> [release\_channel](#input\_release\_channel) | GKE release channel | `string` | `"REGULAR"` | no |
 | <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `true` | no |
 | <a name="input_resource_usage_export_config"></a> [resource\_usage\_export\_config](#input\_resource\_usage\_export\_config) | Config for exporting resource usage. | <pre>object({<br/>    bigquery_dataset_id                  = optional(string, "")<br/>    enable_network_egress_metering       = optional(bool, false)<br/>    enable_resource_consumption_metering = optional(bool, true)<br/>  })</pre> | `{}` | no |
-| <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | `""` | no |
+| <a name="input_service_account_impersonation_email"></a> [service\_account\_impersonation\_email](#input\_service\_account\_impersonation\_email) | Service account email impersonation for the service account created by this module. | `string` | `null` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the service. | `string` | `""` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | The subnetwork to deploy the cluster in. | `string` | n/a | yes |
 | <a name="input_zones"></a> [zones](#input\_zones) | If specified, will spread nodes across these zones | `list(string)` | `null` | no |
 
