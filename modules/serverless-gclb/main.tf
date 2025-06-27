@@ -125,6 +125,13 @@ resource "google_compute_url_map" "public-service" {
   }
 }
 
+# SSL policy to control the features of SSL.
+resource "google_compute_ssl_policy" "ssl_policy" {
+  name            = "${var.name}-ssl-policy"
+  profile         = "MODERN"
+  min_tls_version = "TLS_1_2"
+}
+
 // Create an HTTPS proxy for our URL map.
 resource "google_compute_target_https_proxy" "public-service" {
   project = var.project_id
@@ -132,6 +139,7 @@ resource "google_compute_target_https_proxy" "public-service" {
   url_map = google_compute_url_map.public-service.id
 
   ssl_certificates = [for domain, cert in google_compute_managed_ssl_certificate.public-service : cert.id if !var.public-services[domain].disabled]
+  ssl_policy       = google_compute_ssl_policy.ssl_policy.id
 }
 
 // Attach the HTTPS proxy to the global IP address via a forwarding rule.
