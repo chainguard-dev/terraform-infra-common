@@ -190,3 +190,9 @@ variable "deletion_protection" {
   type        = bool
   default     = true
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

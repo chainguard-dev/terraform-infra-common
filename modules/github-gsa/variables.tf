@@ -50,3 +50,9 @@ variable "notification_channels" {
   description = "The list of notification channels to alert when the service account is misused."
   type        = list(string)
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

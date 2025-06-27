@@ -156,3 +156,9 @@ variable "grpc_non_error_codes" {
     "NotFound",
   ]
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

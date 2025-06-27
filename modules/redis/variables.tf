@@ -211,3 +211,9 @@ variable "secret_version_adder" {
   type        = string
   description = "The user allowed to populate new redis auth secret versions."
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

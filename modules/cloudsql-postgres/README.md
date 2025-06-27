@@ -79,6 +79,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Cloud SQL instance name (lowercase letters, numbers, and hyphens; up to 98 characters). | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | Self‑link or name of the VPC network used for private IP connectivity. | `string` | n/a | yes |
 | <a name="input_primary_zone"></a> [primary\_zone](#input\_primary\_zone) | Optional zone for the primary instance. | `string` | `null` | no |
+| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project"></a> [project](#input\_project) | GCP project ID hosting the Cloud SQL instance. | `string` | n/a | yes |
 | <a name="input_read_replica_regions"></a> [read\_replica\_regions](#input\_read\_replica\_regions) | List of regions in which to create read replicas. Empty list for none. | `list(string)` | `[]` | no |
 | <a name="input_region"></a> [region](#input\_region) | GCP region for the primary instance. | `string` | n/a | yes |

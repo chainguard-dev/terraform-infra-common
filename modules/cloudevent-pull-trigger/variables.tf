@@ -119,3 +119,9 @@ variable "allowed_persistence_regions" {
   type        = list(string)
   default     = []
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

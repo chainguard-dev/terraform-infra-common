@@ -44,3 +44,9 @@ variable "squad" {
     error_message = "squad must be specified or disable check by setting require_squad = false"
   }
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

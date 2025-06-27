@@ -16,3 +16,9 @@ variable "service-account" {
   description = "The email of the service account being authorized to invoke the private Cloud Run service."
   type        = string
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}

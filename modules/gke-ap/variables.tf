@@ -55,3 +55,9 @@ variable "enable_private_nodes" {
   default     = false
   description = "Enable private nodes by default"
 }
+
+variable "product" {
+  description = "Product label to apply to the service."
+  type        = string
+  default     = "unknown"
+}
