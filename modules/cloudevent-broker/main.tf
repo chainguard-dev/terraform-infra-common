@@ -7,7 +7,7 @@ terraform {
 
 locals {
   default_labels = {
-    "cloudevent-broker" = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = var.squad != "" ? {

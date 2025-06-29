@@ -41,7 +41,7 @@ resource "google_service_account_iam_member" "terraform_gke_impersonation" {
 
 locals {
   default_labels = {
-    "gke" = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = {
