@@ -168,6 +168,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_concurrent-work"></a> [concurrent-work](#input\_concurrent-work) | The amount of concurrent work to dispatch at a given time. | `number` | n/a | yes |
+| <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the workqueue resources. | `map(string)` | `{}` | no |
 | <a name="input_max-retry"></a> [max-retry](#input\_max-retry) | The maximum number of retry attempts before a task is moved to the dead letter queue. Default of 0 means unlimited retries. | `number` | `0` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
@@ -185,3 +186,4 @@ No requirements.
 |------|-------------|
 | <a name="output_receiver"></a> [receiver](#output\_receiver) | n/a |
 <!-- END_TF_DOCS -->
+
