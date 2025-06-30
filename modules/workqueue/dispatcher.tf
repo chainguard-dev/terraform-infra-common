@@ -41,6 +41,8 @@ module "dispatcher-service" {
   # Give the things in the workqueue a lot of time to process the key.
   request_timeout_seconds = 3600
 
+  deletion_protection = var.deletion_protection
+
   service_account = google_service_account.dispatcher.email
   containers = {
     "dispatcher" = {
