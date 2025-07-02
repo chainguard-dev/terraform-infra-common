@@ -35,6 +35,7 @@ resource "google_project_iam_member" "cluster" {
 locals {
   default_labels = {
     basename(abspath(path.module)) = var.name
+    terraform-module               = basename(abspath(path.module))
   }
 
   squad_label = {
