@@ -26,6 +26,7 @@ All modules in this repository follow a consistent labeling pattern for GCP cost
 locals {
   default_labels = {
     basename(abspath(path.module)) = var.name
+    terraform-module               = basename(abspath(path.module))
   }
 
   squad_label = var.squad != "" ? {
@@ -42,5 +43,6 @@ This pattern:
 - **Maintains consistency** across all infrastructure modules
 - **Supports team attribution** through squad/team labels
 - **Allows custom labels** via the `labels` variable
+- **Provides module identification** via the `terraform-module` label
 
 The `basename(abspath(path.module))` automatically derives the module name (e.g., "gke", "redis", "workqueue") without requiring hardcoded values.
