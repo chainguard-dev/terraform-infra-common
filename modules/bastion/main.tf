@@ -17,7 +17,7 @@ locals {
 
   // Labels
   default_labels = {
-    bastion = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = {

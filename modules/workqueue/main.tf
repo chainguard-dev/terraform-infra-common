@@ -2,7 +2,7 @@ locals {
   sa_prefix = "${var.name}-"
 
   default_labels = {
-    "workqueue" = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = var.squad != "" ? {

@@ -10,7 +10,7 @@ terraform {
 
 locals {
   default_labels = {
-    cloudsql = var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = var.squad != "" ? {

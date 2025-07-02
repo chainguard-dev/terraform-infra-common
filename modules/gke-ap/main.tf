@@ -34,7 +34,7 @@ resource "google_project_iam_member" "cluster" {
 
 locals {
   default_labels = {
-    "gke" : var.name
+    basename(abspath(path.module)) = var.name
   }
 
   squad_label = {
