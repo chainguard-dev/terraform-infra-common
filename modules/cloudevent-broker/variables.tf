@@ -72,3 +72,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "deletion_protection" {
+  type        = bool
+  description = "Whether to enable delete protection for the service."
+  default     = true
+}

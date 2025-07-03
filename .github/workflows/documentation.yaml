@@ -55,7 +55,13 @@ jobs:
           fail-on-diff: "true"
 
       - if: failure()
-        run: cat modules/${{ matrix.module }}/README.md
+        name: Dump the expected README.md
+        run: |
+          echo === Differences ===
+          git diff --cached "modules/${{ matrix.module }}/README.md"
+
+          echo === Full expected file ===
+          cat "modules/${{ matrix.module }}/README.md"
 
   conclusion:
     permissions:
