@@ -2,14 +2,18 @@ name: Validate terraform
 
 on:
   pull_request:
-    branches: [ 'main' ]
+    branches:
+      - 'main'
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   build-matrix:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     outputs:
       matrix: "${{steps.list_dirs.outputs.matrix}}"
     steps:
@@ -29,6 +33,10 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     needs:
       - build-matrix
     strategy:
