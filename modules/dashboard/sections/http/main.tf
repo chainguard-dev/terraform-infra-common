@@ -11,7 +11,7 @@ module "request_count" {
   filter          = concat(var.filter, ["metric.type=\"run.googleapis.com/request_count\""])
   group_by_fields = ["metric.label.\"response_code_class\""]
   primary_align   = "ALIGN_RATE"
-  primary_reduce  = "REDUCE_NONE"
+  primary_reduce  = "REDUCE_SUM"
 }
 
 module "failure_rate" {
@@ -50,7 +50,7 @@ module "outbound_request_count" {
     "metric.label.\"host\"",
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "outbound_request_latency" {
@@ -60,6 +60,9 @@ module "outbound_request_latency" {
     "metric.type=\"prometheus.googleapis.com/http_client_request_duration_seconds/histogram\"",
     "resource.type=\"prometheus_target\"",
   ])
+  group_by_fields = [
+    "metric.label.\"host\"",
+  ]
 }
 
 locals {

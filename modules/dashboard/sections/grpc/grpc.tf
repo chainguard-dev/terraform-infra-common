@@ -29,7 +29,7 @@ module "request_count" {
     "metric.label.\"grpc_code\""
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "failure_rate" {
@@ -72,7 +72,7 @@ module "outbound_request_count" {
     "metric.label.\"grpc_code\""
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "outbound_latency" {
