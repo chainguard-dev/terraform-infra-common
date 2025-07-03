@@ -1,6 +1,6 @@
 locals {
   oncall = concat(
-    var.notification_channels_pagerduty,
+    var.notification_channels_pager,
     var.notification_channels_email,
     var.notification_channels_pubsub
   )

@@ -8,8 +8,8 @@ variable "notification_channels" {
   default     = []
 }
 
-variable "notification_channels_pagerduty" {
-  description = "Email notification channel."
+variable "notification_channels_pager" {
+  description = "Incident.io notification channel."
   type        = list(string)
   default     = []
 }

@@ -63,7 +63,7 @@ No modules.
 | <a name="input_job_exitcode_filter"></a> [job\_exitcode\_filter](#input\_job\_exitcode\_filter) | additional filter to apply to job exitcode alert policy | `string` | `""` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_email"></a> [notification\_channels\_email](#input\_notification\_channels\_email) | Email notification channel. | `list(string)` | `[]` | no |
-| <a name="input_notification_channels_pagerduty"></a> [notification\_channels\_pagerduty](#input\_notification\_channels\_pagerduty) | Email notification channel. | `list(string)` | `[]` | no |
+| <a name="input_notification_channels_pager"></a> [notification\_channels\_pager](#input\_notification\_channels\_pager) | Incident.io notification channel. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_pubsub"></a> [notification\_channels\_pubsub](#input\_notification\_channels\_pubsub) | Pubsub notification channel. | `list(string)` | `[]` | no |
 | <a name="input_notification_channels_slack"></a> [notification\_channels\_slack](#input\_notification\_channels\_slack) | Slack notification channel. | `list(string)` | `[]` | no |
 | <a name="input_oom_filter"></a> [oom\_filter](#input\_oom\_filter) | additional filter to apply to oom alert policy | `string` | `""` | no |
