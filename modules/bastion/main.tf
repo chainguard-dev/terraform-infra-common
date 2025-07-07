@@ -137,8 +137,7 @@ resource "google_compute_instance" "bastion" {
   allow_stopping_for_update = true
 
   scheduling {
-    automatic_restart   = true
-    on_host_maintenance = "TERMINATE"
+    automatic_restart = true
   }
 
   deletion_protection = var.deletion_protection
