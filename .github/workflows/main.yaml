@@ -6,12 +6,15 @@ on:
       - main
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   lint-and-validate:
     name: "Terraform fmt and validate"
+
+    permissions:
+      contents: read
+
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
