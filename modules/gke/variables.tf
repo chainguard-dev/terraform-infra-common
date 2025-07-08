@@ -161,6 +161,16 @@ variable "resource_usage_export_config" {
   default = {}
 }
 
+variable "advanced_datapath_observability_config" {
+  description = "Config for Advanced Datapath Monitoring."
+  type = object({
+    enable         = optional(bool, false)
+    enable_metrics = optional(bool, true)
+    enable_relay   = optional(bool, true)
+  })
+  default = {}
+}
+
 variable "service_account_impersonation_email" {
   type        = string
   default     = null

@@ -187,6 +187,14 @@ resource "google_container_cluster" "this" {
     enable_components = ["SYSTEM_COMPONENTS", "APISERVER", "SCHEDULER", "CONTROLLER_MANAGER", "STORAGE", "POD"]
     managed_prometheus { enabled = true }
 
+    dynamic "advanced_datapath_observability_config" {
+      for_each = var.advanced_datapath_observability_config.enable ? ["placeholder"] : []
+
+      content {
+        enable_metrics = var.advanced_datapath_observability_config.enable_metrics
+        enable_relay   = var.advanced_datapath_observability_config.enable_relay
+      }
+    }
   }
 
   # This can't hurt... right?
