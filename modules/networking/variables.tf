@@ -53,3 +53,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "hosted_zone_logging_enabled" {
+  description = "Whether or not to enable DNS Hosted Zone Cloud Logging"
+  type        = bool
+  default     = true
+}
