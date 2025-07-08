@@ -29,6 +29,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_advanced_datapath_observability_config"></a> [advanced\_datapath\_observability\_config](#input\_advanced\_datapath\_observability\_config) | Config for Advanced Datapath Monitoring. | <pre>object({<br/>    enable         = optional(bool, false)<br/>    enable_metrics = optional(bool, true)<br/>    enable_relay   = optional(bool, true)<br/>  })</pre> | `{}` | no |
 | <a name="input_cluster_autoscaling"></a> [cluster\_autoscaling](#input\_cluster\_autoscaling) | Enabling of node auto-provisioning | `bool` | `false` | no |
 | <a name="input_cluster_autoscaling_cpu_limits"></a> [cluster\_autoscaling\_cpu\_limits](#input\_cluster\_autoscaling\_cpu\_limits) | Cluster autoscaling cpu limits | <pre>object({<br/>    resource_type = optional(string, "cpu")<br/>    minimum       = optional(number, 4)<br/>    maximum       = optional(number, 10)<br/>  })</pre> | `{}` | no |
 | <a name="input_cluster_autoscaling_memory_limits"></a> [cluster\_autoscaling\_memory\_limits](#input\_cluster\_autoscaling\_memory\_limits) | Cluster autoscaling memory limits | <pre>object({<br/>    resource_type = optional(string, "memory"),<br/>    minimum       = optional(number, 8)<br/>    maximum       = optional(number, 80)<br/>  })</pre> | `null` | no |
