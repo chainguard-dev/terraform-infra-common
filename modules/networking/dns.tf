@@ -21,6 +21,10 @@ resource "google_dns_managed_zone" "cloud-run-internal" {
       network_url = google_compute_network.this.id
     }
   }
+
+  cloud_logging_config {
+    enable_logging = var.hosted_zone_logging_enabled
+  }
 }
 
 // Create a record for *.run.app that points to private.googleapis.com
@@ -50,6 +54,10 @@ resource "google_dns_managed_zone" "private-google-apis" {
     networks {
       network_url = google_compute_network.this.id
     }
+  }
+
+  cloud_logging_config {
+    enable_logging = var.hosted_zone_logging_enabled
   }
 }
 

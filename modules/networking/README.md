@@ -61,6 +61,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_cidr"></a> [cidr](#input\_cidr) | n/a | `string` | `"10.0.0.0/8"` | no |
+| <a name="input_hosted_zone_logging_enabled"></a> [hosted\_zone\_logging\_enabled](#input\_hosted\_zone\_logging\_enabled) | Whether or not to enable DNS Hosted Zone Cloud Logging | `bool` | `true` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the networking resources. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_netnum_offset"></a> [netnum\_offset](#input\_netnum\_offset) | cidrsubnet netnum offset for the subnet. See https://developer.hashicorp.com/terraform/language/functions/cidrsubnet for more details | `number` | `0` | no |
