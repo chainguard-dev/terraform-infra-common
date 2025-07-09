@@ -37,7 +37,7 @@ EOD
 
   validation {
     error_message = "Must be one of ${join(", ", local.valid_ingress_values)}. Got ${var.ingress}"
-    condition     = var.ingress in local.valid_ingress_values
+    condition     = contains(local.valid_ingress_values, var.ingress)
   }
 }
 
