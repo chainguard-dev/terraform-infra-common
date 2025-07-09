@@ -26,6 +26,17 @@ EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 }
 
+variable "require_auth" {
+  type        = bool
+  description = "Whether to require authentication for the service, if ingress is not \"INGRESS_TRAFFIC_INTERNAL_ONLY\"."
+  default     = false
+
+  validation {
+    condition     = !var.require_auth || var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY"
+    error_message = "require_auth cannot be true when ingress is set to INGRESS_TRAFFIC_INTERNAL_ONLY."
+  }
+}
+
 variable "egress" {
   type        = string
   description = <<EOD
