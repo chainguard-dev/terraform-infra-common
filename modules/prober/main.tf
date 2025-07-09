@@ -30,7 +30,7 @@ module "this" {
   product       = var.product
 
   // If we're using GCLB then disallow external traffic,
-  // otherwise allow the prober URI to be used directly.
+  // otherwise allow the prober URI to be used directly, without GCP authentication.
   ingress = local.use_gclb ? "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER" : "INGRESS_TRAFFIC_ALL"
 
   // Different probers have different egress requirements.

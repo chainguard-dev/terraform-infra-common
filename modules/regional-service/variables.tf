@@ -14,16 +14,31 @@ variable "regions" {
   }))
 }
 
+locals {
+  valid_ingress_values = [
+    "INGRESS_TRAFFIC_ALL",
+    "INGRESS_TRAFFIC_ALL_REQUIRE_AUTH",
+    "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER",
+    "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  ]
+}
+
 variable "ingress" {
   type        = string
   description = <<EOD
 Which type of ingress traffic to accept for the service.
 
 - INGRESS_TRAFFIC_ALL accepts all traffic, enabling the public .run.app URL for the service
+- INGRESS_TRAFFIC_ALL_REQUIRE_AUTH accepts all traffic, enabling the public .run.app URL for the service, but does not allow unauthenticated access
 - INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER accepts traffic only from a load balancer
 - INGRESS_TRAFFIC_INTERNAL_ONLY accepts internal traffic only
 EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+
+  validation {
+    error_message = "Must be one of ${join(", ", local.valid_ingress_values)}. Got ${var.ingress}"
+    condition     = var.ingress in local.valid_ingress_values
+  }
 }
 
 variable "egress" {
