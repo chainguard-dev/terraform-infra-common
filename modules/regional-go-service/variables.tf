@@ -52,7 +52,7 @@ variable "containers" {
   description = "The containers to run in the service.  Each container will be run in each region."
   type = map(object({
     source = object({
-      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:092aad9f6448695b6e20333a8faa93fe3637bcf4e88aa804b8f01545eaf288bd")
+      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:c9635595e59e9f4a48da16842ce8dd8984298af3140dcbe5ed2ea4a02156db9c")
       working_dir = string
       importpath  = string
       env         = optional(list(string), [])
