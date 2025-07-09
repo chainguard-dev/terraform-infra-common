@@ -79,10 +79,10 @@ module "this" {
     (local.region) : var.regions[local.region]
   }
 
-  squad           = var.squad
-  require_squad   = var.require_squad
+  squad               = var.squad
+  require_squad       = var.require_squad
   deletion_protection = var.deletion_protection
-  service_account = google_service_account.service.email
+  service_account     = google_service_account.service.email
   containers = {
     "trampoline" = {
       source = {

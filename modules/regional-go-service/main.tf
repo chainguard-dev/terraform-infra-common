@@ -23,11 +23,12 @@ resource "cosign_sign" "this" {
 module "this" {
   source = "../regional-service"
 
-  project_id = var.project_id
-  name       = var.name
-  regions    = var.regions
-  ingress    = var.ingress
-  egress     = var.egress
+  project_id   = var.project_id
+  name         = var.name
+  regions      = var.regions
+  ingress      = var.ingress
+  egress       = var.egress
+  require_auth = var.require_auth
 
   deletion_protection = var.deletion_protection
 
@@ -46,11 +47,11 @@ module "this" {
     }
   }
 
-  labels        = var.labels
-  squad         = var.squad
-  require_squad = var.require_squad
-  product       = var.product
-  scaling       = var.scaling
+  labels           = var.labels
+  squad            = var.squad
+  require_squad    = var.require_squad
+  product          = var.product
+  scaling          = var.scaling
   volumes          = var.volumes
   regional-volumes = var.regional-volumes
   enable_profiler  = var.enable_profiler
