@@ -26,6 +26,12 @@ EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 }
 
+// This allows callers to enforce IAM auth when invoking the service, even if ingress=INGRESS_TRAFFIC_ALL,
+// which otherwise would allow unauthenticated access to the service.
+//
+// This is useful for services that are not intended to be publicly invokable, but aren't served behind a load balancer.
+//
+// This is false by default for backward-compatibility.
 variable "require_auth" {
   type        = bool
   description = "Whether to require authentication for the service, if ingress is not \"INGRESS_TRAFFIC_INTERNAL_ONLY\"."
