@@ -38,3 +38,12 @@ resource "google_compute_subnetwork" "regional" {
     metadata             = "INCLUDE_ALL_METADATA"
   }
 }
+
+// Create DNS policy for allow logging.
+resource "google_dns_policy" "dns_logging_policy" {
+  name           = "dns-logging-policy"
+  enable_logging = true
+  networks {
+    network_url = google_compute_network.this.id
+  }
+}
