@@ -58,6 +58,7 @@ variable "pools" {
     ephemeral_storage_local_ssd_count = optional(number, 0)
     spot                              = optional(bool, false)
     gvisor                            = optional(bool, false)
+    enable_nested_virtualization      = optional(bool, false)
     labels                            = optional(map(string), {})
     taints = optional(list(object({
       key    = string
