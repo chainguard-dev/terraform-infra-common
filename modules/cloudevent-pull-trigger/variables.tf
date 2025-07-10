@@ -6,6 +6,12 @@ variable "name" {
   type = string
 }
 
+variable "gcs_region" {
+  description = "The region in which the GCS Bucket will be created if enabling dead letter queue to send messages to the GCS bucket."
+  type        = string
+  default     = "US"
+}
+
 variable "broker" {
   description = "The name of the pubsub topic we are using as a broker."
   type        = string
@@ -124,4 +130,10 @@ variable "product" {
   description = "Product label to apply to the service."
   type        = string
   default     = "unknown"
+}
+
+variable "enable_dlq_bucket" {
+  description = "Enable the messages to sink in the bucket for the dead letter."
+  type        = bool
+  default     = false
 }
