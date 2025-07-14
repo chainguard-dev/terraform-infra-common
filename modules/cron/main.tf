@@ -4,6 +4,7 @@ terraform {
     google      = { source = "hashicorp/google" }
     google-beta = { source = "hashicorp/google-beta" }
     oci         = { source = "chainguard-dev/oci" }
+    cosign      = { source = "chainguard-dev/cosign" }
   }
 }
 
@@ -37,6 +38,12 @@ resource "ko_build" "image" {
   base_image  = var.base_image
   repo        = local.repo
   env         = var.ko_build_env
+}
+
+resource "cosign_sign" "this" {
+  count    = var.importpath != "" ? 1 : 0
+  image    = ko_build.image[0].image_ref
+  conflict = "REPLACE"
 }
 
 locals {

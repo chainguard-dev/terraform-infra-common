@@ -63,6 +63,7 @@ No requirements.
 
 | Name | Version |
 |------|---------|
+| <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 | <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
@@ -76,6 +77,7 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google-beta_google_cloud_run_v2_job.job](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_job) | resource |
 | [google_cloud_run_v2_job_iam_binding.authorize-calls](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job_iam_binding) | resource |
 | [google_cloud_scheduler_job.cron](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
