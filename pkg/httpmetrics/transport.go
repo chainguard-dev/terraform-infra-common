@@ -194,12 +194,13 @@ func bucketize(ctx context.Context, host string) string {
 		}
 	}
 
+	// Only log every 10th request to avoid flooding the logs.
 	v, _ := seenHostMap.LoadOrStore(host, &atomic.Int64{})
 	vInt := v.(*atomic.Int64)
-
 	if seen := vInt.Add(1); (seen-1)%10 == 0 {
 		clog.WarnContext(ctx, `bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seen)
 	}
+
 	return "other"
 }
 
