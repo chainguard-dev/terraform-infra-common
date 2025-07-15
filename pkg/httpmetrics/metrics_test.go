@@ -76,7 +76,7 @@ func TestBucketize(t *testing.T) {
 		{"rekor.sigstore.dev", "Rekor"},
 		{"issuer.enforce.dev", "issuer.enforce.dev"},
 	} {
-		if got := bucketize(c.host); got != c.bucket {
+		if got := bucketize(t.Context(), c.host); got != c.bucket {
 			t.Errorf("bucketize(%q) = %q, want %q", c.host, got, c.bucket)
 		}
 	}
