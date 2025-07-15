@@ -3,11 +3,11 @@ package httpmetrics
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/chainguard-dev/clog"
@@ -194,12 +194,11 @@ func bucketize(ctx context.Context, host string) string {
 		}
 	}
 
-	v, _ := seenHostMap.LoadOrStore(host, 1)
-	vInt := v.(int)
+	v, _ := seenHostMap.LoadOrStore(host, &atomic.Int64{})
+	vInt := v.(*atomic.Int64)
 
-	if math.Mod(float64(vInt), 10) == 0 {
-		seenHostMap.Store(host, vInt+1)
-		clog.WarnContext(ctx, `bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", vInt+1)
+	if seen := vInt.Add(1); seen-1%10 == 0 {
+		clog.WarnContext(ctx, `bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seen)
 	}
 	return "other"
 }
