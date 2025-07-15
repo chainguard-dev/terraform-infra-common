@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"github.com/chainguard-dev/clog"
 	gcpclog "github.com/chainguard-dev/clog/gcp"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/mileusna/useragent"
@@ -54,7 +54,7 @@ func ServeMetrics() {
 	defer cancel()
 	go ScrapeDiskUsage(ctx)
 	if err := srv.ListenAndServe(); err != nil {
-		slog.Error("listen and serve for http /metrics", "error", err)
+		clog.Error("listen and serve for http /metrics", "error", err)
 	}
 }
 
@@ -229,7 +229,7 @@ func SetupTracer(ctx context.Context) func() {
 
 	return func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
-			slog.Error("Error shutting down tracer provider", "error", err)
+			clog.ErrorContext(ctx, "Error shutting down tracer provider", "error", err)
 		}
 	}
 }

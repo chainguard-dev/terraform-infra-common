@@ -1,8 +1,8 @@
 package httpmetrics
 
 import (
+	"context"
 	"fmt"
-	"log/slog"
 	"math"
 	"net/http"
 	"strconv"
@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/chainguard-dev/clog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -118,7 +119,7 @@ func useGoogClientTraceparent(next http.RoundTripper) promhttp.RoundTripperFunc 
 func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
 		tracer := otel.Tracer("httpmetrics")
-		host := bucketize(r.URL.Host)
+		host := bucketize(r.Context(), r.URL.Host)
 		ctx, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
 		// Ensure that outgoing requests are nested under this span.
 		r = r.WithContext(ctx)
@@ -152,7 +153,7 @@ func instrumentRoundTripperInFlight(next http.RoundTripper) promhttp.RoundTrippe
 	return func(r *http.Request) (*http.Response, error) {
 		g := mReqInFlight.With(prometheus.Labels{
 			"method":        r.Method,
-			"host":          bucketize(r.URL.Host),
+			"host":          bucketize(r.Context(), r.URL.Host),
 			"service_name":  env.KnativeServiceName,
 			"revision_name": env.KnativeRevisionName,
 			"ce_type":       r.Header.Get(CeTypeHeader),
@@ -171,7 +172,7 @@ func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTrippe
 			mReqDuration.With(prometheus.Labels{
 				"code":          fmt.Sprintf("%d", resp.StatusCode),
 				"method":        r.Method,
-				"host":          bucketize(r.URL.Host),
+				"host":          bucketize(r.Context(), r.URL.Host),
 				"service_name":  env.KnativeServiceName,
 				"revision_name": env.KnativeRevisionName,
 				"ce_type":       r.Header.Get(CeTypeHeader),
@@ -181,7 +182,7 @@ func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTrippe
 	}
 }
 
-func bucketize(host string) string {
+func bucketize(ctx context.Context, host string) string {
 	// Check the exact matches first.
 	if b, ok := buckets[host]; ok {
 		return b
@@ -198,7 +199,7 @@ func bucketize(host string) string {
 
 	if math.Mod(float64(vInt), 10) == 0 {
 		seenHostMap.Store(host, vInt+1)
-		slog.Warn(`bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", vInt+1)
+		clog.WarnContext(ctx, `bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", vInt+1)
 	}
 	return "other"
 }
