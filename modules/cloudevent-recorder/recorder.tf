@@ -39,10 +39,10 @@ module "this" {
   name       = var.name
   regions    = var.regions
 
-  squad           = var.squad
-  require_squad   = var.require_squad
+  squad               = var.squad
+  require_squad       = var.require_squad
   deletion_protection = var.deletion_protection
-  service_account = google_service_account.recorder.email
+  service_account     = google_service_account.recorder.email
   containers = {
     "recorder" = {
       source = {
