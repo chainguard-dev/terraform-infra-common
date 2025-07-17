@@ -43,7 +43,7 @@ processors:
     # between multiple otel sidecar instance uploading overlapping time series
     # to the same buckets.
     - key: service.instance.id
-      from_attribute: faas.id
+      from_attribute: faas.instance
       action: upsert
     # The `gcp` resourcedetection processor sets `faas.name` to the name of the
     # Cloud Run service or the Cloud Run job.
