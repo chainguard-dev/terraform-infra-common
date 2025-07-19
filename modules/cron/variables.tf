@@ -18,7 +18,7 @@ variable "schedule" {
 
 variable "base_image" {
   type        = string
-  default     = "cgr.dev/chainguard/static:latest-glibc@sha256:e55a04f85f58e6b0e36bae05b8ff18c79035e65c0151e4e866eb49679782d28e"
+  default     = "cgr.dev/chainguard/static:latest-glibc@sha256:3c0cfe403ce6f1ff7761aab482448e5d4979762a9853103639c0d769aa7de89e"
   description = "The base image that will be used to build the container image."
 }
 
