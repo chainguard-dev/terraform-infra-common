@@ -54,6 +54,10 @@ var _ workqueue.Interface = (*wq)(nil)
 // TODO(mattmoor): What's the right balance here?
 var RefreshInterval = 5 * time.Minute
 
+// The minimum number of attempts before tracking work attempts.
+// This is to minimize the cardinality of the metric.
+var TrackWorkAttemptMinThreshold = 20
+
 const (
 	queuedPrefix          = "queued/"
 	inProgressPrefix      = "in-progress/"
@@ -204,6 +208,16 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 					clog.WarnContextf(ctx, "Failed to parse attempts: %v", err)
 				} else if attempts > maxAttempts {
 					maxAttempts = attempts
+				}
+				if attempts > TrackWorkAttemptMinThreshold {
+					mTaskMaxAttempts.With(
+						prometheus.Labels{
+							"service_name":  env.KnativeServiceName,
+							"revision_name": env.KnativeRevisionName,
+							"task_id":       objAttrs.Name,
+						},
+					).Set(float64(attempts))
+
 				}
 			}
 		}
@@ -565,13 +579,15 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	}
 	// Set the expiration metadata to 3x the refresh interval.
 	copier.Metadata[expirationMetadataKey] = time.Now().UTC().Add(3 * RefreshInterval).Format(time.RFC3339)
+	numAttempts := 1
 	if att, ok := copier.Metadata[attemptsMetadataKey]; ok {
 		prevAttempts, err := strconv.Atoi(att)
 		if err != nil {
 			clog.ErrorContextf(ctx, "Malformed attempts on %s: %v", srcObject, err)
 			copier.Metadata[attemptsMetadataKey] = "1"
 		} else {
-			copier.Metadata[attemptsMetadataKey] = fmt.Sprint(prevAttempts + 1)
+			numAttempts = prevAttempts + 1
+			copier.Metadata[attemptsMetadataKey] = fmt.Sprint(numAttempts)
 		}
 	} else {
 		copier.Metadata[attemptsMetadataKey] = "1"

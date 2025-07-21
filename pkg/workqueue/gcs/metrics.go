@@ -51,6 +51,13 @@ var (
 		},
 		[]string{"service_name", "revision_name"},
 	)
+	mTaskMaxAttempts = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "workqueue_task_max_attempts",
+			Help: "The maximum number of attempts for a given task above 20.",
+		},
+		[]string{"service_name", "revision_name", "task_id"},
+	)
 	mWorkLatency = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "workqueue_process_latency_seconds",
