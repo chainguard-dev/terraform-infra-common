@@ -3,6 +3,7 @@ package httpmetrics
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"strconv"
 	"strings"
@@ -90,19 +91,15 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 
 	return &MetricsTransport{
 		RoundTripper: useGoogClientTraceparent(
-			instrumentRoundTripperCounter(
-				instrumentRoundTripperInFlight(
-					instrumentRoundTripperDuration(
-						instrumentGitHubRateLimits(
-							instrumentDockerHubRateLimit(
-								otelhttp.NewTransport(
-									newPreserveTraceparentTransport(t),
-								),
-							),
+			instrumentRequest(
+				instrumentGitHubRateLimits(
+					instrumentDockerHubRateLimit(
+						otelhttp.NewTransport(
+							newPreserveTraceparentTransport(t),
 						),
-						topts.skipBucketize),
-					topts.skipBucketize),
-				topts.skipBucketize),
+					),
+				), topts.skipBucketize,
+			),
 		),
 		inner: t,
 	}
@@ -144,8 +141,10 @@ func useGoogClientTraceparent(next http.RoundTripper) promhttp.RoundTripperFunc 
 	}
 }
 
-func instrumentRoundTripperCounter(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
+func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
+		start := time.Now()
+
 		tracer := otel.Tracer("httpmetrics")
 		host := bucketize(r.Context(), r.URL.Host, skipBucketize)
 		ctx, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
@@ -153,59 +152,30 @@ func instrumentRoundTripperCounter(next http.RoundTripper, skipBucketize bool) p
 		r = r.WithContext(ctx)
 		defer span.End()
 
-		resp, err := next.RoundTrip(r)
-		if err == nil {
-			mReqCount.With(prometheus.Labels{
-				"code":          fmt.Sprintf("%d", resp.StatusCode),
-				"method":        r.Method,
-				"host":          host,
-				"service_name":  env.KnativeServiceName,
-				"revision_name": env.KnativeRevisionName,
-				"ce_type":       r.Header.Get(CeTypeHeader),
-			}).Inc()
-		} else {
-			mReqCount.With(prometheus.Labels{
-				"code":          mapErrorToLabel(err),
-				"method":        r.Method,
-				"host":          host,
-				"service_name":  env.KnativeServiceName,
-				"revision_name": env.KnativeRevisionName,
-				"ce_type":       r.Header.Get(CeTypeHeader),
-			}).Inc()
-		}
-		return resp, err
-	}
-}
-
-func instrumentRoundTripperInFlight(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
-	return func(r *http.Request) (*http.Response, error) {
-		g := mReqInFlight.With(prometheus.Labels{
+		baseLabels := prometheus.Labels{
 			"method":        r.Method,
-			"host":          bucketize(r.Context(), r.URL.Host, skipBucketize),
+			"host":          host,
 			"service_name":  env.KnativeServiceName,
 			"revision_name": env.KnativeRevisionName,
 			"ce_type":       r.Header.Get(CeTypeHeader),
-		})
+		}
+
+		g := mReqInFlight.With(baseLabels)
 		g.Inc()
 		defer g.Dec()
-		return next.RoundTrip(r)
-	}
-}
 
-func instrumentRoundTripperDuration(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
-	return func(r *http.Request) (*http.Response, error) {
-		start := time.Now()
+		labels := maps.Clone(baseLabels)
 		resp, err := next.RoundTrip(r)
 		if err == nil {
-			mReqDuration.With(prometheus.Labels{
-				"code":          fmt.Sprintf("%d", resp.StatusCode),
-				"method":        r.Method,
-				"host":          bucketize(r.Context(), r.URL.Host, skipBucketize),
-				"service_name":  env.KnativeServiceName,
-				"revision_name": env.KnativeRevisionName,
-				"ce_type":       r.Header.Get(CeTypeHeader),
-			}).Observe(time.Since(start).Seconds())
+			labels["code"] = fmt.Sprintf("%d", resp.StatusCode)
+
+			// We only record the duration if we got a response.
+			mReqDuration.With(labels).Observe(time.Since(start).Seconds())
+		} else {
+			labels["code"] = mapErrorToLabel(err)
 		}
+		mReqCount.With(labels).Inc()
+
 		return resp, err
 	}
 }
