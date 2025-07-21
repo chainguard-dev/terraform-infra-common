@@ -24,10 +24,40 @@ func TestTransport(t *testing.T) {
 	}
 
 	// Sample a metric to make sure labels are being properly applied.
-	if got := testutil.ToFloat64(mReqCount.MustCurryWith(prometheus.Labels{
-		"method": "get",
-		"code":   "200",
-		"host":   "other",
+	if got := testutil.ToFloat64(mReqCount.With(prometheus.Labels{
+		"method":        http.MethodGet,
+		"code":          "200",
+		"host":          "other",
+		"service_name":  "unknown",
+		"revision_name": "unknown",
+		"ce_type":       "",
+	})); got != 1 {
+		t.Errorf("want metric count = 1, got %f", got)
+	}
+}
+
+func TestTransport_SkipBucketize(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Log("got request")
+	}))
+	defer s.Close()
+
+	resp, err := (&http.Client{Transport: WrapTransport(http.DefaultTransport, WithSkipBucketize(true))}).Get(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want OK, got %s", resp.Status)
+	}
+
+	// Sample a metric to make sure labels are being properly applied.
+	if got := testutil.ToFloat64(mReqCount.With(prometheus.Labels{
+		"method":        http.MethodGet,
+		"code":          "200",
+		"host":          "unbucketized",
+		"service_name":  "unknown",
+		"revision_name": "unknown",
+		"ce_type":       "",
 	})); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
