@@ -65,8 +65,29 @@ type MetricsTransport struct {
 	inner http.RoundTripper
 }
 
+type metricsTransportOptions struct {
+	skipBucketize bool
+}
+
+type TransportOption func(*metricsTransportOptions)
+
+// WithSkipBucketize is a TransportOption that skips the bucketization of the host.
+// This is useful for transports that talk to an unbounded number of hosts,
+// where bucketization would cause excessive metric cardinality.
+// If true, the host label will be set to "unbucketized".
+func WithSkipBucketize(skip bool) TransportOption {
+	return func(opts *metricsTransportOptions) {
+		opts.skipBucketize = skip
+	}
+}
+
 // WrapTransport wraps an http.RoundTripper with instrumentation.
-func WrapTransport(t http.RoundTripper) http.RoundTripper {
+func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripper {
+	topts := &metricsTransportOptions{}
+	for _, opt := range opts {
+		opt(topts)
+	}
+
 	return &MetricsTransport{
 		RoundTripper: useGoogClientTraceparent(
 			instrumentRoundTripperCounter(
@@ -75,7 +96,14 @@ func WrapTransport(t http.RoundTripper) http.RoundTripper {
 						instrumentGitHubRateLimits(
 							instrumentDockerHubRateLimit(
 								otelhttp.NewTransport(
-									newPreserveTraceparentTransport(t)))))))),
+									newPreserveTraceparentTransport(t),
+								),
+							),
+						),
+						topts.skipBucketize),
+					topts.skipBucketize),
+				topts.skipBucketize),
+		),
 		inner: t,
 	}
 }
@@ -116,10 +144,10 @@ func useGoogClientTraceparent(next http.RoundTripper) promhttp.RoundTripperFunc 
 	}
 }
 
-func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripperFunc {
+func instrumentRoundTripperCounter(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
 		tracer := otel.Tracer("httpmetrics")
-		host := bucketize(r.Context(), r.URL.Host)
+		host := bucketize(r.Context(), r.URL.Host, skipBucketize)
 		ctx, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
 		// Ensure that outgoing requests are nested under this span.
 		r = r.WithContext(ctx)
@@ -149,11 +177,11 @@ func instrumentRoundTripperCounter(next http.RoundTripper) promhttp.RoundTripper
 	}
 }
 
-func instrumentRoundTripperInFlight(next http.RoundTripper) promhttp.RoundTripperFunc {
+func instrumentRoundTripperInFlight(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
 		g := mReqInFlight.With(prometheus.Labels{
 			"method":        r.Method,
-			"host":          bucketize(r.Context(), r.URL.Host),
+			"host":          bucketize(r.Context(), r.URL.Host, skipBucketize),
 			"service_name":  env.KnativeServiceName,
 			"revision_name": env.KnativeRevisionName,
 			"ce_type":       r.Header.Get(CeTypeHeader),
@@ -164,7 +192,7 @@ func instrumentRoundTripperInFlight(next http.RoundTripper) promhttp.RoundTrippe
 	}
 }
 
-func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTripperFunc {
+func instrumentRoundTripperDuration(next http.RoundTripper, skipBucketize bool) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
 		start := time.Now()
 		resp, err := next.RoundTrip(r)
@@ -172,7 +200,7 @@ func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTrippe
 			mReqDuration.With(prometheus.Labels{
 				"code":          fmt.Sprintf("%d", resp.StatusCode),
 				"method":        r.Method,
-				"host":          bucketize(r.Context(), r.URL.Host),
+				"host":          bucketize(r.Context(), r.URL.Host, skipBucketize),
 				"service_name":  env.KnativeServiceName,
 				"revision_name": env.KnativeRevisionName,
 				"ce_type":       r.Header.Get(CeTypeHeader),
@@ -184,7 +212,11 @@ func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTrippe
 
 var setupWarning sync.Once
 
-func bucketize(ctx context.Context, host string) string {
+func bucketize(ctx context.Context, host string, skip bool) string {
+	if skip {
+		return "unbucketized"
+	}
+
 	if buckets == nil && bucketSuffixes == nil {
 		setupWarning.Do(func() {
 			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
