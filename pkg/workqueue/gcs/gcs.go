@@ -217,7 +217,6 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 							"task_id":       objAttrs.Name,
 						},
 					).Set(float64(attempts))
-
 				}
 			}
 		}
@@ -579,15 +578,13 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	}
 	// Set the expiration metadata to 3x the refresh interval.
 	copier.Metadata[expirationMetadataKey] = time.Now().UTC().Add(3 * RefreshInterval).Format(time.RFC3339)
-	numAttempts := 1
 	if att, ok := copier.Metadata[attemptsMetadataKey]; ok {
 		prevAttempts, err := strconv.Atoi(att)
 		if err != nil {
 			clog.ErrorContextf(ctx, "Malformed attempts on %s: %v", srcObject, err)
 			copier.Metadata[attemptsMetadataKey] = "1"
 		} else {
-			numAttempts = prevAttempts + 1
-			copier.Metadata[attemptsMetadataKey] = fmt.Sprint(numAttempts)
+			copier.Metadata[attemptsMetadataKey] = fmt.Sprint(prevAttempts + 1)
 		}
 	} else {
 		copier.Metadata[attemptsMetadataKey] = "1"
