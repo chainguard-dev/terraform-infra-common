@@ -182,7 +182,16 @@ func instrumentRoundTripperDuration(next http.RoundTripper) promhttp.RoundTrippe
 	}
 }
 
+var setupWarning sync.Once
+
 func bucketize(ctx context.Context, host string) string {
+	if buckets == nil && bucketSuffixes == nil {
+		setupWarning.Do(func() {
+			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
+		})
+		return "other"
+	}
+
 	// Check the exact matches first.
 	if b, ok := buckets[host]; ok {
 		return b
