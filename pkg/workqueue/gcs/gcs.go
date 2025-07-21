@@ -54,6 +54,10 @@ var _ workqueue.Interface = (*wq)(nil)
 // TODO(mattmoor): What's the right balance here?
 var RefreshInterval = 5 * time.Minute
 
+// The minimum number of attempts before tracking work attempts.
+// This is to minimize the cardinality of the metric.
+var TrackWorkAttemptMinThreshold = 20
+
 const (
 	queuedPrefix          = "queued/"
 	inProgressPrefix      = "in-progress/"
@@ -204,6 +208,15 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 					clog.WarnContextf(ctx, "Failed to parse attempts: %v", err)
 				} else if attempts > maxAttempts {
 					maxAttempts = attempts
+				}
+				if attempts > TrackWorkAttemptMinThreshold {
+					mTaskMaxAttempts.With(
+						prometheus.Labels{
+							"service_name":  env.KnativeServiceName,
+							"revision_name": env.KnativeRevisionName,
+							"task_id":       objAttrs.Name,
+						},
+					).Set(float64(attempts))
 				}
 			}
 		}

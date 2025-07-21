@@ -1326,3 +1326,62 @@ resource "google_logging_metric" "violation_metric" {
     "team" = "REGEXP_EXTRACT(labels.verbose_message, \".*team=([^ ,}]+)\")"
   }
 }
+
+resource "google_monitoring_alert_policy" "workqueue_high_retry" {
+  count = var.global_only_alerts ? 0 : 1
+
+  alert_strategy {
+    auto_close = "3600s" // 1 hour
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period     = "600s"
+        cross_series_reducer = "REDUCE_NONE"
+        per_series_aligner   = "ALIGN_COUNT"
+      }
+      aggregations {
+        alignment_period     = "600s"
+        cross_series_reducer = "REDUCE_COUNT"
+        per_series_aligner   = "ALIGN_COUNT"
+        group_by_fields = [
+          "metric.label.team",
+          "metric.label.service_name",
+        ]
+      }
+
+      comparison = "COMPARISON_GT"
+      duration   = "0s"
+      filter     = <<EOT
+        resource.type = "prometheus_target"
+        metric.type = "prometheus.googleapis.com/workqueue_max_attempts/gauge"
+        ${local.squad_metric_filter}
+      EOT
+
+      trigger {
+        count = "1"
+      }
+
+      threshold_value = 1
+    }
+
+    // number of attempts threshold built into metric.
+    display_name = "Workqueue tasks with over 20 attempts"
+  }
+  display_name = "Workqueue tasks with over 20 attempts"
+
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${metric.label.team}: Workqueue $${metric.label.service_name} has tasks with more than 20 attempts"
+    content = "$${metric.label.team}: Workqueue $${metric.label.service_name} has tasks with more than 20 attempts"
+  }
+
+  notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
+
+  enabled = "true"
+  project = var.project_id
+}
+

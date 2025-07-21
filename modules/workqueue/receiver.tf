@@ -23,7 +23,6 @@ module "receiver-service" {
   regions       = var.regions
   labels        = { "service" : "workqueue-receiver" }
   squad         = var.squad
-  require_squad = var.require_squad
 
   deletion_protection = var.deletion_protection
 
