@@ -35,7 +35,7 @@ module "request_count" {
 module "failure_rate" {
   source = "../../widgets/percent"
   title  = "Request failure rate"
-  legend = "Non-[Aborted|AlreadyExists|Canceled|NotFound] resposnes / All responses"
+  legend = "Non-[${join("|", var.grpc_non_error_codes)}] responses / All responses"
 
   common_filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
