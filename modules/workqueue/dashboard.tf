@@ -22,7 +22,7 @@ module "max-attempts" {
     "metric.type=\"prometheus.googleapis.com/workqueue_max_attempts/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\""]
+  group_by_fields = ["resource.labels.\"location\""]
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
   thresholds      = var.max-retry > 0 ? [var.max-retry] : []
@@ -37,7 +37,7 @@ module "dead-letter-queue" {
     "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\"", "resource.labels.\"location\""]
+  group_by_fields = ["resource.labels.\"location\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
@@ -51,7 +51,7 @@ module "work-in-progress" {
     "metric.type=\"prometheus.googleapis.com/workqueue_in_progress_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\""]
+  group_by_fields = ["resource.label.\"location\""]
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
 
@@ -66,9 +66,10 @@ module "work-queued" {
     "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["metric.label.\"service_name\""]
-  primary_align   = "ALIGN_MEAN"
-  primary_reduce  = "REDUCE_MEAN"
+  group_by_fields = ["resource.label.\"location\""]
+  plot_type       = "STACKED_AREA"
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_MAX"
 }
 
 module "work-added" {
@@ -79,11 +80,10 @@ module "work-added" {
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
     "metric.label.\"service_name\"=\"${var.name}-rcv\"",
   ]
-  group_by_fields  = ["metric.label.\"service_name\""]
+  group_by_fields  = ["resource.label.\"location\""]
+  plot_type        = "STACKED_AREA"
   primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_NONE"
-  secondary_align  = "ALIGN_NONE"
-  secondary_reduce = "REDUCE_SUM"
+  primary_reduce   = "REDUCE_SUM"
 }
 
 module "process-latency" {
@@ -94,6 +94,7 @@ module "process-latency" {
     "metric.type=\"prometheus.googleapis.com/workqueue_process_latency_seconds/histogram\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
+  group_by_fields = ["resource.label.\"location\""]
 }
 
 module "wait-latency" {
@@ -104,6 +105,7 @@ module "wait-latency" {
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_seconds/histogram\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
+  group_by_fields = ["resource.label.\"location\""]
 }
 
 module "percent-deduped" {
@@ -126,10 +128,10 @@ module "percent-deduped" {
   alignment_period            = "60s"
   thresholds                  = []
   numerator_align             = "ALIGN_RATE"
-  numerator_group_by_fields   = ["metric.label.\"service_name\""]
+  numerator_group_by_fields   = ["resource.label.\"location\""]
   numerator_reduce            = "REDUCE_SUM"
   denominator_align           = "ALIGN_RATE"
-  denominator_group_by_fields = ["metric.label.\"service_name\""]
+  denominator_group_by_fields = ["resource.label.\"location\""]
   denominator_reduce          = "REDUCE_SUM"
 }
 
