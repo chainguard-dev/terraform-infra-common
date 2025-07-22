@@ -217,7 +217,7 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 		return "unbucketized"
 	}
 
-	if buckets == nil && bucketSuffixes == nil {
+	if len(buckets) == 0 && len(bucketSuffixes) == 0 {
 		setupWarning.Do(func() {
 			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
 		})
