@@ -1357,7 +1357,7 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
       duration   = "0s"
       filter     = <<EOT
         resource.type = "prometheus_target"
-        metric.type = "prometheus.googleapis.com/workqueue_max_attempts/gauge"
+        metric.type = "prometheus.googleapis.com/workqueue_task_max_attempts/gauge"
         ${local.squad_metric_filter}
       EOT
 
