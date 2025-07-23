@@ -51,8 +51,3 @@ variable "notification_channels" {
   type        = list(string)
 }
 
-variable "product" {
-  description = "Product label to apply to the service."
-  type        = string
-  default     = "unknown"
-}

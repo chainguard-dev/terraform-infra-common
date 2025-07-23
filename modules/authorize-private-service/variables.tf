@@ -17,8 +17,3 @@ variable "service-account" {
   type        = string
 }
 
-variable "product" {
-  description = "Product label to apply to the service."
-  type        = string
-  default     = "unknown"
-}
