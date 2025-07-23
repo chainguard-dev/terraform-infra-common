@@ -15,6 +15,11 @@ terraform {
 resource "google_compute_global_address" "this" {
   project = var.project_id
   name    = var.name
+
+  labels = merge(
+    var.team == "" ? {} : { team = var.team },
+    var.product == "" ? {} : { product = var.product }
+  )
 }
 
 // Create A records for each of our public service hostnames.

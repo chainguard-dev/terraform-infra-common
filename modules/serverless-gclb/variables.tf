@@ -51,6 +51,23 @@ variable "security-policy" {
   default     = null
 }
 
+variable "require_team" {
+  description = "Whether to require team variable to be specified"
+  type        = bool
+  default     = true
+}
+
+variable "team" {
+  description = "team label to apply to the service."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !var.require_team || var.team != ""
+    error_message = "team needs to specified or disable check by setting require_team = false"
+  }
+}
+
 variable "product" {
   description = "Product label to apply to the service."
   type        = string
