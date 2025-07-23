@@ -59,7 +59,6 @@ No modules.
 | <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | The regular expression to use for auditing the workflow ref component when using '*' | `string` | `""` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the service account. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when the service account is misused. | `list(string)` | n/a | yes |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_refspec"></a> [refspec](#input\_refspec) | The refspec to allow to federate with this identity. | `string` | n/a | yes |
 | <a name="input_repository"></a> [repository](#input\_repository) | The name of the repository to allow to assume this identity. | `string` | n/a | yes |

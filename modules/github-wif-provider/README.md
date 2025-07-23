@@ -34,7 +34,6 @@ No modules.
 | <a name="input_github_org"></a> [github\_org](#input\_github\_org) | The GitHub organizantion to grant access to. Eg: 'chainguard-dev'. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the provider pool. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when this policy fires. | `list(string)` | n/a | yes |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 
 ## Outputs
