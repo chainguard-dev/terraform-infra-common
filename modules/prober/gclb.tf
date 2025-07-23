@@ -26,5 +26,9 @@ module "gclb" {
     }
   }
 
+  require_team = var.require_team
+  team         = var.team
+  product      = var.product
+
   security-policy = var.security-policy
 }

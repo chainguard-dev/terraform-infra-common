@@ -118,6 +118,7 @@ No requirements.
 | <a name="input_regional-env"></a> [regional-env](#input\_regional-env) | A list of object that provides a map env per region. | <pre>list(object({<br/>    name  = string<br/>    value = map(string)<br/>  }))</pre> | `[]` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `false` | no |
+| <a name="input_require_team"></a> [require\_team](#input\_require\_team) | Whether to require team variable to be specified | `bool` | `true` | no |
 | <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    max_instance_request_concurrency = optional(number)<br/>  })</pre> | `{}` | no |
 | <a name="input_secret_env"></a> [secret\_env](#input\_secret\_env) | A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret\_key=secret\_name) | `map` | `{}` | no |
 | <a name="input_security-policy"></a> [security-policy](#input\_security-policy) | The security policy associated with the prober backend service. | `string` | `null` | no |
@@ -128,6 +129,7 @@ No requirements.
 | <a name="input_slo_policy_link"></a> [slo\_policy\_link](#input\_slo\_policy\_link) | An optional link to the SLO policy to include in the alert documentation. | `string` | `""` | no |
 | <a name="input_slo_threshold"></a> [slo\_threshold](#input\_slo\_threshold) | The uptime percent required to meet the SLO for the service, expressed as a decimal in {0, 1} | `number` | `0.999` | no |
 | <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | `""` | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. Supported values 1-60s | `string` | `"60s"` | no |
 | <a name="input_uptime_alert_duration"></a> [uptime\_alert\_duration](#input\_uptime\_alert\_duration) | duration for uptime alert policy. | `string` | `"600s"` | no |
 | <a name="input_working_dir"></a> [working\_dir](#input\_working\_dir) | The working directory that contains the importpath. | `string` | n/a | yes |
