@@ -32,6 +32,7 @@ repos:
       - id: destroyed-symlinks
       - id: fix-byte-order-marker
 
+  # TODO: this repo is deprecated, check other options or remove or create our own
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:
