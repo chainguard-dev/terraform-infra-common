@@ -1369,9 +1369,9 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
     }
 
     // number of attempts threshold built into metric.
-    display_name = "Workqueue tasks with over 20 attempts"
+    display_name = "Workqueue tasks with over 20 attempt ${local.name}"
   }
-  display_name = "Workqueue tasks with over 20 attempts"
+  display_name = "Workqueue tasks with over 20 attempts ${local.name}"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
