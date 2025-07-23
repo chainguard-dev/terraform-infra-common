@@ -39,4 +39,3 @@ No resources.
 |------|-------------|
 | <a name="output_section"></a> [section](#output\_section) | n/a |
 <!-- END_TF_DOCS -->
-

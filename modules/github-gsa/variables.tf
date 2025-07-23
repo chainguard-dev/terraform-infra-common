@@ -50,4 +50,3 @@ variable "notification_channels" {
   description = "The list of notification channels to alert when the service account is misused."
   type        = list(string)
 }
-

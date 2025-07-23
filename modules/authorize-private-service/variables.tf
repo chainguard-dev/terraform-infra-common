@@ -16,4 +16,3 @@ variable "service-account" {
   description = "The email of the service account being authorized to invoke the private Cloud Run service."
   type        = string
 }
-

@@ -65,4 +65,3 @@ resource "google_storage_bucket" "recorder" {
 
 // What identity is deploying this?
 data "google_client_openid_userinfo" "me" {}
-

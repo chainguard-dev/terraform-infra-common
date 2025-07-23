@@ -80,10 +80,10 @@ module "work-added" {
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
     "metric.label.\"service_name\"=\"${var.name}-rcv\"",
   ]
-  group_by_fields  = ["resource.label.\"location\""]
-  plot_type        = "STACKED_AREA"
-  primary_align    = "ALIGN_RATE"
-  primary_reduce   = "REDUCE_SUM"
+  group_by_fields = ["resource.label.\"location\""]
+  plot_type       = "STACKED_AREA"
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
 }
 
 module "process-latency" {
