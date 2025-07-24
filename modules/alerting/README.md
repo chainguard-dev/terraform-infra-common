@@ -50,6 +50,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_dlq_filter"></a> [dlq\_filter](#input\_dlq\_filter) | additional filter to apply to dlq alert policy | `string` | `""` | no |
+| <a name="input_enable_high_retry"></a> [enable\_high\_retry](#input\_enable\_high\_retry) | Whether to enable the workqueue high retry alert | `bool` | `false` | no |
 | <a name="input_enable_scaling_alerts"></a> [enable\_scaling\_alerts](#input\_enable\_scaling\_alerts) | Whether to enable scaling alerts.<br/>  When logs appear with<br/>    "The request was aborted because there was no available instance." or<br/>    "The request failed because either the HTTP response was malformed or connection to the instance had an error." | `bool` | `false` | no |
 | <a name="input_exitcode_filter"></a> [exitcode\_filter](#input\_exitcode\_filter) | additional filter to apply to exitcode alert policy | `string` | `""` | no |
 | <a name="input_failed_req_filter"></a> [failed\_req\_filter](#input\_failed\_req\_filter) | additional filter to apply to failed request alert policy | `string` | `""` | no |

@@ -162,3 +162,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "enable_high_retry" {
+  description = "Whether to enable the workqueue high retry alert"
+  type        = bool
+  default     = false
+}
