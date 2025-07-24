@@ -1328,7 +1328,7 @@ resource "google_logging_metric" "violation_metric" {
 }
 
 resource "google_monitoring_alert_policy" "workqueue_high_retry" {
-  count = var.global_only_alerts && !var.enable_high_retry ? 0 : 1
+  count = var.global_only_alerts || !var.enable_high_retry ? 0 : 1
 
   alert_strategy {
     auto_close = "3600s" // 1 hour
