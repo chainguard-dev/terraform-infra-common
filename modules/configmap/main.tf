@@ -45,4 +45,3 @@ data "google_project" "project" { project_id = var.project_id }
 
 // What identity is deploying this?
 data "google_client_openid_userinfo" "me" {}
-

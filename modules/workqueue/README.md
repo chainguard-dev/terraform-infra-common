@@ -185,4 +185,3 @@ No requirements.
 |------|-------------|
 | <a name="output_receiver"></a> [receiver](#output\_receiver) | n/a |
 <!-- END_TF_DOCS -->
-

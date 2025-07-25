@@ -1384,4 +1384,3 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
   enabled = "true"
   project = var.project_id
 }
-
