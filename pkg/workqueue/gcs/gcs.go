@@ -220,6 +220,14 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				}
 			}
 		}
+		// Ensure metric has a value.
+		mTaskMaxAttempts.With(
+			prometheus.Labels{
+				"service_name":  env.KnativeServiceName,
+				"revision_name": env.KnativeRevisionName,
+				"task_id":       "placeholder",
+			},
+		).Set(float64(0))
 
 		switch {
 		case strings.HasPrefix(objAttrs.Name, inProgressPrefix):
