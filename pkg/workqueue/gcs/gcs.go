@@ -67,6 +67,7 @@ const (
 	priorityMetadataKey   = "priority"
 	notBeforeMetadataKey  = "not-before"
 	failedTimeMetadataKey = "failed-time"
+	lastAttemptedKey      = "last-attempted"
 )
 
 var noPriority = fmt.Sprintf("%08d", 0)
@@ -358,6 +359,8 @@ func (o *inProgressKey) RequeueWithOptions(ctx context.Context, opts workqueue.O
 	// Clear the lease expiration when copying the object back to avoid
 	// confusion since the object is no longer in progress.
 	delete(copier.Metadata, expirationMetadataKey)
+	// Set the last attempted time as unix timestamp when requeuing
+	copier.Metadata[lastAttemptedKey] = strconv.FormatInt(time.Now().UTC().Unix(), 10)
 
 	// Handle custom delay if specified
 	if opts.Delay > 0 {
@@ -560,10 +563,17 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	key := strings.TrimPrefix(srcObject, queuedPrefix)
 	targetObject := fmt.Sprintf("%s%s", inProgressPrefix, key)
 
+	// Calculate wait latency using last attempted time if available, otherwise use created time
+	waitStart := q.attrs.Created
+	if lastAttempted, ok := q.attrs.Metadata[lastAttemptedKey]; ok && lastAttempted != "" {
+		if lastAttemptedUnix, err := strconv.ParseInt(lastAttempted, 10, 64); err == nil {
+			waitStart = time.Unix(lastAttemptedUnix, 0).UTC()
+		}
+	}
 	mWaitLatency.With(prometheus.Labels{
 		"service_name":  env.KnativeServiceName,
 		"revision_name": env.KnativeRevisionName,
-	}).Observe(time.Now().UTC().Sub(q.attrs.Created).Seconds())
+	}).Observe(time.Now().UTC().Sub(waitStart).Seconds())
 
 	// Create a copier to copy the source object, and then we will delete it
 	// upon success.
