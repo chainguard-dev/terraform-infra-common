@@ -206,6 +206,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if merged := isPullRequestMerged(originalEventType, info); merged {
 		event.SetExtension("merged", true)
 	}
+
+	// Log all cloud event extensions in debug mode
+	extensions := event.Extensions()
+	if len(extensions) > 0 {
+		log.Debugf("cloud event extensions: %+v", extensions)
+	}
+
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
 		When: s.clock.Now(),
 		Headers: &eventHeaders{
