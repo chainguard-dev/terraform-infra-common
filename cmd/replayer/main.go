@@ -12,7 +12,7 @@ import (
 	"os"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
 )
 
 const PollTimeout = 10 * time.Second

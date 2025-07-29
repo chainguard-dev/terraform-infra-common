@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cehttp "github.com/cloudevents/sdk-go/v2/protocol/http"
 	"github.com/coreos/go-oidc/v3/oidc"
