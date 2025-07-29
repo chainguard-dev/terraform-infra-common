@@ -98,17 +98,27 @@ resource "google_sql_database_instance" "this" {
 resource "google_sql_database_instance" "replicas" {
   for_each = toset(var.read_replica_regions)
 
-  name                = "${var.name}-${each.value}"
-  project             = var.project
-  region              = each.value
-  database_version    = var.database_version
-  deletion_protection = true
+  name                 = "${var.name}-${each.value}"
+  project              = var.project
+  region               = each.value
+  database_version     = var.database_version
+  master_instance_name = google_sql_database_instance.this.name
+  deletion_protection  = true
+
+  replica_configuration {
+    failover_target = false
+  }
 
   settings {
     tier = var.tier
 
     # Ensure replicas use same edition as primary
     edition = var.edition
+
+    backup_configuration {
+      enabled                        = false
+      point_in_time_recovery_enabled = false
+    }
 
     ip_configuration {
       ipv4_enabled    = false
@@ -129,6 +139,8 @@ resource "google_sql_database_instance" "replicas" {
       settings[0].disk_size
     ]
   }
+
+  depends_on = [google_sql_database_instance.this]
 }
 
 # Data‑plane IAM for authorized GSAs
