@@ -108,6 +108,12 @@ variable "read_replica_regions" {
   default     = []
 }
 
+variable "replicas_deletion_protection" {
+  description = "Enable deletion protection for read replicas."
+  type        = bool
+  default     = false
+}
+
 # Backup & Maintenance
 
 variable "backup_enabled" {

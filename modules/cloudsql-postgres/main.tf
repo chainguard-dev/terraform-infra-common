@@ -103,6 +103,7 @@ resource "google_sql_database_instance" "replicas" {
   region               = each.value
   database_version     = var.database_version
   master_instance_name = google_sql_database_instance.this.name
+  deletion_protection  = var.replicas_deletion_protection
 
   replica_configuration {
     failover_target = false
