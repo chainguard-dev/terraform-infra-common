@@ -12,7 +12,7 @@ import (
 	"os"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
 )
 
 const PollTimeout = 10 * time.Second
@@ -48,8 +48,8 @@ func main() {
 	}
 	defer client.Close()
 
-	sub := client.Subscription(srcSub)
-	top := client.Topic(dstTop)
+	sub := client.Subscriber(srcSub)
+	top := client.Publisher(dstTop)
 
 	fmt.Println("Listening for messages.")
 
