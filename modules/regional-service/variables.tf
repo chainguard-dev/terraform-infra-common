@@ -148,8 +148,9 @@ variable "regional-volumes" {
   type = list(object({
     name = string
     gcs = optional(map(object({
-      bucket    = string
-      read_only = optional(bool, true)
+      bucket        = string
+      read_only     = optional(bool, true)
+      mount_options = optional(list(string), [])
     })), {})
     nfs = optional(map(object({
       server    = string
