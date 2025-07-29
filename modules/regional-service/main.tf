@@ -355,8 +355,11 @@ data "google_client_openid_userinfo" "me" {}
 
 // When the service is behind a load balancer, then it is publicly exposed and responsible
 // for handling its own authentication.
+//
+// When the service is directly exposed on the .run.app domain, then it is
+// publicly exposed and can be called by anyone, unless require_auth is true.
 resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthenticated" {
-  for_each = var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" ? var.regions : {}
+  for_each = var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" && !var.require_auth ? var.regions : {}
 
   // Ensure that the service exists before attempting to expose things publicly.
   depends_on = [google_cloud_run_v2_service.this]
