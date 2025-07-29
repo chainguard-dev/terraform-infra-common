@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/bigquery v1.69.0
 	cloud.google.com/go/compute/metadata v0.7.0
 	cloud.google.com/go/profiler v0.4.3
-	cloud.google.com/go/pubsub v1.49.0
+	cloud.google.com/go/pubsub v1.50.0
 	cloud.google.com/go/storage v1.56.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.29.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
@@ -49,6 +49,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/monitoring v1.24.2 // indirect
+	cloud.google.com/go/pubsub/v2 v2.0.0 // indirect
 	cloud.google.com/go/trace v1.11.6 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
