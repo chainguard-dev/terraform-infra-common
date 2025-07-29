@@ -326,6 +326,7 @@ resource "google_cloud_run_v2_service" "this" {
           content {
             bucket    = gcs.value.bucket
             read_only = gcs.value.read_only
+            mount_options = gcs.value.mount_options
           }
         }
         dynamic "nfs" {
