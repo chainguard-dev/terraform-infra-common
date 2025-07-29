@@ -324,8 +324,8 @@ resource "google_cloud_run_v2_service" "this" {
         dynamic "gcs" {
           for_each = length(volumes.value.gcs) > 0 ? { "" : volumes.value.gcs[each.key] } : {}
           content {
-            bucket    = gcs.value.bucket
-            read_only = gcs.value.read_only
+            bucket        = gcs.value.bucket
+            read_only     = gcs.value.read_only
             mount_options = gcs.value.mount_options
           }
         }
