@@ -79,7 +79,7 @@ func main() {
 		clog.Fatalf("failed to create pubsub client, %v", err)
 	}
 
-	topic := psc.Topic(env.Topic)
+	topic := psc.Publisher(env.Topic)
 	defer topic.Stop()
 
 	if err := c.StartReceiver(cloudevents.ContextWithRetriesExponentialBackoff(ctx, retryDelay, maxRetry), func(ctx context.Context, event cloudevents.Event) error {

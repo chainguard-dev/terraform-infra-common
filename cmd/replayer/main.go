@@ -48,8 +48,8 @@ func main() {
 	}
 	defer client.Close()
 
-	sub := client.Subscription(srcSub)
-	top := client.Topic(dstTop)
+	sub := client.Subscriber(srcSub)
+	top := client.Publisher(dstTop)
 
 	fmt.Println("Listening for messages.")
 
