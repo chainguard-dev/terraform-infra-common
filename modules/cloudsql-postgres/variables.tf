@@ -24,6 +24,22 @@ variable "network" {
   type        = string
 }
 
+variable "ssl_mode" {
+  description = "SSL mode for the Cloud SQL instance. Default is TRUSTED_CLIENT_CERTIFICATE_REQUIRED."
+  type        = string
+  default     = "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"
+
+  validation {
+    condition = contains([
+      "TRUSTED_CLIENT_CERTIFICATE_REQUIRED",
+      "ALLOW_UNENCRYPTED_AND_ENCRYPTED",
+      "ENCRYPTED_ONLY"
+    ], upper(var.ssl_mode))
+
+    error_message = "ssl_mode must be one of: TRUSTED_CLIENT_CERTIFICATE_REQUIRED, ALLOW_UNENCRYPTED_AND_ENCRYPTED, ENCRYPTED_ONLY."
+  }
+}
+
 variable "squad" {
   description = "Squad or team label applied to the instance (required)."
   type        = string
