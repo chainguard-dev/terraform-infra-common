@@ -298,6 +298,11 @@ resource "google_container_node_pool" "pools" {
       enable_nested_virtualization = each.value.enable_nested_virtualization
     }
 
+    shielded_instance_config {
+      enable_secure_boot          = each.value.enable_secure_boot
+      enable_integrity_monitoring = each.value.enable_integrity_monitoring
+    }
+
     dynamic "taint" {
       for_each = each.value.taints
       content {

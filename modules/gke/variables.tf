@@ -59,6 +59,8 @@ variable "pools" {
     spot                              = optional(bool, false)
     gvisor                            = optional(bool, false)
     enable_nested_virtualization      = optional(bool, false)
+    enable_secure_boot                = optional(bool, false)
+    enable_integrity_monitoring       = optional(bool, true)
     labels                            = optional(map(string), {})
     taints = optional(list(object({
       key    = string
