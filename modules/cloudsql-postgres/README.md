@@ -83,6 +83,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | GCP project ID hosting the Cloud SQL instance. | `string` | n/a | yes |
 | <a name="input_read_replica_regions"></a> [read\_replica\_regions](#input\_read\_replica\_regions) | List of regions in which to create read replicas. Empty list for none. | `list(string)` | `[]` | no |
 | <a name="input_region"></a> [region](#input\_region) | GCP region for the primary instance. | `string` | n/a | yes |
+| <a name="input_replicas_deletion_protection"></a> [replicas\_deletion\_protection](#input\_replicas\_deletion\_protection) | Enable deletion protection for read replicas. | `bool` | `false` | no |
 | <a name="input_squad"></a> [squad](#input\_squad) | Squad or team label applied to the instance (required). | `string` | n/a | yes |
 | <a name="input_storage_gb"></a> [storage\_gb](#input\_storage\_gb) | Initial SSD storage size in GB. | `number` | `256` | no |
 | <a name="input_tier"></a> [tier](#input\_tier) | Machine tier for the Cloud SQL instance. | `string` | `"db-perf-optimized-N-16"` | no |
