@@ -48,9 +48,10 @@ resource "google_sql_database_instance" "this" {
     edition = var.edition
 
     ip_configuration {
-      ipv4_enabled    = false
-      private_network = var.network
-      ssl_mode        = var.ssl_mode
+      ipv4_enabled                                  = false
+      private_network                               = var.network
+      ssl_mode                                      = var.ssl_mode
+      enable_private_path_for_google_cloud_services = var.enable_private_path_for_google_cloud_services
     }
 
     backup_configuration {
@@ -121,9 +122,10 @@ resource "google_sql_database_instance" "replicas" {
     }
 
     ip_configuration {
-      ipv4_enabled    = false
-      private_network = var.network
-      ssl_mode        = var.ssl_mode
+      ipv4_enabled                                  = false
+      private_network                               = var.network
+      ssl_mode                                      = var.ssl_mode
+      enable_private_path_for_google_cloud_services = var.enable_private_path_for_google_cloud_services
     }
 
     user_labels = merge(local.merged_labels, {

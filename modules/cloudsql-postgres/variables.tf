@@ -218,3 +218,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "enable_private_path_for_google_cloud_services" {
+  description = "Enable access from Google Cloud services (e.g. BigQuery)."
+  type        = bool
+  default     = false
+}
