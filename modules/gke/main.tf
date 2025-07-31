@@ -293,9 +293,12 @@ resource "google_container_node_pool" "pools" {
     labels          = each.value.labels
     resource_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
 
-    advanced_machine_features {
-      threads_per_core             = 0 // Must be set, but we want the default.
-      enable_nested_virtualization = each.value.enable_nested_virtualization
+    dynamic "advanced_machine_features" {
+      for_each = each.value.enable_nested_virtualization != null ? [1] : []
+      content {
+        threads_per_core             = 0 // Must be set, but we want the default.
+        enable_nested_virtualization = each.value.enable_nested_virtualization
+      }
     }
 
     shielded_instance_config {
