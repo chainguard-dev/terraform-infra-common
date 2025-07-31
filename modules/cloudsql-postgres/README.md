@@ -73,6 +73,7 @@ No modules.
 | <a name="input_edition"></a> [edition](#input\_edition) | Cloud SQL edition for the instance. Accepted values:<br/>      • "ENTERPRISE"<br/>      • "ENTERPRISE\_PLUS" | `string` | `null` | no |
 | <a name="input_enable_high_availability"></a> [enable\_high\_availability](#input\_enable\_high\_availability) | Enable regional high‑availability (REGIONAL availability\_type). | `bool` | `false` | no |
 | <a name="input_enable_point_in_time_recovery"></a> [enable\_point\_in\_time\_recovery](#input\_enable\_point\_in\_time\_recovery) | Enable point-in-time recovery (continuous WAL archiving). | `bool` | `true` | no |
+| <a name="input_enable_private_path_for_google_cloud_services"></a> [enable\_private\_path\_for\_google\_cloud\_services](#input\_enable\_private\_path\_for\_google\_cloud\_services) | Enable access from Google Cloud services (e.g. BigQuery). | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | The resource labels to represent user-provided metadata. | `map(string)` | `{}` | no |
 | <a name="input_maintenance_window_day"></a> [maintenance\_window\_day](#input\_maintenance\_window\_day) | Day of week for maintenance window (1=Mon … 7=Sun, 0 for unspecified). | `number` | `7` | no |
 | <a name="input_maintenance_window_hour"></a> [maintenance\_window\_hour](#input\_maintenance\_window\_hour) | Hour (0‑23 UTC) for the maintenance window. | `number` | `5` | no |
@@ -85,6 +86,7 @@ No modules.
 | <a name="input_region"></a> [region](#input\_region) | GCP region for the primary instance. | `string` | n/a | yes |
 | <a name="input_replicas_deletion_protection"></a> [replicas\_deletion\_protection](#input\_replicas\_deletion\_protection) | Enable deletion protection for read replicas. | `bool` | `false` | no |
 | <a name="input_squad"></a> [squad](#input\_squad) | Squad or team label applied to the instance (required). | `string` | n/a | yes |
+| <a name="input_ssl_mode"></a> [ssl\_mode](#input\_ssl\_mode) | SSL mode for the Cloud SQL instance. Default is TRUSTED\_CLIENT\_CERTIFICATE\_REQUIRED. | `string` | `"TRUSTED_CLIENT_CERTIFICATE_REQUIRED"` | no |
 | <a name="input_storage_gb"></a> [storage\_gb](#input\_storage\_gb) | Initial SSD storage size in GB. | `number` | `256` | no |
 | <a name="input_tier"></a> [tier](#input\_tier) | Machine tier for the Cloud SQL instance. | `string` | `"db-perf-optimized-N-16"` | no |
 
