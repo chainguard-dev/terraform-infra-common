@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.12
-	chainguard.dev/sdk v0.1.37
+	chainguard.dev/sdk v0.1.38
 	cloud.google.com/go/bigquery v1.69.0
 	cloud.google.com/go/compute/metadata v0.7.0
 	cloud.google.com/go/profiler v0.4.3
@@ -21,7 +21,7 @@ require (
 	github.com/google/go-github/v72 v72.0.0
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/mileusna/useragent v1.3.5
-	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/client_golang v1.23.0
 	github.com/sethvargo/go-envconfig v1.3.0
 	github.com/shirou/gopsutil/v4 v4.25.6
 	github.com/snabb/httpreaderat v1.0.1
@@ -32,7 +32,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.37.0
 	go.opentelemetry.io/otel/sdk v1.37.0
 	gocloud.dev v0.43.0
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
+	golang.org/x/exp v0.0.0-20250530174510-65e920069ea6
 	golang.org/x/net v0.42.0
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.16.0
@@ -104,8 +104,8 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.63.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prometheus/common v0.65.0 // indirect
+	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
