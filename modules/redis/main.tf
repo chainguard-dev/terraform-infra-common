@@ -45,6 +45,7 @@ resource "google_project_service" "redis_api" {
   project                    = var.project_id
   service                    = "redis.googleapis.com"
   disable_dependent_services = false
+  disable_on_destroy         = false
 }
 
 resource "google_redis_instance" "default" {
