@@ -268,23 +268,29 @@ resource "google_project_iam_member" "bastion_extra_roles" {
 // Developer IAM access
 // -----------------------------------------------------------------------------
 
-resource "google_project_iam_member" "dev_os_login" {
+resource "google_iap_tunnel_instance_iam_member" "dev_os_login" {
   for_each = toset(var.dev_principals)
+
   project  = var.project_id
+  instance = google_compute_instance.bastion.name
   role     = "roles/compute.osLogin"
   member   = each.key
 }
 
-resource "google_project_iam_member" "dev_iap_tunnel_resource_accessor" {
+resource "google_iap_tunnel_instance_iam_member" "dev_iap_tunnel_resource_accessor" {
   for_each = toset(var.dev_principals)
+
   project  = var.project_id
+  instance = google_compute_instance.bastion.name
   role     = "roles/iap.tunnelResourceAccessor"
   member   = each.key
 }
 
-resource "google_project_iam_member" "dev_service_account_user" {
+resource "google_iap_tunnel_instance_iam_member" "dev_service_account_user" {
   for_each = toset(var.dev_principals)
+
   project  = var.project_id
+  instance = google_compute_instance.bastion.name
   role     = "roles/iam.serviceAccountUser"
   member   = each.key
 }
