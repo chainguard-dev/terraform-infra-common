@@ -278,24 +278,20 @@ resource "google_iap_tunnel_instance_iam_member" "dev_os_login" {
   member   = each.key
 }
 
-resource "google_iap_tunnel_instance_iam_member" "dev_iap_tunnel_resource_accessor" {
+resource "google_project_iam_member" "dev_iap_tunnel_resource_accessor" {
   for_each = toset(var.dev_principals)
 
-  project  = var.project_id
-  instance = google_compute_instance.bastion.name
-  zone     = var.zone
-  role     = "roles/iap.tunnelResourceAccessor"
-  member   = each.key
+  project = var.project_id
+  role    = "roles/iap.tunnelResourceAccessor"
+  member  = each.key
 }
 
-resource "google_iap_tunnel_instance_iam_member" "dev_service_account_user" {
+resource "google_project_iam_member" "dev_service_account_user" {
   for_each = toset(var.dev_principals)
 
-  project  = var.project_id
-  instance = google_compute_instance.bastion.name
-  zone     = var.zone
-  role     = "roles/iam.serviceAccountUser"
-  member   = each.key
+  project = var.project_id
+  role    = "roles/iam.serviceAccountUser"
+  member  = each.key
 }
 
 resource "google_project_iam_member" "dev_cloudsql_client" {
