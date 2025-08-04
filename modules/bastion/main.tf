@@ -273,6 +273,7 @@ resource "google_iap_tunnel_instance_iam_member" "dev_os_login" {
 
   project  = var.project_id
   instance = google_compute_instance.bastion.name
+  zone     = var.zone
   role     = "roles/compute.osLogin"
   member   = each.key
 }
@@ -282,6 +283,7 @@ resource "google_iap_tunnel_instance_iam_member" "dev_iap_tunnel_resource_access
 
   project  = var.project_id
   instance = google_compute_instance.bastion.name
+  zone     = var.zone
   role     = "roles/iap.tunnelResourceAccessor"
   member   = each.key
 }
@@ -291,6 +293,7 @@ resource "google_iap_tunnel_instance_iam_member" "dev_service_account_user" {
 
   project  = var.project_id
   instance = google_compute_instance.bastion.name
+  zone     = var.zone
   role     = "roles/iam.serviceAccountUser"
   member   = each.key
 }
