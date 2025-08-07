@@ -279,30 +279,110 @@ func (c GitHubClient) RemoveLabel(ctx context.Context, pr *github.PullRequest, l
 	return nil
 }
 
-// SetComment adds or replaces a bot comment on the given pull request.
-func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, botName, content string) error {
-	cs, _, err := c.inner.Issues.ListComments(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, nil)
-	if err != nil {
-		return fmt.Errorf("listing comments: %w", err)
+// FindCommentByMarker finds a comment containing the specified marker string.
+// It handles pagination automatically and returns the first matching comment.
+func (c GitHubClient) FindCommentByMarker(ctx context.Context, owner, repo string, issueNumber int, marker string) (*github.IssueComment, error) {
+	opts := &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
 	}
-	content = fmt.Sprintf("<!-- bot:%s -->\n\n%s", botName, content)
 
-	for _, com := range cs {
-		if strings.Contains(*com.Body, fmt.Sprintf("<!-- bot:%s -->", botName)) {
-			if _, resp, err := c.inner.Issues.EditComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *com.ID, &github.IssueComment{
-				Body: &content,
-			}); err != nil || resp.StatusCode != 200 {
-				return validateResponse(ctx, err, resp, "editing comment")
+	for {
+		comments, resp, err := c.inner.Issues.ListComments(ctx, owner, repo, issueNumber, opts)
+		if err != nil {
+			return nil, fmt.Errorf("listing comments: %w", err)
+		}
+
+		for _, comment := range comments {
+			if comment.Body != nil && strings.Contains(*comment.Body, marker) {
+				return comment, nil
 			}
-			return nil
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return nil, nil
+}
+
+// UpdateOrCreateComment updates an existing comment with the marker or creates a new one.
+// The marker should be unique to identify the comment (e.g., "<!-- bot:name -->").
+func (c GitHubClient) UpdateOrCreateComment(ctx context.Context, owner, repo string, issueNumber int, marker, content string) error {
+	// Find existing comment
+	existingComment, err := c.FindCommentByMarker(ctx, owner, repo, issueNumber, marker)
+	if err != nil {
+		return fmt.Errorf("finding existing comment: %w", err)
+	}
+
+	// Ensure marker is in content
+	if !strings.Contains(content, marker) {
+		content = marker + "\n\n" + content
+	}
+
+	if existingComment != nil {
+		// Update existing comment
+		_, resp, err := c.inner.Issues.EditComment(ctx, owner, repo, *existingComment.ID, &github.IssueComment{
+			Body: &content,
+		})
+		if err := validateResponse(ctx, err, resp, "edit comment"); err != nil {
+			return err
+		}
+	} else {
+		// Create new comment
+		_, resp, err := c.inner.Issues.CreateComment(ctx, owner, repo, issueNumber, &github.IssueComment{
+			Body: &content,
+		})
+		if err != nil || resp.StatusCode != 201 {
+			return validateResponse(ctx, err, resp, "create comment")
 		}
 	}
-	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
-		Body: &content,
-	}); err != nil || resp.StatusCode != 201 {
-		return validateResponse(ctx, err, resp, "create comment")
-	}
+
 	return nil
+}
+
+// ListCommentsWithPagination calls the provided function for each comment on an issue/PR.
+// The function should return true to stop iteration early.
+func (c GitHubClient) ListCommentsWithPagination(ctx context.Context, owner, repo string, issueNumber int, f func(*github.IssueComment) (bool, error)) error {
+	opts := &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	for {
+		comments, resp, err := c.inner.Issues.ListComments(ctx, owner, repo, issueNumber, opts)
+		if err != nil {
+			return fmt.Errorf("listing comments: %w", err)
+		}
+
+		for _, comment := range comments {
+			stop, err := f(comment)
+			if err != nil {
+				return err
+			}
+			if stop {
+				return nil
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return nil
+}
+
+// SetComment adds or replaces a bot comment on the given pull request.
+func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, botName, content string) error {
+	marker := fmt.Sprintf("<!-- bot:%s -->", botName)
+	content = fmt.Sprintf("%s\n\n%s", marker, content)
+	return c.UpdateOrCreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, marker, content)
 }
 
 // AddComment adds a new comment to the given pull request.
