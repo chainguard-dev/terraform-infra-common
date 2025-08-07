@@ -139,4 +139,3 @@ func (sm *CommentStateManager) BuildCommentWithState(message string, state inter
 func (sm *CommentStateManager) HasState(body string) bool {
 	return strings.Contains(body, sm.GetStateMarker()) && strings.Contains(body, sm.GetStateEndMarker())
 }
-
