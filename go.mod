@@ -6,7 +6,7 @@ require (
 	chainguard.dev/go-grpc-kit v0.17.12
 	chainguard.dev/sdk v0.1.38
 	cloud.google.com/go/bigquery v1.69.0
-	cloud.google.com/go/compute/metadata v0.7.0
+	cloud.google.com/go/compute/metadata v0.8.0
 	cloud.google.com/go/profiler v0.4.3
 	cloud.google.com/go/pubsub/v2 v2.0.0
 	cloud.google.com/go/storage v1.56.0
@@ -37,9 +37,9 @@ require (
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.16.0
 	golang.org/x/time v0.12.0
-	google.golang.org/api v0.245.0
+	google.golang.org/api v0.246.0
 	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.7
 )
 
 require (
