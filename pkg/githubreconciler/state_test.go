@@ -16,6 +16,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
 	"github.com/google/go-github/v72/github"
 )
 
@@ -208,9 +209,10 @@ func TestState_Fetch(t *testing.T) {
 			}
 
 			httpClient := &http.Client{Transport: transport}
-			client := github.NewClient(httpClient)
+			ghClient := github.NewClient(httpClient)
+			client := sdk.NewGitHubClient(ctx, "testowner", "testrepo", "test-policy", sdk.WithClient(ghClient))
 
-			state := NewState[testState](tt.identity, client, testResource(123))
+			state := NewState[testState](tt.identity, &client, testResource(123))
 
 			got, err := state.Fetch(ctx)
 
@@ -435,8 +437,9 @@ func TestState_Commit(t *testing.T) {
 			}
 
 			httpClient := &http.Client{Transport: transport}
-			client := github.NewClient(httpClient)
-			state := NewState[testState](tt.identity, client, testResource(123))
+			ghClient := github.NewClient(httpClient)
+			client := sdk.NewGitHubClient(ctx, "testowner", "testrepo", "test-policy", sdk.WithClient(ghClient))
+			state := NewState[testState](tt.identity, &client, testResource(123))
 
 			err := state.Commit(ctx, &tt.state, tt.message)
 
@@ -487,8 +490,9 @@ func TestState_Pagination(t *testing.T) {
 	}
 
 	httpClient := &http.Client{Transport: transport}
-	client := github.NewClient(httpClient)
-	state := NewState[testState]("test-app", client, testResource(123))
+	ghClient := github.NewClient(httpClient)
+	client := sdk.NewGitHubClient(ctx, "testowner", "testrepo", "test-policy", sdk.WithClient(ghClient))
+	state := NewState[testState]("test-app", &client, testResource(123))
 
 	got, err := state.Fetch(ctx)
 	if err != nil {
@@ -587,14 +591,15 @@ func TestState_CommentFormat(t *testing.T) {
 	}
 
 	httpClient := &http.Client{Transport: transport}
-	client := github.NewClient(httpClient)
+	ghClient := github.NewClient(httpClient)
+	client := sdk.NewGitHubClient(ctx, "testowner", "testrepo", "test-policy", sdk.WithClient(ghClient))
 
 	type testData struct {
 		Key   string `json:"key"`
 		Value int    `json:"value"`
 	}
 
-	state := NewState[testData]("my-bot", client, testResource(789))
+	state := NewState[testData]("my-bot", &client, testResource(789))
 
 	err := state.Commit(ctx, &testData{Key: "test", Value: 42}, "Test message for state")
 	if err != nil {
@@ -648,13 +653,5 @@ func TestState_CommentFormat(t *testing.T) {
 
 	if decoded.Key != "test" || decoded.Value != 42 {
 		t.Errorf("Decoded data = %+v, want {Key:test Value:42}", decoded)
-	}
-}
-
-func TestStateManager(t *testing.T) {
-	sm := NewStateManager("test-identity")
-
-	if sm.Identity() != "test-identity" {
-		t.Errorf("StateManager.Identity() = %v, want %v", sm.Identity(), "test-identity")
 	}
 }

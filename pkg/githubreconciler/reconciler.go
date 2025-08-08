@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/chainguard-dev/clog"
+	"github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
 	"github.com/google/go-github/v72/github"
 )
 
@@ -61,7 +62,7 @@ type Reconciler struct {
 	clientCache *ClientCache
 
 	// stateManager handles state persistence in GitHub comments.
-	stateManager *StateManager
+	stateManager *sdk.CommentStateManager
 }
 
 // Option configures a Reconciler.
@@ -75,7 +76,7 @@ func WithReconciler(f ReconcilerFunc) Option {
 }
 
 // WithStateManager sets a custom state manager.
-func WithStateManager(sm *StateManager) Option {
+func WithStateManager(sm *sdk.CommentStateManager) Option {
 	return func(r *Reconciler) {
 		r.stateManager = sm
 	}
@@ -93,7 +94,7 @@ func NewReconciler(cc *ClientCache, opts ...Option) *Reconciler {
 
 	// Use a default state manager if none provided
 	if r.stateManager == nil {
-		r.stateManager = NewStateManager("github-reconciler")
+		r.stateManager = sdk.NewCommentStateManager("github-reconciler")
 	}
 
 	return r
@@ -125,6 +126,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 }
 
 // GetStateManager returns the state manager for accessing state operations.
-func (r *Reconciler) GetStateManager() *StateManager {
+func (r *Reconciler) GetStateManager() *sdk.CommentStateManager {
 	return r.stateManager
 }

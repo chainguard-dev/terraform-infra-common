@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
 	"github.com/google/go-github/v72/github"
 	"golang.org/x/oauth2"
 )
@@ -37,12 +38,12 @@ func TestNewReconciler(t *testing.T) {
 	if r.stateManager == nil {
 		t.Error("Expected default state manager to be created")
 	}
-	if r.stateManager.Identity() != "github-reconciler" {
-		t.Errorf("Expected default identity 'github-reconciler', got %s", r.stateManager.Identity())
+	if r.stateManager.Identity != "github-reconciler" {
+		t.Errorf("Expected default identity 'github-reconciler', got %s", r.stateManager.Identity)
 	}
 
 	// Test with custom state manager
-	customSM := NewStateManager("custom-identity")
+	customSM := sdk.NewCommentStateManager("custom-identity")
 	r2 := NewReconciler(cc, WithStateManager(customSM))
 	if r2.stateManager != customSM {
 		t.Error("Expected custom state manager to be used")
@@ -225,19 +226,19 @@ func TestReconciler_GetStateManager(t *testing.T) {
 	if sm1 == nil {
 		t.Fatal("GetStateManager() returned nil")
 	}
-	if sm1.Identity() != "github-reconciler" {
-		t.Errorf("GetStateManager() identity = %v, want %v", sm1.Identity(), "github-reconciler")
+	if sm1.Identity != "github-reconciler" {
+		t.Errorf("GetStateManager() identity = %v, want %v", sm1.Identity, "github-reconciler")
 	}
 
 	// Test with custom state manager
-	customSM := NewStateManager("custom-id")
+	customSM := sdk.NewCommentStateManager("custom-id")
 	r2 := NewReconciler(cc, WithStateManager(customSM))
 	sm2 := r2.GetStateManager()
 	if sm2 != customSM {
 		t.Error("GetStateManager() did not return the custom state manager")
 	}
-	if sm2.Identity() != "custom-id" {
-		t.Errorf("GetStateManager() identity = %v, want %v", sm2.Identity(), "custom-id")
+	if sm2.Identity != "custom-id" {
+		t.Errorf("GetStateManager() identity = %v, want %v", sm2.Identity, "custom-id")
 	}
 }
 
