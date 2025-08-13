@@ -195,7 +195,7 @@ variable "notification_channels" {
 variable "execution_environment" {
   description = "The execution environment for the service"
   type        = string
-  default     = "EXECUTION_ENVIRONMENT_GEN1"
+  default     = "EXECUTION_ENVIRONMENT_GEN2"
   validation {
     error_message = "Must be EXECUTION_ENVIRONMENT_GEN1 or EXECUTION_ENVIRONMENT_GEN2. Got ${var.execution_environment}"
     condition     = var.execution_environment == "EXECUTION_ENVIRONMENT_GEN1" || var.execution_environment == "EXECUTION_ENVIRONMENT_GEN2"
