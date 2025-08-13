@@ -97,7 +97,8 @@ module "service" {
     }
   }
 
-  service_account = google_service_account.this.email
+  service_account        = google_service_account.this.email
+  notification_channels  = []
 
   containers = {
     "pubsub-slack-bridge" = {
@@ -140,7 +141,7 @@ module "service" {
 
 // Get the Cloud Run service URL
 locals {
-  service_url = module.service.url[var.region]
+  service_url = module.service.uris[var.region]
 }
 
 // Lookup the Pub/Sub service identity
@@ -185,7 +186,7 @@ resource "google_pubsub_subscription" "push" {
 
 // Grant Pub/Sub service account permission to invoke the Cloud Run service
 resource "google_cloud_run_service_iam_binding" "pubsub_invoker" {
-  service  = module.service.service[var.region].name
+  service  = module.service.names[var.region]
   location = var.region
   project  = var.project_id
   role     = "roles/run.invoker"
