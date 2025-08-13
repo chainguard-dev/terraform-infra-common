@@ -134,3 +134,9 @@ variable "max_retry_delay" {
   type        = string
   default     = "300s"
 }
+
+variable "enable_profiler" {
+  description = "Enable Cloud Profiler for the service"
+  type        = bool
+  default     = false
+}

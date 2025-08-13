@@ -121,6 +121,9 @@ module "service" {
         }, {
         name  = "PROJECT_ID"
         value = var.project_id
+        }, {
+        name  = "ENABLE_PROFILER"
+        value = var.enable_profiler ? "true" : "false"
       }]
 
       resources = {

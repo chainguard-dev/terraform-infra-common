@@ -14,22 +14,29 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"github.com/chainguard-dev/clog"
+	_ "github.com/chainguard-dev/clog/gcp/init"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
 	"github.com/sethvargo/go-envconfig"
 )
 
 // Config holds the application configuration
-type Config struct {
-	Port               string `env:"PORT,default=8080"`
+var env = envconfig.MustProcess(context.Background(), &struct {
+	Port               int    `env:"PORT,default=8080"`
 	SlackWebhookSecret string `env:"SLACK_WEBHOOK_SECRET,required"`
 	SlackChannel       string `env:"SLACK_CHANNEL,required"`
 	MessageTemplate    string `env:"MESSAGE_TEMPLATE,required"`
 	ProjectID          string `env:"PROJECT_ID,required"`
-}
+}{})
 
 // PubSubMessage represents the structure of a Pub/Sub push message
 type PubSubMessage struct {
@@ -50,52 +57,65 @@ type SlackService struct {
 }
 
 func main() {
-	ctx := context.Background()
-	logger := clog.New(slog.Default().Handler())
+	// Set up graceful shutdown
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	ctx = clog.WithLogger(ctx, clog.New(slog.Default().Handler()))
 
-	var config Config
-	if err := envconfig.Process(ctx, &config); err != nil {
-		logger.Fatalf("failed to process config: %v", err)
-	}
+	// Set up profiler
+	profiler.SetupProfiler()
+
+	// Start metrics server
+	go httpmetrics.ServeMetrics()
+	defer httpmetrics.SetupTracer(ctx)()
 
 	// Get Slack webhook URL from Secret Manager
-	webhookURL, err := getSecretValue(ctx, config.ProjectID, config.SlackWebhookSecret)
+	webhookURL, err := getSecretValue(ctx, env.ProjectID, env.SlackWebhookSecret)
 	if err != nil {
-		logger.Fatalf("failed to get Slack webhook URL: %v", err)
+		clog.FatalContextf(ctx, "failed to get Slack webhook URL: %v", err)
 	}
 
 	// Initialize Slack service
 	slackService := &SlackService{
 		webhookURL: webhookURL,
-		channel:    config.SlackChannel,
-		template:   config.MessageTemplate,
+		channel:    env.SlackChannel,
+		template:   env.MessageTemplate,
 	}
 
-	// Set up HTTP handlers
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// Create HTTP server with standard configuration
+	mux := http.NewServeMux()
+	
+	// Add health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "OK")
+	})
+
+	// Add main handler with metrics wrapper
+	mux.Handle("/", httpmetrics.Handler("pubsub-slack-bridge", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		if err := handlePubSubMessage(ctx, logger, slackService, w, r); err != nil {
-			logger.Errorf("failed to handle Pub/Sub message: %v", err)
+		if err := handlePubSubMessage(ctx, slackService, w, r); err != nil {
+			clog.ErrorContext(ctx, "failed to handle Pub/Sub message", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-	})
+	})))
 
-	// Health check endpoint
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "OK")
-	})
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%d", env.Port),
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
 
-	logger.Infof("Starting server on port %s", config.Port)
-	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
-		logger.Fatalf("server failed: %v", err)
+	clog.InfoContext(ctx, "Starting server", "port", env.Port)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		clog.FatalContextf(ctx, "server failed: %v", err)
 	}
 }
 
@@ -120,7 +140,7 @@ func getSecretValue(ctx context.Context, projectID, secretID string) (string, er
 }
 
 // handlePubSubMessage processes incoming Pub/Sub push messages
-func handlePubSubMessage(ctx context.Context, logger *clog.Logger, slackService *SlackService, w http.ResponseWriter, r *http.Request) error {
+func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http.ResponseWriter, r *http.Request) error {
 	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -145,7 +165,7 @@ func handlePubSubMessage(ctx context.Context, logger *clog.Logger, slackService 
 		return fmt.Errorf("failed to unmarshal payload: %v", err)
 	}
 
-	logger.Infof("Received message: %s", string(data))
+	clog.InfoContext(ctx, "Received message", "messageId", pubsubMsg.Message.MessageID, "dataLength", len(data))
 
 	// Format the message using the template
 	message, err := formatMessage(slackService.template, payload)
@@ -158,7 +178,7 @@ func handlePubSubMessage(ctx context.Context, logger *clog.Logger, slackService 
 		return fmt.Errorf("failed to send Slack message: %v", err)
 	}
 
-	logger.Infof("Successfully sent message to Slack channel %s", slackService.channel)
+	clog.InfoContext(ctx, "Successfully sent message to Slack", "channel", slackService.channel)
 	return nil
 }
 

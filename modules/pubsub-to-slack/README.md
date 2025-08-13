@@ -151,6 +151,7 @@ The Cloud Run service is configured via environment variables:
 - `SLACK_CHANNEL`: Target Slack channel (e.g., "#alerts" or "@user")
 - `MESSAGE_TEMPLATE`: Template for formatting messages
 - `PROJECT_ID`: GCP project ID for accessing Secret Manager
+- `ENABLE_PROFILER`: Enable Cloud Profiler (set by `enable_profiler` variable)
 
 ## Monitoring
 
@@ -159,6 +160,9 @@ The module includes:
 - Configurable retry policies
 - Health check endpoint at `/health`
 - Structured logging via chainguard-dev/clog
+- Prometheus metrics on port 2112 (via httpmetrics package)
+- OpenTelemetry tracing integration
+- Optional Cloud Profiler support
 
 Failed messages are sent to the dead letter topic `{name}-dlq` after `max_delivery_attempts` retries.
 
@@ -192,6 +196,7 @@ Failed messages are sent to the dead letter topic `{name}-dlq` after `max_delive
 | `squad` | Squad/team label | `string` | `""` | no |
 | `product` | Product label | `string` | `""` | no |
 | `labels` | Additional resource labels | `map(string)` | `{}` | no |
+| `enable_profiler` | Enable Cloud Profiler for the service | `bool` | `false` | no |
 
 See `variables.tf` for additional Cloud Run and Pub/Sub configuration options.
 
