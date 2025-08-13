@@ -84,7 +84,7 @@ func main() {
 
 	// Create HTTP server with standard configuration
 	mux := http.NewServeMux()
-	
+
 	// Add health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

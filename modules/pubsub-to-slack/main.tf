@@ -97,8 +97,8 @@ module "service" {
     }
   }
 
-  service_account        = google_service_account.this.email
-  notification_channels  = []
+  service_account       = google_service_account.this.email
+  notification_channels = []
 
   containers = {
     "pubsub-slack-bridge" = {
