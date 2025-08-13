@@ -76,7 +76,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: step-security/workflow-conclusion-action@3854991aedf48f496a83c417ee559f5e28ec57ad # v3.0.7
+      - uses: step-security/workflow-conclusion-action@85a2b085a440daa8a086b79e1aac26ebe26b7f69 # v3.0.8
 
       - if: ${{ env.WORKFLOW_CONCLUSION == 'success' }}
         working-directory: /tmp
