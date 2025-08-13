@@ -24,11 +24,11 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Port                string `env:"PORT,default=8080"`
-	SlackWebhookSecret  string `env:"SLACK_WEBHOOK_SECRET,required"`
-	SlackChannel        string `env:"SLACK_CHANNEL,required"`
-	MessageTemplate     string `env:"MESSAGE_TEMPLATE,required"`
-	ProjectID           string `env:"PROJECT_ID,required"`
+	Port               string `env:"PORT,default=8080"`
+	SlackWebhookSecret string `env:"SLACK_WEBHOOK_SECRET,required"`
+	SlackChannel       string `env:"SLACK_CHANNEL,required"`
+	MessageTemplate    string `env:"MESSAGE_TEMPLATE,required"`
+	ProjectID          string `env:"PROJECT_ID,required"`
 }
 
 // PubSubMessage represents the structure of a Pub/Sub push message
@@ -52,7 +52,7 @@ type SlackService struct {
 func main() {
 	ctx := context.Background()
 	logger := clog.New(slog.Default().Handler())
-	
+
 	var config Config
 	if err := envconfig.Process(ctx, &config); err != nil {
 		logger.Fatalf("failed to process config: %v", err)
@@ -77,13 +77,13 @@ func main() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		
+
 		if err := handlePubSubMessage(ctx, logger, slackService, w, r); err != nil {
 			logger.Errorf("failed to handle Pub/Sub message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		
+
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -165,12 +165,12 @@ func handlePubSubMessage(ctx context.Context, logger *clog.Logger, slackService 
 // formatMessage applies the template to the payload data
 func formatMessage(template string, payload map[string]interface{}) (string, error) {
 	result := template
-	
+
 	// Simple template substitution using ${field} syntax
 	// This could be enhanced with more sophisticated templating if needed
 	for key, value := range payload {
 		placeholder := fmt.Sprintf("${%s}", key)
-		
+
 		// Convert value to string
 		var valueStr string
 		switch v := value.(type) {
@@ -192,10 +192,10 @@ func formatMessage(template string, payload map[string]interface{}) (string, err
 				valueStr = string(jsonBytes)
 			}
 		}
-		
+
 		result = strings.ReplaceAll(result, placeholder, valueStr)
 	}
-	
+
 	return result, nil
 }
 
@@ -206,24 +206,24 @@ func (s *SlackService) SendMessage(ctx context.Context, message string) error {
 		"channel": s.channel,
 		"text":    message,
 	}
-	
+
 	// Marshal the payload
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal Slack payload: %v", err)
 	}
-	
+
 	// For webhook URLs, we need to make a direct HTTP POST
 	resp, err := http.Post(s.webhookURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to post to Slack webhook: %v", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Slack webhook returned status %d: %s", resp.StatusCode, string(body))
 	}
-	
+
 	return nil
 }

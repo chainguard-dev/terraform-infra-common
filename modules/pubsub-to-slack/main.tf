@@ -111,13 +111,13 @@ module "service" {
       env = [{
         name  = "SLACK_WEBHOOK_SECRET"
         value = google_secret_manager_secret.slack_webhook_url.secret_id
-      }, {
+        }, {
         name  = "SLACK_CHANNEL"
         value = var.slack_channel
-      }, {
+        }, {
         name  = "MESSAGE_TEMPLATE"
         value = var.message_template
-      }, {
+        }, {
         name  = "PROJECT_ID"
         value = var.project_id
       }]

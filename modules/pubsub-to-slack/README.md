@@ -60,7 +60,7 @@ module "budget_slack_notifications" {
 resource "google_monitoring_notification_channel" "budget_pubsub" {
   display_name = "Budget Pub/Sub Channel"
   type         = "pubsub"
-  
+
   labels = {
     topic = module.budget_slack_notifications.topic_name
   }
@@ -81,7 +81,7 @@ resource "google_billing_budget" "example" {
   threshold_rules {
     threshold_percent = 0.5
   }
-  
+
   threshold_rules {
     threshold_percent = 0.9
   }

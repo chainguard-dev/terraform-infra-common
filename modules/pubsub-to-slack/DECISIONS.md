@@ -4,7 +4,7 @@
 
 **Decision**: Use direct HTTP calls to Slack webhook URLs instead of the `slack-go/slack` library.
 
-**Context**: 
+**Context**:
 - Initially considered using the `slack-go/slack` library for Slack integration
 - The library is designed for Slack's Web API using bot tokens, not incoming webhooks
 - Two approaches were evaluated:
