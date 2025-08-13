@@ -82,7 +82,6 @@ locals {
   oom_filter = <<EOF
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 logName:"/logs/run.googleapis.com%2Fvarlog%2Fsystem" OR logName:"/logs/run.googleapis.com%2F%2Fvar%2Flog%2Fsystem"
-severity=ERROR
 textPayload:"Consider increasing the memory limit" OR textPayload:"Out-of-memory event detected in container"
 ${var.oom_filter}
 ${local.squad_log_filter}
