@@ -33,6 +33,7 @@ variable "labels" {
 variable "squad" {
   description = "Squad or team label applied to the instance (required)."
   type        = string
+  default     = "unknown"
 
   validation {
     condition     = length(trim(var.squad, " \t\n\r")) > 0

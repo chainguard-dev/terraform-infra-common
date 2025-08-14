@@ -78,7 +78,7 @@ variable "require_squad" {
 variable "squad" {
   description = "squad label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 }
 
 variable "max_delivery_attempts" {

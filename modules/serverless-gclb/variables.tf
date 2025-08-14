@@ -60,7 +60,7 @@ variable "require_team" {
 variable "team" {
   description = "team label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 
   validation {
     condition     = !var.require_team || var.team != ""

@@ -145,7 +145,7 @@ variable "require_squad" {
 variable "squad" {
   description = "squad label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 
   validation {
     condition     = !var.require_squad || var.squad != ""

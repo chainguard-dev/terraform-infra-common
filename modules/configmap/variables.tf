@@ -37,7 +37,7 @@ variable "require_squad" {
 variable "squad" {
   description = "Squad label to apply to the secret."
   type        = string
-  default     = ""
+  default     = "unknown"
 
   validation {
     condition     = !var.require_squad || var.squad != ""

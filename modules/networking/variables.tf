@@ -40,7 +40,7 @@ variable "require_squad" {
 variable "squad" {
   description = "Squad label to apply to the networking resources."
   type        = string
-  default     = ""
+  default     = "unknown"
 
   validation {
     condition     = !var.require_squad || var.squad != ""
