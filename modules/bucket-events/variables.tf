@@ -55,6 +55,7 @@ variable "deletion_protection" {
   default     = true
 }
 
+
 variable "require_squad" {
   description = "Whether to require squad variable to be specified"
   type        = bool
@@ -66,10 +67,6 @@ variable "squad" {
   type        = string
   default     = "unknown"
 
-  validation {
-    condition     = !var.require_squad || var.squad != ""
-    error_message = "squad needs to specified or disable check by setting require_squad = false"
-  }
 }
 
 variable "labels" {

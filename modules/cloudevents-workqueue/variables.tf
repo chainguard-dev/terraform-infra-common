@@ -69,6 +69,7 @@ variable "notification_channels" {
   type        = list(string)
 }
 
+
 variable "require_squad" {
   description = "Whether to require squad variable to be specified"
   type        = bool
