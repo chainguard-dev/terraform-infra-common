@@ -23,9 +23,9 @@ import (
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
+	"github.com/chainguard-dev/terraform-infra-common/modules/pubsub-to-slack/pkg/slacktemplate"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
-	"github.com/chainguard-dev/terraform-infra-common/pkg/slacktemplate"
 	"github.com/sethvargo/go-envconfig"
 )
 
