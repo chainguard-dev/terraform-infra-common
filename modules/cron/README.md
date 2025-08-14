@@ -54,6 +54,112 @@ or as from a secret in Google Secret Manager:
   }
 ```
 
+## Success Alerting Configuration
+
+The module supports alerting when jobs fail to complete successfully, using GCP Cloud Monitoring's metric absence detection. This monitors the `run.googleapis.com/job/completed_execution_count` metric filtered by `result = "succeeded"`.
+
+### Alert Variables
+
+- **`success_alert_alignment_period_seconds`**: The time window to check for successful executions (default: 0 = disabled)
+  - This is the "alignment period" in GCP monitoring terms - how far back to look for successful executions
+  - Must be ≤ 20 hours (72000 seconds)
+
+- **`success_alert_duration_seconds`**: How long the absence must persist before alerting (default: 0 = uses alignment period value)
+  - This is the "trigger absence time" in GCP monitoring terms - how long to wait before firing the alert
+  - When unset or 0, defaults to the same value as `success_alert_alignment_period_seconds` for backward compatibility
+  - Must be between 60 seconds and 23.5 hours when explicitly set
+
+### Alert Behavior
+
+> **⚠️ Important**: The alert will **not** fire until the job has completed successfully at least once. This is a GCP metric-absence condition requirement - the metric must exist (have been written at least once) before its absence can be detected. After initial deployment, ensure your job runs successfully at least once to enable alerting.
+
+The alert triggers when:
+1. No successful job executions occur within the alignment period window
+2. This absence persists for the specified duration
+3. At least one successful execution has occurred previously (required by GCP's metric-absence conditions)
+
+### Configuration Patterns
+
+#### 1. Fast Detection (Duration < Alignment)
+Use when you need quick alerts while checking a broader time window:
+
+```terraform
+module "critical_cron" {
+  source = "../modules/cron"
+
+  schedule = "0 * * * *"  # Hourly
+
+  # Check 2-hour window but alert after just 30 minutes
+  success_alert_alignment_period_seconds = 7200   # 2 hours
+  success_alert_duration_seconds         = 1800   # 30 minutes
+
+  # Alert fires if no success in past 2 hours, detected within 30 minutes
+}
+```
+
+#### 2. Noise Reduction (Duration > Alignment)
+Use to avoid alerts from transient failures:
+
+```terraform
+module "batch_cron" {
+  source = "../modules/cron"
+
+  schedule = "*/15 * * * *"  # Every 15 minutes
+
+  # Check 30-minute window but wait 1 hour before alerting
+  success_alert_alignment_period_seconds = 1800   # 30 minutes
+  success_alert_duration_seconds         = 3600   # 1 hour
+
+  # Tolerates brief outages, only alerts on extended failures
+}
+```
+
+#### 3. Traditional/Simple (Duration = Alignment)
+For backward compatibility or when both values should match:
+
+```terraform
+module "standard_cron" {
+  source = "../modules/cron"
+
+  schedule = "0 */4 * * *"  # Every 4 hours
+
+  # Both alignment and duration use same value
+  success_alert_alignment_period_seconds = 21600  # 6 hours
+  # success_alert_duration_seconds not set (defaults to alignment value)
+}
+```
+
+#### 4. Daily Jobs with Variable Timing
+For jobs that run once daily but may have scheduling variance:
+
+```terraform
+module "daily_backup" {
+  source = "../modules/cron"
+
+  schedule = "0 2 * * *"  # Daily at 2 AM
+
+  # 6-hour window for completion, 8-hour tolerance for delays
+  success_alert_alignment_period_seconds = 21600  # 6 hours
+  success_alert_duration_seconds         = 28800  # 8 hours
+
+  # Accounts for both execution time variance and potential scheduling delays
+}
+```
+
+### Important Considerations
+
+1. **GCP Limits**: The combined alert horizon (alignment_period + duration) must not exceed 25 hours
+2. **Initial Data Required**: The alert won't trigger if the job has never run successfully at least once
+3. **Auto-close**: Incidents automatically close after 1 hour when successful executions resume
+4. **Minimum Values**: Set alignment period ≥ your cron schedule interval to avoid false positives
+
+### Backward Compatibility
+
+This feature maintains full backward compatibility:
+- Existing configurations work unchanged
+- When `success_alert_duration_seconds` is not set or is 0, it defaults to `success_alert_alignment_period_seconds`
+- No breaking changes for current module users
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -91,6 +197,7 @@ No modules.
 | [google_service_account.delivery](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [ko_build.image](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 | [null_resource.exec](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.validate_success_alert_horizon](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [google_client_config.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
 | [google_client_openid_userinfo.me](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_openid_userinfo) | data source |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
@@ -128,6 +235,7 @@ No modules.
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as, and to invoke the job as. | `string` | n/a | yes |
 | <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | `""` | no |
 | <a name="input_success_alert_alignment_period_seconds"></a> [success\_alert\_alignment\_period\_seconds](#input\_success\_alert\_alignment\_period\_seconds) | Alignment period for successful completion alert. 0 (default) to not create alert. | `number` | `0` | no |
+| <a name="input_success_alert_duration_seconds"></a> [success\_alert\_duration\_seconds](#input\_success\_alert\_duration\_seconds) | How long the absence of successful executions must persist before the alert fires. If not set or 0, defaults to success\_alert\_alignment\_period\_seconds for backward compatibility. This is the 'trigger absence time' in GCP monitoring terms. | `number` | `0` | no |
 | <a name="input_task_count"></a> [task\_count](#input\_task\_count) | The number of tasks to run. | `number` | `1` | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The maximum amount of time in seconds to allow the job to run. | `string` | `"600s"` | no |
 | <a name="input_volume_mounts"></a> [volume\_mounts](#input\_volume\_mounts) | The volume mounts to mount the volumes to the container in the job. | <pre>list(object({<br/>    name       = string<br/>    mount_path = string<br/>  }))</pre> | `[]` | no |

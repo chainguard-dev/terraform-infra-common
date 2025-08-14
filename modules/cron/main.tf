@@ -287,6 +287,38 @@ data "google_project" "project" { project_id = var.project_id }
 // What identity is deploying this?
 data "google_client_openid_userinfo" "me" {}
 
+// Validate that the combined alert horizon doesn't exceed GCP limits
+locals {
+  # Calculate effective duration for validation
+  success_alert_effective_duration = var.success_alert_duration_seconds > 0 ? var.success_alert_duration_seconds : var.success_alert_alignment_period_seconds
+
+  # GCP limit is 25 hours for the total alert horizon (alignment + duration)
+  success_alert_horizon_seconds = var.success_alert_alignment_period_seconds + local.success_alert_effective_duration
+
+  # Validate only when alerting is enabled
+  success_alert_horizon_valid = var.success_alert_alignment_period_seconds == 0 || local.success_alert_horizon_seconds <= (60 * 60 * 25)
+}
+
+resource "null_resource" "validate_success_alert_horizon" {
+  count = local.success_alert_horizon_valid ? 0 : 1
+
+  triggers = {
+    error = <<-EOT
+      Alert horizon validation failed!
+
+      The combined alert horizon (alignment_period + duration) exceeds GCP's 25-hour limit.
+      Current values:
+        - alignment_period: ${var.success_alert_alignment_period_seconds} seconds (${var.success_alert_alignment_period_seconds / 3600} hours)
+        - duration: ${local.success_alert_effective_duration} seconds (${local.success_alert_effective_duration / 3600} hours)
+        - total horizon: ${local.success_alert_horizon_seconds} seconds (${local.success_alert_horizon_seconds / 3600} hours)
+
+      Maximum allowed: 90000 seconds (25 hours)
+
+      Please reduce either the alignment period or duration to stay within limits.
+    EOT
+  }
+}
+
 resource "google_monitoring_alert_policy" "success" {
   count = var.success_alert_alignment_period_seconds == 0 ? 0 : 1
 
@@ -315,7 +347,8 @@ resource "google_monitoring_alert_policy" "success" {
         per_series_aligner   = "ALIGN_MAX"
       }
 
-      duration = "${var.success_alert_alignment_period_seconds}s"
+      # Use custom duration if provided, otherwise default to alignment period for backward compatibility
+      duration = var.success_alert_duration_seconds > 0 ? "${var.success_alert_duration_seconds}s" : "${var.success_alert_alignment_period_seconds}s"
       trigger {
         count = "1"
       }
