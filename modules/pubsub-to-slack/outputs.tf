@@ -28,7 +28,8 @@ output "service_account_email" {
   value       = google_service_account.this.email
 }
 
+
 output "service_url" {
-  description = "The URL of the Cloud Run service"
-  value       = local.service_url
+  description = "Cloud Run service URL"
+  value       = module.service.uris[var.region]
 }

@@ -14,25 +14,23 @@ variable "name" {
 }
 
 variable "region" {
-  description = "The GCP region to deploy the Cloud Run service"
+  description = "The region where the service will be deployed"
   type        = string
-  default     = "us-central1"
 }
 
 variable "network" {
-  description = "The VPC network for the Cloud Run service"
+  description = "The network for the service to egress traffic via"
   type        = string
 }
 
 variable "subnet" {
-  description = "The VPC subnet for the Cloud Run service"
+  description = "The subnetwork for the service to egress traffic via"
   type        = string
 }
 
-variable "slack_webhook_url" {
-  description = "The Slack webhook URL for sending notifications"
+variable "slack_webhook_secret_id" {
+  description = "The Secret Manager secret ID containing the Slack webhook URL"
   type        = string
-  sensitive   = true
 }
 
 variable "slack_channel" {
@@ -42,30 +40,21 @@ variable "slack_channel" {
 }
 
 variable "message_template" {
-  description = <<-EOT
-  Template for formatting messages sent to Slack using Go template syntax. Use {{.field_name}} for JSON field substitution.
-  Supports helper functions like mul, div, add, sub, printf, and round.
-  Example: "Alert: {{.budgetDisplayName}} exceeded {{printf \"%.0f\" (mul .alertThresholdExceeded 100)}}% ({{printf \"%.2f\" .costAmount}} {{.currencyCode}})"
-  EOT
+  description = "Template for formatting messages sent to Slack using Go template syntax. Use {{.field_name}} for JSON field substitution."
   type        = string
   default     = "Notification: {{.message}}"
 }
 
-variable "image" {
-  description = "The container image for the Pub/Sub to Slack bridge service"
+variable "team" {
+  description = "The team label to apply to resources"
   type        = string
-}
-
-variable "squad" {
-  description = "The squad/team label to apply to resources"
-  type        = string
-  default     = ""
+  default     = "unknown"
 }
 
 variable "product" {
   description = "The product label to apply to resources"
   type        = string
-  default     = ""
+  default     = "unknown"
 }
 
 variable "labels" {
@@ -74,67 +63,12 @@ variable "labels" {
   default     = {}
 }
 
-// Cloud Run configuration
-variable "cpu_limit" {
-  description = "CPU limit for the Cloud Run service"
-  type        = string
-  default     = "1000m"
+variable "notification_channels" {
+  description = "List of notification channels to alert"
+  type        = list(string)
+  default     = []
 }
 
-variable "memory_limit" {
-  description = "Memory limit for the Cloud Run service"
-  type        = string
-  default     = "512Mi"
-}
-
-variable "min_instances" {
-  description = "Minimum number of Cloud Run instances"
-  type        = number
-  default     = 0
-}
-
-variable "max_instances" {
-  description = "Maximum number of Cloud Run instances"
-  type        = number
-  default     = 10
-}
-
-variable "max_concurrency" {
-  description = "Maximum concurrent requests per Cloud Run instance"
-  type        = number
-  default     = 1000
-}
-
-// Pub/Sub configuration
-variable "ack_deadline_seconds" {
-  description = "The maximum time a message can be outstanding before being redelivered"
-  type        = number
-  default     = 60
-}
-
-variable "message_retention_duration" {
-  description = "How long unacknowledged messages are retained"
-  type        = string
-  default     = "604800s" // 7 days
-}
-
-variable "max_delivery_attempts" {
-  description = "Maximum number of delivery attempts for dead letter queue"
-  type        = number
-  default     = 5
-}
-
-variable "min_retry_delay" {
-  description = "Minimum retry delay for failed messages"
-  type        = string
-  default     = "10s"
-}
-
-variable "max_retry_delay" {
-  description = "Maximum retry delay for failed messages"
-  type        = string
-  default     = "300s"
-}
 
 variable "enable_profiler" {
   description = "Enable Cloud Profiler for the service"
