@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -26,6 +25,7 @@ import (
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/slacktemplate"
 	"github.com/sethvargo/go-envconfig"
 )
 
@@ -53,7 +53,7 @@ type PubSubMessage struct {
 type SlackService struct {
 	webhookURL string
 	channel    string
-	template   string
+	executor   *slacktemplate.Executor
 }
 
 func main() {
@@ -75,11 +75,17 @@ func main() {
 		clog.FatalContextf(ctx, "failed to get Slack webhook URL: %v", err)
 	}
 
+	// Parse message template
+	executor, err := slacktemplate.New(env.MessageTemplate)
+	if err != nil {
+		clog.FatalContextf(ctx, "failed to parse message template: %v", err)
+	}
+
 	// Initialize Slack service
 	slackService := &SlackService{
 		webhookURL: webhookURL,
 		channel:    env.SlackChannel,
-		template:   env.MessageTemplate,
+		executor:   executor,
 	}
 
 	// Create HTTP server with standard configuration
@@ -168,7 +174,7 @@ func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http
 	clog.InfoContext(ctx, "Received message", "messageId", pubsubMsg.Message.MessageID, "dataLength", len(data))
 
 	// Format the message using the template
-	message, err := formatMessage(slackService.template, payload)
+	message, err := slackService.executor.Execute(payload)
 	if err != nil {
 		return fmt.Errorf("failed to format message: %v", err)
 	}
@@ -180,43 +186,6 @@ func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http
 
 	clog.InfoContext(ctx, "Successfully sent message to Slack", "channel", slackService.channel)
 	return nil
-}
-
-// formatMessage applies the template to the payload data
-func formatMessage(template string, payload map[string]interface{}) (string, error) {
-	result := template
-
-	// Simple template substitution using ${field} syntax
-	// This could be enhanced with more sophisticated templating if needed
-	for key, value := range payload {
-		placeholder := fmt.Sprintf("${%s}", key)
-
-		// Convert value to string
-		var valueStr string
-		switch v := value.(type) {
-		case string:
-			valueStr = v
-		case float64:
-			// Handle numbers (JSON unmarshals numbers as float64)
-			valueStr = fmt.Sprintf("%.2f", v)
-		case bool:
-			valueStr = fmt.Sprintf("%t", v)
-		case nil:
-			valueStr = "null"
-		default:
-			// For complex objects, marshal back to JSON
-			jsonBytes, err := json.Marshal(v)
-			if err != nil {
-				valueStr = fmt.Sprintf("%v", v)
-			} else {
-				valueStr = string(jsonBytes)
-			}
-		}
-
-		result = strings.ReplaceAll(result, placeholder, valueStr)
-	}
-
-	return result, nil
 }
 
 // SendMessage sends a message to the configured Slack channel

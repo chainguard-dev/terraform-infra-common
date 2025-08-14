@@ -43,11 +43,12 @@ variable "slack_channel" {
 
 variable "message_template" {
   description = <<-EOT
-  Template for formatting messages sent to Slack. Use $${field_name} for JSON field substitution.
-  Example: "Alert: $${budgetDisplayName} exceeded $${alertThresholdExceeded*100}% ($${costAmount} $${currencyCode})"
+  Template for formatting messages sent to Slack using Go template syntax. Use {{.field_name}} for JSON field substitution.
+  Supports helper functions like mul, div, add, sub, printf, and round.
+  Example: "Alert: {{.budgetDisplayName}} exceeded {{printf \"%.0f\" (mul .alertThresholdExceeded 100)}}% ({{printf \"%.2f\" .costAmount}} {{.currencyCode}})"
   EOT
   type        = string
-  default     = "Notification: $${message}"
+  default     = "Notification: {{.message}}"
 }
 
 variable "image" {

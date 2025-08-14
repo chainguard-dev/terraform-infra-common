@@ -27,7 +27,7 @@ module "budget_slack_alerts" {
 
   slack_webhook_url = var.slack_webhook_url
   slack_channel     = "#budget-alerts"
-  message_template  = "🚨 Budget Alert: $${budgetDisplayName} exceeded $${alertThresholdExceeded*100}% ($${costAmount} $${currencyCode})"
+  message_template  = "🚨 Budget Alert: {{.budgetDisplayName}} exceeded {{printf \"%.0f\" (mul .alertThresholdExceeded 100)}}% ({{printf \"%.2f\" .costAmount}} {{.currencyCode}})"
 
   image = "gcr.io/your-project/pubsub-slack-bridge:latest"
 
@@ -51,7 +51,7 @@ module "budget_slack_notifications" {
 
   slack_webhook_url = var.slack_webhook_url
   slack_channel     = "#budget-alerts"
-  message_template  = "💸 Budget Alert: *$${budgetDisplayName}* exceeded $${alertThresholdExceeded}% threshold\n💰 Current spend: $${costAmount} $${currencyCode} / $${budgetAmount} $${currencyCode}\n📅 Period: $${costIntervalStart}"
+  message_template  = "💸 Budget Alert: *{{.budgetDisplayName}}* exceeded {{printf \"%.0f\" (mul .alertThresholdExceeded 100)}}% threshold\n💰 Current spend: {{printf \"%.2f\" .costAmount}} {{.currencyCode}} / {{printf \"%.2f\" .budgetAmount}} {{.currencyCode}}\n📅 Period: {{.costIntervalStart}}"
 
   image = var.pubsub_slack_bridge_image
 }
@@ -96,7 +96,7 @@ resource "google_billing_budget" "example" {
 
 ## Message Templating
 
-The `message_template` variable supports simple variable substitution using `$${field_name}` syntax. Note the double `$` to escape Terraform's interpolation.
+The `message_template` variable uses Go's built-in templating system with enhanced helper functions. Templates use `{{.field_name}}` syntax and support conditionals, loops, and mathematical operations.
 
 ### Budget Alert Fields
 
@@ -114,21 +114,33 @@ For Google Cloud Budget alerts, available fields include:
 
 ```hcl
 # Simple alert
-message_template = "Budget $${budgetDisplayName} exceeded $${alertThresholdExceeded*100}%"
+message_template = "Budget {{.budgetDisplayName}} exceeded {{printf \"%.0f\" (mul .alertThresholdExceeded 100)}}%"
 
 # Detailed alert with formatting
 message_template = <<-EOT
 🚨 *Budget Alert*
-Budget: $${budgetDisplayName}
-Threshold: $${alertThresholdExceeded*100}% exceeded
-Current: $${costAmount} $${currencyCode}
-Budget: $${budgetAmount} $${currencyCode}
-Period: $${costIntervalStart}
+Budget: {{.budgetDisplayName}}
+Threshold: {{printf "%.0f" (mul .alertThresholdExceeded 100)}}% exceeded
+Current: {{printf "%.2f" .costAmount}} {{.currencyCode}}
+Budget: {{printf "%.2f" .budgetAmount}} {{.currencyCode}}
+Period: {{.costIntervalStart}}
 EOT
 
-# Custom calculation in template
-message_template = "Alert: $${budgetDisplayName} is at $${costAmount}/$${budgetAmount} $${currencyCode} ($${alertThresholdExceeded*100}%)"
+# Conditional formatting with Go templates
+message_template = <<-EOT
+{{if gt .alertThresholdExceeded 0.9}}🚨 CRITICAL{{else if gt .alertThresholdExceeded 0.75}}⚠️ WARNING{{else}}📊 NOTICE{{end}}:
+Budget {{.budgetDisplayName}} is at {{printf "%.1f" (mul .alertThresholdExceeded 100)}}% ({{printf "%.2f" .costAmount}}/{{printf "%.2f" .budgetAmount}} {{.currencyCode}})
+EOT
 ```
+
+### Available Template Functions
+
+Beyond standard Go template features, these helper functions are available:
+
+- **Math Operations**: `mul`, `div`, `add`, `sub` - Mathematical operations
+- **Formatting**: `printf` - String formatting (like `fmt.Sprintf`)
+- **Rounding**: `round` - Round numbers to nearest integer
+- **Conditionals**: `if`, `eq`, `ne`, `lt`, `gt` - Standard Go template conditionals
 
 ## Building the Container Image
 
