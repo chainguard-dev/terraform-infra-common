@@ -16,27 +16,28 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"text/template"
 	"time"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
-	"github.com/chainguard-dev/terraform-infra-common/modules/pubsub-to-slack/pkg/slacktemplate"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/profiler"
 	"github.com/sethvargo/go-envconfig"
 )
 
 // Config holds the application configuration
-var env = envconfig.MustProcess(context.Background(), &struct {
+type Config struct {
 	Port               int    `env:"PORT,default=8080"`
 	SlackWebhookSecret string `env:"SLACK_WEBHOOK_SECRET,required"`
 	SlackChannel       string `env:"SLACK_CHANNEL,required"`
 	MessageTemplate    string `env:"MESSAGE_TEMPLATE,required"`
 	ProjectID          string `env:"PROJECT_ID,required"`
-}{})
+}
 
 // PubSubMessage represents the structure of a Pub/Sub push message
 type PubSubMessage struct {
@@ -51,9 +52,9 @@ type PubSubMessage struct {
 
 // SlackService handles Slack message sending
 type SlackService struct {
-	webhookURL string
-	channel    string
-	executor   *slacktemplate.Executor
+	webhookURL      string
+	channel         string
+	messageTemplate string
 }
 
 func main() {
@@ -61,6 +62,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	ctx = clog.WithLogger(ctx, clog.New(slog.Default().Handler()))
+
+	// Process environment configuration
+	var env Config
+	if err := envconfig.Process(ctx, &env); err != nil {
+		clog.FatalContextf(ctx, "failed to process environment configuration: %v", err)
+	}
 
 	// Set up profiler
 	profiler.SetupProfiler()
@@ -75,17 +82,11 @@ func main() {
 		clog.FatalContextf(ctx, "failed to get Slack webhook URL: %v", err)
 	}
 
-	// Parse message template
-	executor, err := slacktemplate.New(env.MessageTemplate)
-	if err != nil {
-		clog.FatalContextf(ctx, "failed to parse message template: %v", err)
-	}
-
 	// Initialize Slack service
 	slackService := &SlackService{
-		webhookURL: webhookURL,
-		channel:    env.SlackChannel,
-		executor:   executor,
+		webhookURL:      webhookURL,
+		channel:         env.SlackChannel,
+		messageTemplate: env.MessageTemplate,
 	}
 
 	// Create HTTP server with standard configuration
@@ -145,6 +146,21 @@ func getSecretValue(ctx context.Context, projectID, secretID string) (string, er
 	return string(result.Payload.Data), nil
 }
 
+// processMessage processes a message using a Go text template
+func processMessage(data map[string]interface{}, templateStr string) (string, error) {
+	tmpl, err := template.New("slack").Parse(templateStr)
+	if err != nil {
+		return "", fmt.Errorf("parsing template: %w", err)
+	}
+
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("executing template: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
 // handlePubSubMessage processes incoming Pub/Sub push messages
 func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http.ResponseWriter, r *http.Request) error {
 	// Read the request body
@@ -174,7 +190,7 @@ func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http
 	clog.InfoContext(ctx, "Received message", "messageId", pubsubMsg.Message.MessageID, "dataLength", len(data))
 
 	// Format the message using the template
-	message, err := slackService.executor.Execute(payload)
+	message, err := processMessage(payload, slackService.messageTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to format message: %v", err)
 	}
