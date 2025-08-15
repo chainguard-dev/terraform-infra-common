@@ -183,7 +183,21 @@ variable "success_alert_alignment_period_seconds" {
   default     = 0
   validation {
     condition     = var.success_alert_alignment_period_seconds <= 60 * 60 * 20
-    error_message = "Alignment period must be less than or equal to 20h (in seconds). Alert horizon (duration + alignment period) must be <= 25h, and duration is set to (alignment period)/4."
+    error_message = "Alignment period must be less than or equal to 20h (in seconds). Note: When combined with a custom duration, the total alert horizon (alignment_period + duration) must be <= 25h per GCP limits."
+  }
+}
+
+variable "success_alert_duration_seconds" {
+  description = "How long the absence of successful executions must persist before the alert fires. If not set or 0, defaults to success_alert_alignment_period_seconds for backward compatibility. This is the 'trigger absence time' in GCP monitoring terms."
+  type        = number
+  default     = 0
+  validation {
+    # GCP maximum trigger absence time is 23.5 hours (84600 seconds)
+    condition = var.success_alert_duration_seconds == 0 || (
+      var.success_alert_duration_seconds >= 60 &&
+      var.success_alert_duration_seconds <= 84600
+    )
+    error_message = "Duration must be either 0 (to use alignment period value) or between 60 seconds and 23.5 hours (GCP maximum)."
   }
 }
 
