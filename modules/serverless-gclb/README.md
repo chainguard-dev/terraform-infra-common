@@ -113,7 +113,7 @@ No modules.
 | <a name="input_require_team"></a> [require\_team](#input\_require\_team) | Whether to require team variable to be specified | `bool` | `true` | no |
 | <a name="input_security-policy"></a> [security-policy](#input\_security-policy) | The security policy associated with the backend service. | `string` | `null` | no |
 | <a name="input_serving_regions"></a> [serving\_regions](#input\_serving\_regions) | The set of regions with backends suitable for serving traffic from the load balancer (regions must be removed from here before they can be removed from regions). | `list` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
-| <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | `"unknown"` | no |
 
 ## Outputs
 

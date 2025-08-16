@@ -103,6 +103,7 @@ variable "ack_deadline_seconds" {
   default     = 300
 }
 
+
 variable "require_team" {
   description = "Whether to require team variable to be specified"
   type        = bool
@@ -112,12 +113,8 @@ variable "require_team" {
 variable "team" {
   description = "team label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 
-  validation {
-    condition     = !var.require_team || var.team != ""
-    error_message = "team needs to specified or disable check by setting require_team = false"
-  }
 }
 
 variable "allowed_persistence_regions" {

@@ -97,7 +97,7 @@ No modules.
 | <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `false` | no |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | (Deprecated: Use service-accounts instead) The email of the service account that will access the secret. | `string` | `""` | no |
 | <a name="input_service-accounts"></a> [service-accounts](#input\_service-accounts) | The emails of the service accounts that will access the secret. | `list(string)` | `[]` | no |
-| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the secret. | `string` | `""` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the secret. | `string` | `"unknown"` | no |
 
 ## Outputs
 
