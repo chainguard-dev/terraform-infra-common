@@ -44,6 +44,7 @@ variable "enable_profiler" {
   description = "Enable cloud profiler."
 }
 
+
 variable "require_squad" {
   description = "Whether to require squad variable to be specified"
   type        = bool
@@ -53,12 +54,8 @@ variable "require_squad" {
 variable "squad" {
   description = "squad label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 
-  validation {
-    condition     = !var.require_squad || var.squad != ""
-    error_message = "squad needs to specified or disable check by setting require_squad = false"
-  }
 }
 
 variable "labels" {

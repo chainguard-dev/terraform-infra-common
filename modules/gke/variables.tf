@@ -15,6 +15,7 @@ variable "region" {
   description = "Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones`"
 }
 
+
 variable "require_squad" {
   description = "Whether to require squad variable to be specified"
   type        = bool
@@ -24,12 +25,8 @@ variable "require_squad" {
 variable "squad" {
   description = "Squad label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 
-  validation {
-    condition     = !var.require_squad || var.squad != ""
-    error_message = "Squad needs to specified or disable check by setting require_squad = false"
-  }
 }
 
 variable "zones" {

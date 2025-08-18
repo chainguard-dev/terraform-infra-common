@@ -69,6 +69,7 @@ variable "notification_channels" {
   type        = list(string)
 }
 
+
 variable "require_squad" {
   description = "Whether to require squad variable to be specified"
   type        = bool
@@ -78,7 +79,7 @@ variable "require_squad" {
 variable "squad" {
   description = "squad label to apply to the service."
   type        = string
-  default     = ""
+  default     = "unknown"
 }
 
 variable "max_delivery_attempts" {

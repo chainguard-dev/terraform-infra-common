@@ -50,7 +50,7 @@ No modules.
 | <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `true` | no |
 | <a name="input_resource_usage_export_config"></a> [resource\_usage\_export\_config](#input\_resource\_usage\_export\_config) | Config for exporting resource usage. | <pre>object({<br/>    bigquery_dataset_id                  = optional(string, "")<br/>    enable_network_egress_metering       = optional(bool, false)<br/>    enable_resource_consumption_metering = optional(bool, true)<br/>  })</pre> | `{}` | no |
 | <a name="input_service_account_impersonation_email"></a> [service\_account\_impersonation\_email](#input\_service\_account\_impersonation\_email) | Service account email impersonation for the service account created by this module. | `string` | `null` | no |
-| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the service. | `string` | `""` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | The subnetwork to deploy the cluster in. | `string` | n/a | yes |
 | <a name="input_zones"></a> [zones](#input\_zones) | If specified, will spread nodes across these zones | `list(string)` | `null` | no |
 

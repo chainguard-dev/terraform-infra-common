@@ -19,6 +19,7 @@ variable "region" {
 variable "squad" {
   description = "squad label to apply to the service."
   type        = string
+  default     = "unknown"
 }
 
 variable "zones" {

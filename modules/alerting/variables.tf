@@ -124,7 +124,7 @@ EOT
 variable "squad" {
   description = "squad to filter on if non-empty"
   type        = string
-  default     = ""
+  default     = "unknown"
 }
 
 variable "global_only_alerts" {
