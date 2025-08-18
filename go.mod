@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.8.0
 	cloud.google.com/go/profiler v0.4.3
 	cloud.google.com/go/pubsub/v2 v2.0.0
+	cloud.google.com/go/secretmanager v1.15.0
 	cloud.google.com/go/storage v1.56.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.29.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
