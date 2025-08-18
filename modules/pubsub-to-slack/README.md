@@ -68,5 +68,5 @@ The Cloud Run service uses these environment variables:
 
 ## License
 
-Copyright 2024 Chainguard, Inc.
+Copyright 2025 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0
