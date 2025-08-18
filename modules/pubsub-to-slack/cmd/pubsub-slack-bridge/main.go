@@ -93,7 +93,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Add health check endpoint
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "OK")
 	})
@@ -162,7 +162,7 @@ func processMessage(data map[string]interface{}, templateStr string) (string, er
 }
 
 // handlePubSubMessage processes incoming Pub/Sub push messages
-func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http.ResponseWriter, r *http.Request) error {
+func handlePubSubMessage(ctx context.Context, slackService *SlackService, _ http.ResponseWriter, r *http.Request) error {
 	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -205,7 +205,7 @@ func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http
 }
 
 // SendMessage sends a message to the configured Slack channel
-func (s *SlackService) SendMessage(ctx context.Context, message string) error {
+func (s *SlackService) SendMessage(_ context.Context, message string) error {
 	// Create a simple text message
 	payload := map[string]interface{}{
 		"channel": s.channel,
@@ -227,7 +227,7 @@ func (s *SlackService) SendMessage(ctx context.Context, message string) error {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("Slack webhook returned status %d: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("slack webhook returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	return nil
