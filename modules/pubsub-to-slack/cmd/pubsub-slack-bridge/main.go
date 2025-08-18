@@ -130,7 +130,7 @@ func main() {
 func getSecretValue(ctx context.Context, projectID, secretID string) (string, error) {
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to create secretmanager client: %v", err)
+		return "", fmt.Errorf("failed to create secretmanager client: %w", err)
 	}
 	defer client.Close()
 
@@ -140,7 +140,7 @@ func getSecretValue(ctx context.Context, projectID, secretID string) (string, er
 
 	result, err := client.AccessSecretVersion(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("failed to access secret version: %v", err)
+		return "", fmt.Errorf("failed to access secret version: %w", err)
 	}
 
 	return string(result.Payload.Data), nil
@@ -166,25 +166,25 @@ func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http
 	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read request body: %v", err)
+		return fmt.Errorf("failed to read request body: %w", err)
 	}
 
 	// Parse the Pub/Sub message
 	var pubsubMsg PubSubMessage
 	if err := json.Unmarshal(body, &pubsubMsg); err != nil {
-		return fmt.Errorf("failed to unmarshal Pub/Sub message: %v", err)
+		return fmt.Errorf("failed to unmarshal Pub/Sub message: %w", err)
 	}
 
 	// Decode the base64-encoded data
 	data, err := base64.StdEncoding.DecodeString(pubsubMsg.Message.Data)
 	if err != nil {
-		return fmt.Errorf("failed to decode message data: %v", err)
+		return fmt.Errorf("failed to decode message data: %w", err)
 	}
 
 	// Parse the JSON payload
 	var payload map[string]interface{}
 	if err := json.Unmarshal(data, &payload); err != nil {
-		return fmt.Errorf("failed to unmarshal payload: %v", err)
+		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
 	clog.InfoContext(ctx, "Received message", "messageId", pubsubMsg.Message.MessageID, "dataLength", len(data))
@@ -192,12 +192,12 @@ func handlePubSubMessage(ctx context.Context, slackService *SlackService, w http
 	// Format the message using the template
 	message, err := processMessage(payload, slackService.messageTemplate)
 	if err != nil {
-		return fmt.Errorf("failed to format message: %v", err)
+		return fmt.Errorf("failed to format message: %w", err)
 	}
 
 	// Send to Slack
 	if err := slackService.SendMessage(ctx, message); err != nil {
-		return fmt.Errorf("failed to send Slack message: %v", err)
+		return fmt.Errorf("failed to send Slack message: %w", err)
 	}
 
 	clog.InfoContext(ctx, "Successfully sent message to Slack", "channel", slackService.channel)
@@ -215,13 +215,13 @@ func (s *SlackService) SendMessage(ctx context.Context, message string) error {
 	// Marshal the payload
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal Slack payload: %v", err)
+		return fmt.Errorf("failed to marshal Slack payload: %w", err)
 	}
 
 	// For webhook URLs, we need to make a direct HTTP POST
 	resp, err := http.Post(s.webhookURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return fmt.Errorf("failed to post to Slack webhook: %v", err)
+		return fmt.Errorf("failed to post to Slack webhook: %w", err)
 	}
 	defer resp.Body.Close()
 
