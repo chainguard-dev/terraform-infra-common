@@ -25,6 +25,8 @@ resource "google_secret_manager_secret_version" "placeholder" {
 locals {
   accessors       = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != ""]
   accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : sa if sa != ""]
+  # Extract the email portion of the authorized adder member
+  authorized_adder_email = strcontains(var.authorized-adder, ":") ? split(":", var.authorized-adder)[1] : var.authorized-adder
 
   default_labels = {
     basename(abspath(path.module)) = var.name
@@ -91,6 +93,11 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
       -(
         protoPayload.authenticationInfo.principalEmail=~"${join("|", local.accessor_emails)}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(AccessSecretVersion|GetSecretVersion)"
+      )
+      -- Ignore the identity that is authorized to manipulate secret versions.
+      -(
+        protoPayload.authenticationInfo.principalEmail="${local.authorized_adder_email}"
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(DestroySecretVersion|AddSecretVersion|EnableSecretVersion)"
       )
       EOT
 
