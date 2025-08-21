@@ -8,44 +8,56 @@ on:
 permissions: {}
 
 jobs:
-  docs:
+  discover-modules:
     runs-on: ubuntu-latest
+
     permissions:
       actions: read
+
+    outputs:
+      modules: ${{ steps.set-matrix.outputs.modules }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Discover modules with .tf files
+        id: set-matrix
+        run: |
+          # Find all directories under modules/ that contain at least one .tf file
+          MODULES=()
+          while IFS= read -r -d '' dir; do
+            if ls "$dir"/*.tf >/dev/null 2>&1; then
+              module_path="${dir#modules/}"
+              MODULES+=("$module_path")
+            fi
+          done < <(find modules -type d -print0)
+
+          # Sort the modules array and convert to JSON
+          mapfile -t sorted_modules < <(printf '%s\n' "${MODULES[@]}" | sort)
+
+          # Convert to JSON array
+          json_modules=$(printf '%s\n' "${sorted_modules[@]}" | jq -R -s -c 'split("\n")[:-1]')
+          echo "modules=$json_modules" >> $GITHUB_OUTPUT
+          echo "Found modules: $json_modules"
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: discover-modules
+
+    permissions:
+      actions: read
+
     strategy:
       fail-fast: false
       matrix:
-        module:
-          - alerting
-          - authorize-private-service
-          - bastion
-          - bucket-events
-          - cloudsql-postgres
-          - cloudevent-broker
-          - cloudevent-pull-trigger
-          - cloudevent-recorder
-          - cloudevent-trigger
-          - cloudevents-workqueue
-          - configmap
-          - cron
-          - dashboard/alerts
-          - dashboard/cloudevent-receiver
-          - dashboard/job
-          - dashboard/service
-          - gke
-          - gke-ap
-          - github-bots
-          - github-events
-          - github-gsa
-          - github-wif-provider
-          - networking
-          - prober
-          - redis
-          - regional-go-service
-          - regional-service
-          - secret
-          - serverless-gclb
-          - workqueue
+        module: ${{ fromJson(needs.discover-modules.outputs.modules) }}
 
     steps:
       - name: Harden Runner
@@ -74,12 +86,16 @@ jobs:
           cat "modules/${{ matrix.module }}/README.md"
 
   conclusion:
+    runs-on: ubuntu-latest
+    if: always()
+
     permissions:
       actions: read
 
-    needs: docs
-    runs-on: ubuntu-latest
-    if: always()
+    needs:
+      - discover-modules
+      - docs
+
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
