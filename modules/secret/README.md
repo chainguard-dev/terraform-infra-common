@@ -95,6 +95,7 @@ No modules.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_require_squad"></a> [require\_squad](#input\_require\_squad) | Whether to require squad variable to be specified | `bool` | `false` | no |
+| <a name="input_scanner-service-accounts"></a> [scanner-service-accounts](#input\_scanner-service-accounts) | The emails of the service accounts that will scan for secrets. | `list(string)` | `[]` | no |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | (Deprecated: Use service-accounts instead) The email of the service account that will access the secret. | `string` | `""` | no |
 | <a name="input_service-accounts"></a> [service-accounts](#input\_service-accounts) | The emails of the service accounts that will access the secret. | `list(string)` | `[]` | no |
 | <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the secret. | `string` | `""` | no |

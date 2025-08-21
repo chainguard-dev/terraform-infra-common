@@ -90,7 +90,12 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
       -- Ignore the identity that is intended to access this.
       -(
         protoPayload.authenticationInfo.principalEmail=~"${join("|", local.accessor_emails)}"
-        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(AccessSecretVersion|GetSecretVersion|ListSecretVersions)"
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(AccessSecretVersion|GetSecretVersion)"
+      )
+      -- Ignore the identity that is intended to list secrets.
+      -(
+        protoPayload.authenticationInfo.principalEmail=~"${join("|", var.scanner_service_accounts)}"
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(ListSecretVersions)"
       )
       EOT
 

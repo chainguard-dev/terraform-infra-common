@@ -31,6 +31,12 @@ variable "service-accounts" {
   }
 }
 
+variable "scanner-service-accounts" {
+  description = "The emails of the service accounts that will scan for secrets."
+  type        = list(string)
+  default     = []
+}
+
 variable "notification-channels" {
   description = "The channels to notify if the configuration data is improperly accessed."
   type        = list(string)
