@@ -19,7 +19,12 @@ output "widget" {
         label = "y1Axis"
         scale = "LINEAR"
       }
-      thresholds        = var.thresholds
+      thresholds = [
+        for threshold in var.thresholds : {
+          value      = threshold
+          targetAxis = "Y1"
+        }
+      ],
       timeshiftDuration = var.timeshift_duration
     }
   }
