@@ -99,6 +99,10 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
         protoPayload.authenticationInfo.principalEmail="${local.authorized_adder_email}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(DestroySecretVersion|AddSecretVersion|EnableSecretVersion)"
       )
+      -- Ignore benign secret actions.
+      -(
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.ListSecretVersions"
+      )
       EOT
 
       label_extractors = {
