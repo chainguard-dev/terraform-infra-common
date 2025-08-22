@@ -109,7 +109,7 @@ No requirements.
 | <a name="input_enable_slo_alert"></a> [enable\_slo\_alert](#input\_enable\_slo\_alert) | If true, alert service availability dropping below SLO threshold. Outputs will return the alert ID for notification and dashboards. | `bool` | `false` | no |
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the prober application. | `string` | n/a | yes |
-| <a name="input_load_balancing"></a> [load\_balancing](#input\_load\_balancing) | n/a | <pre>object({<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, "EXTERNAL")<br/>  })</pre> | `{}` | no |
+| <a name="input_load_balancing"></a> [load\_balancing](#input\_load\_balancing) | n/a | <pre>object({<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, null)<br/>  })</pre> | `{}` | no |
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory limit for the prober. | `string` | `"512Mi"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to prefix to created resources. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | n/a | yes |
