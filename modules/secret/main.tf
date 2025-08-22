@@ -27,7 +27,6 @@ locals {
   accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : sa if sa != ""]
   # Extract the email portion of the authorized adder member
   authorized_adder_email = strcontains(var.authorized-adder, ":") ? split(":", var.authorized-adder)[1] : var.authorized-adder
-  orca_sa                = "sa-chainguard-9419b821e0@orca-service-accounts-prod.iam.gserviceaccount.com"
 
   default_labels = {
     basename(abspath(path.module)) = var.name
@@ -100,9 +99,8 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
         protoPayload.authenticationInfo.principalEmail="${local.authorized_adder_email}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(DestroySecretVersion|AddSecretVersion|EnableSecretVersion)"
       )
-      -- Ignore the Orca scanner SA performing benign actions.
+      -- Ignore benign secret actions.
       -(
-        protoPayload.authenticationInfo.principalEmail=~"${local.orca_sa}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.ListSecretVersions"
       )
       EOT
