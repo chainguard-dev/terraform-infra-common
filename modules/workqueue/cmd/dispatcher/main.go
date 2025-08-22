@@ -14,7 +14,6 @@ import (
 	"os/signal"
 	"time"
 
-	"chainguard.dev/go-grpc-kit/pkg/options"
 	"cloud.google.com/go/storage"
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
@@ -50,7 +49,7 @@ func main() {
 	var wq workqueue.Interface
 	switch env.Mode {
 	case "gcs":
-		cl, err := storage.NewClient(ctx, options.ClientOptions()...)
+		cl, err := storage.NewClient(ctx)
 		if err != nil {
 			log.Panicf("Failed to create client: %v", err)
 		}
