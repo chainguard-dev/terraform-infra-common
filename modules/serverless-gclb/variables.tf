@@ -22,10 +22,20 @@ variable "dns_zone" {
 }
 
 variable "public-services" {
-  description = "A map from hostnames (managed by dns_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname, and a DNS record set will be created for each hostname pointing to the load balancer's global IP address."
+  description = <<EOF
+A map from hostnames (managed by dns_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname, and a DNS record set will be created for each hostname pointing to the load balancer's global IP address.
+
+external_managed_migration_state: The migration state for the load balancer, [PREPARE, TEST_BY_PERCENTAGE, and TEST_ALL_TRAFFIC].
+external_managed_migration_testing_percentage: The percentage of traffic to route to new load balancer, [0, 100].
+load_balancing_scheme: The default load balancing scheme to use.
+EOF
   type = map(object({
-    name     = string
-    disabled = optional(bool, false)
+    name                                          = string
+    disabled                                      = optional(bool, false)
+    external_managed_migration_state              = optional(string, null)
+    external_managed_migration_testing_percentage = optional(number, null)
+    load_balancing_scheme                         = optional(string, "EXTERNAL")
+    connection_draining_timeout_sec               = optional(number, 300)
   }))
 }
 
@@ -69,4 +79,13 @@ variable "product" {
   description = "Product label to apply to the service."
   type        = string
   default     = "unknown"
+}
+
+variable "forwarding_rule_load_balancing" {
+  type = object({
+    external_managed_backend_bucket_migration_state              = optional(string, null)
+    external_managed_backend_bucket_migration_testing_percentage = optional(number, null)
+    load_balancing_scheme                                        = optional(string, "EXTERNAL")
+  })
+  default = {}
 }

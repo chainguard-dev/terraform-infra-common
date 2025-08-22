@@ -22,8 +22,17 @@ module "gclb" {
 
   public-services = {
     "${var.name}-prober.${var.domain}" : {
-      name = local.service_name
+      name                                          = local.service_name
+      external_managed_migration_state              = var.load_balancing.external_managed_migration_state
+      external_managed_migration_testing_percentage = var.load_balancing.external_managed_migration_testing_percentage
+      load_balancing_scheme                         = var.load_balancing.load_balancing_scheme
     }
+  }
+
+  forwarding_rule_load_balancing = {
+    external_managed_backend_bucket_migration_state              = var.load_balancing.external_managed_migration_state
+    external_managed_backend_bucket_migration_testing_percentage = var.load_balancing.external_managed_migration_testing_percentage
+    load_balancing_scheme                                        = var.load_balancing.load_balancing_scheme
   }
 
   require_team = var.require_squad
