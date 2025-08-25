@@ -215,3 +215,12 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "load_balancing" {
+  type = object({
+    external_managed_migration_state              = optional(string, null)
+    external_managed_migration_testing_percentage = optional(number, null)
+    load_balancing_scheme                         = optional(string, null)
+  })
+  default = {}
+}

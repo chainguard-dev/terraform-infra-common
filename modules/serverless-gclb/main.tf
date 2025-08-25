@@ -149,13 +149,16 @@ resource "google_compute_target_https_proxy" "public-service" {
 
 // Attach the HTTPS proxy to the global IP address via a forwarding rule.
 resource "google_compute_global_forwarding_rule" "this" {
-  project               = var.project_id
-  name                  = var.name
-  ip_protocol           = "TCP"
-  load_balancing_scheme = "EXTERNAL"
-  port_range            = 443
-  ip_address            = google_compute_global_address.this.id
-  target                = google_compute_target_https_proxy.public-service.id
+  project     = var.project_id
+  name        = var.name
+  ip_protocol = "TCP"
+  port_range  = 443
+  ip_address  = google_compute_global_address.this.id
+  target      = google_compute_target_https_proxy.public-service.id
+
+  external_managed_backend_bucket_migration_state              = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_state
+  external_managed_backend_bucket_migration_testing_percentage = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_testing_percentage
+  load_balancing_scheme                                        = var.forwarding_rule_load_balancing.load_balancing_scheme
 }
 
 // What identity is deploying this?
