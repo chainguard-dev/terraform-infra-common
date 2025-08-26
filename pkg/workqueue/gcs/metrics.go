@@ -7,6 +7,7 @@ package gcs
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -64,7 +65,7 @@ var (
 			Help:    "The duration taken to process a key.",
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960, 3600, 7200},
 		},
-		[]string{"service_name", "revision_name"},
+		[]string{"service_name", "revision_name", "priority_class"},
 	)
 	mWaitLatency = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -72,7 +73,7 @@ var (
 			Help:    "The duration the key waited to start.",
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960, 3600, 7200},
 		},
-		[]string{"service_name", "revision_name"},
+		[]string{"service_name", "revision_name", "priority_class"},
 	)
 	mAddedKeys = promauto.NewCounterVec(
 		prometheus.CounterOpts{
@@ -96,3 +97,8 @@ var (
 		[]string{"service_name", "revision_name"},
 	)
 )
+
+// priorityClass converts a priority value to a priority class label.
+func priorityClass(priority int64) string {
+	return fmt.Sprintf("%dxx", priority/100)
+}
