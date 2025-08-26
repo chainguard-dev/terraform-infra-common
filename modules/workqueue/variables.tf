@@ -25,6 +25,12 @@ variable "max-retry" {
   default     = 0
 }
 
+variable "max-retry2" {
+  description = "The maximum number of retry attempts before a task is moved to the dead letter queue. Default of 0 means unlimited retries."
+  type        = number
+  default     = 5
+}
+
 variable "reconciler-service" {
   description = "The name of the reconciler service that the workqueue will dispatch work to."
   type = object({
