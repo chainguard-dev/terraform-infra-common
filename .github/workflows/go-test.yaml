@@ -71,6 +71,6 @@ jobs:
       - name: Ensure generated files are up-to-date
         run: go generate ./...
 
-      - uses: chainguard-dev/actions/nodiff@de82dfd62f186b1b55bd0cdf084f484496d88ee3 # v1.4.11
+      - uses: chainguard-dev/actions/nodiff@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
         with:
           fixup-command: go generate ./...

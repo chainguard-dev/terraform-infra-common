@@ -33,13 +33,13 @@ jobs:
           scope: ${{ github.repository }}
           identity: digestabot
 
-      - uses: chainguard-dev/digestabot@43222237fd8a07dc41a06ca13e931c95ce2cedac # v1.2.2
+      - uses: chainguard-dev/digestabot@a3b776c1ca57d3127c85578cde8fef6eed3c75d3 # v1.2.3
         id: digest-bot
         with:
           create-pr: false
 
       - name: Install terraform-docs
-        uses: chainguard-dev/actions/setup-terraform-docs@de82dfd62f186b1b55bd0cdf084f484496d88ee3 # v1.4.11
+        uses: chainguard-dev/actions/setup-terraform-docs@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
 
       - name: update docs
         run: ./hack/update-docs.sh
@@ -54,7 +54,7 @@ jobs:
             echo "create_pr_update=true" >> $GITHUB_OUTPUT
           fi
 
-      - uses: chainguard-dev/actions/setup-gitsign@de82dfd62f186b1b55bd0cdf084f484496d88ee3 # v1.4.11
+      - uses: chainguard-dev/actions/setup-gitsign@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
         if: ${{ steps.create_pr_update.outputs.create_pr_update == 'true' }}
 
       - name: Create Pull Request
