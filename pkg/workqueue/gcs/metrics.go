@@ -62,7 +62,7 @@ var (
 		prometheus.HistogramOpts{
 			Name:    "workqueue_process_latency_seconds",
 			Help:    "The duration taken to process a key.",
-			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960},
+			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960, 3600, 7200},
 		},
 		[]string{"service_name", "revision_name"},
 	)
@@ -70,7 +70,7 @@ var (
 		prometheus.HistogramOpts{
 			Name:    "workqueue_wait_latency_seconds",
 			Help:    "The duration the key waited to start.",
-			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960},
+			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960, 3600, 7200},
 		},
 		[]string{"service_name", "revision_name"},
 	)
