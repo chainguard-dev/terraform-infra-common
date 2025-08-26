@@ -441,8 +441,9 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 	defer o.rw.RUnlock()
 
 	mWorkLatency.With(prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
+		"service_name":   env.KnativeServiceName,
+		"revision_name":  env.KnativeRevisionName,
+		"priority_class": priorityClass(o.priority),
 	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
 
 	// Best-effort delete of the dead-letter object, if it exists.
@@ -579,8 +580,9 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 		}
 	}
 	mWaitLatency.With(prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
+		"service_name":   env.KnativeServiceName,
+		"revision_name":  env.KnativeRevisionName,
+		"priority_class": priorityClass(q.priority),
 	}).Observe(time.Now().UTC().Sub(waitStart).Seconds())
 
 	// Create a copier to copy the source object, and then we will delete it
