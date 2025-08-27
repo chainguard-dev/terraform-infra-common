@@ -33,27 +33,27 @@ with exponential backoff, dead letter queues, and detailed Prometheus metrics.
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	wq := gcs.NewWorkQueue(client.Bucket("my-workqueue-bucket"), 10)
-	
+
 	// Queue work with options
 	err = wq.Queue(ctx, "task-key", workqueue.Options{
 		Priority: 100,
 		NotBefore: time.Now().Add(5 * time.Minute),
 	})
-	
+
 	// Enumerate and process work
 	inProgress, queued, err := wq.Enumerate(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	for _, key := range queued {
 		owned, err := key.Own(ctx)
 		if err != nil {
 			continue
 		}
-		
+
 		// Process the work...
 		if err := processWork(owned.Name()); err != nil {
 			owned.Requeue(ctx) // Will retry with backoff
@@ -96,7 +96,7 @@ Example Prometheus queries:
 
 	# 90th percentile of retry attempts
 	histogram_quantile(0.9, workqueue_retry_attempts)
-	
+
 	# Tasks with excessive retries
 	workqueue_task_max_attempts > 50
 
