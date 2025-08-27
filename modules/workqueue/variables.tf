@@ -20,9 +20,9 @@ variable "concurrent-work" {
 }
 
 variable "max-retry" {
-  description = "The maximum number of retry attempts before a task is moved to the dead letter queue. Default of 0 means unlimited retries."
+  description = "The maximum number of retry attempts before a task is moved to the dead letter queue. Set this to 0 to have unlimited retries."
   type        = number
-  default     = 0
+  default     = 100
 }
 
 variable "reconciler-service" {
