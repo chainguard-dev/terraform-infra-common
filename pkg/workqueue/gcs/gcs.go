@@ -207,8 +207,17 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				attempts, err := strconv.Atoi(att)
 				if err != nil {
 					clog.WarnContextf(ctx, "Failed to parse attempts: %v", err)
-				} else if attempts > maxAttempts {
-					maxAttempts = attempts
+				} else {
+					if attempts > maxAttempts {
+						maxAttempts = attempts
+					}
+					// Record attempt count in histogram for distribution tracking
+					mRetryAttemptsDistribution.With(
+						prometheus.Labels{
+							"service_name":  env.KnativeServiceName,
+							"revision_name": env.KnativeRevisionName,
+						},
+					).Observe(float64(attempts))
 				}
 				if attempts > TrackWorkAttemptMinThreshold {
 					mTaskMaxAttempts.With(
