@@ -21,6 +21,15 @@ receivers:
             action: drop
 
 processors:
+  attributes:
+    actions:
+      - action: insert
+        key: team
+        value: "REPLACE_ME_TEAM"
+      - action: insert
+        key: job_name
+        value: "REPLACE_ME_JOB"
+
   batch:
     # batch metrics before sending to reduce API usage
     send_batch_max_size: 200
@@ -80,5 +89,5 @@ service:
   pipelines:
     metrics:
       receivers: [prometheus]
-      processors: [batch, memory_limiter, resourcedetection, resource]
+      processors: [batch, memory_limiter, resourcedetection, resource, attributes]
       exporters: [googlemanagedprometheus]
