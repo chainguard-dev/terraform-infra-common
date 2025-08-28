@@ -60,5 +60,4 @@ module "this" {
   execution_environment   = var.execution_environment
 
   notification_channels = var.notification_channels
-  regional_cpu_idle     = var.regional_cpu_idle
 }

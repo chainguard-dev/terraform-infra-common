@@ -66,12 +66,12 @@ variable "containers" {
               memory = string
             }
           ), null)
-          cpu_idle          = optional(bool, true) // Overrides regional_cpu_idle for this container
+          cpu_idle          = optional(bool, true)
           startup_cpu_boost = optional(bool, true)
         }
       ),
       {
-        cpu_idle = true // Default can be overridden by regional_cpu_idle
+        cpu_idle = true
       }
     )
     env = optional(list(object({
@@ -88,6 +88,7 @@ variable "containers" {
       name  = string
       value = map(string)
     })), [])
+    regional-cpu-idle = optional(map(bool), {})
     volume_mounts = optional(list(object({
       name       = string
       mount_path = string
@@ -242,7 +243,7 @@ variable "otel_resources" {
         memory = string
       }
     ), null)
-    cpu_idle          = optional(bool) // Overrides regional_cpu_idle for otel container
+    cpu_idle          = optional(bool)
     startup_cpu_boost = optional(bool)
   })
   default     = null
@@ -253,10 +254,4 @@ variable "product" {
   description = "Product label to apply to the service."
   type        = string
   default     = "unknown"
-}
-
-variable "regional_cpu_idle" {
-  description = "Map of region names to default cpu_idle settings. Container-level cpu_idle settings override this regional default. When not specified for a region, defaults to true (request-based billing)."
-  type        = map(bool)
-  default     = {}
 }

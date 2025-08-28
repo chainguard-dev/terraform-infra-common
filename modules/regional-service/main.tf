@@ -106,7 +106,7 @@ resource "google_cloud_run_v2_service" "this" {
         for_each = local.main_container.resources != null ? { "" : local.main_container.resources } : {}
         content {
           limits            = resources.value.limits
-          cpu_idle          = coalesce(resources.value.cpu_idle, lookup(var.regional_cpu_idle, each.key, true))
+          cpu_idle          = coalesce(resources.value.cpu_idle, lookup(local.main_container.regional-cpu-idle, each.key, true))
           startup_cpu_boost = resources.value.startup_cpu_boost
         }
       }
@@ -223,7 +223,7 @@ resource "google_cloud_run_v2_service" "this" {
           for_each = containers.value.resources != null ? { "" : containers.value.resources } : {}
           content {
             limits            = resources.value.limits
-            cpu_idle          = coalesce(resources.value.cpu_idle, lookup(var.regional_cpu_idle, each.key, true))
+            cpu_idle          = coalesce(resources.value.cpu_idle, lookup(containers.value.regional-cpu-idle, each.key, true))
             startup_cpu_boost = resources.value.startup_cpu_boost
           }
         }
@@ -280,7 +280,7 @@ resource "google_cloud_run_v2_service" "this" {
         for_each = var.otel_resources != null ? { "" : var.otel_resources } : {}
         content {
           limits            = resources.value.limits
-          cpu_idle          = coalesce(resources.value.cpu_idle, lookup(var.regional_cpu_idle, each.key, null))
+          cpu_idle          = resources.value.cpu_idle
           startup_cpu_boost = resources.value.startup_cpu_boost
         }
       }
