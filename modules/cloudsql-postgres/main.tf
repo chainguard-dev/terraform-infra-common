@@ -111,7 +111,8 @@ resource "google_sql_database_instance" "replicas" {
   }
 
   settings {
-    tier = var.tier
+    tier                  = var.tier
+    disk_autoresize_limit = var.disk_autoresize_limit
 
     # Ensure replicas use same edition as primary
     edition = var.edition
