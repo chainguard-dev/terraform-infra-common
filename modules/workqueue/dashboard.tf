@@ -14,6 +14,13 @@ module "dispatcher-logs" {
   cloudrun_type = "service"
 }
 
+module "attempts-at-completion" {
+  source = "../dashboard/widgets/xy-promql"
+  title  = "Attempts at completion (95p over 5m)"
+  promql_query = "histogram_quantile(0.95, rate(workqueue_attempts_at_completion_bucket{service_name=\"${var.name}-dsp\"}[5m]))"
+  thresholds = var.max-retry > 0 ? [var.max-retry] : []
+}
+
 module "max-attempts" {
   source = "../dashboard/widgets/xy"
   title  = "Maximum task attempts"
@@ -191,13 +198,20 @@ locals {
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
+      widget = module.attempts-at-completion.widget,
+    },
+    {
+      yPos   = local.unit * 2,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
       widget = module.max-attempts.widget,
     }
     ],
     var.max-retry > 0 ? [
       {
         yPos   = local.unit * 2,
-        xPos   = local.col[1],
+        xPos   = local.col[2],
         height = local.unit,
         width  = local.unit,
         widget = module.dead-letter-queue[0].widget,

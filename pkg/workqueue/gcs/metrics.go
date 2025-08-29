@@ -89,6 +89,14 @@ var (
 		},
 		[]string{"service_name", "revision_name"},
 	)
+	mCompletionAttempts = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "workqueue_attempts_at_completion",
+			Help:    "The number of attempts for successfully completed tasks",
+			Buckets: []float64{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024},
+		},
+		[]string{"service_name", "revision_name"},
+	)
 	mDeadLetteredKeys = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "workqueue_dead_lettered_keys",

@@ -446,6 +446,13 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 		"priority_class": priorityClass(o.priority),
 	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
 
+	// Record the number of attempts for this successful completion
+	attempts := o.GetAttempts()
+	mCompletionAttempts.With(prometheus.Labels{
+		"service_name":  env.KnativeServiceName,
+		"revision_name": env.KnativeRevisionName,
+	}).Observe(float64(attempts))
+
 	// Best-effort delete of the dead-letter object, if it exists.
 	deadLetterKey := o.deadLetterKey()
 	if err := o.client.Object(deadLetterKey).Delete(ctx); err != nil {
