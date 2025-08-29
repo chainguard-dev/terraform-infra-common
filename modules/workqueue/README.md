@@ -25,6 +25,13 @@ module "workqueue" {
   // Default is 0 (unlimited retries)
   max-retry = 5
 
+  // It is recommended that folks use a "global" scoped workqueue to get the
+  // most accurate deduplication and concurrency control.  The "regional" scope
+  // offers regionalized deduplication and concurrency control, but cannot
+  // guarantee that receivers and dispatchers in other regions will not process
+  // the same key concurrently or redundantly.
+  scope = "global"
+
   // The name of a service that implements the workqueue GRPC service above.
   reconciler-service = {
     name = "foo"
