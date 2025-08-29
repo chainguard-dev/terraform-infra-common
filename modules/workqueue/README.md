@@ -120,6 +120,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_attempts-at-completion"></a> [attempts-at-completion](#module\_attempts-at-completion) | ../dashboard/widgets/xy-promql | n/a |
 | <a name="module_change-trigger-calls-dispatcher"></a> [change-trigger-calls-dispatcher](#module\_change-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../dashboard/sections/collapsible | n/a |
 | <a name="module_cron-trigger-calls-dispatcher"></a> [cron-trigger-calls-dispatcher](#module\_cron-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
