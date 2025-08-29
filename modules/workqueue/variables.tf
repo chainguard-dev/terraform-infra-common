@@ -59,3 +59,25 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "scope" {
+  description = "The scope of the workqueue: 'regional' for region-specific workqueues or 'global' for a single multi-regional workqueue."
+  type        = string
+  default     = "regional"
+
+  validation {
+    condition     = contains(["regional", "global"], var.scope)
+    error_message = "scope must be either 'regional' or 'global'."
+  }
+}
+
+variable "multi_regional_location" {
+  description = "The multi-regional location for the global workqueue bucket (e.g., 'US', 'EU', 'ASIA'). Only used when scope='global'."
+  type        = string
+  default     = "US"
+
+  validation {
+    condition     = contains(["US", "EU", "ASIA"], var.multi_regional_location)
+    error_message = "multi_regional_location must be one of 'US', 'EU', or 'ASIA'."
+  }
+}
