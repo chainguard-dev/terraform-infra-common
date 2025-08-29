@@ -53,8 +53,12 @@ module "receiver-service" {
       ]
       regional-env = [
         {
-          name  = "WORKQUEUE_BUCKET"
-          value = { for k, v in google_storage_bucket.workqueue : k => v.name }
+          name = "WORKQUEUE_BUCKET"
+          value = var.scope == "global" ? {
+            for k, v in var.regions : k => google_storage_bucket.global-workqueue.name
+            } : {
+            for k, v in google_storage_bucket.workqueue : k => v.name
+          }
         },
       ]
     }

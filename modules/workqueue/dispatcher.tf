@@ -69,8 +69,12 @@ module "dispatcher-service" {
       ]
       regional-env = [
         {
-          name  = "WORKQUEUE_BUCKET"
-          value = { for k, v in google_storage_bucket.workqueue : k => v.name }
+          name = "WORKQUEUE_BUCKET"
+          value = var.scope == "global" ? {
+            for k, v in var.regions : k => google_storage_bucket.global-workqueue.name
+            } : {
+            for k, v in google_storage_bucket.workqueue : k => v.name
+          }
         },
         {
           name  = "WORKQUEUE_TARGET"
@@ -190,13 +194,36 @@ module "change-trigger-calls-dispatcher" {
   service-account = google_service_account.change-trigger.email
 }
 
-// Configure the subscription to deliver the events matching our filter to this service
-// using the above identity to authorize the delivery..
+// Configure subscriptions to deliver events to dispatcher service: regional and global
 resource "google_pubsub_subscription" "this" {
   for_each = var.regions
 
   name   = "${var.name}-${each.key}"
   topic  = google_pubsub_topic.object-change-notifications[each.key].id
+  labels = local.merged_labels
+
+  ack_deadline_seconds = 600 // Maximum value
+
+  push_config {
+    push_endpoint = module.change-trigger-calls-dispatcher[each.key].uri
+
+    // Authenticate requests to this service using tokens minted
+    // from the given service account.
+    oidc_token {
+      service_account_email = google_service_account.change-trigger.email
+    }
+  }
+
+  expiration_policy {
+    ttl = "" // This does not expire.
+  }
+}
+
+resource "google_pubsub_subscription" "global-this" {
+  for_each = var.regions
+
+  name   = "${var.name}-global-${each.key}"
+  topic  = google_pubsub_topic.global-object-change-notifications[each.key].id
   labels = local.merged_labels
 
   ack_deadline_seconds = 600 // Maximum value
