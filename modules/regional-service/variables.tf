@@ -88,6 +88,7 @@ variable "containers" {
       name  = string
       value = map(string)
     })), [])
+    regional-cpu-idle = optional(map(bool), {})
     volume_mounts = optional(list(object({
       name       = string
       mount_path = string
