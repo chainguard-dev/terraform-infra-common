@@ -21,10 +21,10 @@ module "attempts-at-completion" {
   thresholds   = var.max-retry > 0 ? [var.max-retry] : []
 }
 
-module "total-time-to-completion" {
+module "time-to-completion" {
   source       = "../dashboard/widgets/xy-promql"
-  title        = "Total time to completion (50p/95p by priority)"
-  promql_query = "histogram_quantile(0.50, rate(workqueue_total_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class) or histogram_quantile(0.95, rate(workqueue_total_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class)"
+  title        = "Time to completion (50p/95p by priority)"
+  promql_query = "histogram_quantile(0.50, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class) or histogram_quantile(0.95, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class)"
 }
 
 module "max-attempts" {
@@ -218,7 +218,7 @@ locals {
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
-      widget = module.total-time-to-completion.widget,
+      widget = module.time-to-completion.widget,
     }
     ],
     var.max-retry > 0 ? [

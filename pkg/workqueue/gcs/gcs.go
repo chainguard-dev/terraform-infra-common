@@ -453,8 +453,8 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 		"revision_name": env.KnativeRevisionName,
 	}).Observe(float64(attempts))
 
-	// Record total time to completion
-	mTotalTimeToCompletion.With(prometheus.Labels{
+	// Record time to completion
+	mTimeToCompletion.With(prometheus.Labels{
 		"service_name":   env.KnativeServiceName,
 		"revision_name":  env.KnativeRevisionName,
 		"priority_class": priorityClass(o.priority),
@@ -500,8 +500,8 @@ func (o *inProgressKey) Deadletter(ctx context.Context) error {
 	// Add metadata about when the key was dead-lettered
 	copier.Metadata[failedTimeMetadataKey] = time.Now().UTC().Format(time.RFC3339)
 
-	// Record total time to completion for dead-lettered task
-	mTotalTimeToCompletion.With(prometheus.Labels{
+	// Record time to completion for dead-lettered task
+	mTimeToCompletion.With(prometheus.Labels{
 		"service_name":   env.KnativeServiceName,
 		"revision_name":  env.KnativeRevisionName,
 		"priority_class": priorityClass(o.priority),
