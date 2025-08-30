@@ -142,6 +142,7 @@ No requirements.
 | <a name="module_process-latency"></a> [process-latency](#module\_process-latency) | ../dashboard/widgets/latency | n/a |
 | <a name="module_receiver-logs"></a> [receiver-logs](#module\_receiver-logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_receiver-service"></a> [receiver-service](#module\_receiver-service) | ../regional-go-service | n/a |
+| <a name="module_time-to-completion"></a> [time-to-completion](#module\_time-to-completion) | ../dashboard/widgets/xy-promql | n/a |
 | <a name="module_wait-latency"></a> [wait-latency](#module\_wait-latency) | ../dashboard/widgets/latency | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
 | <a name="module_work-added"></a> [work-added](#module\_work-added) | ../dashboard/widgets/xy | n/a |
