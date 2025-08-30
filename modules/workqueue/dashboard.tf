@@ -15,10 +15,16 @@ module "dispatcher-logs" {
 }
 
 module "attempts-at-completion" {
-  source = "../dashboard/widgets/xy-promql"
-  title  = "Attempts at completion (95p over 5m)"
+  source       = "../dashboard/widgets/xy-promql"
+  title        = "Attempts at completion (95p over 5m)"
   promql_query = "histogram_quantile(0.95, rate(workqueue_attempts_at_completion_bucket{service_name=\"${var.name}-dsp\"}[5m]))"
-  thresholds = var.max-retry > 0 ? [var.max-retry] : []
+  thresholds   = var.max-retry > 0 ? [var.max-retry] : []
+}
+
+module "time-to-completion" {
+  source       = "../dashboard/widgets/xy-promql"
+  title        = "Time to completion (50p/95p by priority)"
+  promql_query = "histogram_quantile(0.50, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class) or histogram_quantile(0.95, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class)"
 }
 
 module "max-attempts" {
@@ -206,6 +212,13 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.max-attempts.widget,
+    },
+    {
+      yPos   = local.unit * 3,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.time-to-completion.widget,
     }
     ],
     var.max-retry > 0 ? [
