@@ -453,6 +453,14 @@ func (o *inProgressKey) Complete(ctx context.Context) error {
 		"revision_name": env.KnativeRevisionName,
 	}).Observe(float64(attempts))
 
+	// Record total time to completion
+	mTotalTimeToCompletion.With(prometheus.Labels{
+		"service_name":   env.KnativeServiceName,
+		"revision_name":  env.KnativeRevisionName,
+		"priority_class": priorityClass(o.priority),
+		"status":         "success",
+	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
+
 	// Best-effort delete of the dead-letter object, if it exists.
 	deadLetterKey := o.deadLetterKey()
 	if err := o.client.Object(deadLetterKey).Delete(ctx); err != nil {
@@ -491,6 +499,14 @@ func (o *inProgressKey) Deadletter(ctx context.Context) error {
 
 	// Add metadata about when the key was dead-lettered
 	copier.Metadata[failedTimeMetadataKey] = time.Now().UTC().Format(time.RFC3339)
+
+	// Record total time to completion for dead-lettered task
+	mTotalTimeToCompletion.With(prometheus.Labels{
+		"service_name":   env.KnativeServiceName,
+		"revision_name":  env.KnativeRevisionName,
+		"priority_class": priorityClass(o.priority),
+		"status":         "dead-lettered",
+	}).Observe(time.Now().UTC().Sub(o.attrs.Created).Seconds())
 
 	// Create the dead letter entry
 	_, err := copier.Run(ctx)

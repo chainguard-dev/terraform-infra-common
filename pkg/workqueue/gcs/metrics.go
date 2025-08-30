@@ -104,6 +104,14 @@ var (
 		},
 		[]string{"service_name", "revision_name"},
 	)
+	mTotalTimeToCompletion = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "workqueue_total_time_to_completion_seconds",
+			Help:    "The total time from first queue to final outcome (success or dead-letter)",
+			Buckets: []float64{5, 10, 20, 30, 45, 60, 120, 240, 480, 960, 3600 /* 1h */, 7200 /* 2h */, 14400 /* 4h */, 28800 /* 8h */, 43200 /* 12h */, 86400 /* 1d */, 172800 /* 2d */, 259200 /* 3d */},
+		},
+		[]string{"service_name", "revision_name", "priority_class", "status"},
+	)
 )
 
 // priorityClass converts a priority value to a priority class label.
