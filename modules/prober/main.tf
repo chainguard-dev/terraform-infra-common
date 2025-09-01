@@ -25,9 +25,8 @@ module "this" {
   regions    = var.regions
   scaling    = var.scaling
 
-  squad         = var.squad
-  require_squad = var.require_squad
-  product       = var.product
+  squad   = var.squad
+  product = var.product
 
   // If we're using GCLB then disallow external traffic,
   // otherwise allow the prober URI to be used directly.

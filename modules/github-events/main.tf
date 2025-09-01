@@ -35,7 +35,6 @@ module "this" {
   deletion_protection = var.deletion_protection
 
   squad           = var.squad
-  require_squad   = var.require_squad
   service_account = google_service_account.service.email
   containers = {
     "trampoline" = {

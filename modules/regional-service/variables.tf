@@ -210,11 +210,6 @@ variable "labels" {
 }
 
 
-variable "require_squad" {
-  description = "Whether to require squad variable to be specified"
-  type        = bool
-  default     = true
-}
 
 variable "squad" {
   description = "squad label to apply to the service."

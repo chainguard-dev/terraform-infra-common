@@ -40,7 +40,6 @@ module "this" {
   regions    = var.regions
 
   squad               = var.squad
-  require_squad       = var.require_squad
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.recorder.email
   containers = {
@@ -112,8 +111,7 @@ module "triggers" {
     name   = var.name
   }
 
-  team         = var.squad
-  require_team = var.require_squad
+  team = var.squad
 
   notification_channels = var.notification_channels
 }
