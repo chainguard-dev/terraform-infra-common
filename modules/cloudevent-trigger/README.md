@@ -132,7 +132,6 @@ No requirements.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_raw_filter"></a> [raw\_filter](#input\_raw\_filter) | Raw PubSub filter to apply, ignores other variables. https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax | `string` | `""` | no |
-| <a name="input_require_team"></a> [require\_team](#input\_require\_team) | Whether to require team variable to be specified | `bool` | `true` | no |
 | <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | `"unknown"` | no |
 
 ## Outputs

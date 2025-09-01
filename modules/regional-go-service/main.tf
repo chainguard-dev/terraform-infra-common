@@ -48,7 +48,6 @@ module "this" {
 
   labels           = var.labels
   squad            = var.squad
-  require_squad    = var.require_squad
   product          = var.product
   scaling          = var.scaling
   volumes          = var.volumes

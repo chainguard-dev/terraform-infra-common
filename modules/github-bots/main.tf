@@ -13,9 +13,8 @@ module "service" {
 
   labels = var.labels
 
-  squad         = var.squad
-  require_squad = var.require_squad
-  product       = var.product
+  squad   = var.squad
+  product = var.product
 
   service_account = var.service_account_email == "" ? google_service_account.sa[0].email : var.service_account_email
 
@@ -72,8 +71,7 @@ module "cloudevent-trigger" {
     name   = var.name
   }
 
-  team         = var.squad
-  require_team = var.require_squad
+  team = var.squad
 
   notification_channels = var.notification_channels
 }

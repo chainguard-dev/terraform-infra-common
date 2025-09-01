@@ -80,7 +80,6 @@ module "this" {
   }
 
   squad               = var.squad
-  require_squad       = var.require_squad
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.service.email
   containers = {

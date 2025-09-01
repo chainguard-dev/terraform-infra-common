@@ -117,11 +117,6 @@ variable "ack_deadline_seconds" {
 }
 
 
-variable "require_team" {
-  description = "Whether to require team variable to be specified"
-  type        = bool
-  default     = true
-}
 
 variable "team" {
   description = "team label to apply to the service."

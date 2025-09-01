@@ -70,11 +70,6 @@ variable "notification_channels" {
 }
 
 
-variable "require_squad" {
-  description = "Whether to require squad variable to be specified"
-  type        = bool
-  default     = false
-}
 
 variable "squad" {
   description = "squad label to apply to the service."
