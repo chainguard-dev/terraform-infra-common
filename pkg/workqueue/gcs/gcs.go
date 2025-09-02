@@ -345,6 +345,7 @@ func (w *wq) getInProgressKey(ctx context.Context, key string) (*workqueue.KeySt
 		return nil, err
 	}
 	return &workqueue.KeyState{
+		Key:           key,
 		Status:        workqueue.KeyState_IN_PROGRESS,
 		Attempts:      attrs.attempts,
 		Priority:      attrs.priority,
@@ -359,6 +360,7 @@ func (w *wq) getQueuedKey(ctx context.Context, key string) (*workqueue.KeyState,
 		return nil, err
 	}
 	return &workqueue.KeyState{
+		Key:           key,
 		Status:        workqueue.KeyState_QUEUED,
 		Attempts:      attrs.attempts,
 		Priority:      attrs.priority,
@@ -373,6 +375,7 @@ func (w *wq) getDeadLetterKey(ctx context.Context, key string) (*workqueue.KeySt
 		return nil, err
 	}
 	return &workqueue.KeyState{
+		Key:           key,
 		Status:        workqueue.KeyState_DEAD_LETTER,
 		Attempts:      attrs.attempts,
 		Priority:      attrs.priority,
