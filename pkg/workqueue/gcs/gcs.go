@@ -297,10 +297,10 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 }
 
 type objectAttrs struct {
-	attempts   int32
-	priority   int64
-	notBefore  time.Time
-	queuedTime time.Time
+	attempts    int32
+	priority    int64
+	notBefore   time.Time
+	createdTime time.Time
 }
 
 func (w *wq) getAttrs(ctx context.Context, objKey string) (objectAttrs, error) {
@@ -332,10 +332,10 @@ func (w *wq) getAttrs(ctx context.Context, objKey string) (objectAttrs, error) {
 	}
 
 	return objectAttrs{
-		attempts:   int32(attempts), //nolint:gosec  // we're not worried about this overflowing
-		priority:   priority,
-		notBefore:  notBefore,
-		queuedTime: attrs.Created,
+		attempts:    int32(attempts), //nolint:gosec  // we're not worried about this overflowing
+		priority:    priority,
+		notBefore:   notBefore,
+		createdTime: attrs.Created,
 	}, nil
 }
 
@@ -349,7 +349,6 @@ func (w *wq) getInProgressKey(ctx context.Context, key string) (*workqueue.KeySt
 		Status:        workqueue.KeyState_IN_PROGRESS,
 		Attempts:      attrs.attempts,
 		Priority:      attrs.priority,
-		QueuedTime:    attrs.queuedTime.Unix(),
 		NotBeforeTime: attrs.notBefore.Unix(),
 	}, nil
 }
@@ -364,7 +363,7 @@ func (w *wq) getQueuedKey(ctx context.Context, key string) (*workqueue.KeyState,
 		Status:        workqueue.KeyState_QUEUED,
 		Attempts:      attrs.attempts,
 		Priority:      attrs.priority,
-		QueuedTime:    attrs.queuedTime.Unix(),
+		QueuedTime:    attrs.createdTime.Unix(),
 		NotBeforeTime: attrs.notBefore.Unix(),
 	}, nil
 }
@@ -379,7 +378,7 @@ func (w *wq) getDeadLetterKey(ctx context.Context, key string) (*workqueue.KeySt
 		Status:        workqueue.KeyState_DEAD_LETTER,
 		Attempts:      attrs.attempts,
 		Priority:      attrs.priority,
-		QueuedTime:    attrs.queuedTime.Unix(),
+		QueuedTime:    attrs.createdTime.Unix(),
 		NotBeforeTime: attrs.notBefore.Unix(),
 	}, nil
 }

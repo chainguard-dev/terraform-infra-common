@@ -8,7 +8,6 @@ package inmem
 import (
 	"context"
 	"fmt"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -24,7 +23,7 @@ func NewWorkQueue(limit int) workqueue.Interface {
 	return &wq{
 		limit: limit,
 
-		wip:   make(map[string]struct{}, limit),
+		wip:   make(map[string]queueItem, limit),
 		queue: make(map[string]queueItem, 10),
 	}
 }
@@ -34,7 +33,7 @@ type wq struct {
 
 	// rw guards the key sets.
 	rw    sync.RWMutex
-	wip   map[string]struct{}
+	wip   map[string]queueItem
 	queue map[string]queueItem
 }
 
@@ -72,23 +71,22 @@ func (w *wq) Get(_ context.Context, key string) (*workqueue.KeyState, error) {
 	w.rw.RLock()
 	defer w.rw.RUnlock()
 
-	if _, ok := w.wip[key]; ok {
+	if qi, ok := w.wip[key]; ok {
 		return &workqueue.KeyState{
-			Key:    key,
-			Status: workqueue.KeyState_IN_PROGRESS,
+			Key:           key,
+			Status:        workqueue.KeyState_IN_PROGRESS,
+			Priority:      qi.Priority,
+			Attempts:      int32(qi.attempts), //nolint:gosec  // we're not worried about this overflowing
+			NotBeforeTime: qi.NotBefore.Unix(),
 		}, nil
 	}
 
 	if qi, ok := w.queue[key]; ok {
-		attempts := qi.attempts
-		if attempts > math.MaxInt32 {
-			attempts = math.MaxInt32
-		}
 		return &workqueue.KeyState{
 			Key:           key,
 			Status:        workqueue.KeyState_QUEUED,
 			Priority:      qi.Priority,
-			Attempts:      int32(attempts), //nolint:gosec  // we're not worried about this overflowing
+			Attempts:      int32(qi.attempts), //nolint:gosec  // we're not worried about this overflowing
 			QueuedTime:    qi.queued.Unix(),
 			NotBeforeTime: qi.NotBefore.Unix(),
 		}, nil
@@ -306,7 +304,11 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	}
 
 	delete(q.wq.queue, q.key)
-	q.wq.wip[q.key] = struct{}{}
+	q.wq.wip[q.key] = queueItem{
+		Options:  q.Options,
+		attempts: q.attempts,
+		queued:   time.Now().UTC(),
+	}
 
 	ctx, cancel := context.WithCancel(ctx)
 	return &inProgressKey{
