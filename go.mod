@@ -22,6 +22,7 @@ require (
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/mileusna/useragent v1.3.5
 	github.com/prometheus/client_golang v1.23.0
+	github.com/rogpeppe/go-internal v1.14.1
 	github.com/sethvargo/go-envconfig v1.3.0
 	github.com/shirou/gopsutil/v4 v4.25.7
 	github.com/snabb/httpreaderat v1.0.1

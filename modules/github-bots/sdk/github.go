@@ -20,13 +20,37 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/snabb/httpreaderat"
 
 	"chainguard.dev/sdk/octosts"
 	"github.com/chainguard-dev/clog"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/google/go-github/v72/github"
 	"golang.org/x/oauth2"
 )
+
+var (
+	mReqCount = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "octosts_http_client_request_count",
+			Help: "The total number of HTTP requests, with octosts policy name",
+		},
+		[]string{"method", "policy_name"},
+	)
+)
+
+func instrumentOctoSTS(next http.RoundTripper, policyName string) promhttp.RoundTripperFunc {
+	return func(r *http.Request) (*http.Response, error) {
+		mReqCount.With(prometheus.Labels{
+			"method":      r.Method,
+			"policy_name": policyName,
+		}).Inc()
+		return next.RoundTrip(r)
+	}
+}
 
 // NewGitHubClient creates a new GitHub client, using a new token from OctoSTS,
 // for the given org, repo and policy name.
@@ -41,7 +65,9 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 	})
 
 	client := GitHubClient{
-		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
+		inner: github.NewClient(&http.Client{
+			Transport: instrumentOctoSTS(httpmetrics.WrapTransport(oauth2.NewClient(ctx, ts).Transport), policyName),
+		}),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -182,6 +208,7 @@ func (c GitHubClient) Close(ctx context.Context) error {
 	ctx, cancel = context.WithTimeoutCause(context.WithoutCancel(ctx), 1*time.Minute, errors.New("revoking token timeout"))
 	defer cancel()
 
+	// TODO: Revoke in a non-blocking goroutine, and only log failures.
 	if err := octosts.Revoke(ctx, tok.AccessToken); err != nil {
 		// Callers might just `defer c.Close()` so we log the error here too
 		clog.FromContext(ctx).Errorf("failed to revoke token: %v", err)
