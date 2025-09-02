@@ -8,11 +8,14 @@ package inmem
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // NewWorkQueue creates a new in-memory workqueue.
@@ -62,6 +65,36 @@ func (w *wq) Queue(_ context.Context, key string, opts workqueue.Options) error 
 		w.queue[key] = qi
 	}
 	return nil
+}
+
+// Get implements workqueue.Interface.
+func (w *wq) Get(_ context.Context, key string) (*workqueue.KeyState, error) {
+	w.rw.RLock()
+	defer w.rw.RUnlock()
+
+	if _, ok := w.wip[key]; ok {
+		return &workqueue.KeyState{
+			Key:    key,
+			Status: workqueue.KeyState_IN_PROGRESS,
+		}, nil
+	}
+
+	if qi, ok := w.queue[key]; ok {
+		attempts := qi.attempts
+		if attempts > math.MaxInt32 {
+			attempts = math.MaxInt32
+		}
+		return &workqueue.KeyState{
+			Key:           key,
+			Status:        workqueue.KeyState_QUEUED,
+			Priority:      qi.Priority,
+			Attempts:      int32(attempts), //nolint:gosec  // we're not worried about this overflowing
+			QueuedTime:    qi.queued.Unix(),
+			NotBeforeTime: qi.NotBefore.Unix(),
+		}, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, "key %q not found", key)
 }
 
 // Enumerate implements workqueue.Interface.

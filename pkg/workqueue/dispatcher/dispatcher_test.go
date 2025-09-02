@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // --- Mocks ---
@@ -93,6 +95,10 @@ func (m *mockQueue) Enumerate(context.Context) ([]workqueue.ObservedInProgressKe
 func (m *mockQueue) Queue(_ context.Context, key string, _ workqueue.Options) error {
 	m.next = append(m.next, &mockKey{name: key})
 	return nil
+}
+
+func (m *mockQueue) Get(_ context.Context, key string) (*workqueue.KeyState, error) {
+	return nil, status.Errorf(codes.NotFound, "key %q not found", key)
 }
 
 // --- Tests ---
