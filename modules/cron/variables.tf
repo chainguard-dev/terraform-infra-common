@@ -61,7 +61,7 @@ variable "secret_env" {
 }
 
 variable "execution_environment" {
-  default     = ""
+  default     = "EXECUTION_ENVIRONMENT_GEN2"
   type        = string
   description = "The execution environment to use for the job."
 }
