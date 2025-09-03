@@ -33,6 +33,9 @@ type Interface interface {
 	// - a list of the next "N" keys in the queue (according to its configured ordering), or
 	// - an error if the workqueue is unable to enumerate the keys.
 	Enumerate(ctx context.Context) ([]ObservedInProgressKey, []QueuedKey, error)
+
+	// Get retrieves the current state and metadata for a specific key.
+	Get(ctx context.Context, key string) (*KeyState, error)
 }
 
 // Options is a set of options that can be passed when queuing a key.

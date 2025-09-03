@@ -6,6 +6,7 @@ package chainguard.workqueue;
 
 service WorkqueueService {
   rpc Process(ProcessRequest) returns (ProcessResponse) {}
+  rpc GetKeyState(GetKeyStateRequest) returns (KeyState) {}
 }
 
 message ProcessRequest {
@@ -24,6 +25,37 @@ message ProcessResponse {
   // If not set or 0, the default behavior applies (success if no error, or exponential backoff on error).
   // This field is only honored when the RPC returns successfully (no error).
   int64 requeue_after_seconds = 1;
+}
+
+message GetKeyStateRequest {
+  // The key to retrieve information for
+  string key = 1;
+}
+
+message KeyState {
+  // The key name
+  string key = 1;
+
+  // Current status of the key
+  enum Status {
+    UNKNOWN = 0;
+    QUEUED = 1;
+    IN_PROGRESS = 2;
+    DEAD_LETTER = 3;
+  }
+  Status status = 2;
+
+  // Priority of the key (if queued or in progress)
+  int64 priority = 3;
+
+  // Number of attempts made (if in progress)
+  int32 attempts = 4;
+
+  // Time when the key was first queued
+  int64 queued_time = 5;
+
+  // Time when the key should be processed (NotBefore)
+  int64 not_before_time = 6;
 }
 
 // NoRetryDetails is a marker message that indicates that the key should not be retried.

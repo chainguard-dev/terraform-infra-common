@@ -21,6 +21,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 )
@@ -292,6 +294,110 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	// Set the max attempts metric
 	mMaxAttempts.With(labels).Set(float64(maxAttempts))
 	return wip, qk, nil
+}
+
+type objectAttrs struct {
+	attempts    int32
+	priority    int64
+	notBefore   time.Time
+	createdTime time.Time
+}
+
+func (w *wq) getAttrs(ctx context.Context, objKey string) (objectAttrs, error) {
+	obj := w.client.Object(objKey)
+	attrs, err := obj.Attrs(ctx)
+	if err != nil {
+		return objectAttrs{}, err
+	}
+
+	var attempts int
+	if att, ok := attrs.Metadata[attemptsMetadataKey]; ok && att != "" {
+		if parsedAttempts, err := strconv.Atoi(att); err == nil {
+			attempts = parsedAttempts
+		}
+	}
+
+	var priority int64
+	if p, ok := attrs.Metadata[priorityMetadataKey]; ok {
+		if parsedPriority, err := strconv.ParseInt(p, 10, 64); err == nil {
+			priority = parsedPriority
+		}
+	}
+
+	var notBefore time.Time
+	if nb, ok := attrs.Metadata[notBeforeMetadataKey]; ok {
+		if parsedTime, err := time.Parse(time.RFC3339, nb); err == nil {
+			notBefore = parsedTime
+		}
+	}
+
+	return objectAttrs{
+		attempts:    int32(attempts), //nolint:gosec  // we're not worried about this overflowing
+		priority:    priority,
+		notBefore:   notBefore,
+		createdTime: attrs.Created,
+	}, nil
+}
+
+func (w *wq) getInProgressKey(ctx context.Context, key string) (*workqueue.KeyState, error) {
+	attrs, err := w.getAttrs(ctx, fmt.Sprintf("%s%s", inProgressPrefix, key))
+	if err != nil {
+		return nil, err
+	}
+	return &workqueue.KeyState{
+		Key:           key,
+		Status:        workqueue.KeyState_IN_PROGRESS,
+		Attempts:      attrs.attempts,
+		Priority:      attrs.priority,
+		NotBeforeTime: attrs.notBefore.Unix(),
+	}, nil
+}
+
+func (w *wq) getQueuedKey(ctx context.Context, key string) (*workqueue.KeyState, error) {
+	attrs, err := w.getAttrs(ctx, fmt.Sprintf("%s%s", queuedPrefix, key))
+	if err != nil {
+		return nil, err
+	}
+	return &workqueue.KeyState{
+		Key:           key,
+		Status:        workqueue.KeyState_QUEUED,
+		Attempts:      attrs.attempts,
+		Priority:      attrs.priority,
+		QueuedTime:    attrs.createdTime.Unix(),
+		NotBeforeTime: attrs.notBefore.Unix(),
+	}, nil
+}
+
+func (w *wq) getDeadLetterKey(ctx context.Context, key string) (*workqueue.KeyState, error) {
+	attrs, err := w.getAttrs(ctx, fmt.Sprintf("%s%s", deadLetterPrefix, key))
+	if err != nil {
+		return nil, err
+	}
+	return &workqueue.KeyState{
+		Key:           key,
+		Status:        workqueue.KeyState_DEAD_LETTER,
+		Attempts:      attrs.attempts,
+		Priority:      attrs.priority,
+		QueuedTime:    attrs.createdTime.Unix(),
+		NotBeforeTime: attrs.notBefore.Unix(),
+	}, nil
+}
+
+// Get implements workqueue.Interface.
+func (w *wq) Get(ctx context.Context, key string) (*workqueue.KeyState, error) {
+	if state, err := w.getInProgressKey(ctx, key); err == nil {
+		return state, nil
+	}
+
+	if state, err := w.getQueuedKey(ctx, key); err == nil {
+		return state, nil
+	}
+
+	if state, err := w.getDeadLetterKey(ctx, key); err == nil {
+		return state, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, "key %q not found", key)
 }
 
 type inProgressKey struct {

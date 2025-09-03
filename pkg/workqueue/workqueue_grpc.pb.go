@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorkqueueService_Process_FullMethodName = "/chainguard.workqueue.WorkqueueService/Process"
+	WorkqueueService_Process_FullMethodName     = "/chainguard.workqueue.WorkqueueService/Process"
+	WorkqueueService_GetKeyState_FullMethodName = "/chainguard.workqueue.WorkqueueService/GetKeyState"
 )
 
 // WorkqueueServiceClient is the client API for WorkqueueService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkqueueServiceClient interface {
 	Process(ctx context.Context, in *ProcessRequest, opts ...grpc.CallOption) (*ProcessResponse, error)
+	GetKeyState(ctx context.Context, in *GetKeyStateRequest, opts ...grpc.CallOption) (*KeyState, error)
 }
 
 type workqueueServiceClient struct {
@@ -47,11 +49,22 @@ func (c *workqueueServiceClient) Process(ctx context.Context, in *ProcessRequest
 	return out, nil
 }
 
+func (c *workqueueServiceClient) GetKeyState(ctx context.Context, in *GetKeyStateRequest, opts ...grpc.CallOption) (*KeyState, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(KeyState)
+	err := c.cc.Invoke(ctx, WorkqueueService_GetKeyState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkqueueServiceServer is the server API for WorkqueueService service.
 // All implementations must embed UnimplementedWorkqueueServiceServer
 // for forward compatibility.
 type WorkqueueServiceServer interface {
 	Process(context.Context, *ProcessRequest) (*ProcessResponse, error)
+	GetKeyState(context.Context, *GetKeyStateRequest) (*KeyState, error)
 	mustEmbedUnimplementedWorkqueueServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedWorkqueueServiceServer struct{}
 
 func (UnimplementedWorkqueueServiceServer) Process(context.Context, *ProcessRequest) (*ProcessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Process not implemented")
+}
+func (UnimplementedWorkqueueServiceServer) GetKeyState(context.Context, *GetKeyStateRequest) (*KeyState, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetKeyState not implemented")
 }
 func (UnimplementedWorkqueueServiceServer) mustEmbedUnimplementedWorkqueueServiceServer() {}
 func (UnimplementedWorkqueueServiceServer) testEmbeddedByValue()                          {}
@@ -104,6 +120,24 @@ func _WorkqueueService_Process_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkqueueService_GetKeyState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetKeyStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkqueueServiceServer).GetKeyState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkqueueService_GetKeyState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkqueueServiceServer).GetKeyState(ctx, req.(*GetKeyStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkqueueService_ServiceDesc is the grpc.ServiceDesc for WorkqueueService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +148,10 @@ var WorkqueueService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Process",
 			Handler:    _WorkqueueService_Process_Handler,
+		},
+		{
+			MethodName: "GetKeyState",
+			Handler:    _WorkqueueService_GetKeyState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -13,6 +13,8 @@ import (
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ExpectedState struct {
@@ -637,6 +639,134 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 		// Now the key should show as queued.
 		_, _ = checkQueue(t, wq, ExpectedState{
 			Queued: []string{"foo"},
+		})
+	})
+
+	ct.scenario("get key states", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Test getting a nonexistent key
+		_, err := wq.Get(ctx, "nonexistent")
+		if err == nil {
+			t.Fatal("Expected error for nonexistent key")
+		}
+		st, ok := status.FromError(err)
+		if !ok || st.Code() != codes.NotFound {
+			t.Fatalf("Expected NotFound gRPC error, got %v", err)
+		}
+
+		// Queue a key
+		if err := wq.Queue(ctx, "test-key", workqueue.Options{
+			Priority: 100,
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// Get the queued key
+		state, err := wq.Get(ctx, "test-key")
+		if err != nil {
+			t.Fatalf("Get failed: %v", err)
+		}
+		if state.Key != "test-key" {
+			t.Errorf("Expected key 'test-key', got %q", state.Key)
+		}
+		if state.Status != workqueue.KeyState_QUEUED {
+			t.Errorf("Expected status QUEUED, got %v", state.Status)
+		}
+		if state.Priority != 100 {
+			t.Errorf("Expected priority 100, got %v", state.Priority)
+		}
+		if state.QueuedTime == 0 {
+			t.Error("Expected non-zero queued time")
+		}
+
+		// Start processing the key
+		_, qd := checkQueue(t, wq, ExpectedState{
+			Queued: []string{"test-key"},
+		})
+		owned, err := qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// Get the in-progress key
+		state, err = wq.Get(ctx, "test-key")
+		if err != nil {
+			t.Fatalf("Get failed: %v", err)
+		}
+		if state.Key != "test-key" {
+			t.Errorf("Expected key 'test-key', got %q", state.Key)
+		}
+		if state.Status != workqueue.KeyState_IN_PROGRESS {
+			t.Errorf("Expected status IN_PROGRESS, got %v", state.Status)
+		}
+
+		// Complete the key
+		if err := owned.Complete(ctx); err != nil {
+			t.Fatalf("Complete failed: %v", err)
+		}
+
+		// Key should not be found after completion
+		_, err = wq.Get(ctx, "test-key")
+		if err == nil {
+			t.Fatal("Expected error for completed key")
+		}
+		st, ok = status.FromError(err)
+		if !ok || st.Code() != codes.NotFound {
+			t.Fatalf("Expected NotFound gRPC error, got %v", err)
+		}
+	})
+
+	ct.scenario("queued and in-progress", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
+		// Add the key as queued
+		if err := wq.Queue(ctx, "test-key", workqueue.Options{
+			Priority: 100,
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+		checkQueue(t, wq, ExpectedState{
+			Queued: []string{"test-key"},
+		})
+
+		// Start processing the key
+		_, qd := checkQueue(t, wq, ExpectedState{
+			Queued: []string{"test-key"},
+		})
+		owned, err := qd[0].Start(ctx)
+		if err != nil {
+			t.Fatalf("Start failed: %v", err)
+		}
+
+		// While that's running, queue it again
+		if err := wq.Queue(ctx, "test-key", workqueue.Options{
+			Priority: 100,
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
+
+		// Check that it's still queued and in-progress
+		checkQueue(t, wq, ExpectedState{
+			Queued:         []string{"test-key"},
+			WorkInProgress: []string{"test-key"},
+		})
+		// Check that IN_PROGRESS takes precedence over QUEUED
+		state, err := wq.Get(ctx, "test-key")
+		if err != nil {
+			t.Fatalf("Get failed: %v", err)
+		}
+		if state.Key != "test-key" {
+			t.Errorf("Expected key 'test-key', got %q", state.Key)
+		}
+		if state.Status != workqueue.KeyState_IN_PROGRESS {
+			t.Errorf("Expected status IN_PROGRESS, got %v", state.Status)
+		}
+
+		// Complete the key
+		if err := owned.Complete(ctx); err != nil {
+			t.Fatalf("Complete failed: %v", err)
+		}
+
+		// Key should not be found after completion
+		checkQueue(t, wq, ExpectedState{
+			Queued: []string{"test-key"},
 		})
 	})
 }

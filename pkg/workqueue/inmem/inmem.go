@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // NewWorkQueue creates a new in-memory workqueue.
@@ -21,7 +23,7 @@ func NewWorkQueue(limit int) workqueue.Interface {
 	return &wq{
 		limit: limit,
 
-		wip:   make(map[string]struct{}, limit),
+		wip:   make(map[string]queueItem, limit),
 		queue: make(map[string]queueItem, 10),
 	}
 }
@@ -31,7 +33,7 @@ type wq struct {
 
 	// rw guards the key sets.
 	rw    sync.RWMutex
-	wip   map[string]struct{}
+	wip   map[string]queueItem
 	queue map[string]queueItem
 }
 
@@ -62,6 +64,35 @@ func (w *wq) Queue(_ context.Context, key string, opts workqueue.Options) error 
 		w.queue[key] = qi
 	}
 	return nil
+}
+
+// Get implements workqueue.Interface.
+func (w *wq) Get(_ context.Context, key string) (*workqueue.KeyState, error) {
+	w.rw.RLock()
+	defer w.rw.RUnlock()
+
+	if qi, ok := w.wip[key]; ok {
+		return &workqueue.KeyState{
+			Key:           key,
+			Status:        workqueue.KeyState_IN_PROGRESS,
+			Priority:      qi.Priority,
+			Attempts:      int32(qi.attempts), //nolint:gosec  // we're not worried about this overflowing
+			NotBeforeTime: qi.NotBefore.Unix(),
+		}, nil
+	}
+
+	if qi, ok := w.queue[key]; ok {
+		return &workqueue.KeyState{
+			Key:           key,
+			Status:        workqueue.KeyState_QUEUED,
+			Priority:      qi.Priority,
+			Attempts:      int32(qi.attempts), //nolint:gosec  // we're not worried about this overflowing
+			QueuedTime:    qi.queued.Unix(),
+			NotBeforeTime: qi.NotBefore.Unix(),
+		}, nil
+	}
+
+	return nil, status.Errorf(codes.NotFound, "key %q not found", key)
 }
 
 // Enumerate implements workqueue.Interface.
@@ -273,7 +304,11 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	}
 
 	delete(q.wq.queue, q.key)
-	q.wq.wip[q.key] = struct{}{}
+	q.wq.wip[q.key] = queueItem{
+		Options:  q.Options,
+		attempts: q.attempts,
+		queued:   time.Now().UTC(),
+	}
 
 	ctx, cancel := context.WithCancel(ctx)
 	return &inProgressKey{
