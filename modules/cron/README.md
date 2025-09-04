@@ -212,7 +212,7 @@ No modules.
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Enable otel sidecar for metrics | `bool` | `true` | no |
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_exec"></a> [exec](#input\_exec) | Whether to execute job on modify. | `bool` | `false` | no |
-| <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment to use for the job. | `string` | `""` | no |
+| <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment to use for the job. | `string` | `"EXECUTION_ENVIRONMENT_GEN2"` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the cron application. Leave empty to run the unmodified base image as the application: for example, when running an `apko`-built image. This works by skipping the `ko` build and just use the base image directly in the cron job. A digest must be specified in this case. | `string` | `""` | no |
 | <a name="input_invokers"></a> [invokers](#input\_invokers) | List of iam members invoker perimssions to invoke the job. | `list(string)` | `[]` | no |
 | <a name="input_ko_build_env"></a> [ko\_build\_env](#input\_ko\_build\_env) | A list of custom environment variables to pass to the ko build. | `list(string)` | `[]` | no |
