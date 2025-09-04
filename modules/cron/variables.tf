@@ -204,7 +204,7 @@ variable "success_alert_duration_seconds" {
 variable "enable_otel_sidecar" {
   description = "Enable otel sidecar for metrics"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "otel_collector_image" {
