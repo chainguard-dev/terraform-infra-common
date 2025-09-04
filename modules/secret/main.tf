@@ -76,6 +76,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
   display_name = "Abnormal Secret Access: ${var.name}"
   combiner     = "OR"
   user_labels  = local.merged_labels
+  severity     = "WARNING"
 
   conditions {
     display_name = "Abnormal Secret Access: ${var.name}"

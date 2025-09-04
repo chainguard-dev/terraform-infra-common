@@ -34,6 +34,8 @@ EOT
 resource "google_monitoring_alert_policy" "bad-rollout" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "CRITICAL"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -90,6 +92,8 @@ EOF
 
 resource "google_monitoring_alert_policy" "oom" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "ERROR"
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -150,6 +154,8 @@ EOT
 resource "google_monitoring_alert_policy" "signal" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "ERROR"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -208,6 +214,8 @@ EOF
 resource "google_monitoring_alert_policy" "panic" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "ERROR"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -263,6 +271,8 @@ EOF
 resource "google_monitoring_alert_policy" "panic-stacktrace" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "ERROR"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -317,6 +327,8 @@ EOF
 
 resource "google_monitoring_alert_policy" "fatal" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "ERROR"
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -377,6 +389,8 @@ EOF
 resource "google_monitoring_alert_policy" "nonzero-exitcode-svc" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "ERROR"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -435,6 +449,8 @@ EOF
 resource "google_monitoring_alert_policy" "nonzero-exitcode-job" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "ERROR"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -486,6 +502,8 @@ locals {
 
 resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -539,6 +557,8 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
 resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "WARNING"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -590,6 +610,8 @@ resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing
 
 resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -647,6 +669,8 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
 
 resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -741,6 +765,8 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
 resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "WARNING"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -830,6 +856,8 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
   display_name = "Cloud Run failed request ${local.name}"
   combiner     = "OR"
 
+  severity = "WARNING"
+
   conditions {
     display_name = "Cloud Run failed request ${local.name}"
 
@@ -859,6 +887,8 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
 
 resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   alert_strategy {
     auto_close = "3600s" // 1 hour
@@ -909,6 +939,8 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
 
 resource "google_monitoring_alert_policy" "cloudrun_timeout" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -1138,6 +1170,8 @@ EOF
 resource "google_monitoring_alert_policy" "pinned" {
   count = var.global_only_alerts ? 0 : 1
 
+  severity = "ERROR"
+
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
     auto_close = "3600s"
@@ -1183,6 +1217,8 @@ resource "google_monitoring_alert_policy" "pinned" {
 
 resource "google_monitoring_alert_policy" "http_error_rate" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   alert_strategy {
     auto_close = "3600s" // 1 hour
@@ -1243,6 +1279,8 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
 
 resource "google_monitoring_alert_policy" "grpc_error_rate" {
   count = var.global_only_alerts ? 0 : 1
+
+  severity = "WARNING"
 
   alert_strategy {
     auto_close = "3600s" // 1 hour
@@ -1328,6 +1366,8 @@ resource "google_logging_metric" "violation_metric" {
 
 resource "google_monitoring_alert_policy" "workqueue_high_retry" {
   count = var.global_only_alerts || !var.enable_high_retry ? 0 : 1
+
+  severity = "WARNING"
 
   alert_strategy {
     auto_close = "3600s" // 1 hour

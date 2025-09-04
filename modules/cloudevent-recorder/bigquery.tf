@@ -115,6 +115,8 @@ resource "google_monitoring_alert_policy" "bq_dts" {
 
   combiner = "OR"
 
+  severity = "ERROR"
+
   dynamic "conditions" {
     for_each = var.regions
 
