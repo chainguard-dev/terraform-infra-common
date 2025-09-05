@@ -332,6 +332,8 @@ resource "google_monitoring_alert_policy" "success" {
   display_name = "Cloud Run Job Success Execution: ${var.name}"
   combiner     = "OR"
 
+  severity = "ERROR"
+
   conditions {
     display_name = "Cloud Run Job Success Execution: ${var.name}"
 

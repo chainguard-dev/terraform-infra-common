@@ -18,6 +18,8 @@ resource "google_monitoring_alert_policy" "pubsub_unacked_messages" {
     auto_close = "604800s"
   }
 
+  severity = "WARNING"
+
   combiner = "OR"
 
   conditions {

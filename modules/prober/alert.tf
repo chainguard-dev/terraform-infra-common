@@ -8,6 +8,8 @@ resource "google_monitoring_alert_policy" "uptime_alert" {
   count   = var.enable_alert ? 1 : 0
   project = var.project_id
 
+  severity = "CRITICAL"
+
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "${7 * 24 * 60 * 60}s"
@@ -62,6 +64,8 @@ locals {
 resource "google_monitoring_alert_policy" "slo_alert" {
   count   = var.enable_slo_alert ? 1 : 0
   project = var.project_id
+
+  severity = "WARNING"
 
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
