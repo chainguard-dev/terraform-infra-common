@@ -52,6 +52,15 @@ resource "google_sql_database_instance" "this" {
       private_network                               = var.network
       ssl_mode                                      = var.ssl_mode
       enable_private_path_for_google_cloud_services = var.enable_private_path_for_google_cloud_services
+
+      # Private Service Connect (PSC) configuration
+      dynamic "psc_config" {
+        for_each = var.psc_enabled ? [1] : []
+        content {
+          psc_enabled               = true
+          allowed_consumer_projects = var.psc_allowed_consumer_projects
+        }
+      }
     }
 
     backup_configuration {
@@ -127,6 +136,15 @@ resource "google_sql_database_instance" "replicas" {
       private_network                               = var.network
       ssl_mode                                      = var.ssl_mode
       enable_private_path_for_google_cloud_services = var.enable_private_path_for_google_cloud_services
+
+      # Private Service Connect (PSC) configuration
+      dynamic "psc_config" {
+        for_each = var.psc_enabled ? [1] : []
+        content {
+          psc_enabled               = true
+          allowed_consumer_projects = var.psc_allowed_consumer_projects
+        }
+      }
     }
 
     user_labels = merge(local.merged_labels, {

@@ -13,6 +13,7 @@ Opinionated Terraform module that provisions a Cloud SQL for PostgreSQL instance
 - IAM authentication enabled by default
 - Service account access management
 - Storage autoresizing with configurable limits
+- Private Service Connect (PSC) support for cross-project access
 
 ## Usage example
 
@@ -82,6 +83,8 @@ No modules.
 | <a name="input_primary_zone"></a> [primary\_zone](#input\_primary\_zone) | Optional zone for the primary instance. | `string` | `null` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project"></a> [project](#input\_project) | GCP project ID hosting the Cloud SQL instance. | `string` | n/a | yes |
+| <a name="input_psc_allowed_consumer_projects"></a> [psc\_allowed\_consumer\_projects](#input\_psc\_allowed\_consumer\_projects) | List of project IDs allowed to connect to this Cloud SQL instance via PSC. Only used when psc\_enabled is true. | `list(string)` | `[]` | no |
+| <a name="input_psc_enabled"></a> [psc\_enabled](#input\_psc\_enabled) | Enable Private Service Connect (PSC) for cross-project access to the Cloud SQL instance. | `bool` | `false` | no |
 | <a name="input_read_replica_regions"></a> [read\_replica\_regions](#input\_read\_replica\_regions) | List of regions in which to create read replicas. Empty list for none. | `list(string)` | `[]` | no |
 | <a name="input_region"></a> [region](#input\_region) | GCP region for the primary instance. | `string` | n/a | yes |
 | <a name="input_replicas_deletion_protection"></a> [replicas\_deletion\_protection](#input\_replicas\_deletion\_protection) | Enable deletion protection for read replicas. | `bool` | `false` | no |
@@ -99,6 +102,8 @@ No modules.
 | <a name="output_instance_name"></a> [instance\_name](#output\_instance\_name) | Name of the primary Cloud SQL instance. |
 | <a name="output_instance_self_link"></a> [instance\_self\_link](#output\_instance\_self\_link) | Self‑link URI of the primary Cloud SQL instance. |
 | <a name="output_private_ip_address"></a> [private\_ip\_address](#output\_private\_ip\_address) | Private IPv4 address of the primary Cloud SQL instance. |
+| <a name="output_psc_dns_name"></a> [psc\_dns\_name](#output\_psc\_dns\_name) | The DNS name to use for PSC connections. Only populated when PSC is enabled. |
+| <a name="output_psc_service_attachment_link"></a> [psc\_service\_attachment\_link](#output\_psc\_service\_attachment\_link) | The PSC service attachment link for connecting from consumer projects. Only populated when PSC is enabled. |
 | <a name="output_replica_connection_names"></a> [replica\_connection\_names](#output\_replica\_connection\_names) | Map of replica region → connection name. Empty if no replicas. |
 | <a name="output_replica_private_ips"></a> [replica\_private\_ips](#output\_replica\_private\_ips) | Map of replica region → private IPv4 address. Empty if no replicas. |
 <!-- END_TF_DOCS -->

@@ -32,3 +32,15 @@ output "client_sa_bindings" {
   description = "Map of service‑account email → IAM binding resource ID."
   value       = { for k, v in google_project_iam_member.client_sa : k => v.id }
 }
+
+# Private Service Connect (PSC) outputs
+
+output "psc_service_attachment_link" {
+  description = "The PSC service attachment link for connecting from consumer projects. Only populated when PSC is enabled."
+  value       = var.psc_enabled ? google_sql_database_instance.this.psc_service_attachment_link : null
+}
+
+output "psc_dns_name" {
+  description = "The DNS name to use for PSC connections. Only populated when PSC is enabled."
+  value       = var.psc_enabled ? google_sql_database_instance.this.dns_name : null
+}

@@ -225,3 +225,17 @@ variable "enable_private_path_for_google_cloud_services" {
   type        = bool
   default     = false
 }
+
+# Private Service Connect (PSC) configuration
+
+variable "psc_enabled" {
+  description = "Enable Private Service Connect (PSC) for cross-project access to the Cloud SQL instance."
+  type        = bool
+  default     = false
+}
+
+variable "psc_allowed_consumer_projects" {
+  description = "List of project IDs allowed to connect to this Cloud SQL instance via PSC. Only used when psc_enabled is true."
+  type        = list(string)
+  default     = []
+}
