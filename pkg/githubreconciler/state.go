@@ -7,59 +7,27 @@ package githubreconciler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
-	"strings"
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/chainguard-dev/clog"
-	"github.com/google/go-github/v72/github"
+	"github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
 )
-
-// StateManager manages reconciler state stored in GitHub comments.
-type StateManager struct {
-	identity    string
-	projectID   string
-	serviceName string
-}
-
-// NewStateManager creates a new state manager with the given identity.
-// The identity is used to identify comments created by this reconciler.
-func NewStateManager(identity string) *StateManager {
-	// Get project ID once at startup
-	projectID := getProjectID()
-
-	// Get service name once at startup
-	serviceName := os.Getenv("K_SERVICE")
-	if serviceName == "" {
-		serviceName = "unknown-service"
-	}
-
-	return &StateManager{
-		identity:    identity,
-		projectID:   projectID,
-		serviceName: serviceName,
-	}
-}
-
-// Identity returns the identity used by this state manager.
-func (sm *StateManager) Identity() string {
-	return sm.identity
-}
 
 // State wraps a typed state with resource information.
 type State[T any] struct {
-	identity    string
-	client      *github.Client
-	resource    *Resource
-	projectID   string
-	serviceName string
+	identity     string
+	client       *sdk.GitHubClient
+	resource     *Resource
+	projectID    string
+	serviceName  string
+	stateManager *sdk.CommentStateManager
 }
 
 // NewState creates a new state instance for a specific resource.
-func NewState[T any](identity string, client *github.Client, resource *Resource) *State[T] {
+func NewState[T any](identity string, client *sdk.GitHubClient, resource *Resource) *State[T] {
 	// Get project ID once at creation
 	projectID := getProjectID()
 
@@ -70,97 +38,42 @@ func NewState[T any](identity string, client *github.Client, resource *Resource)
 	}
 
 	return &State[T]{
-		identity:    identity,
-		client:      client,
-		resource:    resource,
-		projectID:   projectID,
-		serviceName: serviceName,
+		identity:     identity,
+		client:       client,
+		resource:     resource,
+		projectID:    projectID,
+		serviceName:  serviceName,
+		stateManager: sdk.NewCommentStateManager(identity),
 	}
-}
-
-// getStateMarker returns the HTML comment marker for state data.
-func (s *State[T]) getStateMarker() string {
-	return fmt.Sprintf("<!--%s-state-->", s.identity)
-}
-
-// getIdentityMarker returns the HTML comment marker for the identity.
-func (s *State[T]) getIdentityMarker() string {
-	return fmt.Sprintf("<!--%s-->", s.identity)
 }
 
 // Fetch retrieves the current state from the automation comment.
 func (s *State[T]) Fetch(ctx context.Context) (*T, error) {
 	log := clog.FromContext(ctx)
 
-	// List all comments to find our automation comment
-	opts := &github.IssueListCommentsOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
+	// Find comment with our identity marker
+	identityMarker := s.stateManager.GetIdentityMarker()
+	comment, err := s.client.FindCommentByMarker(ctx, s.resource.Owner, s.resource.Repo, s.resource.Number, identityMarker)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find comment: %w", err)
 	}
 
-	identityMarker := s.getIdentityMarker()
-	stateMarker := s.getStateMarker()
-
-	for {
-		comments, resp, err := s.client.Issues.ListComments(ctx, s.resource.Owner, s.resource.Repo, s.resource.Number, opts)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list comments: %w", err)
-		}
-
-		for _, comment := range comments {
-			if comment.Body != nil && strings.Contains(*comment.Body, identityMarker) {
-				// Found our comment, extract state
-				if strings.Contains(*comment.Body, stateMarker) {
-					state, err := s.extractState(*comment.Body)
-					if err != nil {
-						log.Errorf("Failed to extract state from comment: %v", err)
-						return nil, nil // Return nil state if we can't parse it
-					}
-					return state, nil
-				}
-				// Comment exists but no state yet
-				return nil, nil
-			}
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
-	}
-
-	// No automation comment found
-	return nil, nil
-}
-
-// extractState extracts the state JSON from the comment body.
-func (s *State[T]) extractState(body string) (*T, error) {
-	stateMarker := s.getStateMarker()
-	stateEndMarker := fmt.Sprintf("<!--/%s-state-->", s.identity)
-
-	// Find the state data between markers
-	startIdx := strings.Index(body, stateMarker)
-	if startIdx == -1 {
+	if comment == nil || comment.Body == nil {
+		// No automation comment found
 		return nil, nil
 	}
-	startIdx += len(stateMarker)
 
-	endIdx := strings.Index(body[startIdx:], stateEndMarker)
-	if endIdx == -1 {
-		return nil, fmt.Errorf("malformed state: missing end marker")
+	// Check if comment has state
+	if !s.stateManager.HasState(*comment.Body) {
+		// Comment exists but no state yet
+		return nil, nil
 	}
 
-	stateJSON := strings.TrimSpace(body[startIdx : startIdx+endIdx])
-
-	// Remove HTML comment wrapper if present
-	stateJSON = strings.TrimPrefix(stateJSON, "<!--")
-	stateJSON = strings.TrimSuffix(stateJSON, "-->")
-	stateJSON = strings.TrimSpace(stateJSON)
-
+	// Extract state from comment
 	var state T
-	if err := json.Unmarshal([]byte(stateJSON), &state); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal state: %w", err)
+	if err := s.stateManager.ExtractState(*comment.Body, &state); err != nil {
+		log.Errorf("Failed to extract state from comment: %v", err)
+		return nil, nil // Return nil state if we can't parse it
 	}
 
 	return &state, nil
@@ -170,17 +83,17 @@ func (s *State[T]) extractState(body string) (*T, error) {
 func (s *State[T]) Commit(ctx context.Context, state *T, message string) error {
 	log := clog.FromContext(ctx)
 
-	// Serialize the state
-	stateJSON, err := json.MarshalIndent(state, "", "  ")
+	// Build the comment content with state
+	content, err := s.stateManager.BuildCommentWithState(message, state, func() string {
+		return s.buildBotInfoBlock()
+	})
 	if err != nil {
-		return fmt.Errorf("failed to marshal state: %w", err)
+		return fmt.Errorf("failed to build comment content: %w", err)
 	}
 
-	// Build the comment content
-	content := s.buildCommentContent(string(stateJSON), message)
-
 	// Find existing comment
-	existingComment, err := s.findExistingComment(ctx)
+	identityMarker := s.stateManager.GetIdentityMarker()
+	existingComment, err := s.client.FindCommentByMarker(ctx, s.resource.Owner, s.resource.Repo, s.resource.Number, identityMarker)
 	if err != nil {
 		return fmt.Errorf("failed to find existing comment: %w", err)
 	}
@@ -191,90 +104,13 @@ func (s *State[T]) Commit(ctx context.Context, state *T, message string) error {
 			log.Debug("Comment content unchanged, skipping update")
 			return nil
 		}
-
-		// Update existing comment
-		updatedComment := &github.IssueComment{
-			Body: &content,
-		}
-
-		_, _, err = s.client.Issues.EditComment(ctx, s.resource.Owner, s.resource.Repo, *existingComment.ID, updatedComment)
-		if err != nil {
-			return fmt.Errorf("failed to update comment: %w", err)
-		}
-
 		log.With("comment_id", *existingComment.ID).Info("Updated automation comment with new state")
 	} else {
-		// Create new comment
-		newComment := &github.IssueComment{
-			Body: &content,
-		}
-
-		_, _, err = s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, s.resource.Number, newComment)
-		if err != nil {
-			return fmt.Errorf("failed to create comment: %w", err)
-		}
-
 		log.Info("Created automation comment with initial state")
 	}
 
-	return nil
-}
-
-// findExistingComment finds the automation comment if it exists.
-func (s *State[T]) findExistingComment(ctx context.Context) (*github.IssueComment, error) {
-	opts := &github.IssueListCommentsOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
-	}
-
-	identityMarker := s.getIdentityMarker()
-
-	for {
-		comments, resp, err := s.client.Issues.ListComments(ctx, s.resource.Owner, s.resource.Repo, s.resource.Number, opts)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, comment := range comments {
-			if comment.Body != nil && strings.Contains(*comment.Body, identityMarker) {
-				return comment, nil
-			}
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opts.Page = resp.NextPage
-	}
-
-	return nil, nil
-}
-
-// buildCommentContent builds the comment content with state and message.
-func (s *State[T]) buildCommentContent(stateJSON, message string) string {
-	var content strings.Builder
-
-	// Identity marker
-	content.WriteString(s.getIdentityMarker())
-	content.WriteString("\n\n")
-
-	// Bot info and logs link
-	content.WriteString(s.buildBotInfoBlock())
-	content.WriteString("\n\n---\n\n")
-
-	// User-visible message
-	content.WriteString(message)
-	content.WriteString("\n\n")
-
-	// State data (hidden in HTML comment)
-	content.WriteString(s.getStateMarker())
-	content.WriteString("\n<!--\n")
-	content.WriteString(stateJSON)
-	content.WriteString("\n-->\n")
-	content.WriteString(fmt.Sprintf("<!--/%s-state-->", s.identity))
-
-	return content.String()
+	// Use SDK's UpdateOrCreateComment to handle the update/create logic
+	return s.client.UpdateOrCreateComment(ctx, s.resource.Owner, s.resource.Repo, s.resource.Number, identityMarker, content)
 }
 
 // buildBotInfoBlock creates an italicized block with bot info and logs link.
