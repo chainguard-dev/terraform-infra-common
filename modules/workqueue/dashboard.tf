@@ -35,7 +35,7 @@ module "max-attempts" {
     "metric.type=\"prometheus.googleapis.com/workqueue_max_attempts/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["resource.labels.\"location\""]
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
   thresholds      = var.max-retry > 0 ? [var.max-retry] : []
@@ -50,7 +50,7 @@ module "dead-letter-queue" {
     "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["resource.labels.\"location\""]
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
@@ -64,7 +64,7 @@ module "work-in-progress" {
     "metric.type=\"prometheus.googleapis.com/workqueue_in_progress_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
 
@@ -79,7 +79,7 @@ module "work-queued" {
     "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
@@ -118,7 +118,7 @@ module "wait-latency" {
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_seconds/histogram\"",
     "metric.label.\"service_name\"=\"${var.name}-dsp\"",
   ]
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
 }
 
 module "percent-deduped" {
@@ -141,10 +141,10 @@ module "percent-deduped" {
   alignment_period            = "60s"
   thresholds                  = []
   numerator_align             = "ALIGN_RATE"
-  numerator_group_by_fields   = ["resource.label.\"location\""]
+  numerator_group_by_fields   = var.scope == "regional" ? ["resource.label.\"location\""] : null
   numerator_reduce            = "REDUCE_SUM"
   denominator_align           = "ALIGN_RATE"
-  denominator_group_by_fields = ["resource.label.\"location\""]
+  denominator_group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   denominator_reduce          = "REDUCE_SUM"
 }
 
