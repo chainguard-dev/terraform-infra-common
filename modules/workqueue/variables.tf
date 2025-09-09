@@ -63,7 +63,7 @@ variable "product" {
 variable "scope" {
   description = "The scope of the workqueue: 'regional' for region-specific workqueues or 'global' for a single multi-regional workqueue."
   type        = string
-  default     = "regional"
+  default     = "global"
 
   validation {
     condition     = contains(["regional", "global"], var.scope)
