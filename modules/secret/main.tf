@@ -17,9 +17,10 @@ resource "google_secret_manager_secret_version" "placeholder" {
   secret      = google_secret_manager_secret.this.id
   secret_data = "placeholder"
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # We don't prevent this version from being destroyed,
+  # since it is meant as a bootstrapping step when creating new
+  # secrets. Once populated with a legitimate value, this
+  # placeholder is no longer needed.
 }
 
 locals {
