@@ -164,3 +164,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "local_disk_mount" {
+  description = "Whether to use alpha local disk mount option."
+  type        = bool
+  default     = false
+}
