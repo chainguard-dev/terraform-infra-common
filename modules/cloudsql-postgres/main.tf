@@ -126,6 +126,17 @@ resource "google_sql_database_instance" "replicas" {
     # Ensure replicas use same edition as primary
     edition = var.edition
 
+    # Apply same database flags to replicas as primary
+    dynamic "database_flags" {
+      for_each = merge({
+        "cloudsql.iam_authentication" = "on"
+      }, var.database_flags)
+      content {
+        name  = database_flags.key
+        value = database_flags.value
+      }
+    }
+
     backup_configuration {
       enabled                        = false
       point_in_time_recovery_enabled = false
