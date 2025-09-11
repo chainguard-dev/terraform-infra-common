@@ -24,8 +24,8 @@ resource "google_secret_manager_secret_version" "placeholder" {
 }
 
 locals {
-  accessors       = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != ""]
-  accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : sa if sa != ""]
+  accessors       = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != "" && !strcontains(sa, ":")]
+  accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : reverse(split(":", sa))[0] if sa != ""]
   # Extract the email portion of the authorized adder member
   authorized_adder_email = strcontains(var.authorized-adder, ":") ? split(":", var.authorized-adder)[1] : var.authorized-adder
 
