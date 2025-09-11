@@ -50,15 +50,19 @@ locals {
     [for key in var.filter_has_attributes : "attributes:ce-${key}"],
     [for key in var.filter_not_has_attributes : "NOT attributes:ce-${key}"],
   )
+
+  default_labels = {
+    basename(abspath(path.module)) = var.name
+    terraform-module               = basename(abspath(path.module))
+    team                           = var.team
+    product                        = var.product
+  }
 }
 
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.suffix.result}"
 
-  labels = merge(
-    var.team == "" ? {} : { team = var.team },
-    var.product == "" ? {} : { product = var.product }
-  )
+  labels = local.default_labels
 
   message_storage_policy {
     allowed_persistence_regions = [var.private-service.region]
@@ -79,6 +83,8 @@ resource "google_storage_bucket" "dlq_bucket" {
   location = var.gcs_region
 
   uniform_bucket_level_access = true
+
+  labels = local.default_labels
 }
 
 // Allow the subscription to publish to the dead letter bucket
@@ -117,6 +123,7 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   name                       = google_pubsub_topic.dead-letter.name
   topic                      = google_pubsub_topic.dead-letter.name
   message_retention_duration = "86400s"
+  labels                     = local.default_labels
 
   expiration_policy {
     ttl = "86400s"
@@ -145,8 +152,9 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
 // Configure the subscription to deliver the events matching our filter to this service
 // using the above identity to authorize the delivery..
 resource "google_pubsub_subscription" "this" {
-  name  = "${var.name}-${random_string.suffix.result}"
-  topic = var.broker
+  name   = "${var.name}-${random_string.suffix.result}"
+  topic  = var.broker
+  labels = local.default_labels
 
   ack_deadline_seconds = var.ack_deadline_seconds
 
