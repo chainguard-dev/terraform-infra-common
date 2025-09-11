@@ -71,13 +71,11 @@ variable "containers" {
               memory = string
             }
           ), null)
-          cpu_idle          = optional(bool, true)
+          cpu_idle          = optional(bool)
           startup_cpu_boost = optional(bool, true)
         }
       ),
-      {
-        cpu_idle = true
-      }
+      {}
     )
     env = optional(list(object({
       name  = string
