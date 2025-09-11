@@ -78,8 +78,11 @@ module "this" {
     }
   }
   volumes = [{
-    name      = "logs"
-    empty_dir = {}
+    name = "logs"
+    empty_dir = {
+      medium = var.local_disk_mount ? "DISK" : "MEMORY"
+      size   = var.local_disk_mount ? "16G" : "2G"
+    }
   }]
 
   scaling = var.scaling
