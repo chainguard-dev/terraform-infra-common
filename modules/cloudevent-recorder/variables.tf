@@ -170,3 +170,9 @@ variable "local_disk_mount" {
   type        = bool
   default     = false
 }
+
+variable "launch_stage" {
+  description = "Launch stage as defined by GCP; Cloud Run supports ALPHA, BETA, and GA. If no value is specified, GA is assumed."
+  type        = string
+  default     = "GA"
+}
