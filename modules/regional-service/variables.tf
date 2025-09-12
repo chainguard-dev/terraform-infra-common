@@ -248,3 +248,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "launch_stage" {
+  description = "Launch stage as defined by GCP; Cloud Run supports ALPHA, BETA, and GA. If no value is specified, GA is assumed."
+  type        = string
+  default     = "GA"
+}
