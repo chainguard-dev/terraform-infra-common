@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/chainguard-dev/clog"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 	"github.com/google/go-github/v72/github"
 )
 
@@ -54,6 +55,8 @@ func (r *Resource) String() string {
 
 // Reconciler manages the reconciliation of GitHub resources.
 type Reconciler struct {
+	workqueue.UnimplementedWorkqueueServiceServer
+
 	// reconcileFunc is the reconciler for all resource types.
 	reconcileFunc ReconcilerFunc
 
@@ -127,4 +130,35 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 // GetStateManager returns the state manager for accessing state operations.
 func (r *Reconciler) GetStateManager() *StateManager {
 	return r.stateManager
+}
+
+// Process implements the WorkqueueService.Process RPC.
+func (r *Reconciler) Process(ctx context.Context, req *workqueue.ProcessRequest) (*workqueue.ProcessResponse, error) {
+	clog.InfoContextf(ctx, "Processing GitHub resource: %s (priority: %d)", req.Key, req.Priority)
+
+	// Call the reconciler
+	err := r.Reconcile(ctx, req.Key)
+	if err != nil {
+		// Check if we can extract a requeue delay from the error
+		if delay, ok := workqueue.GetRequeueDelay(err); ok {
+			clog.InfoContextf(ctx, "Reconciliation requested requeue after %v for key: %s", delay, req.Key)
+			return &workqueue.ProcessResponse{
+				RequeueAfterSeconds: int64(delay.Seconds()),
+			}, nil
+		}
+
+		// Check if this is a non-retriable error
+		if details := workqueue.GetNonRetriableDetails(err); details != nil {
+			clog.WarnContextf(ctx, "Reconciliation failed with non-retriable error for key %s: %v (reason: %s)", req.Key, err, details.Message)
+			// Return nil error to indicate successful processing (but don't retry)
+			return &workqueue.ProcessResponse{}, nil
+		}
+
+		// Regular error - will be retried with exponential backoff
+		clog.ErrorContextf(ctx, "Reconciliation failed for key %s: %v", req.Key, err)
+		return nil, err
+	}
+
+	clog.InfoContextf(ctx, "Successfully reconciled GitHub resource: %s", req.Key)
+	return &workqueue.ProcessResponse{}, nil
 }
