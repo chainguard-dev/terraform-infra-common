@@ -7,7 +7,7 @@ This module creates a dashboard section for monitoring workqueue state, includin
 ```hcl
 module "workqueue-state" {
   source = "../sections/workqueue"
-  
+
   title           = "My Workqueue"
   service_name    = "my-service"
   max_retry       = 5
