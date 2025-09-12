@@ -93,6 +93,7 @@ No modules.
 | <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment for the service | `string` | `"EXECUTION_ENVIRONMENT_GEN2"` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | Which type of ingress traffic to accept for the service.<br/><br/>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br/>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer<br/>- INGRESS\_TRAFFIC\_INTERNAL\_ONLY accepts internal traffic only | `string` | `"INGRESS_TRAFFIC_INTERNAL_ONLY"` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the service. | `map(string)` | `{}` | no |
+| <a name="input_launch_stage"></a> [launch\_stage](#input\_launch\_stage) | Launch stage as defined by GCP; Cloud Run supports ALPHA, BETA, and GA. If no value is specified, GA is assumed. | `string` | `"GA"` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | The otel collector image to use as a base. Must be on gcr.io or dockerhub. | `string` | `"chainguard/opentelemetry-collector-contrib:latest"` | no |
