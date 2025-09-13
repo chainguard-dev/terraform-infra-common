@@ -158,27 +158,11 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_attempts-at-completion"></a> [attempts-at-completion](#module\_attempts-at-completion) | ../dashboard/widgets/xy-promql | n/a |
 | <a name="module_change-trigger-calls-dispatcher"></a> [change-trigger-calls-dispatcher](#module\_change-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
-| <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../dashboard/sections/collapsible | n/a |
 | <a name="module_cron-trigger-calls-dispatcher"></a> [cron-trigger-calls-dispatcher](#module\_cron-trigger-calls-dispatcher) | ../authorize-private-service | n/a |
-| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard | n/a |
-| <a name="module_dead-letter-queue"></a> [dead-letter-queue](#module\_dead-letter-queue) | ../dashboard/widgets/xy | n/a |
 | <a name="module_dispatcher-calls-target"></a> [dispatcher-calls-target](#module\_dispatcher-calls-target) | ../authorize-private-service | n/a |
-| <a name="module_dispatcher-logs"></a> [dispatcher-logs](#module\_dispatcher-logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_dispatcher-service"></a> [dispatcher-service](#module\_dispatcher-service) | ../regional-go-service | n/a |
-| <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
-| <a name="module_max-attempts"></a> [max-attempts](#module\_max-attempts) | ../dashboard/widgets/xy | n/a |
-| <a name="module_percent-deduped"></a> [percent-deduped](#module\_percent-deduped) | ../dashboard/widgets/xy-ratio | n/a |
-| <a name="module_process-latency"></a> [process-latency](#module\_process-latency) | ../dashboard/widgets/latency | n/a |
-| <a name="module_receiver-logs"></a> [receiver-logs](#module\_receiver-logs) | ../dashboard/sections/logs | n/a |
 | <a name="module_receiver-service"></a> [receiver-service](#module\_receiver-service) | ../regional-go-service | n/a |
-| <a name="module_time-to-completion"></a> [time-to-completion](#module\_time-to-completion) | ../dashboard/widgets/xy-promql | n/a |
-| <a name="module_wait-latency"></a> [wait-latency](#module\_wait-latency) | ../dashboard/widgets/latency | n/a |
-| <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
-| <a name="module_work-added"></a> [work-added](#module\_work-added) | ../dashboard/widgets/xy | n/a |
-| <a name="module_work-in-progress"></a> [work-in-progress](#module\_work-in-progress) | ../dashboard/widgets/xy | n/a |
-| <a name="module_work-queued"></a> [work-queued](#module\_work-queued) | ../dashboard/widgets/xy | n/a |
 
 ## Resources
 
@@ -231,5 +215,6 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_dispatcher"></a> [dispatcher](#output\_dispatcher) | n/a |
 | <a name="output_receiver"></a> [receiver](#output\_receiver) | n/a |
 <!-- END_TF_DOCS -->
