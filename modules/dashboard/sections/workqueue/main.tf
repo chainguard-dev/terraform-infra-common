@@ -1,84 +1,71 @@
-module "width" { source = "../dashboard/sections/width" }
-
-module "receiver-logs" {
-  source        = "../dashboard/sections/logs"
-  title         = "Receiver Logs"
-  filter        = ["resource.labels.service_name=\"${var.name}-rcv\""]
-  cloudrun_type = "service"
+variable "title" {
+  type    = string
+  default = "Workqueue State"
+}
+variable "filter" {
+  type    = list(string)
+  default = []
+}
+variable "collapsed" {
+  type    = bool
+  default = false
+}
+variable "service_name" {
+  type = string
+}
+variable "receiver_name" {
+  type    = string
+  default = ""
+}
+variable "dispatcher_name" {
+  type    = string
+  default = ""
+}
+variable "max_retry" {
+  type    = number
+  default = 0
+}
+variable "concurrent_work" {
+  type = number
+}
+variable "scope" {
+  type    = string
+  default = "regional"
 }
 
-module "dispatcher-logs" {
-  source        = "../dashboard/sections/logs"
-  title         = "Dispatcher Logs"
-  filter        = ["resource.labels.service_name=\"${var.name}-dsp\""]
-  cloudrun_type = "service"
+locals {
+  // Use provided names or derive from service_name
+  rcv_name = var.receiver_name != "" ? var.receiver_name : "${var.service_name}-rcv"
+  dsp_name = var.dispatcher_name != "" ? var.dispatcher_name : "${var.service_name}-dsp"
+
+  // gmp_filter is a subset of var.filter that does not include the "resource.type" string
+  gmp_filter = [for f in var.filter : f if !strcontains(f, "resource.type")]
 }
 
-module "attempts-at-completion" {
-  source       = "../dashboard/widgets/xy-promql"
-  title        = "Attempts at completion (95p over 5m)"
-  promql_query = "histogram_quantile(0.95, rate(workqueue_attempts_at_completion_bucket{service_name=\"${var.name}-dsp\"}[5m]))"
-  thresholds   = var.max-retry > 0 ? [var.max-retry] : []
-}
-
-module "time-to-completion" {
-  source       = "../dashboard/widgets/xy-promql"
-  title        = "Time to completion (50p/95p by priority)"
-  promql_query = "histogram_quantile(0.50, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class) or histogram_quantile(0.95, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${var.name}-dsp\"}[5m])) by (priority_class)"
-}
-
-module "max-attempts" {
-  source = "../dashboard/widgets/xy"
-  title  = "Maximum task attempts"
-  filter = [
-    "resource.type=\"prometheus_target\"",
-    "metric.type=\"prometheus.googleapis.com/workqueue_max_attempts/gauge\"",
-    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
-  ]
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MAX"
-  thresholds      = var.max-retry > 0 ? [var.max-retry] : []
-}
-
-module "dead-letter-queue" {
-  count  = var.max-retry > 0 ? 1 : 0
-  source = "../dashboard/widgets/xy"
-  title  = "Dead-letter queue size"
-  filter = [
-    "resource.type=\"prometheus_target\"",
-    "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
-    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
-  ]
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
-  plot_type       = "STACKED_AREA"
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MAX"
-}
+module "width" { source = "../width" }
 
 module "work-in-progress" {
-  source = "../dashboard/widgets/xy"
+  source = "../../widgets/xy"
   title  = "Amount of work in progress"
-  filter = [
+  filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_in_progress_keys/gauge\"",
-    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
-  ]
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
   group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
-
-  thresholds = [var.concurrent-work]
+  thresholds      = [var.concurrent_work]
 }
 
 module "work-queued" {
-  source = "../dashboard/widgets/xy"
+  source = "../../widgets/xy"
   title  = "Amount of work queued"
-  filter = [
+  filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
-    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
-  ]
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
   group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
@@ -86,13 +73,13 @@ module "work-queued" {
 }
 
 module "work-added" {
-  source = "../dashboard/widgets/xy"
+  source = "../../widgets/xy"
   title  = "Amount of work added"
-  filter = [
+  filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
-    "metric.label.\"service_name\"=\"${var.name}-rcv\"",
-  ]
+    "metric.label.\"service_name\"=\"${local.rcv_name}\"",
+  ])
   group_by_fields = ["resource.label.\"location\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_RATE"
@@ -100,43 +87,43 @@ module "work-added" {
 }
 
 module "process-latency" {
-  source = "../dashboard/widgets/latency"
+  source = "../../widgets/latency"
   title  = "Work processing latency"
-  filter = [
+  filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_process_latency_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
-  ]
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
   group_by_fields = ["resource.label.\"location\""]
 }
 
 module "wait-latency" {
-  source = "../dashboard/widgets/latency"
+  source = "../../widgets/latency"
   title  = "Work wait times"
-  filter = [
+  filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${var.name}-dsp\"",
-  ]
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
   group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
 }
 
 module "percent-deduped" {
-  source    = "../dashboard/widgets/xy-ratio"
+  source    = "../../widgets/xy-ratio"
   title     = "Percentage of work deduplicated"
   legend    = ""
   plot_type = "LINE"
 
-  numerator_filter = [
+  numerator_filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_deduped_keys_total/counter\"",
-    "metric.label.\"service_name\"=\"${var.name}-rcv\"",
-  ]
-  denominator_filter = [
+    "metric.label.\"service_name\"=\"${local.rcv_name}\"",
+  ])
+  denominator_filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
-    "metric.label.\"service_name\"=\"${var.name}-rcv\"",
-  ]
+    "metric.label.\"service_name\"=\"${local.rcv_name}\"",
+  ])
 
   alignment_period            = "60s"
   thresholds                  = []
@@ -146,6 +133,48 @@ module "percent-deduped" {
   denominator_align           = "ALIGN_RATE"
   denominator_group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
   denominator_reduce          = "REDUCE_SUM"
+}
+
+module "attempts-at-completion" {
+  source       = "../../widgets/xy-promql"
+  title        = "Attempts at completion (95p over 5m)"
+  promql_query = "histogram_quantile(0.95, rate(workqueue_attempts_at_completion_bucket{service_name=\"${local.dsp_name}\"}[5m]))"
+  thresholds   = var.max_retry > 0 ? [var.max_retry] : []
+}
+
+module "max-attempts" {
+  source = "../../widgets/xy"
+  title  = "Maximum task attempts"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_max_attempts/gauge\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_MAX"
+  thresholds      = var.max_retry > 0 ? [var.max_retry] : []
+}
+
+module "time-to-completion" {
+  source       = "../../widgets/xy-promql"
+  title        = "Time to completion (50p/95p by priority)"
+  promql_query = "histogram_quantile(0.50, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${local.dsp_name}\"}[5m])) by (priority_class) or histogram_quantile(0.95, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${local.dsp_name}\"}[5m])) by (priority_class)"
+}
+
+module "dead-letter-queue" {
+  count  = var.max_retry > 0 ? 1 : 0
+  source = "../../widgets/xy"
+  title  = "Dead-letter queue size"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  plot_type       = "STACKED_AREA"
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_MAX"
 }
 
 locals {
@@ -221,7 +250,7 @@ locals {
       widget = module.time-to-completion.widget,
     }
     ],
-    var.max-retry > 0 ? [
+    var.max_retry > 0 ? [
       {
         yPos   = local.unit * 2,
         xPos   = local.col[2],
@@ -233,37 +262,13 @@ locals {
 }
 
 module "collapsible" {
-  source = "../dashboard/sections/collapsible"
+  source = "../collapsible"
 
-  title     = "Workqueue State"
+  title     = var.title
   tiles     = local.tiles
-  collapsed = false
+  collapsed = var.collapsed
 }
 
-module "layout" {
-  source = "../dashboard/sections/layout"
-
-  sections = [
-    module.collapsible.section,
-    module.receiver-logs.section,
-    module.dispatcher-logs.section,
-  ]
-}
-
-module "dashboard" {
-  source = "../dashboard"
-
-  object = {
-    displayName = "Cloud Workqueue: ${var.name}"
-    labels = {
-      "service" : ""
-      "workqueue" : ""
-    }
-
-    // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#mosaiclayout
-    mosaicLayout = {
-      columns = module.width.size
-      tiles   = module.layout.tiles,
-    }
-  }
+output "section" {
+  value = module.collapsible.section
 }

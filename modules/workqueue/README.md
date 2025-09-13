@@ -85,6 +85,37 @@ pointing at `WORKQUEUE_SERVICE` with Cloud Run authentication (see the
 	}
 ```
 
+## Dashboard
+
+A separate dashboard module is available for monitoring your workqueue. The dashboard provides comprehensive visibility into queue metrics, processing latency, retry patterns, and system health.
+
+```hcl
+// Deploy the workqueue dashboard separately
+module "workqueue-dashboard" {
+  source = "chainguard-dev/common/infra//modules/dashboard/workqueue"
+
+  // Pass the same configuration used for the workqueue
+  name            = var.name
+  max_retry       = var.max-retry
+  concurrent_work = var.concurrent-work
+  scope           = var.scope
+
+  // Optional: Add alert policy IDs
+  alerts = {
+    "high-retry-alert" = google_monitoring_alert_policy.high_retry.id
+  }
+}
+```
+
+The dashboard includes:
+- Queue state visualization (work in progress, queued, added)
+- Processing and wait latency metrics
+- Retry analytics and completion patterns
+- Dead letter queue monitoring (when max-retry is configured)
+- Service logs for receiver and dispatcher
+
+See [`modules/dashboard/workqueue`](../dashboard/workqueue/) for more details.
+
 ## Maximum Retry and Dead Letter Queue
 
 The workqueue system supports a maximum retry limit for tasks through the `max-retry` variable. When a task fails and gets requeued, the system tracks the number of attempts. Once the maximum retry limit is reached, the task is moved to a dead letter queue instead of being requeued.
