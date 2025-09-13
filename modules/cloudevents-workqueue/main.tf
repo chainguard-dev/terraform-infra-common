@@ -100,4 +100,6 @@ module "trigger" {
   ack_deadline_seconds  = var.ack_deadline_seconds
 
   team = var.squad
+
+  depends_on = [module.subscriber]
 }
