@@ -84,3 +84,53 @@ module "my-reconciler-dashboard" {
   concurrent_work = module.my-reconciler.concurrent-work
   scope           = "global"
 }
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+No requirements.
+
+## Providers
+
+No providers.
+
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_alerts"></a> [alerts](#module\_alerts) | ../sections/alerts | n/a |
+| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../ | n/a |
+| <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
+| <a name="module_github"></a> [github](#module\_github) | ../sections/github | n/a |
+| <a name="module_grpc"></a> [grpc](#module\_grpc) | ../sections/grpc | n/a |
+| <a name="module_layout"></a> [layout](#module\_layout) | ../sections/layout | n/a |
+| <a name="module_reconciler-logs"></a> [reconciler-logs](#module\_reconciler-logs) | ../sections/logs | n/a |
+| <a name="module_resources"></a> [resources](#module\_resources) | ../sections/resources | n/a |
+| <a name="module_width"></a> [width](#module\_width) | ../sections/width | n/a |
+| <a name="module_workqueue-state"></a> [workqueue-state](#module\_workqueue-state) | ../sections/workqueue | n/a |
+
+## Resources
+
+No resources.
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_alerts"></a> [alerts](#input\_alerts) | Map of alert names to alert configurations | <pre>map(object({<br/>    displayName         = string<br/>    documentation       = string<br/>    userLabels          = map(string)<br/>    project             = string<br/>    notificationChannel = string<br/>  }))</pre> | `{}` | no |
+| <a name="input_concurrent_work"></a> [concurrent\_work](#input\_concurrent\_work) | The amount of concurrent work the workqueue dispatches | `number` | `20` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to add to the dashboard | `map(string)` | `{}` | no |
+| <a name="input_max_retry"></a> [max\_retry](#input\_max\_retry) | The maximum number of retry attempts for workqueue tasks | `number` | `100` | no |
+| <a name="input_name"></a> [name](#input\_name) | The name of the reconciler (base name without suffixes) | `string` | n/a | yes |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels for alerts | `list(string)` | `[]` | no |
+| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID | `string` | n/a | yes |
+| <a name="input_scope"></a> [scope](#input\_scope) | The scope of the workqueue (regional or global) | `string` | `"global"` | no |
+| <a name="input_sections"></a> [sections](#input\_sections) | Configure visibility of optional dashboard sections | <pre>object({<br/>    github = optional(bool, false)<br/>  })</pre> | `{}` | no |
+| <a name="input_service_name"></a> [service\_name](#input\_service\_name) | The name of the reconciler service (defaults to name-rec) | `string` | `""` | no |
+| <a name="input_workqueue_name"></a> [workqueue\_name](#input\_workqueue\_name) | The name of the workqueue (defaults to name-wq) | `string` | `""` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_json"></a> [json](#output\_json) | n/a |
+<!-- END_TF_DOCS -->
