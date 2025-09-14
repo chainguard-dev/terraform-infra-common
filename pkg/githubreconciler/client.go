@@ -8,9 +8,11 @@ package githubreconciler
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/chainguard-dev/clog"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/google/go-github/v72/github"
 	"golang.org/x/oauth2"
 )
@@ -70,7 +72,14 @@ func (cc *ClientCache) Get(ctx context.Context, org, repo string) (*github.Clien
 		return nil, fmt.Errorf("creating token source: %w", err)
 	}
 
-	httpClient := oauth2.NewClient(ctx, tokenSource)
+	// Create OAuth2 client with the token source
+	oauthClient := oauth2.NewClient(ctx, tokenSource)
+
+	// Wrap the transport with metrics instrumentation for GitHub API monitoring
+	httpClient := &http.Client{
+		Transport: httpmetrics.WrapTransport(oauthClient.Transport),
+	}
+
 	client = github.NewClient(httpClient)
 
 	// Cache the client
