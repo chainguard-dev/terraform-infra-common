@@ -13,8 +13,8 @@ cloud.google.com/go/auth/oauth2adapt v0.2.8 h1:keo8NaayQZ6wimpNSmW5OPc283g65QNIi
 cloud.google.com/go/auth/oauth2adapt v0.2.8/go.mod h1:XQ9y31RkqZCcwJWNSx2Xvric3RrU88hAYYbjDWYDL+c=
 cloud.google.com/go/bigquery v1.70.0 h1:V1OIhhOSionCOXWMmypXOvZu/ogkzosa7s1ArWJO/Yg=
 cloud.google.com/go/bigquery v1.70.0/go.mod h1:6lEAkgTJN+H2JcaX1eKiuEHTKyqBaJq5U3SpLGbSvwI=
-cloud.google.com/go/compute/metadata v0.8.2 h1:9qL7VvAzeYdA4MN9QjJCSRO8h2vx8C5Rif+PnG5ITQ8=
-cloud.google.com/go/compute/metadata v0.8.2/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
+cloud.google.com/go/compute/metadata v0.8.4 h1:oXMa1VMQBVCyewMIOm3WQsnVd9FbKBtm8reqWRaXnHQ=
+cloud.google.com/go/compute/metadata v0.8.4/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 cloud.google.com/go/datacatalog v1.26.0 h1:eFgygb3DTufTWWUB8ARk+dSuXz+aefNJXTlkWlQcWwE=
 cloud.google.com/go/datacatalog v1.26.0/go.mod h1:bLN2HLBAwB3kLTFT5ZKLHVPj/weNz6bR0c7nYp0LE14=
 cloud.google.com/go/iam v1.5.2 h1:qgFRAGEmd8z6dJ/qyEchAuL9jpswyODjA2lS+w234g8=

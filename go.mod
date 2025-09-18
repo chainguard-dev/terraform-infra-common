@@ -6,7 +6,7 @@ require (
 	chainguard.dev/go-grpc-kit v0.17.15
 	chainguard.dev/sdk v0.1.41
 	cloud.google.com/go/bigquery v1.70.0
-	cloud.google.com/go/compute/metadata v0.8.2
+	cloud.google.com/go/compute/metadata v0.8.4
 	cloud.google.com/go/profiler v0.4.3
 	cloud.google.com/go/pubsub/v2 v2.0.0
 	cloud.google.com/go/storage v1.56.2
