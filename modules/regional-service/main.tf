@@ -341,6 +341,8 @@ resource "google_cloud_run_v2_service" "this" {
     }
   }
 
+  launch_stage = var.launch_stage
+
   lifecycle {
     ignore_changes = [
       launch_stage,

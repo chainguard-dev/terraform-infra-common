@@ -199,6 +199,8 @@ resource "google_cloud_run_v2_job" "job" {
     }
   }
 
+  launch_stage = var.launch_stage
+
   lifecycle {
     ignore_changes = [
       launch_stage,
