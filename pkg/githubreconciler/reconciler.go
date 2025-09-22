@@ -65,6 +65,9 @@ type Reconciler struct {
 
 	// stateManager handles state persistence in GitHub comments.
 	stateManager *StateManager
+
+	// useOrgScopedCredentials indicates whether to use org-scoped instead of repo-scoped credentials.
+	useOrgScopedCredentials bool
 }
 
 // Option configures a Reconciler.
@@ -81,6 +84,15 @@ func WithReconciler(f ReconcilerFunc) Option {
 func WithStateManager(sm *StateManager) Option {
 	return func(r *Reconciler) {
 		r.stateManager = sm
+	}
+}
+
+// WithOrgScopedCredentials configures the reconciler to use org-scoped credentials
+// instead of repo-scoped credentials. When enabled, the same GitHub client will be
+// used for all repositories within an organization.
+func WithOrgScopedCredentials() Option {
+	return func(r *Reconciler) {
+		r.useOrgScopedCredentials = true
 	}
 }
 
@@ -114,7 +126,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 	}
 
 	// Get the appropriate GitHub client
-	client, err := r.clientCache.Get(ctx, resource.Owner, resource.Repo)
+	// When using org-scoped credentials, pass .github as repo for Octo STS
+	repo := resource.Repo
+	if r.useOrgScopedCredentials {
+		repo = ".github"
+	}
+	client, err := r.clientCache.Get(ctx, resource.Owner, repo)
 	if err != nil {
 		return fmt.Errorf("getting GitHub client: %w", err)
 	}
