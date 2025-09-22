@@ -129,7 +129,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 	// When using org-scoped credentials, pass .github as repo for Octo STS
 	repo := resource.Repo
 	if r.useOrgScopedCredentials {
-		repo = ".github"
+		// Drop the repo component to make it org-scoped.
+		repo = ""
 	}
 	client, err := r.clientCache.Get(ctx, resource.Owner, repo)
 	if err != nil {
