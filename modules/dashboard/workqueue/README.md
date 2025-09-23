@@ -75,7 +75,6 @@ No resources.
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard | `map(string)` | `{}` | no |
 | <a name="input_max_retry"></a> [max\_retry](#input\_max\_retry) | The maximum number of retry attempts before a task is moved to the dead letter queue | `number` | `100` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the workqueue | `string` | n/a | yes |
-| <a name="input_scope"></a> [scope](#input\_scope) | The scope of the workqueue: 'regional' or 'global' | `string` | `"regional"` | no |
 
 ## Outputs
 

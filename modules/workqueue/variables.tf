@@ -61,13 +61,13 @@ variable "product" {
 }
 
 variable "scope" {
-  description = "The scope of the workqueue: 'regional' for region-specific workqueues or 'global' for a single multi-regional workqueue."
+  description = "The scope of the workqueue. Must be 'global' for a single multi-regional workqueue."
   type        = string
   default     = "global"
 
   validation {
-    condition     = contains(["regional", "global"], var.scope)
-    error_message = "scope must be either 'regional' or 'global'."
+    condition     = var.scope == "global"
+    error_message = "scope must be 'global'. Regional scope is no longer supported."
   }
 }
 

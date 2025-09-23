@@ -81,7 +81,6 @@ No resources.
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | `[]` | no |
 | <a name="input_max_retry"></a> [max\_retry](#input\_max\_retry) | n/a | `number` | `0` | no |
 | <a name="input_receiver_name"></a> [receiver\_name](#input\_receiver\_name) | n/a | `string` | `""` | no |
-| <a name="input_scope"></a> [scope](#input\_scope) | n/a | `string` | `"regional"` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | n/a | `string` | n/a | yes |
 | <a name="input_title"></a> [title](#input\_title) | n/a | `string` | `"Workqueue State"` | no |
 

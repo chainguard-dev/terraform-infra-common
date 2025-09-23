@@ -18,7 +18,6 @@ module "my-reconciler-dashboard" {
   # Workqueue configuration
   max_retry       = 100
   concurrent_work = 20
-  scope           = "global"
 
   # Optional sections
   sections = {
@@ -55,7 +54,6 @@ The dashboard includes:
 | `workqueue_name` | Workqueue name | `${name}-wq` |
 | `max_retry` | Maximum retry attempts for tasks | `100` |
 | `concurrent_work` | Concurrent work items | `20` |
-| `scope` | Workqueue scope (regional/global) | `global` |
 | `sections` | Optional dashboard sections | See variables.tf |
 | `notification_channels` | Alert notification channels | `[]` |
 
@@ -82,7 +80,6 @@ module "my-reconciler-dashboard" {
   name            = "my-reconciler"  # Same base name as the reconciler
   max_retry       = module.my-reconciler.max-retry
   concurrent_work = module.my-reconciler.concurrent-work
-  scope           = "global"
 }
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -123,7 +120,6 @@ No resources.
 | <a name="input_name"></a> [name](#input\_name) | The name of the reconciler (base name without suffixes) | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels for alerts | `list(string)` | `[]` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID | `string` | n/a | yes |
-| <a name="input_scope"></a> [scope](#input\_scope) | The scope of the workqueue (regional or global) | `string` | `"global"` | no |
 | <a name="input_sections"></a> [sections](#input\_sections) | Configure visibility of optional dashboard sections | <pre>object({<br/>    github = optional(bool, false)<br/>  })</pre> | `{}` | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | The name of the reconciler service (defaults to name-rec) | `string` | `""` | no |
 | <a name="input_workqueue_name"></a> [workqueue\_name](#input\_workqueue\_name) | The name of the workqueue (defaults to name-wq) | `string` | `""` | no |

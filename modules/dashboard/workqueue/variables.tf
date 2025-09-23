@@ -14,12 +14,6 @@ variable "concurrent_work" {
   type        = number
 }
 
-variable "scope" {
-  description = "The scope of the workqueue: 'regional' or 'global'"
-  type        = string
-  default     = "regional"
-}
-
 variable "labels" {
   description = "Additional labels to apply to the dashboard"
   type        = map(string)

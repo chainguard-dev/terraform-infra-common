@@ -38,12 +38,6 @@ variable "concurrent_work" {
   default     = 20
 }
 
-variable "scope" {
-  description = "The scope of the workqueue (regional or global)"
-  type        = string
-  default     = "global"
-}
-
 // Section visibility
 variable "sections" {
   description = "Configure visibility of optional dashboard sections"
