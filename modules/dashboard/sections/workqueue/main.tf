@@ -28,10 +28,6 @@ variable "max_retry" {
 variable "concurrent_work" {
   type = number
 }
-variable "scope" {
-  type    = string
-  default = "regional"
-}
 
 locals {
   // Use provided names or derive from service_name
@@ -52,7 +48,7 @@ module "work-in-progress" {
     "metric.type=\"prometheus.googleapis.com/workqueue_in_progress_keys/gauge\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  group_by_fields = null
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
   thresholds      = [var.concurrent_work]
@@ -66,7 +62,7 @@ module "work-queued" {
     "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  group_by_fields = null
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
@@ -105,7 +101,7 @@ module "wait-latency" {
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_seconds/histogram\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  group_by_fields = null
 }
 
 module "percent-deduped" {
@@ -128,10 +124,10 @@ module "percent-deduped" {
   alignment_period            = "60s"
   thresholds                  = []
   numerator_align             = "ALIGN_RATE"
-  numerator_group_by_fields   = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  numerator_group_by_fields   = null
   numerator_reduce            = "REDUCE_SUM"
   denominator_align           = "ALIGN_RATE"
-  denominator_group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  denominator_group_by_fields = null
   denominator_reduce          = "REDUCE_SUM"
 }
 
@@ -150,7 +146,7 @@ module "max-attempts" {
     "metric.type=\"prometheus.googleapis.com/workqueue_max_attempts/gauge\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  group_by_fields = null
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
   thresholds      = var.max_retry > 0 ? [var.max_retry] : []
@@ -171,7 +167,7 @@ module "dead-letter-queue" {
     "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
-  group_by_fields = var.scope == "regional" ? ["resource.label.\"location\""] : null
+  group_by_fields = null
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"

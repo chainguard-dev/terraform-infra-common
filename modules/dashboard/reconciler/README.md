@@ -18,7 +18,6 @@ module "my-reconciler-dashboard" {
   # Workqueue configuration
   max_retry       = 100
   concurrent_work = 20
-  scope           = "global"
 
   # Optional sections
   sections = {
@@ -55,7 +54,6 @@ The dashboard includes:
 | `workqueue_name` | Workqueue name | `${name}-wq` |
 | `max_retry` | Maximum retry attempts for tasks | `100` |
 | `concurrent_work` | Concurrent work items | `20` |
-| `scope` | Workqueue scope (regional/global) | `global` |
 | `sections` | Optional dashboard sections | See variables.tf |
 | `notification_channels` | Alert notification channels | `[]` |
 
@@ -82,7 +80,6 @@ module "my-reconciler-dashboard" {
   name            = "my-reconciler"  # Same base name as the reconciler
   max_retry       = module.my-reconciler.max-retry
   concurrent_work = module.my-reconciler.concurrent-work
-  scope           = "global"
 }
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

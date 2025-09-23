@@ -31,7 +31,6 @@ module "workqueue" {
   notification_channels = var.notification_channels
   labels                = var.labels
 
-  scope                    = "global"
   multi_regional_location = var.multi_regional_location
 
   depends_on = [module.reconciler]
