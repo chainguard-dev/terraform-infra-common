@@ -124,6 +124,7 @@ No requirements.
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_service_account_email"></a> [service\_account\_email](#input\_service\_account\_email) | The email of the service account being authorized to invoke the private Cloud Run service. If empty, a service account will be created and used. | `string` | `""` | no |
 | <a name="input_squad"></a> [squad](#input\_squad) | squad label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_trigger-name-prefix"></a> [trigger-name-prefix](#input\_trigger-name-prefix) | Prefix for the cloud event trigger and associated resources created with this bot. | `string` | `"bot-trigger"` | no |
 
 ## Outputs
 
