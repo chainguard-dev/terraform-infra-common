@@ -3,7 +3,13 @@ variable "project_id" {
 }
 
 variable "name" {
+  description = "The name prefixed to all resources created by this module."
   type = string
+
+  validation {
+    condition = length(var.name) <= 25
+    error_message = "Name must be 25 characters or less to satisfy service account name restrictions, with random 5 character suffix."
+  }
 }
 
 variable "gcs_region" {

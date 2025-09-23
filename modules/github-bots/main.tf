@@ -58,7 +58,7 @@ module "cloudevent-trigger" {
   source   = "../cloudevent-trigger"
 
   project_id                = var.project_id
-  name                      = "bot-trigger-${var.name}"
+  name                      = "${var.trigger-name-prefix}-${var.name}"
   broker                    = var.broker[each.key]
   raw_filter                = var.raw_filter
   filter                    = local.combined_filter
@@ -84,7 +84,7 @@ module "dashboard" {
 
   triggers = {
     (var.name) : {
-      subscription_prefix   = "bot-trigger-${var.name}"
+      subscription_prefix   = "${var.trigger-name-prefix}-${var.name}"
       notification_channels = var.notification_channels
     }
   }
