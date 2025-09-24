@@ -9,12 +9,14 @@ terraform {
 }
 
 resource "google_project_service" "cloud_run_api" {
+  project = var.project_id
   service = "run.googleapis.com"
 
   disable_on_destroy = false
 }
 
 resource "google_project_service" "cloudscheduler" {
+  project = var.project_id
   service = "cloudscheduler.googleapis.com"
 
   disable_on_destroy = false
@@ -263,7 +265,8 @@ locals {
 }
 
 resource "google_cloud_scheduler_job" "cron" {
-  paused = var.paused
+  project = var.project_id
+  paused  = var.paused
 
   name     = "${var.name}-cron"
   schedule = var.schedule
