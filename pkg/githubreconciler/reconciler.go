@@ -7,7 +7,9 @@ package githubreconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
@@ -142,7 +144,32 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 	}
 
 	// Execute the reconciliation
-	return r.reconcileFunc(ctx, resource, client)
+	err = r.reconcileFunc(ctx, resource, client)
+	if err != nil {
+		// Check if it's a rate limit error from any GitHub API call
+		var rateLimitErr *github.RateLimitError
+		if errors.As(err, &rateLimitErr) {
+			// Calculate duration until rate limit resets
+			resetTime := rateLimitErr.Rate.Reset.Time
+			clog.FromContext(ctx).With("reset_at", resetTime).
+				Warn("Rate limited, requeueing after rate limit reset")
+			return workqueue.RequeueAfter(time.Until(resetTime))
+		}
+
+		// Check if it's an abuse rate limit error
+		var abuseRateLimitErr *github.AbuseRateLimitError
+		if errors.As(err, &abuseRateLimitErr) {
+			// GitHub wants us to slow down - use retry after if provided, otherwise use a conservative 1 minute
+			retryAfter := time.Minute
+			if abuseRateLimitErr.RetryAfter != nil {
+				retryAfter = *abuseRateLimitErr.RetryAfter
+			}
+			clog.FromContext(ctx).With("retry_after", retryAfter).
+				Warn("Abuse rate limit detected, requeueing after retry period")
+			return workqueue.RequeueAfter(retryAfter)
+		}
+	}
+	return err
 }
 
 // GetStateManager returns the state manager for accessing state operations.
