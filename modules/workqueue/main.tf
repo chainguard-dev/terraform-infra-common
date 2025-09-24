@@ -18,7 +18,7 @@ locals {
 }
 
 resource "random_string" "bucket_suffix" {
-  length  = 6  // Same length as "global"
+  length  = 6 // Same length as "global"
   special = false
   upper   = false
   numeric = true
