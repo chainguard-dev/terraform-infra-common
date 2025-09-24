@@ -102,3 +102,7 @@ func (y *enq) Process(ctx context.Context, req *workqueue.ProcessRequest) (*work
 	}
 	return &workqueue.ProcessResponse{}, nil
 }
+
+func (y *enq) GetKeyState(ctx context.Context, req *workqueue.GetKeyStateRequest) (*workqueue.KeyState, error) {
+	return y.wq.Get(ctx, req.Key)
+}
