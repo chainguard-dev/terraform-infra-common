@@ -298,7 +298,6 @@ func extractStatusFromOutput[T any](identity string, output *github.CheckRunOutp
 	statusJSON := strings.TrimSpace(body[startIdx : startIdx+endIdx])
 
 	// Remove HTML comment wrapper
-	statusJSON = strings.TrimSpace(statusJSON)
 	statusJSON = strings.TrimPrefix(statusJSON, "<!--")
 	statusJSON = strings.TrimSuffix(statusJSON, "-->")
 
