@@ -90,7 +90,7 @@ func (sm *StatusManager[T]) NewSession(client *github.Client, pr *github.PullReq
 		owner:       owner,
 		repo:        repo,
 		sha:         pr.GetHead().GetSHA(),
-		prURL:       pr.GetURL(),
+		prURL:       pr.GetHTMLURL(),
 		projectID:   sm.projectID,
 		serviceName: sm.serviceName,
 	}

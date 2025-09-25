@@ -375,8 +375,9 @@ func TestNewSession(t *testing.T) {
 	}{{
 		name: "standard pull request",
 		pr: &github.PullRequest{
-			Number: github.Ptr(123),
-			URL:    github.Ptr("https://api.github.com/repos/owner/repo/pulls/123"),
+			Number:  github.Ptr(123),
+			URL:     github.Ptr("https://api.github.com/repos/owner/repo/pulls/123"),
+			HTMLURL: github.Ptr("https://github.com/owner/repo/pull/123"),
 			Base: &github.PullRequestBranch{
 				Repo: &github.Repository{
 					Owner: &github.User{
@@ -392,14 +393,15 @@ func TestNewSession(t *testing.T) {
 		expectedOwner:   "test-owner",
 		expectedRepo:    "test-repo",
 		expectedSHA:     "abc123def456",
-		expectedPRURL:   "https://api.github.com/repos/owner/repo/pulls/123",
+		expectedPRURL:   "https://github.com/owner/repo/pull/123",
 		expectedProject: "my-gcp-project",
 		expectedService: "autofix-service",
 	}, {
 		name: "pull request with special characters",
 		pr: &github.PullRequest{
-			Number: github.Ptr(456),
-			URL:    github.Ptr("https://api.github.com/repos/org-with-dash/repo_with_underscore/pulls/456"),
+			Number:  github.Ptr(456),
+			URL:     github.Ptr("https://api.github.com/repos/org-with-dash/repo_with_underscore/pulls/456"),
+			HTMLURL: github.Ptr("https://github.com/org-with-dash/repo_with_underscore/pull/456"),
 			Base: &github.PullRequestBranch{
 				Repo: &github.Repository{
 					Owner: &github.User{
@@ -415,7 +417,7 @@ func TestNewSession(t *testing.T) {
 		expectedOwner:   "org-with-dash",
 		expectedRepo:    "repo_with_underscore",
 		expectedSHA:     "xyz789abc123",
-		expectedPRURL:   "https://api.github.com/repos/org-with-dash/repo_with_underscore/pulls/456",
+		expectedPRURL:   "https://github.com/org-with-dash/repo_with_underscore/pull/456",
 		expectedProject: "my-gcp-project",
 		expectedService: "autofix-service",
 	}}
