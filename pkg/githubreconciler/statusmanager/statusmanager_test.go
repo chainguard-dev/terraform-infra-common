@@ -283,16 +283,16 @@ func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 		output: &github.CheckRunOutput{
 			Summary: github.Ptr(fmt.Sprintf("%s\n<!--\n{}\n", getStatusMarker(identity))),
 		},
-		wantNil: true,   // Should return nil
-		wantErr: true,   // With error for missing end marker
+		wantNil: true, // Should return nil
+		wantErr: true, // With error for missing end marker
 	}, {
 		name: "malformed JSON",
 		output: &github.CheckRunOutput{
 			Summary: github.Ptr(fmt.Sprintf("%s\n<!--\n{invalid json}\n-->\n%s",
 				getStatusMarker(identity), getStatusEndMarker(identity))),
 		},
-		wantNil: true,   // Returns nil when JSON unmarshal fails
-		wantErr: true,   // And returns error
+		wantNil: true, // Returns nil when JSON unmarshal fails
+		wantErr: true, // And returns error
 	}, {
 		name: "valid but empty JSON",
 		output: &github.CheckRunOutput{
@@ -525,8 +525,8 @@ func TestGetSetCheckRunID(t *testing.T) {
 
 func TestBuildDetailsURL(t *testing.T) {
 	tests := []struct {
-		name        string
-		session     *Session[TestDetails]
+		name         string
+		session      *Session[TestDetails]
 		wantContains []string
 	}{{
 		name: "standard session",
