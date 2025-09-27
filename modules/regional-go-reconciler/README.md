@@ -156,6 +156,7 @@ No resources.
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which to run the reconciler service. | `string` | n/a | yes |
 | <a name="input_squad"></a> [squad](#input\_squad) | The squad that owns the service. | `string` | `""` | no |
 | <a name="input_volumes"></a> [volumes](#input\_volumes) | The volumes to attach to the service. | <pre>list(object({<br/>    name = string<br/>    empty_dir = optional(object({<br/>      medium     = optional(string, "MEMORY")<br/>      size_limit = optional(string, "1Gi")<br/>    }), null)<br/>    csi = optional(object({<br/>      driver = string<br/>      volume_attributes = optional(object({<br/>        bucketName = string<br/>      }), null)<br/>    }), null)<br/>  }))</pre> | `[]` | no |
+| <a name="input_workqueue_cpu_idle"></a> [workqueue\_cpu\_idle](#input\_workqueue\_cpu\_idle) | Set to false for a region in order to use instance-based billing for workqueue services (dispatcher and receiver). Defaults to true. To control reconciler cpu\_idle, use the 'regional-cpu-idle' field in the 'containers' variable. | `map(map(bool))` | <pre>{<br/>  "dispatcher": {},<br/>  "receiver": {}<br/>}</pre> | no |
 
 ## Outputs
 

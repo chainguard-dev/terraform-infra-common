@@ -59,6 +59,7 @@ module "receiver-service" {
           }
         },
       ]
+      regional-cpu-idle = lookup(var.cpu_idle, "receiver", {})
     }
   }
 

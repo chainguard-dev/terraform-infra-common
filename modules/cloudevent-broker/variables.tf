@@ -70,3 +70,9 @@ variable "deletion_protection" {
   description = "Whether to enable delete protection for the service."
   default     = true
 }
+
+variable "cpu_idle" {
+  description = "Set to false for a region in order to use instance-based billing. Defaults to true."
+  type        = map(bool)
+  default     = {}
+}

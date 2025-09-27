@@ -79,6 +79,7 @@ module "dispatcher-service" {
           value = { for k, v in module.dispatcher-calls-target : k => v.uri }
         },
       ]
+      regional-cpu-idle = lookup(var.cpu_idle, "dispatcher", {})
     }
   }
 

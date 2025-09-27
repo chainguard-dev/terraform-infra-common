@@ -81,3 +81,12 @@ variable "multi_regional_location" {
     error_message = "multi_regional_location must be one of 'US', 'EU', or 'ASIA'."
   }
 }
+
+variable "cpu_idle" {
+  description = "Set to false for a region in order to use instance-based billing. Defaults to true."
+  type        = map(map(bool))
+  default = {
+    "dispatcher" = {}
+    "receiver"   = {}
+  }
+}
