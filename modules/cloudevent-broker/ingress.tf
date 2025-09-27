@@ -47,6 +47,7 @@ module "this" {
       resources = {
         limits = var.limits
       }
+      regional-cpu-idle = var.cpu_idle
     }
   }
 

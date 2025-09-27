@@ -32,6 +32,7 @@ module "workqueue" {
   labels                = var.labels
 
   multi_regional_location = var.multi_regional_location
+  cpu_idle                = var.workqueue_cpu_idle
 
   depends_on = [module.reconciler]
 }

@@ -244,3 +244,12 @@ variable "notification_channels" {
   type        = list(string)
   default     = []
 }
+
+variable "workqueue_cpu_idle" {
+  description = "Set to false for a region in order to use instance-based billing for workqueue services (dispatcher and receiver). Defaults to true. To control reconciler cpu_idle, use the 'regional-cpu-idle' field in the 'containers' variable."
+  type        = map(map(bool))
+  default = {
+    "dispatcher" = {}
+    "receiver"   = {}
+  }
+}
