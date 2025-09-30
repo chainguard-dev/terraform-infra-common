@@ -5,10 +5,10 @@ go 1.24.6
 require (
 	chainguard.dev/go-grpc-kit v0.17.15
 	chainguard.dev/sdk v0.1.41
-	cloud.google.com/go/bigquery v1.70.0
+	cloud.google.com/go/bigquery v1.71.0
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/profiler v0.4.3
-	cloud.google.com/go/pubsub/v2 v2.0.0
+	cloud.google.com/go/pubsub/v2 v2.1.0
 	cloud.google.com/go/storage v1.57.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.30.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
@@ -37,7 +37,7 @@ require (
 	golang.org/x/oauth2 v0.31.0
 	golang.org/x/sync v0.17.0
 	golang.org/x/time v0.13.0
-	google.golang.org/api v0.250.0
+	google.golang.org/api v0.251.0
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.9
 )
@@ -113,7 +113,6 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.einride.tech/aip v0.73.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
@@ -133,6 +132,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250922171735-9219d122eba9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
