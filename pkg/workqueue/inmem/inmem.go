@@ -196,8 +196,14 @@ func (o *inProgressKey) RequeueWithOptions(_ context.Context, opts workqueue.Opt
 		opts.Priority = o.Priority()
 	}
 
+	// Determine the attempt count to use when requeueing
+	attempts := o.attempts
+
 	// Handle custom delay if specified
 	if opts.Delay > 0 {
+		// Reset attempts when using custom delay, as this indicates periodic revisit pattern
+		// rather than retry due to failure
+		attempts = 0
 		opts.NotBefore = time.Now().UTC().Add(opts.Delay)
 	} else if opts.Priority > 0 {
 		// If no custom delay and priority is set, use the standard backoff
@@ -213,7 +219,7 @@ func (o *inProgressKey) RequeueWithOptions(_ context.Context, opts workqueue.Opt
 	if qi, ok := o.wq.queue[o.key]; !ok {
 		o.wq.queue[o.key] = queueItem{
 			Options:  opts,
-			attempts: o.attempts,
+			attempts: attempts,
 			queued:   time.Now().UTC(),
 		}
 	} else {

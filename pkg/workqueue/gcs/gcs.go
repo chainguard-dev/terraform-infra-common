@@ -478,6 +478,9 @@ func (o *inProgressKey) RequeueWithOptions(ctx context.Context, opts workqueue.O
 
 	// Handle custom delay if specified
 	if opts.Delay > 0 {
+		// Reset attempts when using custom delay, as this indicates periodic revisit pattern
+		// rather than retry due to failure
+		copier.Metadata[attemptsMetadataKey] = "0"
 		notBefore := time.Now().UTC().Add(opts.Delay)
 		copier.Metadata[notBeforeMetadataKey] = notBefore.Format(time.RFC3339)
 	} else if p, ok := copier.Metadata[priorityMetadataKey]; ok && p != noPriority {
