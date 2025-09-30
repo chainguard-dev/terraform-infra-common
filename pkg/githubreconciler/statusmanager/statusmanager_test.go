@@ -185,6 +185,7 @@ func TestRoundtripWithoutMarkdown(t *testing.T) {
 
 			if extracted == nil {
 				t.Fatal("extractStatusFromOutput() returned nil")
+				return
 			}
 
 			// Compare the extracted status with original
@@ -240,6 +241,7 @@ func TestRoundtripWithMarkdown(t *testing.T) {
 
 	if extracted == nil {
 		t.Fatal("extractStatusFromOutput() returned nil")
+		return
 	}
 
 	// Verify roundtrip succeeded
@@ -347,6 +349,11 @@ func TestComplexRoundtrip(t *testing.T) {
 	extracted, err := extractStatusFromOutput[TestDetails](identity, checkRunOutput)
 	if err != nil {
 		t.Fatalf("extractStatusFromOutput() error = %v", err)
+	}
+
+	if extracted == nil {
+		t.Fatal("extractStatusFromOutput() returned nil")
+		return
 	}
 
 	// Verify special characters survived the roundtrip
