@@ -13,7 +13,7 @@ import (
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
-	"github.com/google/go-github/v72/github"
+	"github.com/google/go-github/v75/github"
 	"golang.org/x/oauth2"
 )
 
