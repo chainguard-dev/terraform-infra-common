@@ -58,7 +58,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: chainguard-dev/actions/setup-terraform@de56c2728beb0a0f371bff2ce2ee4b8afee4b5e8 # v1.5.1
+      - uses: chainguard-dev/actions/setup-terraform@8e97c1fc72515d627456cb0b92e9c9f299356375 # v1.5.2
         with:
           terraform-version-file: './.terraform-version'
           terraform-wrapper: false
@@ -81,7 +81,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: step-security/workflow-conclusion-action@85a2b085a440daa8a086b79e1aac26ebe26b7f69 # v3.0.8
+      - uses: step-security/workflow-conclusion-action@e624ac1e0582b6498a4ddaa8cf623532fc7b95ea # v3.0.9
 
       - if: ${{ env.WORKFLOW_CONCLUSION == 'success' }}
         working-directory: /tmp
