@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/v72/github"
+	"github.com/google/go-github/v75/github"
 )
 
 // TestDetails is a test implementation of Details

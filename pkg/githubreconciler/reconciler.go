@@ -11,9 +11,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/go-github/v75/github"
+
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
-	"github.com/google/go-github/v72/github"
 )
 
 // ReconcilerFunc is the function signature for GitHub resource reconcilers.

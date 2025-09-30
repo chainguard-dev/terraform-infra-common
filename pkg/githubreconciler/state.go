@@ -14,8 +14,9 @@ import (
 	"strings"
 
 	"cloud.google.com/go/compute/metadata"
+	"github.com/google/go-github/v75/github"
+
 	"github.com/chainguard-dev/clog"
-	"github.com/google/go-github/v72/github"
 )
 
 // StateManager manages reconciler state stored in GitHub comments.

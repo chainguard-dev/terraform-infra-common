@@ -12,7 +12,7 @@ import (
 
 	"github.com/chainguard-dev/clog"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/google/go-github/v72/github"
+	"github.com/google/go-github/v75/github"
 	"github.com/jonboulle/clockwork"
 )
 

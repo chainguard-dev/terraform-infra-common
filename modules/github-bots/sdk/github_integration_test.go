@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/go-github/v72/github"
+	"github.com/google/go-github/v75/github"
 )
 
 // NOTE: This is an integration test that requires 'GITHUB_TOKEN' env variable to be set!
