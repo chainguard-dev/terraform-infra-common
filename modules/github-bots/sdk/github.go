@@ -33,14 +33,40 @@ import (
 //
 // A new token is created for each client, and is not refreshed. It can be
 // revoked with Close.
+//
+// Deprecated: use NewClient instead.
 func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...GitHubClientOption) GitHubClient {
-	ts := oauth2.ReuseTokenSource(nil, &tokenSource{
-		org:        org,
-		repo:       repo,
-		policyName: policyName,
-	})
+	client, err := NewClient(ctx, org, repo, policyName, opts...)
+	if err != nil {
+		clog.FromContext(ctx).Warnf("failed to create octosts token source, failing back to legacy token source (may make more calls to GCP metadata server and octo-sts): %v", err)
+		// This falls back to the old token source which will do all token fetching at request time.
+		// This isn't preferred because it will try to fetch a new token for every request.
+		ts := oauth2.ReuseTokenSource(nil, &legacyTokenSource{
+			org:        org,
+			repo:       repo,
+			policyName: policyName,
+		})
+		return *NewClientFromTokenSource(ctx, org, repo, ts, opts...)
+	}
+	return *client
+}
 
-	client := GitHubClient{
+// NewGitHubClient creates a new GitHub client, using a new token from OctoSTS,
+// for the given org, repo and policy name.
+//
+// A new token is created for each client, and is not refreshed. It can be
+// revoked with Close.
+func NewClient(ctx context.Context, org, repo, policyName string, opts ...GitHubClientOption) (*GitHubClient, error) {
+	ts, err := octosts.NewTokenSourceFromValues(ctx, policyName, org, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClientFromTokenSource(ctx, org, repo, oauth2.ReuseTokenSource(nil, ts), opts...), nil
+}
+
+func NewClientFromTokenSource(ctx context.Context, org, repo string, ts oauth2.TokenSource, opts ...GitHubClientOption) *GitHubClient {
+	client := &GitHubClient{
 		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
@@ -49,7 +75,7 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 	}
 
 	for _, opt := range opts {
-		opt(&client)
+		opt(client)
 	}
 
 	return client
@@ -93,40 +119,6 @@ func NewInstallationClient(ctx context.Context, org, repo string, tr *ghinstalla
 	}
 
 	return client
-}
-
-type tokenSource struct {
-	org, repo, policyName, tok string
-}
-
-func (ts *tokenSource) Token() (*oauth2.Token, error) {
-	ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("get octosts token timeout"))
-	defer cancel()
-
-	clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
-	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
-	if err != nil {
-		return nil, err
-	}
-
-	// If there's a previous token, attempt to revoke it.
-	if ts.tok != "" {
-		ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("revoke previous token timeout"))
-		defer cancel()
-
-		if err := octosts.Revoke(ctx, ts.tok); err != nil {
-			// This isn't an error, but we should log it.
-			clog.FromContext(ctx).Warnf("failed to revoke token: %v", err)
-		}
-	}
-
-	ts.tok = tok
-	return &oauth2.Token{
-		AccessToken: tok,
-		// We don't actually know when it will expire, but it's probably in 1
-		// hour, and we want to refresh it before it expires.
-		Expiry: time.Now().Add(45 * time.Minute),
-	}, nil
 }
 
 // GitHubClientOption configures the client, these are ran after the default setup.
@@ -736,4 +728,38 @@ func (c GitHubClient) ListFiles(ctx context.Context, owner, repo, path, ref stri
 	}
 
 	return dirContents, nil
+}
+
+type legacyTokenSource struct {
+	org, repo, policyName, tok string
+}
+
+func (ts *legacyTokenSource) Token() (*oauth2.Token, error) {
+	ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("get octosts token timeout"))
+	defer cancel()
+
+	clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
+	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	// If there's a previous token, attempt to revoke it.
+	if ts.tok != "" {
+		ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("revoke previous token timeout"))
+		defer cancel()
+
+		if err := octosts.Revoke(ctx, ts.tok); err != nil {
+			// This isn't an error, but we should log it.
+			clog.FromContext(ctx).Warnf("failed to revoke token: %v", err)
+		}
+	}
+
+	ts.tok = tok
+	return &oauth2.Token{
+		AccessToken: tok,
+		// We don't actually know when it will expire, but it's probably in 1
+		// hour, and we want to refresh it before it expires.
+		Expiry: time.Now().Add(45 * time.Minute),
+	}, nil
 }
