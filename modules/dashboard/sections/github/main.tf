@@ -12,18 +12,7 @@ module "used" {
   ])
   group_by_fields = ["resource.label.\"resource\""]
   primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_SUM"
-}
-
-module "limit" {
-  source = "../../widgets/xy"
-  title  = "GitHub API Rate Limit"
-  filter = concat(var.filter, [
-    "metric.type=\"prometheus.googleapis.com/github_rate_limit/gauge\"",
-  ])
-  group_by_fields = ["resource.label.\"resource\""]
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MEAN"
+  primary_reduce  = "REDUCE_MAX"
 }
 
 module "time_to_reset" {
@@ -33,8 +22,8 @@ module "time_to_reset" {
     "metric.type=\"prometheus.googleapis.com/github_rate_limit_time_to_reset/gauge\"",
   ])
   group_by_fields = ["resource.label.\"resource\""]
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MEAN"
+  primary_align   = "ALIGN_MIN"
+  primary_reduce  = "REDUCE_MIN"
 }
 
 locals {
@@ -45,20 +34,13 @@ locals {
   // N columns, unit width each  ([0, unit, 2 * unit, ...])
   col = range(0, local.columns * local.unit, local.unit)
 
-  tiles = [{
-
-    yPos   = local.unit,
-    xPos   = local.col[0],
-    height = local.unit,
-    width  = local.unit,
-    widget = module.used.widget,
-    },
+  tiles = [
     {
       yPos   = local.unit,
-      xPos   = local.col[1],
+      xPos   = local.col[0],
       height = local.unit,
-      width  = local.unit,
-      widget = module.limit.widget,
+      width  = 2 * local.unit,
+      widget = module.used.widget,
     },
     {
       yPos   = local.unit,
