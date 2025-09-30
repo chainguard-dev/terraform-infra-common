@@ -34,14 +34,13 @@ import (
 // A new token is created for each client, and is not refreshed. It can be
 // revoked with Close.
 func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...GitHubClientOption) GitHubClient {
-	ts := oauth2.ReuseTokenSource(nil, &tokenSource{
-		org:        org,
-		repo:       repo,
-		policyName: policyName,
-	})
+	ts, err := octosts.NewTokenSourceFromValues(ctx, policyName, org, repo)
+	if err != nil {
+		clog.FromContext(ctx).Warnf("failed to create octosts token source, failing back to no token source: %v", err)
+	}
 
 	client := GitHubClient{
-		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
+		inner:   github.NewClient(oauth2.NewClient(ctx, oauth2.ReuseTokenSource(nil, ts))),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -93,40 +92,6 @@ func NewInstallationClient(ctx context.Context, org, repo string, tr *ghinstalla
 	}
 
 	return client
-}
-
-type tokenSource struct {
-	org, repo, policyName, tok string
-}
-
-func (ts *tokenSource) Token() (*oauth2.Token, error) {
-	ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("get octosts token timeout"))
-	defer cancel()
-
-	clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
-	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
-	if err != nil {
-		return nil, err
-	}
-
-	// If there's a previous token, attempt to revoke it.
-	if ts.tok != "" {
-		ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("revoke previous token timeout"))
-		defer cancel()
-
-		if err := octosts.Revoke(ctx, ts.tok); err != nil {
-			// This isn't an error, but we should log it.
-			clog.FromContext(ctx).Warnf("failed to revoke token: %v", err)
-		}
-	}
-
-	ts.tok = tok
-	return &oauth2.Token{
-		AccessToken: tok,
-		// We don't actually know when it will expire, but it's probably in 1
-		// hour, and we want to refresh it before it expires.
-		Expiry: time.Now().Add(45 * time.Minute),
-	}, nil
 }
 
 // GitHubClientOption configures the client, these are ran after the default setup.
