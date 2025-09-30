@@ -106,7 +106,7 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 		}).Add(1)
 
 		if err := updateMetadata(ctx, w.client, key, writer.Metadata); err != nil {
-			if err ==  storage.ErrObjectNotExist {
+			if err == storage.ErrObjectNotExist {
 				clog.InfoContextf(ctx, "Key %q was deleted before we could fetch the duplicate, recursing.", key)
 				return w.Queue(ctx, key, opts)
 			}
