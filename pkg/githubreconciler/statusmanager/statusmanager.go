@@ -183,6 +183,21 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 		conclusionPtr = &status.Conclusion
 	}
 
+	// Build CheckRunOutput with optional annotations
+	checkOutput := &github.CheckRunOutput{
+		Title:   github.Ptr(title),
+		Summary: github.Ptr(output),
+	}
+
+	// Check if Details implements Annotated interface
+	if annotated, ok := any(status.Details).(Annotated); ok {
+		annotations := annotated.Annotations()
+		if len(annotations) > 0 {
+			checkOutput.Annotations = annotations
+			checkOutput.AnnotationsCount = github.Ptr(len(annotations))
+		}
+	}
+
 	// Check if we have a check run ID from ObservedState
 	if checkRunID := s.getCheckRunID(); checkRunID != nil {
 		// Update existing check run
@@ -191,10 +206,7 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 			Status:     &status.Status,
 			Conclusion: conclusionPtr,
 			DetailsURL: &detailsURL,
-			Output: &github.CheckRunOutput{
-				Title:   github.Ptr(title),
-				Summary: github.Ptr(output),
-			},
+			Output:     checkOutput,
 		})
 
 		if err != nil {
@@ -211,10 +223,7 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 		Status:     &status.Status,
 		Conclusion: conclusionPtr,
 		DetailsURL: &detailsURL,
-		Output: &github.CheckRunOutput{
-			Title:   github.Ptr(title),
-			Summary: github.Ptr(output),
-		},
+		Output:     checkOutput,
 	})
 
 	if err != nil {
@@ -230,6 +239,11 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 // markdownProvider is an interface for types that can provide markdown representation
 type markdownProvider interface {
 	Markdown() string
+}
+
+// Annotated is an interface for types that can provide GitHub check run annotations
+type Annotated interface {
+	Annotations() []*github.CheckRunAnnotation
 }
 
 // getStatusMarker returns the HTML comment marker for status data
