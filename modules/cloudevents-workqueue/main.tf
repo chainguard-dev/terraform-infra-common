@@ -26,6 +26,7 @@ module "subscriber" {
   service_account = google_service_account.subscriber.email
 
   notification_channels = var.notification_channels
+  deletion_protection   = var.deletion_protection
 
   squad = var.squad
 
