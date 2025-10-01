@@ -132,10 +132,16 @@ module "percent-deduped" {
 }
 
 module "attempts-at-completion" {
-  source       = "../../widgets/xy-promql"
-  title        = "Attempts at completion (95p over 5m)"
-  promql_query = "histogram_quantile(0.95, rate(workqueue_attempts_at_completion_bucket{service_name=\"${local.dsp_name}\"}[5m]))"
-  thresholds   = var.max_retry > 0 ? [var.max_retry] : []
+  source = "../../widgets/xy"
+  title  = "Attempts at completion (p95)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_attempts_at_completion/histogram\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  primary_align  = "ALIGN_DELTA"
+  primary_reduce = "REDUCE_PERCENTILE_95"
+  thresholds     = var.max_retry > 0 ? [var.max_retry] : []
 }
 
 module "max-attempts" {
@@ -153,9 +159,16 @@ module "max-attempts" {
 }
 
 module "time-to-completion" {
-  source       = "../../widgets/xy-promql"
-  title        = "Time to completion (50p/95p by priority)"
-  promql_query = "histogram_quantile(0.50, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${local.dsp_name}\"}[5m])) by (priority_class) or histogram_quantile(0.95, rate(workqueue_time_to_completion_seconds_bucket{service_name=\"${local.dsp_name}\"}[5m])) by (priority_class)"
+  source = "../../widgets/xy"
+  title  = "Time to completion (95p by priority)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_attempts_at_completion/histogram\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = ["metric.label.\"priority_class\""]
+  primary_align   = "ALIGN_DELTA"
+  primary_reduce  = "REDUCE_PERCENTILE_95"
 }
 
 module "dead-letter-queue" {
