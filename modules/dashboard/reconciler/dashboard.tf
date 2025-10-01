@@ -36,6 +36,13 @@ module "reconciler-logs" {
   cloudrun_type = "service"
 }
 
+module "http" {
+  source       = "../sections/http"
+  title        = "HTTP"
+  filter       = []
+  service_name = local.service_name
+}
+
 module "grpc" {
   source       = "../sections/grpc"
   title        = "GRPC"
@@ -76,6 +83,7 @@ module "layout" {
       module.workqueue-state.section,
       module.errgrp.section,
       module.reconciler-logs.section,
+      module.http.section,
       module.grpc.section,
     ],
     var.sections.github ? [module.github.section] : [],
