@@ -93,6 +93,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_authorize-delivery"></a> [authorize-delivery](#module\_authorize-delivery) | ../authorize-private-service | n/a |
+| <a name="module_sa-name"></a> [sa-name](#module\_sa-name) | ../limited-concat | n/a |
 
 ## Resources
 

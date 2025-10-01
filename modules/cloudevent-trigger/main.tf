@@ -4,11 +4,21 @@ resource "random_string" "suffix" {
   special = false
 }
 
+// Limit the length of the service account name with applied random suffix
+// so we don't run into name length restrictions for long service names.
+module "sa-name" {
+  source = "../limited-concat"
+  prefix = var.name
+  suffix = "-${random_string.suffix.result}"
+  // https://cloud.google.com/iam/docs/service-accounts-create
+  limit = 30
+}
+
 // A dedicated service account for this subscription.
 resource "google_service_account" "this" {
   project = var.project_id
 
-  account_id   = "${var.name}-${random_string.suffix.result}"
+  account_id   = module.sa-name.result
   display_name = "Delivery account for ${var.private-service.name} in ${var.private-service.region}."
 }
 
