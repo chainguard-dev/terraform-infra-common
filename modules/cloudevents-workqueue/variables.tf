@@ -106,3 +106,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "deletion_protection" {
+  description = "Whether to enable deletion protection for resources"
+  type        = bool
+  default     = true
+}
