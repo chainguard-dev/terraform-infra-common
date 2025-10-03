@@ -125,7 +125,7 @@ func TestTokenSource_Token_NotFoundError(t *testing.T) {
 
 func TestTokenSource_Token_OtherError(t *testing.T) {
 	ctx := context.Background()
-	wantErr := errors.New(fmt.Sprintf("error-%d", rand.Int64()))
+	wantErr := fmt.Errorf("error-%d", rand.Int64())
 
 	// Mock the octoTokenFunc to return a different error
 	originalFunc := octoTokenFunc
