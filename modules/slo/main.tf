@@ -3,7 +3,7 @@ locals {
 }
 
 resource "google_monitoring_service" "this" {
-  service_id = "${lower(var.service_type)}-${lower(var.name)}"
+  service_id = "${lower(var.service_type)}-${lower(var.service_name)}"
   project    = var.project_id
 
   basic_service {
@@ -81,10 +81,10 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
   documentation {
     content   = <<-EOT
       The multi-region SLO for ${var.service_name} is burning through its error budget too quickly.
-      
-      Current SLO target: ${var.availability.multi_region_goal * 100}% availability over 30 days
+
+      Current SLO target: ${var.slo.availability.multi_region_goal * 100}% availability over 30 days
       Monitored regions: us-central1, us-west1, us-east1
-      
+
       Please investigate the Cloud Run service for errors or performance issues across regions.
     EOT
     mime_type = "text/markdown"
@@ -93,9 +93,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
 
 # Alert policies for per-region SLO burn rates
 resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
-  count = var.slo.enable_alerting ? 1 : 0
-
-  for_each = toset(var.regions)
+  for_each = toset(var.slo.enable_alerting ? var.regions : [])
 
   display_name = "${var.service_name} - ${each.value} SLO Burn Rate Alert"
   project      = var.project_id
@@ -129,9 +127,9 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
   documentation {
     content   = <<-EOT
       The SLO for ${var.service_name} in ${each.value} is burning through its error budget too quickly.
-      
-      Current SLO target: ${var.availability.per_region_goal * 100}% availability over 30 days
-      
+
+      Current SLO target: ${var.slo.availability.per_region_goal * 100}% availability over 30 days
+
       Please investigate the Cloud Run service in ${each.value} for errors or performance issues.
     EOT
     mime_type = "text/markdown"
