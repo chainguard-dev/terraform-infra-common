@@ -163,7 +163,7 @@ module "time-to-completion" {
   title  = "Time to completion (95p by priority)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
-    "metric.type=\"prometheus.googleapis.com/workqueue_attempts_at_completion/histogram\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_time_to_completion_seconds/histogram\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
   group_by_fields = ["metric.label.\"priority_class\""]
