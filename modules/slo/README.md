@@ -29,7 +29,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | GCP project ID | `string` | n/a | yes |
-| <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A service will be created in each region configured to egress the specified traffic via the specified subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_regions"></a> [regions](#input\_regions) | A list of regions that the cloudrun service is deployed in. | `list(string)` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of service to setup SLO for. | `string` | n/a | yes |
 | <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Type of service to setup SLO for. | `string` | `"CLOUD_RUN"` | no |
 | <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    availability = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), null)<br/>  })</pre> | `null` | no |

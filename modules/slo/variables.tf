@@ -15,11 +15,8 @@ variable "service_type" {
 }
 
 variable "regions" {
-  description = "A map from region names to a network and subnetwork.  A service will be created in each region configured to egress the specified traffic via the specified subnetwork."
-  type = map(object({
-    network = string
-    subnet  = string
-  }))
+  description = "A list of regions that the cloudrun service is deployed in."
+  type = list(string)
 }
 
 variable "slo" {
