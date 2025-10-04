@@ -150,3 +150,17 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "trigger-name-prefix" {
+  description = "Prefix for the cloud event trigger and associated resources created with this bot."
+  type        = string
+  default     = "bot-trigger"
+
+  validation {
+    # Trigger prefix and name are joined by a hyphen before passed to the cloudevent-trigger module,
+    # so include an additional character in the length calculation.
+    # e.g. "${var.trigger-name-prefix}-${var.name}"
+    condition     = length(var.trigger-name-prefix) > 0 && length(var.trigger-name-prefix) + length(var.name) + 1 <= 25
+    error_message = "Trigger prefix and name cannot be more than 24 characters, due to trigger service account naming restrictions."
+  }
+}
