@@ -368,3 +368,19 @@ resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthent
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+module "slo" {
+  count = var.slo.enable ? 1 : 0
+
+  source = "../slo"
+
+  project_id   = var.project_id
+  service_name = var.name
+  service_type = "CLOUD_RUN"
+
+  regions = keys(var.regions)
+
+  slo = var.slo
+
+  notification_channels = var.notification_channels
+}

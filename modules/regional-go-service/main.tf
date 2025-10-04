@@ -59,5 +59,7 @@ module "this" {
   request_timeout_seconds = var.request_timeout_seconds
   execution_environment   = var.execution_environment
 
+  slo = var.slo
+
   notification_channels = var.notification_channels
 }
