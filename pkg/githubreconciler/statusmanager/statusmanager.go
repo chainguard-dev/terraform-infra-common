@@ -163,6 +163,36 @@ func (s *Session[T]) ObservedState(ctx context.Context) (*Status[T], error) {
 	return nil, nil // No status found
 }
 
+// ObservedStateAtSHA retrieves the status for a specific commit SHA without creating a session.
+// This is useful for gathering historical status across multiple commits in a PR.
+func (sm *StatusManager[T]) ObservedStateAtSHA(
+	ctx context.Context,
+	client *github.Client,
+	pr *github.PullRequest,
+	sha string,
+) (*Status[T], error) {
+	owner := pr.GetBase().GetRepo().GetOwner().GetLogin()
+	repo := pr.GetBase().GetRepo().GetName()
+
+	checkRuns, _, err := client.Checks.ListCheckRunsForRef(
+		ctx, owner, repo, sha,
+		&github.ListCheckRunsOptions{
+			CheckName: github.Ptr(sm.identity),
+		})
+
+	if err != nil {
+		return nil, fmt.Errorf("listing check runs: %w", err)
+	}
+
+	for _, run := range checkRuns.CheckRuns {
+		if run.GetName() == sm.identity {
+			return extractStatusFromOutput[T](sm.identity, run.Output)
+		}
+	}
+
+	return nil, nil
+}
+
 // SetActualState updates the state for the current SHA
 func (s *Session[T]) SetActualState(ctx context.Context, title string, status *Status[T]) error {
 	// Ensure ObservedGeneration is set to current SHA
