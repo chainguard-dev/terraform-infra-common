@@ -67,7 +67,13 @@ func (cc *ClientCache) Get(ctx context.Context, org, repo string) (*github.Clien
 	}
 
 	// Create token source for this org/repo
-	tokenSource, err := cc.tokenSourceFunc(ctx, org, repo)
+	// Use context.Background() instead of ctx because the token source will be cached
+	// and reused across multiple requests. If we use the request context, it could be
+	// cancelled while the token source is still in the cache, causing future token
+	// refresh attempts to fail with "context cancelled". Alternatively, using a context
+	// without cancel here will cause future requests to inherit a leaky/dirty context
+	// based on previous requests.
+	tokenSource, err := cc.tokenSourceFunc(context.Background(), org, repo)
 	if err != nil {
 		return nil, fmt.Errorf("creating token source: %w", err)
 	}
