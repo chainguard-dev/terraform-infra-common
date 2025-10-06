@@ -221,37 +221,58 @@ var (
 			Name: "github_rate_limit_remaining",
 			Help: "The number of requests remaining in the current rate limit window",
 		},
-		[]string{"resource"},
+		[]string{"resource", "organization"},
 	)
 	mGitHubRateLimit = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit",
 			Help: "The number of requests allowed during the rate limit window",
 		},
-		[]string{"resource"},
+		[]string{"resource", "organization"},
 	)
 	mGitHubRateLimitReset = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_reset",
 			Help: "The timestamp at which the current rate limit window resets",
 		},
-		[]string{"resource"},
+		[]string{"resource", "organization"},
 	)
 	mGitHubRateLimitUsed = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_used",
 			Help: "The fraction of the rate limit window used",
 		},
-		[]string{"resource"},
+		[]string{"resource", "organization"},
 	)
 	mGitHubRateLimitTimeToReset = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_time_to_reset",
 			Help: "The number of minutes until the current rate limit window resets",
 		},
-		[]string{"resource"},
+		[]string{"resource", "organization"},
 	)
 )
+
+// extractOrgFromGitHubURL extracts the organization from a GitHub API URL path.
+// GitHub API URLs typically have the format: /repos/{org}/{repo}/... or /orgs/{org}/...
+func extractOrgFromGitHubURL(path string) string {
+	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	if len(parts) < 2 {
+		return "unknown"
+	}
+
+	// Handle /repos/{org}/{repo}/... URLs
+	if parts[0] == "repos" && len(parts) >= 2 {
+		return parts[1]
+	}
+
+	// Handle /orgs/{org}/... URLs
+	if parts[0] == "orgs" && len(parts) >= 2 {
+		return parts[1]
+	}
+
+	return "unknown"
+}
 
 // instrumentGitHubRateLimits is a promhttp.RoundTripperFunc that records GitHub rate limit metrics.
 // See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28
@@ -267,6 +288,9 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				resource = "unknown"
 			}
 
+			// Extract organization from the request URL
+			organization := extractOrgFromGitHubURL(r.URL.Path)
+
 			val := func(key string) float64 {
 				val := resp.Header.Get(key)
 				if val == "" {
@@ -278,23 +302,28 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				}
 				return float64(i)
 			}
+			labels := prometheus.Labels{
+				"resource":     resource,
+				"organization": organization,
+			}
+
 			remaining := val("X-RateLimit-Remaining")
-			mGitHubRateLimitRemaining.With(prometheus.Labels{"resource": resource}).Set(remaining)
+			mGitHubRateLimitRemaining.With(labels).Set(remaining)
 
 			limit := val("X-RateLimit-Limit")
-			mGitHubRateLimit.With(prometheus.Labels{"resource": resource}).Set(limit)
+			mGitHubRateLimit.With(labels).Set(limit)
 
 			reset := val("X-RateLimit-Reset")
-			mGitHubRateLimitReset.With(prometheus.Labels{"resource": resource}).Set(reset)
+			mGitHubRateLimitReset.With(labels).Set(reset)
 
 			if limit > 0 {
 				used := (limit - remaining) / limit
-				mGitHubRateLimitUsed.With(prometheus.Labels{"resource": resource}).Set(used)
+				mGitHubRateLimitUsed.With(labels).Set(used)
 			}
 
 			if reset > 0 {
 				timeToReset := time.Until(time.Unix(int64(reset), 0)).Minutes()
-				mGitHubRateLimitTimeToReset.With(prometheus.Labels{"resource": resource}).Set(timeToReset)
+				mGitHubRateLimitTimeToReset.With(labels).Set(timeToReset)
 			}
 		}
 		return resp, err
