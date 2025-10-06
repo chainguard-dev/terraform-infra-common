@@ -253,3 +253,18 @@ variable "workqueue_cpu_idle" {
     "receiver"   = {}
   }
 }
+
+variable "slo" {
+  description = "Configuration for setting up SLO for the cloud run service"
+  type = object({
+    enable          = optional(bool, false)
+    enable_alerting = optional(bool, false)
+    availability = optional(object(
+      {
+        multi_region_goal = optional(number, 0.999)
+        per_region_goal   = optional(number, 0.999)
+      }
+    ), null)
+  })
+  default = null
+}
