@@ -5,5 +5,5 @@ locals {
 
 output "result" {
   description = "The concatenation of prefix and suffix, with limit applied."
-  value = "${local.prefix}${var.suffix}"
+  value       = "${local.prefix}${var.suffix}"
 }
