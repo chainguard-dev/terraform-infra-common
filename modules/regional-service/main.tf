@@ -370,7 +370,7 @@ resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthent
 }
 
 module "slo" {
-  count = var.slo.enable ? 1 : 0
+  count = (var.slo != null && var.slo.enable) ? 1 : 0
 
   source = "../slo"
 
