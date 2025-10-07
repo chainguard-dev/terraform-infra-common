@@ -16,7 +16,7 @@ variable "service_type" {
 
 variable "regions" {
   description = "A list of regions that the cloudrun service is deployed in."
-  type = list(string)
+  type        = list(string)
 }
 
 variable "slo" {
@@ -31,7 +31,7 @@ variable "slo" {
       }
     ), null)
   })
-  default = null
+  default = {}
 }
 
 variable "notification_channels" {

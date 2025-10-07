@@ -261,5 +261,5 @@ variable "slo" {
       }
     ), null)
   })
-  default = null
+  default = {}
 }
