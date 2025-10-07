@@ -25,7 +25,7 @@ resource "google_secret_manager_secret_version" "placeholder" {
 
 locals {
   # only append `serviceAccount:` if there is no `:` in the entry
-  accessors       = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != "" && !strcontains(sa, ":")]
+  accessors = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != "" && !strcontains(sa, ":")]
   # extract the email component if there is a `:` in the entry, and choose the last entry by reversing the list
   accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : reverse(split(":", sa))[0] if sa != ""]
   # Extract the email portion of the authorized adder member
