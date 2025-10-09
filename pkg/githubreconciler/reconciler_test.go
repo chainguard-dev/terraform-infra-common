@@ -11,9 +11,14 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v75/github"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 )
 
 // mockTokenSourceFunc returns a mock token source
@@ -244,4 +249,84 @@ func TestReconciler_GetStateManager(t *testing.T) {
 // Helper function to check if string contains substring
 func contains(s, substr string) bool {
 	return strings.Contains(s, substr)
+}
+
+func TestReconciler_RateLimitHandling(t *testing.T) {
+	tests := []struct {
+		name             string
+		reconcilerError  error
+		wantRequeue      bool
+		wantRequeueAfter time.Duration
+		wantErrContains  string
+	}{{
+		name:             "gRPC ResourceExhausted error triggers requeue",
+		reconcilerError:  status.Error(codes.ResourceExhausted, "resource exhausted"),
+		wantRequeue:      true,
+		wantRequeueAfter: 2 * time.Minute,
+	}, {
+		name:             "wrapped gRPC ResourceExhausted error triggers requeue",
+		reconcilerError:  fmt.Errorf("failed to call API: %w", status.Error(codes.ResourceExhausted, "quota exceeded")),
+		wantRequeue:      true,
+		wantRequeueAfter: 2 * time.Minute,
+	}, {
+		name:             "GitHub RateLimitError triggers requeue",
+		reconcilerError:  &github.RateLimitError{Rate: github.Rate{Reset: github.Timestamp{Time: time.Now().Add(5 * time.Minute)}}},
+		wantRequeue:      true,
+		wantRequeueAfter: 5 * time.Minute,
+	}, {
+		name:             "GitHub AbuseRateLimitError with RetryAfter triggers requeue",
+		reconcilerError:  &github.AbuseRateLimitError{RetryAfter: ptrDuration(2 * time.Minute)},
+		wantRequeue:      true,
+		wantRequeueAfter: 2 * time.Minute,
+	}, {
+		name:             "GitHub AbuseRateLimitError without RetryAfter uses default",
+		reconcilerError:  &github.AbuseRateLimitError{},
+		wantRequeue:      true,
+		wantRequeueAfter: time.Minute,
+	}, {
+		name:            "non-rate-limit error does not trigger requeue",
+		reconcilerError: errors.New("regular error"),
+		wantRequeue:     false,
+		wantErrContains: "regular error",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			cc := NewClientCache(mockTokenSourceFunc)
+
+			r := NewReconciler(cc, WithReconciler(func(_ context.Context, _ *Resource, _ *github.Client) error {
+				return tt.reconcilerError
+			}))
+
+			err := r.Reconcile(ctx, "https://github.com/owner/repo/issues/123")
+
+			if tt.wantRequeue {
+				delay, ok := workqueue.GetRequeueDelay(err)
+				if !ok {
+					t.Errorf("Expected requeue error, got = %v", err)
+				}
+				// Jitter adds 0% to +10% to the base delay
+				minDelay := tt.wantRequeueAfter
+				maxDelay := tt.wantRequeueAfter + (tt.wantRequeueAfter / 10)
+				if delay < minDelay || delay > maxDelay {
+					t.Errorf("Requeue delay = %v, want between %v and %v", delay, minDelay, maxDelay)
+				}
+			} else {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+				if _, ok := workqueue.GetRequeueDelay(err); ok {
+					t.Errorf("Did not expect requeue error, got = %v", err)
+				}
+				if tt.wantErrContains != "" && !contains(err.Error(), tt.wantErrContains) {
+					t.Errorf("Error = %v, want error containing %v", err, tt.wantErrContains)
+				}
+			}
+		})
+	}
+}
+
+func ptrDuration(d time.Duration) *time.Duration {
+	return &d
 }
