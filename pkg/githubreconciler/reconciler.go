@@ -9,9 +9,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/google/go-github/v75/github"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
@@ -49,11 +52,25 @@ const (
 
 	// ResourceTypePullRequest represents a GitHub pull request.
 	ResourceTypePullRequest ResourceType = "pull_request"
+
+	// grpcRateLimitRetryDuration is the base duration to wait before retrying
+	// when a gRPC ResourceExhausted error is encountered.
+	grpcRateLimitRetryDuration = 2 * time.Minute
 )
 
 // String returns the string representation of the resource.
 func (r *Resource) String() string {
 	return fmt.Sprintf("%s/%s#%d", r.Owner, r.Repo, r.Number)
+}
+
+// addJitter adds random jitter to a duration to avoid thundering herd.
+// Jitter is 0% to +10% of the base duration.
+//
+//nolint:gosec // Using weak random for jitter is fine, not cryptographic
+func addJitter(d time.Duration) time.Duration {
+	// Add jitter between 0% and +10%
+	jitter := time.Duration(rand.Int63n(int64(d / 10)))
+	return d + jitter
 }
 
 // Reconciler manages the reconciliation of GitHub resources.
@@ -149,9 +166,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 		if errors.As(err, &rateLimitErr) {
 			// Calculate duration until rate limit resets
 			resetTime := rateLimitErr.Rate.Reset.Time
+			delay := addJitter(time.Until(resetTime))
 			clog.FromContext(ctx).With("reset_at", resetTime).
 				Warn("Rate limited, requeueing after rate limit reset")
-			return workqueue.RequeueAfter(time.Until(resetTime))
+			return workqueue.RequeueAfter(delay)
 		}
 
 		// Check if it's an abuse rate limit error
@@ -162,9 +180,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 			if abuseRateLimitErr.RetryAfter != nil {
 				retryAfter = *abuseRateLimitErr.RetryAfter
 			}
-			clog.FromContext(ctx).With("retry_after", retryAfter).
+			delay := addJitter(retryAfter)
+			clog.FromContext(ctx).With("retry_after", delay).
 				Warn("Abuse rate limit detected, requeueing after retry period")
-			return workqueue.RequeueAfter(retryAfter)
+			return workqueue.RequeueAfter(delay)
+		}
+
+		// Check if it's a gRPC ResourceExhausted error
+		if status.Code(err) == codes.ResourceExhausted {
+			// Resource exhausted - use a conservative retry delay
+			delay := addJitter(grpcRateLimitRetryDuration)
+			clog.FromContext(ctx).With("retry_after", delay).
+				Warn("gRPC ResourceExhausted detected, requeueing after retry period")
+			return workqueue.RequeueAfter(delay)
 		}
 	}
 	return err
