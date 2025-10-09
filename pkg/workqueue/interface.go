@@ -51,6 +51,11 @@ type Options struct {
 	// Delay is an optional duration to wait before processing the key.
 	// This is used when requeueing with a custom delay.
 	Delay time.Duration
+
+	// PreserveAttempts indicates whether to preserve the attempt counter when requeueing.
+	// When false (default for polling), attempts are reset to 0.
+	// When true (for error retries), attempts are preserved and incremented.
+	PreserveAttempts bool
 }
 
 // Key is a shared interface that all key types must implement.

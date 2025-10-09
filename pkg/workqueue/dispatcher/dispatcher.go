@@ -119,8 +119,9 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 						clog.InfoContextf(ctx, "Key %q requested requeue after %v for polling", oip.Name(), delay)
 					}
 					if err := oip.RequeueWithOptions(ctx, workqueue.Options{
-						Priority: oip.Priority(),
-						Delay:    delay,
+						Priority:         oip.Priority(),
+						Delay:            delay,
+						PreserveAttempts: isError, // Preserve attempts for error retries, reset for polling
 					}); err != nil {
 						return fmt.Errorf("requeue(after delay request) = %w", err)
 					}

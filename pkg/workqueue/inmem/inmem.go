@@ -201,9 +201,11 @@ func (o *inProgressKey) RequeueWithOptions(_ context.Context, opts workqueue.Opt
 
 	// Handle custom delay if specified
 	if opts.Delay > 0 {
-		// Reset attempts when using custom delay, as this indicates periodic revisit pattern
-		// rather than retry due to failure
-		attempts = 0
+		// Reset attempts when using custom delay for polling scenarios
+		// Preserve attempts when using custom delay for error retry scenarios
+		if !opts.PreserveAttempts {
+			attempts = 0
+		}
 		opts.NotBefore = time.Now().UTC().Add(opts.Delay)
 	} else if opts.Priority > 0 {
 		// If no custom delay and priority is set, use the standard backoff
