@@ -112,11 +112,16 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 				Priority: oip.Priority(),
 			}); err != nil {
 				// Check if this is a requeue error with custom delay
-				if delay, ok := workqueue.GetRequeueDelay(err); ok {
-					clog.InfoContextf(ctx, "Key %q requested requeue after %v", oip.Name(), delay)
+				if delay, ok, isError := workqueue.GetRequeueDelay(err); ok {
+					if isError {
+						clog.WarnContextf(ctx, "Key %q requested retry with backoff after %v due to error", oip.Name(), delay)
+					} else {
+						clog.InfoContextf(ctx, "Key %q requested requeue after %v for polling", oip.Name(), delay)
+					}
 					if err := oip.RequeueWithOptions(ctx, workqueue.Options{
-						Priority: oip.Priority(),
-						Delay:    delay,
+						Priority:         oip.Priority(),
+						Delay:            delay,
+						PreserveAttempts: isError, // Preserve attempts for error retries, reset for polling
 					}); err != nil {
 						return fmt.Errorf("requeue(after delay request) = %w", err)
 					}

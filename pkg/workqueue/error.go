@@ -53,29 +53,48 @@ func GetNonRetriableDetails(err error) *NoRetryDetails {
 // requeueError is a special error type that indicates the work item should be
 // requeued with a specific delay.
 type requeueError struct {
-	delay time.Duration
+	delay   time.Duration
+	isError bool
 }
 
 // Error implements the error interface.
 func (e *requeueError) Error() string {
-	return "requeue requested"
+	if e.isError {
+		return "requeue requested (error)"
+	}
+	return "requeue requested (polling)"
 }
 
 // RequeueAfter returns an error that indicates the work item should be requeued
-// after the specified delay.
+// after the specified delay for normal polling scenarios.
+// Use RetryAfter for error/retry scenarios.
 func RequeueAfter(delay time.Duration) error {
-	return &requeueError{delay: delay}
+	return &requeueError{
+		delay:   delay,
+		isError: false,
+	}
+}
+
+// RetryAfter returns an error that indicates the work item should be retried
+// after the specified delay due to an error condition requiring retry with backoff.
+// Use RequeueAfter for normal polling scenarios.
+func RetryAfter(delay time.Duration) error {
+	return &requeueError{
+		delay:   delay,
+		isError: true,
+	}
 }
 
 // GetRequeueDelay extracts the requeue delay from an error if it's a requeue error.
-// Returns the delay and true if the error is a requeue error, or 0 and false otherwise.
-func GetRequeueDelay(err error) (time.Duration, bool) {
+// Returns the delay, whether it's a requeue error, and whether it's an error scenario (vs polling).
+// If the error is not a requeue error, returns (0, false, false).
+func GetRequeueDelay(err error) (time.Duration, bool, bool) {
 	if err == nil {
-		return 0, false
+		return 0, false, false
 	}
 	var re *requeueError
 	if errors.As(err, &re) {
-		return re.delay, true
+		return re.delay, true, re.isError
 	}
-	return 0, false
+	return 0, false, false
 }

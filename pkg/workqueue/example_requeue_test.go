@@ -26,15 +26,23 @@ func (w *ExampleWorker) Process(_ context.Context, req *workqueue.ProcessRequest
 		return &workqueue.ProcessResponse{}, nil
 	}
 
-	// Example 2: Requeue with a 5-minute delay
-	if req.Key == "rate-limited" {
-		fmt.Println("Rate limited, requeueing after 5 minutes")
+	// Example 2: Requeue with a 5-minute delay for polling
+	if req.Key == "polling" {
+		fmt.Println("Polling, requeueing after 5 minutes")
 		return &workqueue.ProcessResponse{
 			RequeueAfterSeconds: 300, // 5 minutes
 		}, nil
 	}
 
-	// Example 3: Requeue with exponential backoff based on external state
+	// Example 3: Retry with backoff due to rate limiting (error scenario)
+	if req.Key == "rate-limited" {
+		fmt.Println("Rate limited, retrying after 5 minutes")
+		return &workqueue.ProcessResponse{
+			RequeueAfterSeconds: 300, // 5 minutes
+		}, nil
+	}
+
+	// Example 4: Requeue with exponential backoff based on external state
 	if req.Key == "backoff" {
 		retryCount := getRetryCount(req.Key) // hypothetical function
 		delay := time.Duration(retryCount) * time.Minute
@@ -44,12 +52,12 @@ func (w *ExampleWorker) Process(_ context.Context, req *workqueue.ProcessRequest
 		}, nil
 	}
 
-	// Example 4: Traditional error handling (uses default backoff)
+	// Example 5: Traditional error handling (uses default backoff)
 	if req.Key == "error" {
 		return nil, fmt.Errorf("processing failed")
 	}
 
-	// Example 5: Non-retriable error
+	// Example 6: Non-retriable error
 	if req.Key == "permanent-failure" {
 		return nil, workqueue.NonRetriableError(
 			fmt.Errorf("unrecoverable error"),
@@ -60,19 +68,34 @@ func (w *ExampleWorker) Process(_ context.Context, req *workqueue.ProcessRequest
 	return &workqueue.ProcessResponse{}, nil
 }
 
-// ExampleRequeueAfter demonstrates how to use RequeueAfter in a callback.
+// ExampleRequeueAfter demonstrates how to use RequeueAfter for polling in a callback.
 func ExampleRequeueAfter() {
 	callback := func(_ context.Context, _ string, _ workqueue.Options) error {
 		// Do some work...
 
-		// Request requeue with a 30-second delay
+		// Request requeue with a 30-second delay for polling
 		return workqueue.RequeueAfter(30 * time.Second)
 	}
 	// This would be used in a dispatcher
 	err := callback(context.Background(), "example-key", workqueue.Options{})
-	delay, ok := workqueue.GetRequeueDelay(err)
-	fmt.Printf("Requeue requested: %v, delay: %v\n", ok, delay)
-	// Output: Requeue requested: true, delay: 30s
+	delay, ok, isError := workqueue.GetRequeueDelay(err)
+	fmt.Printf("Requeue requested: %v, delay: %v, isError: %v\n", ok, delay, isError)
+	// Output: Requeue requested: true, delay: 30s, isError: false
+}
+
+// ExampleRetryAfter demonstrates how to use RetryAfter for error retry in a callback.
+func ExampleRetryAfter() {
+	callback := func(_ context.Context, _ string, _ workqueue.Options) error {
+		// Attempt some work that may fail...
+
+		// On error, request retry after 1 minute
+		return workqueue.RetryAfter(time.Minute)
+	}
+	// This would be used in a dispatcher
+	err := callback(context.Background(), "example-key", workqueue.Options{})
+	delay, ok, isError := workqueue.GetRequeueDelay(err)
+	fmt.Printf("Retry requested: %v, delay: %v, isError: %v\n", ok, delay, isError)
+	// Output: Retry requested: true, delay: 1m0s, isError: true
 }
 
 func getRetryCount(_ string) int {
