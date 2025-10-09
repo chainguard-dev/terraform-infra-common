@@ -45,7 +45,7 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 				scope = ts.org + "/" + ts.repo
 			}
 			clog.ErrorContextf(ctx, "Got NotFound error from Octo STS for %q: %v", scope, err)
-			return nil, workqueue.RequeueAfter(10 * time.Minute)
+			return nil, workqueue.RetryAfter(10 * time.Minute)
 		}
 		return nil, err
 	}

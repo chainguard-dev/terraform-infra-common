@@ -42,7 +42,7 @@ func TestRequeueWithDelay(t *testing.T) {
 			wantCompleted: true,
 		},
 		{
-			name: "requeue with 5 second delay",
+			name: "requeue with 5 second delay (polling)",
 			callback: func(_ context.Context, _ string, _ workqueue.Options) error {
 				return workqueue.RequeueAfter(5 * time.Second)
 			},
@@ -50,12 +50,28 @@ func TestRequeueWithDelay(t *testing.T) {
 			wantMinDelay: 5 * time.Second,
 		},
 		{
-			name: "requeue with 1 minute delay",
+			name: "requeue with 1 minute delay (polling)",
 			callback: func(_ context.Context, _ string, _ workqueue.Options) error {
 				return workqueue.RequeueAfter(time.Minute)
 			},
 			wantRequeued: true,
 			wantMinDelay: time.Minute,
+		},
+		{
+			name: "retry after 10 second delay (error)",
+			callback: func(_ context.Context, _ string, _ workqueue.Options) error {
+				return workqueue.RetryAfter(10 * time.Second)
+			},
+			wantRequeued: true,
+			wantMinDelay: 10 * time.Second,
+		},
+		{
+			name: "retry after 2 minute delay (error)",
+			callback: func(_ context.Context, _ string, _ workqueue.Options) error {
+				return workqueue.RetryAfter(2 * time.Minute)
+			},
+			wantRequeued: true,
+			wantMinDelay: 2 * time.Minute,
 		},
 		{
 			name: "non-retriable error",
@@ -140,7 +156,7 @@ func TestServiceCallbackWithDelay(t *testing.T) {
 	err := callback(context.Background(), "test-key", workqueue.Options{})
 
 	// Should return a requeue error
-	delay, ok := workqueue.GetRequeueDelay(err)
+	delay, ok, _ := workqueue.GetRequeueDelay(err)
 	if !ok {
 		t.Fatalf("Expected requeue error, got: %v", err)
 	}

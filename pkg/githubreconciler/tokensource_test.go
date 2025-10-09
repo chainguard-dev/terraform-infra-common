@@ -113,11 +113,14 @@ func TestTokenSource_Token_NotFoundError(t *testing.T) {
 			}
 
 			// Check that error is a requeue error with the correct delay
-			delay, ok := workqueue.GetRequeueDelay(err)
+			delay, ok, isError := workqueue.GetRequeueDelay(err)
 			if !ok {
 				t.Errorf("error type: got non-requeue error, wanted requeue error")
 			} else if delay != 10*time.Minute {
 				t.Errorf("requeue duration: got = %v, wanted = %v", delay, 10*time.Minute)
+			}
+			if !isError {
+				t.Error("expected isError = true for RetryAfter, got false")
 			}
 		})
 	}

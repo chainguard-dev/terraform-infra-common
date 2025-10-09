@@ -151,7 +151,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 			resetTime := rateLimitErr.Rate.Reset.Time
 			clog.FromContext(ctx).With("reset_at", resetTime).
 				Warn("Rate limited, requeueing after rate limit reset")
-			return workqueue.RequeueAfter(time.Until(resetTime))
+			return workqueue.RetryAfter(time.Until(resetTime))
 		}
 
 		// Check if it's an abuse rate limit error
@@ -164,7 +164,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 			}
 			clog.FromContext(ctx).With("retry_after", retryAfter).
 				Warn("Abuse rate limit detected, requeueing after retry period")
-			return workqueue.RequeueAfter(retryAfter)
+			return workqueue.RetryAfter(retryAfter)
 		}
 	}
 	return err
@@ -183,8 +183,12 @@ func (r *Reconciler) Process(ctx context.Context, req *workqueue.ProcessRequest)
 	err := r.Reconcile(ctx, req.Key)
 	if err != nil {
 		// Check if we can extract a requeue delay from the error
-		if delay, ok := workqueue.GetRequeueDelay(err); ok {
-			clog.InfoContextf(ctx, "Reconciliation requested requeue after %v for key: %s", delay, req.Key)
+		if delay, ok, isError := workqueue.GetRequeueDelay(err); ok {
+			if isError {
+				clog.WarnContextf(ctx, "Reconciliation requested requeue after %v due to error for key: %s", delay, req.Key)
+			} else {
+				clog.InfoContextf(ctx, "Reconciliation requested requeue after %v for polling key: %s", delay, req.Key)
+			}
 			return &workqueue.ProcessResponse{
 				RequeueAfterSeconds: int64(delay.Seconds()),
 			}, nil
