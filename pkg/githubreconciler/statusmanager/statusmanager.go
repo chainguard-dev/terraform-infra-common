@@ -8,6 +8,7 @@ package statusmanager
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -16,6 +17,8 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/google/go-github/v75/github"
+
+	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
 )
 
 // Status represents the overall status of reconciliation
@@ -54,7 +57,7 @@ func NewStatusManager[T any](ctx context.Context, identity string) (*StatusManag
 	// Get service name once at startup
 	serviceName, ok := os.LookupEnv("K_SERVICE")
 	if !ok {
-		return nil, fmt.Errorf("K_SERVICE environment variable not set")
+		return nil, errors.New("K_SERVICE environment variable not set")
 	}
 
 	return &StatusManager[T]{
@@ -64,35 +67,26 @@ func NewStatusManager[T any](ctx context.Context, identity string) (*StatusManag
 	}, nil
 }
 
-// Session represents a reconciliation session for a specific PR
+// Session represents a reconciliation session for a specific resource
 type Session[T any] struct {
-	manager     *StatusManager[T]
-	client      *github.Client
-	owner       string
-	repo        string
-	sha         string
-	prURL       string
-	projectID   string
-	serviceName string
+	manager  *StatusManager[T]
+	client   *github.Client
+	resource *githubreconciler.Resource
+	sha      string
 
 	mu         sync.Mutex
 	checkRunID *int64 // Set when we find an existing check run
 }
 
-// NewSession creates a new reconciliation session for a pull request
-func (sm *StatusManager[T]) NewSession(client *github.Client, pr *github.PullRequest) *Session[T] {
-	owner := pr.GetBase().GetRepo().GetOwner().GetLogin()
-	repo := pr.GetBase().GetRepo().GetName()
-
+// NewSession creates a new reconciliation session for a GitHub resource and SHA.
+// The resource provides owner, repo, and URL (used as key for log filtering).
+// The SHA is the commit to attach check runs to.
+func (sm *StatusManager[T]) NewSession(client *github.Client, res *githubreconciler.Resource, sha string) *Session[T] {
 	return &Session[T]{
-		manager:     sm,
-		client:      client,
-		owner:       owner,
-		repo:        repo,
-		sha:         pr.GetHead().GetSHA(),
-		prURL:       pr.GetHTMLURL(),
-		projectID:   sm.projectID,
-		serviceName: sm.serviceName,
+		manager:  sm,
+		client:   client,
+		resource: res,
+		sha:      sha,
 	}
 }
 
@@ -110,20 +104,20 @@ func (s *Session[T]) setCheckRunID(id int64) {
 	s.checkRunID = &id
 }
 
-// buildDetailsURL builds the Cloud Logging URL with filters for this PR and SHA
+// buildDetailsURL builds the Cloud Logging URL with filters for this resource and SHA
 func (s *Session[T]) buildDetailsURL() string {
-	// Build the Cloud Logging URL with both PR and SHA filters
+	// Build the Cloud Logging URL with both key and SHA filters
 	// The query filters for:
 	// - Cloud Run revision logs
 	// - Specific service name
-	// - The PR URL in jsonPayload.key
+	// - The resource key (PR URL) in jsonPayload.key
 	// - The SHA in jsonPayload.sha
 	query := fmt.Sprintf(`resource.type="cloud_run_revision"
 resource.labels.service_name=%q
 jsonPayload.key=%q
 jsonPayload.sha=%q`,
-		s.serviceName,
-		s.prURL,
+		s.manager.serviceName,
+		s.resource.URL,
 		s.sha,
 	)
 
@@ -132,17 +126,22 @@ jsonPayload.sha=%q`,
 	return fmt.Sprintf(
 		"https://console.cloud.google.com/logs/query;query=%s;storageScope=project;summaryFields=:false:32:beginning;duration=P2D?project=%s",
 		encodedQuery,
-		s.projectID,
+		s.manager.projectID,
 	)
 }
 
 // ObservedState retrieves the last observed state for the current SHA
 func (s *Session[T]) ObservedState(ctx context.Context) (*Status[T], error) {
+	name, err := checkRunName(s.manager.identity, s.resource)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get check runs for this SHA
 	checkRuns, _, err := s.client.Checks.ListCheckRunsForRef(
-		ctx, s.owner, s.repo, s.sha,
+		ctx, s.resource.Owner, s.resource.Repo, s.sha,
 		&github.ListCheckRunsOptions{
-			CheckName: github.Ptr(s.manager.identity),
+			CheckName: github.Ptr(name),
 		})
 
 	if err != nil {
@@ -151,7 +150,7 @@ func (s *Session[T]) ObservedState(ctx context.Context) (*Status[T], error) {
 
 	// Find our check run
 	for _, run := range checkRuns.CheckRuns {
-		if run.GetName() == s.manager.identity {
+		if run.GetName() == name {
 			// Record the check run ID for potential updates
 			s.setCheckRunID(run.GetID())
 
@@ -164,20 +163,22 @@ func (s *Session[T]) ObservedState(ctx context.Context) (*Status[T], error) {
 }
 
 // ObservedStateAtSHA retrieves the status for a specific commit SHA without creating a session.
-// This is useful for gathering historical status across multiple commits in a PR.
+// This is useful for gathering historical status across multiple commits.
 func (sm *StatusManager[T]) ObservedStateAtSHA(
 	ctx context.Context,
 	client *github.Client,
-	pr *github.PullRequest,
+	res *githubreconciler.Resource,
 	sha string,
 ) (*Status[T], error) {
-	owner := pr.GetBase().GetRepo().GetOwner().GetLogin()
-	repo := pr.GetBase().GetRepo().GetName()
+	name, err := checkRunName(sm.identity, res)
+	if err != nil {
+		return nil, err
+	}
 
 	checkRuns, _, err := client.Checks.ListCheckRunsForRef(
-		ctx, owner, repo, sha,
+		ctx, res.Owner, res.Repo, sha,
 		&github.ListCheckRunsOptions{
-			CheckName: github.Ptr(sm.identity),
+			CheckName: github.Ptr(name),
 		})
 
 	if err != nil {
@@ -185,7 +186,7 @@ func (sm *StatusManager[T]) ObservedStateAtSHA(
 	}
 
 	for _, run := range checkRuns.CheckRuns {
-		if run.GetName() == sm.identity {
+		if run.GetName() == name {
 			return extractStatusFromOutput[T](sm.identity, run.Output)
 		}
 	}
@@ -195,6 +196,11 @@ func (sm *StatusManager[T]) ObservedStateAtSHA(
 
 // SetActualState updates the state for the current SHA
 func (s *Session[T]) SetActualState(ctx context.Context, title string, status *Status[T]) error {
+	name, err := checkRunName(s.manager.identity, s.resource)
+	if err != nil {
+		return err
+	}
+
 	// Ensure ObservedGeneration is set to current SHA
 	status.ObservedGeneration = s.sha
 
@@ -231,8 +237,8 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 	// Check if we have a check run ID from ObservedState
 	if checkRunID := s.getCheckRunID(); checkRunID != nil {
 		// Update existing check run
-		_, _, err = s.client.Checks.UpdateCheckRun(ctx, s.owner, s.repo, *checkRunID, github.UpdateCheckRunOptions{
-			Name:       s.manager.identity,
+		_, _, err = s.client.Checks.UpdateCheckRun(ctx, s.resource.Owner, s.resource.Repo, *checkRunID, github.UpdateCheckRunOptions{
+			Name:       name,
 			Status:     &status.Status,
 			Conclusion: conclusionPtr,
 			DetailsURL: &detailsURL,
@@ -247,8 +253,8 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 	}
 
 	// Create new check run
-	checkRun, _, err := s.client.Checks.CreateCheckRun(ctx, s.owner, s.repo, github.CreateCheckRunOptions{
-		Name:       s.manager.identity,
+	checkRun, _, err := s.client.Checks.CreateCheckRun(ctx, s.resource.Owner, s.resource.Repo, github.CreateCheckRunOptions{
+		Name:       name,
 		HeadSHA:    s.sha,
 		Status:     &status.Status,
 		Conclusion: conclusionPtr,
@@ -274,6 +280,22 @@ type markdownProvider interface {
 // Annotated is an interface for types that can provide GitHub check run annotations
 type Annotated interface {
 	Annotations() []*github.CheckRunAnnotation
+}
+
+// checkRunName returns the check run name for the given identity and resource.
+// Currently this is just the identity itself, but this function provides
+// a single place to modify the naming convention if needed (e.g., incorporating
+// resource-specific information).
+// Returns an error if the resource type is not supported by StatusManager.
+func checkRunName(identity string, res *githubreconciler.Resource) (string, error) {
+	switch res.Type {
+	case githubreconciler.ResourceTypePullRequest:
+		return identity, nil
+	case githubreconciler.ResourceTypeIssue:
+		return "", errors.New("issues are not supported by StatusManager")
+	default:
+		return "", fmt.Errorf("unrecognized resource type: %s", res.Type)
+	}
 }
 
 // getStatusMarker returns the HTML comment marker for status data
@@ -336,7 +358,7 @@ func extractStatusFromOutput[T any](identity string, output *github.CheckRunOutp
 
 	endIdx := strings.Index(body[startIdx:], statusEndMarker)
 	if endIdx == -1 {
-		return nil, fmt.Errorf("malformed status: missing end marker")
+		return nil, errors.New("malformed status: missing end marker")
 	}
 
 	statusJSON := strings.TrimSpace(body[startIdx : startIdx+endIdx])
