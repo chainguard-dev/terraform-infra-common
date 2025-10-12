@@ -83,9 +83,6 @@ type Reconciler struct {
 	// clientCache manages GitHub API clients per repository.
 	clientCache *ClientCache
 
-	// stateManager handles state persistence in GitHub comments.
-	stateManager *StateManager
-
 	// useOrgScopedCredentials indicates whether to use org-scoped instead of repo-scoped credentials.
 	useOrgScopedCredentials bool
 }
@@ -97,13 +94,6 @@ type Option func(*Reconciler)
 func WithReconciler(f ReconcilerFunc) Option {
 	return func(r *Reconciler) {
 		r.reconcileFunc = f
-	}
-}
-
-// WithStateManager sets a custom state manager.
-func WithStateManager(sm *StateManager) Option {
-	return func(r *Reconciler) {
-		r.stateManager = sm
 	}
 }
 
@@ -124,11 +114,6 @@ func NewReconciler(cc *ClientCache, opts ...Option) *Reconciler {
 
 	for _, opt := range opts {
 		opt(r)
-	}
-
-	// Use a default state manager if none provided
-	if r.stateManager == nil {
-		r.stateManager = NewStateManager("github-reconciler")
 	}
 
 	return r
@@ -196,11 +181,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, url string) error {
 		}
 	}
 	return err
-}
-
-// GetStateManager returns the state manager for accessing state operations.
-func (r *Reconciler) GetStateManager() *StateManager {
-	return r.stateManager
 }
 
 // Process implements the WorkqueueService.Process RPC.

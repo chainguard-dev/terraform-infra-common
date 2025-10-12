@@ -39,19 +39,6 @@ func TestNewReconciler(t *testing.T) {
 	if r.clientCache != cc {
 		t.Error("Expected client cache to be set")
 	}
-	if r.stateManager == nil {
-		t.Error("Expected default state manager to be created")
-	}
-	if r.stateManager.Identity() != "github-reconciler" {
-		t.Errorf("Expected default identity 'github-reconciler', got %s", r.stateManager.Identity())
-	}
-
-	// Test with custom state manager
-	customSM := NewStateManager("custom-identity")
-	r2 := NewReconciler(cc, WithStateManager(customSM))
-	if r2.stateManager != customSM {
-		t.Error("Expected custom state manager to be used")
-	}
 
 	// Test with reconciler function
 	var reconcileCalled bool
@@ -218,31 +205,6 @@ func TestReconciler_Reconcile(t *testing.T) {
 				t.Errorf("PR reconciler called = %v, want %v", prCalled, tt.wantPRCalled)
 			}
 		})
-	}
-}
-
-func TestReconciler_GetStateManager(t *testing.T) {
-	cc := NewClientCache(mockTokenSourceFunc)
-
-	// Test with default state manager
-	r1 := NewReconciler(cc)
-	sm1 := r1.GetStateManager()
-	if sm1 == nil {
-		t.Fatal("GetStateManager() returned nil")
-	}
-	if sm1.Identity() != "github-reconciler" {
-		t.Errorf("GetStateManager() identity = %v, want %v", sm1.Identity(), "github-reconciler")
-	}
-
-	// Test with custom state manager
-	customSM := NewStateManager("custom-id")
-	r2 := NewReconciler(cc, WithStateManager(customSM))
-	sm2 := r2.GetStateManager()
-	if sm2 != customSM {
-		t.Error("GetStateManager() did not return the custom state manager")
-	}
-	if sm2.Identity() != "custom-id" {
-		t.Errorf("GetStateManager() identity = %v, want %v", sm2.Identity(), "custom-id")
 	}
 }
 
