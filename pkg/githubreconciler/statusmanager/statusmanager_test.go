@@ -13,6 +13,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/v75/github"
+
+	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
 )
 
 // TestDetails is a test implementation of Details
@@ -434,26 +436,35 @@ func TestNewSession(t *testing.T) {
 			// Create a mock GitHub client
 			client := &github.Client{}
 
-			session := sm.NewSession(client, tt.pr)
+			// Create a Resource from the PR
+			owner := tt.pr.GetBase().GetRepo().GetOwner().GetLogin()
+			repo := tt.pr.GetBase().GetRepo().GetName()
+			res := &githubreconciler.Resource{
+				Owner: owner,
+				Repo:  repo,
+				URL:   tt.pr.GetHTMLURL(),
+			}
+
+			session := sm.NewSession(client, res, tt.pr.GetHead().GetSHA())
 
 			// Verify session fields
-			if session.owner != tt.expectedOwner {
-				t.Errorf("owner = %q, want %q", session.owner, tt.expectedOwner)
+			if session.resource.Owner != tt.expectedOwner {
+				t.Errorf("resource.Owner = %q, want %q", session.resource.Owner, tt.expectedOwner)
 			}
-			if session.repo != tt.expectedRepo {
-				t.Errorf("repo = %q, want %q", session.repo, tt.expectedRepo)
+			if session.resource.Repo != tt.expectedRepo {
+				t.Errorf("resource.Repo = %q, want %q", session.resource.Repo, tt.expectedRepo)
 			}
 			if session.sha != tt.expectedSHA {
 				t.Errorf("sha = %q, want %q", session.sha, tt.expectedSHA)
 			}
-			if session.prURL != tt.expectedPRURL {
-				t.Errorf("prURL = %q, want %q", session.prURL, tt.expectedPRURL)
+			if session.resource.URL != tt.expectedPRURL {
+				t.Errorf("resource.URL = %q, want %q", session.resource.URL, tt.expectedPRURL)
 			}
-			if session.projectID != tt.expectedProject {
-				t.Errorf("projectID = %q, want %q", session.projectID, tt.expectedProject)
+			if session.manager.projectID != tt.expectedProject {
+				t.Errorf("manager.projectID = %q, want %q", session.manager.projectID, tt.expectedProject)
 			}
-			if session.serviceName != tt.expectedService {
-				t.Errorf("serviceName = %q, want %q", session.serviceName, tt.expectedService)
+			if session.manager.serviceName != tt.expectedService {
+				t.Errorf("manager.serviceName = %q, want %q", session.manager.serviceName, tt.expectedService)
 			}
 
 			// Verify manager reference
@@ -474,6 +485,60 @@ func TestNewSession(t *testing.T) {
 	}
 }
 
+func TestCheckRunNameValidation(t *testing.T) {
+	tests := []struct {
+		name         string
+		resourceType githubreconciler.ResourceType
+		wantErr      bool
+		errContains  string
+	}{{
+		name:         "pull request is supported",
+		resourceType: githubreconciler.ResourceTypePullRequest,
+		wantErr:      false,
+	}, {
+		name:         "issue is not supported",
+		resourceType: githubreconciler.ResourceTypeIssue,
+		wantErr:      true,
+		errContains:  "issues are not supported by StatusManager",
+	}, {
+		name:         "unrecognized type",
+		resourceType: githubreconciler.ResourceType("unknown"),
+		wantErr:      true,
+		errContains:  "unrecognized resource type",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := &githubreconciler.Resource{
+				Owner: "test-owner",
+				Repo:  "test-repo",
+				Type:  tt.resourceType,
+				URL:   "https://github.com/test-owner/test-repo",
+			}
+
+			name, err := checkRunName("test-identity", res)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("checkRunName() error = nil, wantErr = true")
+				} else if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("checkRunName() error = %v, want error containing %q", err, tt.errContains)
+				}
+				if name != "" {
+					t.Errorf("checkRunName() name = %q, want empty string on error", name)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("checkRunName() error = %v, wantErr = false", err)
+				}
+				if name != "test-identity" {
+					t.Errorf("checkRunName() name = %q, want %q", name, "test-identity")
+				}
+			}
+		})
+	}
+}
+
 func TestGetSetCheckRunID(t *testing.T) {
 	// Create a test session manually
 	session := &Session[TestDetails]{
@@ -482,12 +547,12 @@ func TestGetSetCheckRunID(t *testing.T) {
 			projectID:   "test-project",
 			serviceName: "test-service",
 		},
-		owner:       "test-owner",
-		repo:        "test-repo",
-		sha:         "abc123",
-		prURL:       "https://github.com/test-owner/test-repo/pull/42",
-		projectID:   "test-project",
-		serviceName: "test-service",
+		resource: &githubreconciler.Resource{
+			Owner: "test-owner",
+			Repo:  "test-repo",
+			URL:   "https://github.com/test-owner/test-repo/pull/42",
+		},
+		sha: "abc123",
 	}
 
 	// Initially should be nil
@@ -545,12 +610,12 @@ func TestBuildDetailsURL(t *testing.T) {
 				projectID:   "my-project",
 				serviceName: "autofix-service",
 			},
-			owner:       "chainguard-dev",
-			repo:        "mono",
-			sha:         "def456ghi789",
-			prURL:       "https://github.com/chainguard-dev/mono/pull/123",
-			projectID:   "my-project",
-			serviceName: "autofix-service",
+			resource: &githubreconciler.Resource{
+				Owner: "chainguard-dev",
+				Repo:  "mono",
+				URL:   "https://github.com/chainguard-dev/mono/pull/123",
+			},
+			sha: "def456ghi789",
 		},
 		wantContains: []string{
 			"console.cloud.google.com/logs/query",
@@ -568,12 +633,12 @@ func TestBuildDetailsURL(t *testing.T) {
 				projectID:   "project-with-dash",
 				serviceName: "service_with_underscore",
 			},
-			owner:       "test-org",
-			repo:        "test-repo",
-			sha:         "sha+with+plus",
-			prURL:       "https://github.com/test-org/test-repo/pull/456",
-			projectID:   "project-with-dash",
-			serviceName: "service_with_underscore",
+			resource: &githubreconciler.Resource{
+				Owner: "test-org",
+				Repo:  "test-repo",
+				URL:   "https://github.com/test-org/test-repo/pull/456",
+			},
+			sha: "sha+with+plus",
 		},
 		wantContains: []string{
 			"project=project-with-dash",
