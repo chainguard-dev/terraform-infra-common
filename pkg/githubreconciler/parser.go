@@ -12,11 +12,13 @@ import (
 	"strings"
 )
 
-// ParseURL parses a GitHub issue or pull request URL and extracts the components.
+// ParseURL parses a GitHub resource URL and extracts the components.
 //
 // Expected formats:
 //   - https://github.com/org/repo/issues/123
 //   - https://github.com/org/repo/pull/123
+//   - https://github.com/org/repo/blob/ref/path/to/file
+//   - https://github.com/org/repo/tree/ref/path/to/dir
 func ParseURL(uri string) (*Resource, error) {
 	parsed, err := url.Parse(uri)
 	if err != nil {
@@ -29,39 +31,56 @@ func ParseURL(uri string) (*Resource, error) {
 	}
 
 	// Split path into components
-	// Expected: /org/repo/issues/123 or /org/repo/pull/123
 	parts := strings.Split(strings.Trim(parsed.Path, "/"), "/")
-	if len(parts) != 4 {
+	if len(parts) < 4 {
 		return nil, fmt.Errorf("invalid path format: %s", parsed.Path)
 	}
 
 	owner := parts[0]
 	repo := parts[1]
 	resourceType := parts[2]
-	numberStr := parts[3]
 
-	// Parse number
-	number, err := strconv.Atoi(numberStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid resource number: %s", numberStr)
-	}
-
-	// Determine resource type
-	var resType ResourceType
 	switch resourceType {
-	case "issues":
-		resType = ResourceTypeIssue
-	case "pull":
-		resType = ResourceTypePullRequest
+	case "issues", "pull":
+		if len(parts) != 4 {
+			return nil, fmt.Errorf("invalid path format: %s", parsed.Path)
+		}
+		number, err := strconv.Atoi(parts[3])
+		if err != nil {
+			return nil, fmt.Errorf("invalid resource number: %s", parts[3])
+		}
+
+		var resType ResourceType
+		if resourceType == "issues" {
+			resType = ResourceTypeIssue
+		} else {
+			resType = ResourceTypePullRequest
+		}
+
+		return &Resource{
+			Owner:  owner,
+			Repo:   repo,
+			Number: number,
+			Type:   resType,
+			URL:    uri,
+		}, nil
+
+	case "blob", "tree":
+		if len(parts) < 5 {
+			return nil, fmt.Errorf("invalid path format: %s", parsed.Path)
+		}
+		ref := parts[3]
+		filePath := strings.Join(parts[4:], "/")
+		return &Resource{
+			Owner: owner,
+			Repo:  repo,
+			Type:  ResourceTypePath,
+			URL:   uri,
+			Ref:   ref,
+			Path:  filePath,
+		}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown resource type: %s", resourceType)
 	}
-
-	return &Resource{
-		Owner:  owner,
-		Repo:   repo,
-		Number: number,
-		Type:   resType,
-		URL:    uri,
-	}, nil
 }
