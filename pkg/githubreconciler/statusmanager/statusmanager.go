@@ -283,14 +283,15 @@ type Annotated interface {
 }
 
 // checkRunName returns the check run name for the given identity and resource.
-// Currently this is just the identity itself, but this function provides
-// a single place to modify the naming convention if needed (e.g., incorporating
-// resource-specific information).
+// For pull requests, returns the identity as-is.
+// For paths, returns "{identity} ({path})" to distinguish different paths.
 // Returns an error if the resource type is not supported by StatusManager.
 func checkRunName(identity string, res *githubreconciler.Resource) (string, error) {
 	switch res.Type {
 	case githubreconciler.ResourceTypePullRequest:
 		return identity, nil
+	case githubreconciler.ResourceTypePath:
+		return fmt.Sprintf("%s (%s)", identity, res.Path), nil
 	case githubreconciler.ResourceTypeIssue:
 		return "", errors.New("issues are not supported by StatusManager")
 	default:

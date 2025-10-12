@@ -487,36 +487,57 @@ func TestNewSession(t *testing.T) {
 
 func TestCheckRunNameValidation(t *testing.T) {
 	tests := []struct {
-		name         string
-		resourceType githubreconciler.ResourceType
-		wantErr      bool
-		errContains  string
+		name        string
+		resource    *githubreconciler.Resource
+		wantErr     bool
+		errContains string
+		wantName    string
 	}{{
-		name:         "pull request is supported",
-		resourceType: githubreconciler.ResourceTypePullRequest,
-		wantErr:      false,
+		name: "pull request is supported",
+		resource: &githubreconciler.Resource{
+			Owner: "test-owner",
+			Repo:  "test-repo",
+			Type:  githubreconciler.ResourceTypePullRequest,
+			URL:   "https://github.com/test-owner/test-repo/pull/123",
+		},
+		wantErr:  false,
+		wantName: "test-identity",
 	}, {
-		name:         "issue is not supported",
-		resourceType: githubreconciler.ResourceTypeIssue,
-		wantErr:      true,
-		errContains:  "issues are not supported by StatusManager",
+		name: "path is supported",
+		resource: &githubreconciler.Resource{
+			Owner: "test-owner",
+			Repo:  "test-repo",
+			Type:  githubreconciler.ResourceTypePath,
+			Path:  "pkg/foo/bar.go",
+			URL:   "https://github.com/test-owner/test-repo/blob/main/pkg/foo/bar.go",
+		},
+		wantErr:  false,
+		wantName: "test-identity (pkg/foo/bar.go)",
 	}, {
-		name:         "unrecognized type",
-		resourceType: githubreconciler.ResourceType("unknown"),
-		wantErr:      true,
-		errContains:  "unrecognized resource type",
+		name: "issue is not supported",
+		resource: &githubreconciler.Resource{
+			Owner: "test-owner",
+			Repo:  "test-repo",
+			Type:  githubreconciler.ResourceTypeIssue,
+			URL:   "https://github.com/test-owner/test-repo/issues/123",
+		},
+		wantErr:     true,
+		errContains: "issues are not supported by StatusManager",
+	}, {
+		name: "unrecognized type",
+		resource: &githubreconciler.Resource{
+			Owner: "test-owner",
+			Repo:  "test-repo",
+			Type:  githubreconciler.ResourceType("unknown"),
+			URL:   "https://github.com/test-owner/test-repo",
+		},
+		wantErr:     true,
+		errContains: "unrecognized resource type",
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := &githubreconciler.Resource{
-				Owner: "test-owner",
-				Repo:  "test-repo",
-				Type:  tt.resourceType,
-				URL:   "https://github.com/test-owner/test-repo",
-			}
-
-			name, err := checkRunName("test-identity", res)
+			name, err := checkRunName("test-identity", tt.resource)
 
 			if tt.wantErr {
 				if err == nil {
@@ -531,8 +552,8 @@ func TestCheckRunNameValidation(t *testing.T) {
 				if err != nil {
 					t.Errorf("checkRunName() error = %v, wantErr = false", err)
 				}
-				if name != "test-identity" {
-					t.Errorf("checkRunName() name = %q, want %q", name, "test-identity")
+				if name != tt.wantName {
+					t.Errorf("checkRunName() name = %q, want = %q", name, tt.wantName)
 				}
 			}
 		})
