@@ -25,7 +25,7 @@ import (
 // and returns an error if reconciliation fails.
 type ReconcilerFunc func(ctx context.Context, res *Resource, gh *github.Client) error
 
-// Resource represents a parsed GitHub resource (issue or pull request).
+// Resource represents a parsed GitHub resource (issue, pull request, or path).
 type Resource struct {
 	// Owner is the GitHub organization or user.
 	Owner string
@@ -34,13 +34,22 @@ type Resource struct {
 	Repo string
 
 	// Number is the issue or pull request number.
+	// Only set for ResourceTypeIssue and ResourceTypePullRequest.
 	Number int
 
-	// Type indicates whether this is an issue or pull request.
+	// Type indicates the resource type.
 	Type ResourceType
 
 	// URL is the original URL that was parsed.
 	URL string
+
+	// Ref is the branch, tag, or commit SHA.
+	// Only set for ResourceTypePath.
+	Ref string
+
+	// Path is the file or directory path.
+	// Only set for ResourceTypePath.
+	Path string
 }
 
 // ResourceType represents the type of GitHub resource.
@@ -53,6 +62,9 @@ const (
 	// ResourceTypePullRequest represents a GitHub pull request.
 	ResourceTypePullRequest ResourceType = "pull_request"
 
+	// ResourceTypePath represents a file or directory path in a repository.
+	ResourceTypePath ResourceType = "path"
+
 	// grpcRateLimitRetryDuration is the base duration to wait before retrying
 	// when a gRPC ResourceExhausted error is encountered.
 	grpcRateLimitRetryDuration = 2 * time.Minute
@@ -60,7 +72,14 @@ const (
 
 // String returns the string representation of the resource.
 func (r *Resource) String() string {
-	return fmt.Sprintf("%s/%s#%d", r.Owner, r.Repo, r.Number)
+	switch r.Type {
+	case ResourceTypeIssue, ResourceTypePullRequest:
+		return fmt.Sprintf("%s/%s#%d", r.Owner, r.Repo, r.Number)
+	case ResourceTypePath:
+		return fmt.Sprintf("%s/%s@%s:%s", r.Owner, r.Repo, r.Ref, r.Path)
+	default:
+		return fmt.Sprintf("%s/%s", r.Owner, r.Repo)
+	}
 }
 
 // addJitter adds random jitter to a duration to avoid thundering herd.
