@@ -60,6 +60,7 @@ module "this" {
       resources = {
         limits = var.limits
       }
+      regional-cpu-idle = var.cpu_idle
     }
     "logrotate" = {
       source = {
@@ -75,6 +76,7 @@ module "this" {
         name       = "logs"
         mount_path = "/logs"
       }]
+      regional-cpu-idle = var.cpu_idle
     }
   }
   volumes = [{
