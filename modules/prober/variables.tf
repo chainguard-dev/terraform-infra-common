@@ -74,6 +74,12 @@ variable "regional-env" {
   }))
 }
 
+variable "cpu_idle" {
+  default     = {}
+  description = "A map of region names to cpu_idle settings. When true, CPU is throttled when no requests are being processed."
+  type        = map(bool)
+}
+
 variable "secret_env" {
   default     = {}
   description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name)"

@@ -100,6 +100,7 @@ No requirements.
 | <a name="input_alert_description"></a> [alert\_description](#input\_alert\_description) | Alert documentation. Use this to link to playbooks or give additional context. | `string` | `"An uptime check has failed."` | no |
 | <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image to use for the prober. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the prober. | `string` | `"1000m"` | no |
+| <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | A map of region names to cpu\_idle settings. When true, CPU is throttled when no requests are being processed. | `map(bool)` | `{}` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
 | <a name="input_dns_zone"></a> [dns\_zone](#input\_dns\_zone) | The managed DNS zone in which to create prober record sets (required for multiple locations). | `string` | `""` | no |
 | <a name="input_domain"></a> [domain](#input\_domain) | The domain of the environment to probe (required for multiple locations). | `string` | `""` | no |

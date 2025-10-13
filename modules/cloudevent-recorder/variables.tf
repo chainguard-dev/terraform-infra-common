@@ -116,6 +116,12 @@ variable "limits" {
   default = null
 }
 
+variable "cpu_idle" {
+  default     = {}
+  description = "A map of region names to cpu_idle settings. When true, CPU is throttled when no requests are being processed."
+  type        = map(bool)
+}
+
 variable "scaling" {
   description = "The scaling configuration for the service."
   type = object({
