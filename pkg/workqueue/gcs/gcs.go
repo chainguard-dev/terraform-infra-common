@@ -117,23 +117,6 @@ func (w *wq) Queue(ctx context.Context, key string, opts workqueue.Options) erro
 }
 
 func updateMetadata(ctx context.Context, client ClientInterface, key string, metadata map[string]string) error {
-	switch {
-	case metadata[priorityMetadataKey] != noPriority:
-		// If the priority was set, then attempt to merge it with the queued
-		// key.
-		break
-
-	case metadata[notBeforeMetadataKey] != noNotBefore:
-		// If the not before was set, then attempt to merge it with the queued
-		// key.  This is largely for Queue operations, as the NotBefore is
-		// cleared when we start processing the key.
-		break
-
-	default:
-		// No options, so don't bother fetching the queued object.
-		return nil
-	}
-
 	attrs, err := client.Object(fmt.Sprintf("%s%s", queuedPrefix, key)).Attrs(ctx)
 	if err != nil {
 		return fmt.Errorf("Attrs() = %w", err)
@@ -143,12 +126,14 @@ func updateMetadata(ctx context.Context, client ClientInterface, key string, met
 		attrs.Metadata = make(map[string]string, 2)
 	}
 	update := false
+	// Always choose the highest priority.
 	if p, ok := attrs.Metadata[priorityMetadataKey]; !ok || p < metadata[priorityMetadataKey] {
 		clog.InfoContextf(ctx, "Updating %s priority from %q to %q", key, p, metadata[priorityMetadataKey])
 		attrs.Metadata[priorityMetadataKey] = metadata[priorityMetadataKey]
 		update = true
 	}
-	if ts, ok := attrs.Metadata[notBeforeMetadataKey]; ok && ts < metadata[notBeforeMetadataKey] {
+	// Always choose the lowest not-before.
+	if ts, ok := attrs.Metadata[notBeforeMetadataKey]; ok && ts > metadata[notBeforeMetadataKey] {
 		clog.InfoContextf(ctx, "Updating %s not-before from %q to %q", key, ts, metadata[notBeforeMetadataKey])
 		attrs.Metadata[notBeforeMetadataKey] = metadata[notBeforeMetadataKey]
 		update = true
