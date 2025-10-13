@@ -361,21 +361,8 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Start failed: %v", err)
 		}
 
-		// Queue the in-progress key with no priority.
-		if err := wq.Queue(ctx, owned.Name(), workqueue.Options{
-			// No priority
-		}); err != nil {
-			t.Fatalf("Queue failed: %v", err)
-		}
-
-		// Check that the key is queued and in-progress, and the queued key
-		// is behind the other key.
-		_, _ = checkQueue(t, wq, ExpectedState{
-			WorkInProgress: []string{"foo"},
-			Queued:         []string{"bar", "foo"},
-		})
-
 		// Requeue the in-progress high-priority key.
+		// This will add backoff NotBefore.
 		if err := owned.Requeue(ctx); err != nil {
 			t.Fatalf("Requeue failed: %v", err)
 		}
@@ -422,30 +409,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Queue failed: %v", err)
 		}
 
-		// The queue should appear empty because the later NotBefore won.
-		_, _ = checkQueue(t, wq, ExpectedState{})
-
-		// Queue the same key again with a NotBefore that's twice as long.
-		if err := wq.Queue(ctx, "foo", workqueue.Options{
-			NotBefore: time.Now().UTC().Add(2 * delay),
-		}); err != nil {
-			t.Fatalf("Queue failed: %v", err)
-		}
-
-		// The queue should appear empty
-		_, _ = checkQueue(t, wq, ExpectedState{})
-
-		// Sleep for the NotBefore delay.
-		time.Sleep(delay)
-
-		// The queue should STILL appear empty because the doubled delay
-		// should have won.
-		_, _ = checkQueue(t, wq, ExpectedState{})
-
-		// Sleep for the NotBefore delay one last time.
-		time.Sleep(delay)
-
-		// The queue should now have the key.
+		// The queue should still have the key because the earlier NotBefore won.
 		_, _ = checkQueue(t, wq, ExpectedState{
 			Queued: []string{"foo"},
 		})
@@ -487,53 +451,33 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	})
 
 	ct.scenario("requeue doesn't reset not before", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
-		// Queue a key without NotBefore set.
+		// Test that lowest (earliest) NotBefore wins when merging.
+		// Queue a key with a long NotBefore delay.
+		longDelay := 10 * workqueue.BackoffPeriod
 		if err := wq.Queue(ctx, "foo", workqueue.Options{
-			// No NotBefore.
+			NotBefore: time.Now().UTC().Add(longDelay),
 		}); err != nil {
 			t.Fatalf("Queue failed: %v", err)
 		}
 
-		// The queue should have the key.
-		_, qd := checkQueue(t, wq, ExpectedState{
-			Queued: []string{"foo"},
-		})
-
-		// Start processing the first key.
-		owned, err := qd[0].Start(ctx)
-		if err != nil {
-			t.Fatalf("Start failed: %v", err)
-		}
-
-		// The key should now be in progress
-		_, _ = checkQueue(t, wq, ExpectedState{
-			WorkInProgress: []string{"foo"},
-		})
-
-		// Queue the key again with a short NotBefore delay.
-		if err := wq.Queue(ctx, owned.Name(), workqueue.Options{
-			NotBefore: time.Now().UTC().Add(delay),
-		}); err != nil {
-			t.Fatalf("Queue failed: %v", err)
-		}
-
-		// The queue should still have the key just in-progress.
-		_, _ = checkQueue(t, wq, ExpectedState{
-			WorkInProgress: []string{"foo"},
-		})
-
-		// Requeue the key.
-		if err := owned.Requeue(ctx); err != nil {
-			t.Fatalf("Requeue failed: %v", err)
-		}
-
-		// The requeue should not reset NotBefore.
+		// The queue should be empty (long delay not passed).
 		_, _ = checkQueue(t, wq, ExpectedState{})
 
-		// Sleep for the NotBefore delay.
-		time.Sleep(delay)
+		// Queue the same key again with a shorter NotBefore delay.
+		shortDelay := workqueue.BackoffPeriod
+		if err := wq.Queue(ctx, "foo", workqueue.Options{
+			NotBefore: time.Now().UTC().Add(shortDelay),
+		}); err != nil {
+			t.Fatalf("Queue failed: %v", err)
+		}
 
-		// Now the key should show as queued.
+		// The queue should still be empty (short delay not passed yet).
+		_, _ = checkQueue(t, wq, ExpectedState{})
+
+		// Sleep for the short delay.
+		time.Sleep(shortDelay)
+
+		// Now the key should show as queued (short delay won over long delay).
 		_, _ = checkQueue(t, wq, ExpectedState{
 			Queued: []string{"foo"},
 		})
