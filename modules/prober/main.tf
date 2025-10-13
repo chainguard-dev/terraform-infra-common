@@ -68,7 +68,8 @@ module "this" {
             }
           }
       ])
-      regional-env = var.regional-env
+      regional-env      = var.regional-env
+      regional-cpu-idle = var.cpu_idle
       resources = {
         limits = {
           cpu    = var.cpu
