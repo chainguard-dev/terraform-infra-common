@@ -13,10 +13,12 @@ locals {
     terraform-module               = basename(abspath(path.module))
   }
 
-  squad_label = var.squad != "" ? {
-    squad = var.squad
-    team  = var.squad
-  } : {}
+  effective_team = coalesce(var.team, var.squad, "unknown")
+
+  squad_label = {
+    squad = local.effective_team
+    team  = local.effective_team
+  }
 
   product_label = var.product != "" ? {
     product = var.product
@@ -79,6 +81,7 @@ module "this" {
     (local.region) : var.regions[local.region]
   }
 
+  team                = var.team
   squad               = var.squad
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.service.email

@@ -25,6 +25,7 @@ module "workqueue" {
     name = "${var.name}-rec"
   }
 
+  team                  = var.team
   squad                 = var.squad
   product               = var.product
   deletion_protection   = var.deletion_protection
@@ -53,6 +54,7 @@ module "reconciler" {
   containers      = var.containers
 
   labels           = var.labels
+  team             = var.team
   squad            = var.squad
   product          = var.product
   scaling          = var.scaling

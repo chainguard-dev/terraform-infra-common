@@ -30,15 +30,21 @@ variable "labels" {
   default     = {}
 }
 
-variable "squad" {
-  description = "Squad or team label applied to the instance (required)."
+variable "team" {
+  description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = "unknown"
+  default     = ""
 
   validation {
-    condition     = length(trim(var.squad, " \t\n\r")) > 0
-    error_message = "squad must be specified and non-empty."
+    condition     = var.team != "" || var.squad != ""
+    error_message = "Either 'team' or 'squad' must be specified. Please use 'team' as 'squad' is deprecated."
   }
+}
+
+variable "squad" {
+  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
+  type        = string
+  default     = ""
 }
 
 variable "region" {

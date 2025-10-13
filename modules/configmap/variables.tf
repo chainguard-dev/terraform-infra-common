@@ -30,11 +30,16 @@ variable "labels" {
 
 
 
-variable "squad" {
-  description = "Squad label to apply to the secret."
+variable "team" {
+  description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = "unknown"
+  default     = ""
+}
 
+variable "squad" {
+  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
+  type        = string
+  default     = ""
 }
 
 variable "product" {

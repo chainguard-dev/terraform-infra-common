@@ -157,8 +157,14 @@ variable "labels" {
   default     = {}
 }
 
+variable "team" {
+  description = "Team label to apply to resources (replaces deprecated 'squad')."
+  type        = string
+  default     = ""
+}
+
 variable "squad" {
-  description = "The squad that owns the service."
+  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
   type        = string
   default     = ""
 }

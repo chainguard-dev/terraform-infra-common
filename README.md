@@ -27,22 +27,28 @@ locals {
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
+    product                        = var.product
+    team                           = var.team
   }
 
-  squad_label = var.squad != "" ? {
-    squad = var.squad
-    team  = var.squad
-  } : {}
-
-  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
+  merged_labels = merge(local.default_labels, var.labels)
 }
 ```
 
 This pattern:
 - **Enables cost tracking** to break down each module by use
 - **Maintains consistency** across all infrastructure modules
-- **Supports team attribution** through squad/team labels
+- **Supports team attribution** through team labels (with backward compatibility for deprecated squad)
 - **Allows custom labels** via the `labels` variable
 - **Provides module identification** via the `terraform-module` label
+- **Sets both squad and team labels** to the same value for resource tagging
 
 The `basename(abspath(path.module))` automatically derives the module name (e.g., "gke", "redis", "workqueue") without requiring hardcoded values.
+
+### Team vs Squad
+
+All modules support both `team` and `squad` variables for backward compatibility:
+- Use `team` for new code (preferred)
+- `squad` is deprecated but still supported
+- `team` takes precedence if both are provided
+- If neither is specified, both labels default to "unknown"
