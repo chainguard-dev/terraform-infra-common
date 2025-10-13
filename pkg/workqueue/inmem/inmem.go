@@ -49,16 +49,21 @@ var _ workqueue.Interface = (*wq)(nil)
 func (w *wq) Queue(_ context.Context, key string, opts workqueue.Options) error {
 	w.rw.Lock()
 	defer w.rw.Unlock()
-	if qi, ok := w.queue[key]; !ok {
+	qi, ok := w.queue[key]
+	if !ok {
 		w.queue[key] = queueItem{
 			Options: opts,
 			queued:  time.Now().UTC(),
 		}
-	} else if qi.Priority < opts.Priority {
-		// Raise the priority of the queued item.
+		return nil
+	}
+	// Always choose the highest priority.
+	if qi.Priority < opts.Priority {
 		qi.Priority = opts.Priority
 		w.queue[key] = qi
-	} else if qi.NotBefore.Before(opts.NotBefore) {
+	}
+	// Always choose the lowest not-before.
+	if qi.NotBefore.After(opts.NotBefore) {
 		// Update the NotBefore time.
 		qi.NotBefore = opts.NotBefore
 		w.queue[key] = qi
@@ -223,12 +228,12 @@ func (o *inProgressKey) RequeueWithOptions(_ context.Context, opts workqueue.Opt
 			queued:   time.Now().UTC(),
 		}
 	} else {
+		// Always choose the highest priority.
 		if qi.Priority < opts.Priority {
-			// Raise the priority of the queued item.
 			qi.Priority = opts.Priority
 		}
-		if opts.NotBefore.After(qi.NotBefore) {
-			// Update the NotBefore time if the new one is later.
+		// Always choose the lowest not-before.
+		if qi.NotBefore.After(opts.NotBefore) {
 			qi.NotBefore = opts.NotBefore
 		}
 		o.wq.queue[o.key] = qi
