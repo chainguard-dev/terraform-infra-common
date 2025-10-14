@@ -62,8 +62,15 @@ func (e *requeueError) Error() string {
 }
 
 // RequeueAfter returns an error that indicates the work item should be requeued
-// after the specified delay.
+// after the specified delay. If the delay is less than 1 second, it returns
+// a regular error that triggers an immediate retry instead of a delayed requeue.
 func RequeueAfter(delay time.Duration) error {
+	// For delays less than 1 second, return a regular error to trigger
+	// an immediate retry. This avoids the issue where RequeueAfter(0)
+	// gets treated as "no requeue specified".
+	if delay < 1*time.Second {
+		return errors.New("immediate retry requested")
+	}
 	return &requeueError{delay: delay}
 }
 
