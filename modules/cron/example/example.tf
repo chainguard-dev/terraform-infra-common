@@ -38,6 +38,6 @@ module "cron" {
   # Note: Set notification_channels to actual channel IDs to receive alerts
   notification_channels = []
 
-  # Required squad label for the job
-  squad = "example-team"
+  # Required team label for the job
+  team = "example-team"
 }

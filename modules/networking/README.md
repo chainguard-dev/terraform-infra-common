@@ -69,7 +69,8 @@ No modules.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | The list of regions in which to provision subnets suitable for use with Cloud Run direct VPC egress. | `list(string)` | n/a | yes |
-| <a name="input_squad"></a> [squad](#input\_squad) | Squad label to apply to the networking resources. | `string` | `"unknown"` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | DEPRECATED: Use 'team' instead. Squad label to apply to resources. | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
 
 ## Outputs
 

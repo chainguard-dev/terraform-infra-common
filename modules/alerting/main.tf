@@ -13,11 +13,12 @@ locals {
 }
 
 locals {
-  squad_log_filter               = var.squad == "" ? "" : "labels.squad=\"${var.squad}\""
-  squad_proto_log_filter         = var.squad == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${var.squad}\""
-  name                           = var.squad == "" ? "global" : var.squad
-  squad_metric_filter            = var.squad == "" ? "" : "metric.labels.team=\"${var.squad}\""
-  squad_metric_user_label_filter = var.squad == "" ? "" : "metadata.user_labels.\"team\"=\"${var.squad}\""
+  effective_team                 = coalesce(var.team, var.squad, "")
+  squad_log_filter               = local.effective_team == "" ? "" : "labels.squad=\"${local.effective_team}\""
+  squad_proto_log_filter         = local.effective_team == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${local.effective_team}\""
+  name                           = local.effective_team == "" ? "global" : local.effective_team
+  squad_metric_filter            = local.effective_team == "" ? "" : "metric.labels.team=\"${local.effective_team}\""
+  squad_metric_user_label_filter = local.effective_team == "" ? "" : "metadata.user_labels.\"team\"=\"${local.effective_team}\""
 }
 
 locals {
@@ -497,7 +498,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode-job" {
 }
 
 locals {
-  promql_squad_filter = var.squad == "" ? "" : ", team=\"${var.squad}\""
+  promql_squad_filter = local.effective_team == "" ? "" : ", team=\"${local.effective_team}\""
 }
 
 resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
@@ -726,7 +727,7 @@ resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
 }
 
 resource "google_logging_metric" "cloud-run-scaling-failure" {
-  count = var.squad == "" ? 1 : 0
+  count = local.effective_team == "" ? 1 : 0
 
   name   = "cloud_run_scaling_failure"
   filter = <<EOT
@@ -807,7 +808,7 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
 }
 
 resource "google_logging_metric" "cloud-run-failed-req" {
-  count = var.squad == "" ? 1 : 0
+  count = local.effective_team == "" ? 1 : 0
 
   name   = "cloud_run_failed_req"
   filter = <<EOT
@@ -989,7 +990,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
 }
 
 resource "google_logging_metric" "cloudrun_timeout" {
-  count = var.squad == "" ? 1 : 0
+  count = local.effective_team == "" ? 1 : 0
 
   name   = "cloudrun_timeout"
   filter = <<EOT
@@ -1026,7 +1027,7 @@ resource "google_logging_metric" "cloudrun_timeout" {
 }
 
 resource "google_logging_metric" "dockerhub_ratelimit" {
-  count = var.squad == "" ? 1 : 0
+  count = local.effective_team == "" ? 1 : 0
 
   name   = "dockerhub_ratelimit"
   filter = <<EOT
@@ -1069,7 +1070,7 @@ resource "google_logging_metric" "dockerhub_ratelimit" {
 }
 
 resource "google_logging_metric" "github_ratelimit" {
-  count = var.squad == "" ? 1 : 0
+  count = local.effective_team == "" ? 1 : 0
 
   name   = "github_ratelimit"
   filter = <<EOT
@@ -1112,7 +1113,7 @@ resource "google_logging_metric" "github_ratelimit" {
 }
 
 resource "google_logging_metric" "r2_same_ratelimit" {
-  count = var.squad == "" ? 1 : 0
+  count = local.effective_team == "" ? 1 : 0
 
   name   = "r2_same_ratelimit"
   filter = <<EOT

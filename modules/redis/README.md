@@ -140,7 +140,8 @@ limitations under the License.
 | <a name="input_reserved_ip_range"></a> [reserved\_ip\_range](#input\_reserved\_ip\_range) | The CIDR range of internal addresses that are reserved for this instance. | `string` | `null` | no |
 | <a name="input_secret_accessor_sa_email"></a> [secret\_accessor\_sa\_email](#input\_secret\_accessor\_sa\_email) | The email of the service account that will access the secret. | `string` | n/a | yes |
 | <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new redis auth secret versions. | `string` | n/a | yes |
-| <a name="input_squad"></a> [squad](#input\_squad) | Squad or team label applied to the instance (required). | `string` | `"unknown"` | no |
+| <a name="input_squad"></a> [squad](#input\_squad) | DEPRECATED: Use 'team' instead. Squad label to apply to resources. | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
 | <a name="input_tier"></a> [tier](#input\_tier) | The service tier of the instance. Valid values: BASIC, STANDARD\_HA. | `string` | `"STANDARD_HA"` | no |
 | <a name="input_transit_encryption_mode"></a> [transit\_encryption\_mode](#input\_transit\_encryption\_mode) | The TLS mode of the Redis instance. Valid values: DISABLED, SERVER\_AUTHENTICATION. | `string` | `"SERVER_AUTHENTICATION"` | no |
 | <a name="input_zone"></a> [zone](#input\_zone) | The zone where the instance will be deployed. | `string` | n/a | yes |

@@ -13,6 +13,7 @@ module "service" {
 
   labels = var.labels
 
+  team    = var.team
   squad   = var.squad
   product = var.product
 
