@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package statusmanager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -766,7 +767,7 @@ func TestReadOnlyStatusManager(t *testing.T) {
 		},
 	}
 
-	err := session.SetActualState(nil, "Test", status)
+	err := session.SetActualState(context.TODO(), "Test", status)
 	if err == nil {
 		t.Fatal("SetActualState should fail for read-only session")
 	}
