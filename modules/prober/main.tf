@@ -25,6 +25,7 @@ module "this" {
   regions    = var.regions
   scaling    = var.scaling
 
+  team    = var.team
   squad   = var.squad
   product = var.product
 

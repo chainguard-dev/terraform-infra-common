@@ -33,9 +33,11 @@ locals {
     terraform-module               = basename(abspath(path.module))
   }
 
+  effective_team = coalesce(var.team, var.squad, "unknown")
+
   squad_label = {
-    "squad" : var.squad
-    "team" : var.squad
+    "squad" : local.effective_team
+    "team" : local.effective_team
   }
 
   product_label = var.product != "" ? {
@@ -271,7 +273,7 @@ resource "google_cloud_run_v2_service" "this" {
       env {
         name = "OTEL_CONFIG"
         value = replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
-          "REPLACE_ME_TEAM", var.squad),
+          "REPLACE_ME_TEAM", local.effective_team),
           "REPLACE_ME_PROJECT_ID", var.project_id),
         "REPLACE_ME_SERVICE", var.name)
       }

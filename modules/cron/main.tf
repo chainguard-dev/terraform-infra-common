@@ -24,9 +24,12 @@ resource "google_project_service" "cloudscheduler" {
 
 locals {
   repo = var.repository != "" ? var.repository : "gcr.io/${var.project_id}/${var.name}"
+
+  effective_team = coalesce(var.team, var.squad, "unknown")
+
   squad_label = {
-    "squad" : var.squad
-    "team" : var.squad
+    "squad" : local.effective_team
+    "team" : local.effective_team
   }
   product_label = var.product != "" ? {
     product = var.product
@@ -177,7 +180,7 @@ resource "google_cloud_run_v2_job" "job" {
           env {
             name = "OTEL_CONFIG"
             value = replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
-              "REPLACE_ME_TEAM", var.squad),
+              "REPLACE_ME_TEAM", local.effective_team),
               "REPLACE_ME_PROJECT_ID", var.project_id),
             "REPLACE_ME_JOB", var.name)
           }

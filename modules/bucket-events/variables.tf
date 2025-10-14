@@ -56,11 +56,16 @@ variable "deletion_protection" {
 }
 
 
-variable "squad" {
-  description = "squad label to apply to the service."
+variable "team" {
+  description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = "unknown"
+  default     = ""
+}
 
+variable "squad" {
+  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
+  type        = string
+  default     = ""
 }
 
 variable "labels" {

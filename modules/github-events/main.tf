@@ -34,6 +34,7 @@ module "this" {
 
   deletion_protection = var.deletion_protection
 
+  team            = var.team
   squad           = var.squad
   service_account = google_service_account.service.email
   containers = {

@@ -21,9 +21,11 @@ locals {
     terraform-module               = basename(abspath(path.module))
   }
 
+  effective_team = coalesce(var.team, var.squad)
+
   squad_label = {
-    squad = var.squad
-    team  = var.squad
+    squad = local.effective_team
+    team  = local.effective_team
   }
 
   product_label = var.product != "" ? {
