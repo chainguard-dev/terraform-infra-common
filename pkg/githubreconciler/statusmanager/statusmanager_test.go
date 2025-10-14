@@ -732,3 +732,46 @@ func TestJSONFormattingConsistency(t *testing.T) {
 		t.Errorf("Manually extracted JSON mismatch (-want +got):\n%s", diff)
 	}
 }
+
+func TestReadOnlyStatusManager(t *testing.T) {
+	// Create a read-only status manager
+	sm := &StatusManager[TestDetails]{
+		identity:    "test-reconciler",
+		projectID:   "test-project",
+		serviceName: "test-service",
+		readOnly:    true,
+	}
+
+	// Create a session
+	res := &githubreconciler.Resource{
+		Owner:  "test-owner",
+		Repo:   "test-repo",
+		Number: 123,
+		Type:   githubreconciler.ResourceTypePullRequest,
+		URL:    "https://github.com/test-owner/test-repo/pull/123",
+	}
+
+	session := sm.NewSession(nil, res, "abc123")
+
+	// Verify session is read-only
+	if !session.readOnly {
+		t.Error("Session should be read-only")
+	}
+
+	// Attempt to set actual state should fail
+	status := &Status[TestDetails]{
+		Status: "completed",
+		Details: TestDetails{
+			Message: "Test",
+		},
+	}
+
+	err := session.SetActualState(nil, "Test", status)
+	if err == nil {
+		t.Fatal("SetActualState should fail for read-only session")
+	}
+
+	if !strings.Contains(err.Error(), "read-only") {
+		t.Errorf("Error should mention read-only, got: %v", err)
+	}
+}

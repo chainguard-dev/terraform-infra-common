@@ -44,10 +44,21 @@ type StatusManager[T any] struct {
 	identity    string
 	projectID   string
 	serviceName string
+	readOnly    bool
 }
 
 // NewStatusManager creates a new status manager with the given identity
 func NewStatusManager[T any](ctx context.Context, identity string) (*StatusManager[T], error) {
+	return newStatusManager[T](ctx, identity, false)
+}
+
+// NewReadOnlyStatusManager creates a new read-only status manager with the given identity.
+// A read-only status manager will fail any operations that attempt to mutate GitHub state.
+func NewReadOnlyStatusManager[T any](ctx context.Context, identity string) (*StatusManager[T], error) {
+	return newStatusManager[T](ctx, identity, true)
+}
+
+func newStatusManager[T any](ctx context.Context, identity string, readOnly bool) (*StatusManager[T], error) {
 	// Get project ID from metadata
 	projectID, err := metadata.ProjectIDWithContext(ctx)
 	if err != nil {
@@ -64,6 +75,7 @@ func NewStatusManager[T any](ctx context.Context, identity string) (*StatusManag
 		identity:    identity,
 		projectID:   projectID,
 		serviceName: serviceName,
+		readOnly:    readOnly,
 	}, nil
 }
 
@@ -73,6 +85,7 @@ type Session[T any] struct {
 	client   *github.Client
 	resource *githubreconciler.Resource
 	sha      string
+	readOnly bool
 
 	mu         sync.Mutex
 	checkRunID *int64 // Set when we find an existing check run
@@ -87,6 +100,7 @@ func (sm *StatusManager[T]) NewSession(client *github.Client, res *githubreconci
 		client:   client,
 		resource: res,
 		sha:      sha,
+		readOnly: sm.readOnly,
 	}
 }
 
@@ -196,6 +210,10 @@ func (sm *StatusManager[T]) ObservedStateAtSHA(
 
 // SetActualState updates the state for the current SHA
 func (s *Session[T]) SetActualState(ctx context.Context, title string, status *Status[T]) error {
+	if s.readOnly {
+		return errors.New("cannot set actual state: status manager is read-only")
+	}
+
 	name, err := checkRunName(s.manager.identity, s.resource)
 	if err != nil {
 		return err
