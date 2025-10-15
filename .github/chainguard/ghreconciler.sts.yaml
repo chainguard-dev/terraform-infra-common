@@ -1,0 +1,11 @@
+issuer: https://accounts.google.com
+# ghreconciler@mattmoor-chainguard.iam.gserviceaccount.com
+# autofix@mattmoor-chainguard.iam.gserviceaccount.com
+subject_pattern: "(117292703478108941530|113456058529792035155)"
+
+permissions:
+  checks: read
+  contents: write # Enable autofix mode
+  pull_requests: write
+  statuses: read
+  workflows: write # Allow triggering actions when authoring commits.
