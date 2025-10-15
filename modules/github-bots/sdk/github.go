@@ -737,3 +737,27 @@ func (c GitHubClient) ListFiles(ctx context.Context, owner, repo, path, ref stri
 
 	return dirContents, nil
 }
+
+// CompareCommits fetches the differences between two commits
+func (c GitHubClient) CompareCommits(ctx context.Context, owner, repo, base, head string, opts *github.ListOptions) (*github.CommitsComparison, error) {
+	comparison, resp, err := c.inner.Repositories.CompareCommits(
+		ctx, owner, repo, base, head, opts,
+	)
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("compare commits %s...%s", base, head)); err != nil {
+		return nil, err
+	}
+
+	return comparison, nil
+}
+
+// GetCommitDetails fetches the details of a single commit
+func (c GitHubClient) GetCommitDetails(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, error) {
+	cDetails, resp, err := c.inner.Repositories.GetCommit(
+		ctx, owner, repo, sha, opts,
+	)
+	if err := validateResponse(ctx, err, resp, fmt.Sprintf("get commit details for %s", sha)); err != nil {
+		return nil, err
+	}
+
+	return cDetails, nil
+}
