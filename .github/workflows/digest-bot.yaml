@@ -39,7 +39,7 @@ jobs:
           create-pr: false
 
       - name: Install terraform-docs
-        uses: chainguard-dev/actions/setup-terraform-docs@7b18ea9960f945cabf19a84752e580829347f4ed # v1.5.4
+        uses: chainguard-dev/actions/setup-terraform-docs@94249a4828defae94ef3eaeaafaff2f95f1b446f # v1.5.6
 
       - name: update docs
         run: ./hack/update-docs.sh
@@ -54,7 +54,7 @@ jobs:
             echo "create_pr_update=true" >> $GITHUB_OUTPUT
           fi
 
-      - uses: chainguard-dev/actions/setup-gitsign@7b18ea9960f945cabf19a84752e580829347f4ed # v1.5.4
+      - uses: chainguard-dev/actions/setup-gitsign@94249a4828defae94ef3eaeaafaff2f95f1b446f # v1.5.6
         if: ${{ steps.create_pr_update.outputs.create_pr_update == 'true' }}
 
       - name: Create Pull Request
