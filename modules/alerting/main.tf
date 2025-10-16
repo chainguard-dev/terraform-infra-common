@@ -13,7 +13,7 @@ locals {
 }
 
 locals {
-  effective_team                 = coalesce(var.team, var.squad, "")
+  effective_team                 = coalesce(var.team, var.squad, "unknown")
   squad_log_filter               = local.effective_team == "" ? "" : "labels.squad=\"${local.effective_team}\""
   squad_proto_log_filter         = local.effective_team == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${local.effective_team}\""
   name                           = local.effective_team == "" ? "global" : local.effective_team
