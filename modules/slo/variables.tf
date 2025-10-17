@@ -29,7 +29,7 @@ variable "slo" {
         multi_region_goal = optional(number, 0.999)
         per_region_goal   = optional(number, 0.999)
       }
-    ), null)
+    ), {})
   })
   default = {}
 }
