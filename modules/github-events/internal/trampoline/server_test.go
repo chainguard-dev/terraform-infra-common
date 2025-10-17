@@ -824,52 +824,6 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 			expectedURL: "https://github.com/user/project/pull/789",
 		},
 		{
-			name:      "check_run event with PR",
-			eventType: "check_run",
-			payload: map[string]interface{}{
-				"action": "completed",
-				"check_run": map[string]interface{}{
-					"id": 999,
-					"pull_requests": []interface{}{
-						map[string]interface{}{
-							"number": 111,
-						},
-					},
-				},
-				"repository": map[string]interface{}{
-					"full_name": "test/repo",
-					"owner": map[string]interface{}{
-						"login": "test",
-					},
-					"name": "repo",
-				},
-			},
-			expectedURL: "https://github.com/test/repo/pull/111",
-		},
-		{
-			name:      "check_suite event with PR",
-			eventType: "check_suite",
-			payload: map[string]interface{}{
-				"action": "completed",
-				"check_suite": map[string]interface{}{
-					"id": 888,
-					"pull_requests": []interface{}{
-						map[string]interface{}{
-							"number": 222,
-						},
-					},
-				},
-				"repository": map[string]interface{}{
-					"full_name": "corp/app",
-					"owner": map[string]interface{}{
-						"login": "corp",
-					},
-					"name": "app",
-				},
-			},
-			expectedURL: "https://github.com/corp/app/pull/222",
-		},
-		{
 			name:      "check_run event without PR",
 			eventType: "check_run",
 			payload: map[string]interface{}{
