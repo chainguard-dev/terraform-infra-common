@@ -187,7 +187,6 @@ No requirements.
 | <a name="input_requested_only_webhook_id"></a> [requested\_only\_webhook\_id](#input\_requested\_only\_webhook\_id) | If set, the csv IDs of the webhooks that should only receive check requested events. | `string` | `""` | no |
 | <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new webhook secret versions. | `string` | n/a | yes |
 | <a name="input_service-ingress"></a> [service-ingress](#input\_service-ingress) | Which type of ingress traffic to accept for the service (see regional-go-service). Valid values are:<br/><br/>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br/>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer | `string` | `"INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"` | no |
-| <a name="input_squad"></a> [squad](#input\_squad) | DEPRECATED: Use 'team' instead. Squad label to apply to resources. | `string` | `""` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
 | <a name="input_webhook_id"></a> [webhook\_id](#input\_webhook\_id) | If set, the csv IDs of the webhooks that the trampoline should listen to. | `string` | `""` | no |
 
