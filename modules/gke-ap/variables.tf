@@ -22,12 +22,6 @@ variable "team" {
   default     = ""
 }
 
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
-}
-
 variable "zones" {
   default     = null
   description = "If specified, will spread nodes across these zones"

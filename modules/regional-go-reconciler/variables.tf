@@ -163,12 +163,6 @@ variable "team" {
   default     = ""
 }
 
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
-}
-
 variable "product" {
   description = "The product that this service belongs to."
   type        = string

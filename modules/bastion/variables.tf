@@ -36,18 +36,6 @@ variable "dev_principals" {
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = ""
-
-  validation {
-    condition     = var.team != "" || var.squad != ""
-    error_message = "Either 'team' or 'squad' must be specified. Please use 'team' as 'squad' is deprecated."
-  }
-}
-
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
 }
 
 variable "machine_type" {

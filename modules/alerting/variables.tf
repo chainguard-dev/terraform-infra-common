@@ -127,12 +127,6 @@ variable "team" {
   default     = ""
 }
 
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
-}
-
 variable "global_only_alerts" {
   description = "only enable global alerts. when true, only create alerts that are global."
   type        = bool
