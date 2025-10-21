@@ -245,3 +245,24 @@ variable "psc_allowed_consumer_projects" {
   type        = list(string)
   default     = []
 }
+
+# Query Insights configuration
+
+variable "insights_config" {
+  description = <<EOT
+    Query Insights configuration for monitoring and troubleshooting database performance.
+    When set, enables Query Insights with the specified configuration:
+      • query_string_length: Maximum query length stored in bytes (256-4500 for ENTERPRISE, 1024-100000 for ENTERPRISE_PLUS; default: 1024)
+      • query_plans_per_minute: Number of query execution plans captured per minute (0-20 for ENTERPRISE, 0-200 for ENTERPRISE_PLUS; default: 5)
+      • record_application_tags: Record application tags from queries (default: false)
+      • record_client_address: Record client IP addresses (default: false)
+    Set to null to disable Query Insights (default).
+  EOT
+  type = object({
+    query_string_length     = optional(number)
+    query_plans_per_minute  = optional(number)
+    record_application_tags = optional(bool)
+    record_client_address   = optional(bool)
+  })
+  default = null
+}

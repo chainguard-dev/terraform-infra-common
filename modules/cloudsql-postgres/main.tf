@@ -76,6 +76,17 @@ resource "google_sql_database_instance" "this" {
       hour = var.maintenance_window_hour
     }
 
+    dynamic "insights_config" {
+      for_each = var.insights_config != null ? [var.insights_config] : []
+      content {
+        query_insights_enabled  = true
+        query_string_length     = lookup(insights_config.value, "query_string_length", 1024)
+        query_plans_per_minute  = lookup(insights_config.value, "query_plans_per_minute", 5)
+        record_application_tags = lookup(insights_config.value, "record_application_tags", false)
+        record_client_address   = lookup(insights_config.value, "record_client_address", false)
+      }
+    }
+
     dynamic "location_preference" {
       for_each = var.primary_zone == null ? [] : [var.primary_zone]
       content {
@@ -157,6 +168,17 @@ resource "google_sql_database_instance" "replicas" {
           psc_enabled               = true
           allowed_consumer_projects = var.psc_allowed_consumer_projects
         }
+      }
+    }
+
+    dynamic "insights_config" {
+      for_each = var.insights_config != null ? [var.insights_config] : []
+      content {
+        query_insights_enabled  = true
+        query_string_length     = lookup(insights_config.value, "query_string_length", 1024)
+        query_plans_per_minute  = lookup(insights_config.value, "query_plans_per_minute", 5)
+        record_application_tags = lookup(insights_config.value, "record_application_tags", false)
+        record_client_address   = lookup(insights_config.value, "record_client_address", false)
       }
     }
 
