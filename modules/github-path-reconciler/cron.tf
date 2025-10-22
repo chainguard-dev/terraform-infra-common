@@ -44,6 +44,6 @@ module "cron" {
   notification_channels = var.notification_channels
   deletion_protection   = var.deletion_protection
   labels                = var.labels
-  squad                 = var.squad
+  team                  = var.team
   product               = var.product
 }

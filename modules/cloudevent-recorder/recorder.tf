@@ -39,7 +39,7 @@ module "this" {
   name       = var.name
   regions    = var.regions
 
-  squad               = var.squad
+  team                = var.team
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.recorder.email
   containers = {
@@ -116,7 +116,7 @@ module "triggers" {
     name   = var.name
   }
 
-  team = var.squad
+  team = var.team
 
   notification_channels = var.notification_channels
 }

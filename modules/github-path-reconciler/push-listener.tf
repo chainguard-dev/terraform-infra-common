@@ -40,8 +40,8 @@ module "push-listener" {
   deletion_protection   = var.deletion_protection
   notification_channels = var.notification_channels
   labels                = var.labels
-  squad                 = var.squad
   product               = var.product
+  team                  = var.team
 }
 
 # Subscribe to push events in each region
@@ -63,8 +63,8 @@ module "push-subscription" {
 
   project_id = var.project_id
 
-  team    = var.squad
   product = var.product
+  team    = var.team
 
   notification_channels = var.notification_channels
 

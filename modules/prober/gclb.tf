@@ -35,7 +35,7 @@ module "gclb" {
     load_balancing_scheme                                        = var.load_balancing.load_balancing_scheme
   }
 
-  team    = var.squad
+  team    = var.team
   product = var.product
 
   security-policy = var.security-policy

@@ -54,7 +54,6 @@ module "reconciler" {
 
   labels           = var.labels
   team             = var.team
-  squad            = var.squad
   product          = var.product
   scaling          = var.scaling
   volumes          = var.volumes
