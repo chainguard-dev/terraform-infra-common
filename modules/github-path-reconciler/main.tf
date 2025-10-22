@@ -17,7 +17,7 @@ module "reconciler" {
   multi_regional_location = var.multi_regional_location
   egress                  = var.egress
   labels                  = var.labels
-  squad                   = var.squad
+  team                    = var.team
   product                 = var.product
   scaling                 = var.scaling
   volumes                 = var.volumes

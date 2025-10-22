@@ -28,7 +28,7 @@ module "subscriber" {
   notification_channels = var.notification_channels
   deletion_protection   = var.deletion_protection
 
-  squad = var.squad
+  team = var.team
 
   containers = {
     "subscriber" = {
@@ -100,7 +100,7 @@ module "trigger" {
   maximum_backoff       = var.maximum_backoff
   ack_deadline_seconds  = var.ack_deadline_seconds
 
-  team = var.squad
+  team = var.team
 
   depends_on = [module.subscriber]
 }

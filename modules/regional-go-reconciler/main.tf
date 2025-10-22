@@ -26,7 +26,6 @@ module "workqueue" {
   }
 
   team                  = var.team
-  squad                 = var.squad
   product               = var.product
   deletion_protection   = var.deletion_protection
   notification_channels = var.notification_channels
@@ -55,7 +54,6 @@ module "reconciler" {
 
   labels           = var.labels
   team             = var.team
-  squad            = var.squad
   product          = var.product
   scaling          = var.scaling
   volumes          = var.volumes

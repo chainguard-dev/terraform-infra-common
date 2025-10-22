@@ -71,8 +71,8 @@ variable "notification_channels" {
 
 
 
-variable "squad" {
-  description = "squad label to apply to the service."
+variable "team" {
+  description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
   default     = "unknown"
 }

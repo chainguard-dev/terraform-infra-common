@@ -204,12 +204,6 @@ variable "team" {
   default     = ""
 }
 
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
-}
-
 variable "deletion_protection" {
   type        = bool
   description = "Whether to enable delete protection for the service."

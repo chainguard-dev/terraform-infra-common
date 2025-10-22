@@ -22,7 +22,7 @@ module "receiver-service" {
   name       = "${var.name}-rcv"
   regions    = var.regions
   labels     = { "service" : "workqueue-receiver" }
-  squad      = var.squad
+  team       = var.team
 
   deletion_protection = var.deletion_protection
 

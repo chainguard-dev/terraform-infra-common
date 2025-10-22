@@ -26,7 +26,6 @@ module "this" {
   scaling    = var.scaling
 
   team    = var.team
-  squad   = var.squad
   product = var.product
 
   // If we're using GCLB then disallow external traffic,

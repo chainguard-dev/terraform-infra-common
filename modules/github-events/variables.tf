@@ -85,12 +85,6 @@ variable "team" {
   default     = ""
 }
 
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
-}
-
 variable "github_organizations" {
   description = "csv string of GitHub organizations to allow."
   type        = string

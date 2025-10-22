@@ -158,12 +158,6 @@ variable "team" {
   default     = ""
 }
 
-variable "squad" {
-  description = "DEPRECATED: Use 'team' instead. Squad label to apply to resources."
-  type        = string
-  default     = ""
-}
-
 variable "labels" {
   description = "Labels to apply to the BigQuery and storage resources."
   type        = map(string)
