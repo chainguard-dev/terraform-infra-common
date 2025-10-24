@@ -17,11 +17,13 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [google_monitoring_alert_policy.slo_burn_rate_gclb](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.slo_burn_rate_multi_region](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.slo_burn_rate_per_region](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_custom_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_custom_service) | resource |
-| [google_monitoring_slo.availability](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_slo) | resource |
-| [google_monitoring_slo.availability_per_region](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_slo) | resource |
+| [google_monitoring_slo.success_cr](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_slo) | resource |
+| [google_monitoring_slo.success_cr_per_region](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_slo) | resource |
+| [google_monitoring_slo.success_gclb](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_slo) | resource |
 
 ## Inputs
 
@@ -32,7 +34,7 @@ No modules.
 | <a name="input_regions"></a> [regions](#input\_regions) | A list of regions that the cloudrun service is deployed in. | `list(string)` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of service to setup SLO for. | `string` | n/a | yes |
 | <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Type of service to setup SLO for. | `string` | `"CLOUD_RUN"` | no |
-| <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    availability = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), {})<br/>  })</pre> | `{}` | no |
+| <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    success = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), {})<br/>    monitor_gclb = optional(bool, false)<br/>  })</pre> | `{}` | no |
 
 ## Outputs
 

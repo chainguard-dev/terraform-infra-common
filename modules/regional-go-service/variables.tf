@@ -258,12 +258,13 @@ variable "slo" {
   type = object({
     enable          = optional(bool, false)
     enable_alerting = optional(bool, false)
-    availability = optional(object(
+    success = optional(object(
       {
         multi_region_goal = optional(number, 0.999)
         per_region_goal   = optional(number, 0.999)
       }
     ), null)
+    monitor_gclb = optional(bool, false)
   })
   default = {}
 }
