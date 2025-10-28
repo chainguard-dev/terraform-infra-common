@@ -97,7 +97,8 @@ resource "google_container_cluster" "this" {
     for_each = var.cluster_autoscaling == false ? [] : ["placeholder"]
 
     content {
-      enabled = var.cluster_autoscaling
+      enabled                       = var.cluster_autoscaling
+      default_compute_class_enabled = var.default_compute_class_enabled
       resource_limits {
         resource_type = var.cluster_autoscaling_cpu_limits.resource_type
         minimum       = var.cluster_autoscaling_cpu_limits.minimum
