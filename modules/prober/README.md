@@ -86,7 +86,6 @@ No requirements.
 
 | Name | Type |
 |------|------|
-| [google_monitoring_alert_policy.slo_alert](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.uptime_alert](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_uptime_check_config.global_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
 | [google_monitoring_uptime_check_config.regional_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
@@ -107,7 +106,6 @@ No requirements.
 | <a name="input_egress"></a> [egress](#input\_egress) | The level of egress the prober requires. | `string` | `"ALL_TRAFFIC"` | no |
 | <a name="input_enable_alert"></a> [enable\_alert](#input\_enable\_alert) | If true, alert on failures. Outputs will return the alert ID for notification and dashboards. | `bool` | `false` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
-| <a name="input_enable_slo_alert"></a> [enable\_slo\_alert](#input\_enable\_slo\_alert) | If true, alert service availability dropping below SLO threshold. Outputs will return the alert ID for notification and dashboards. | `bool` | `false` | no |
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the prober application. | `string` | n/a | yes |
 | <a name="input_load_balancing"></a> [load\_balancing](#input\_load\_balancing) | n/a | <pre>object({<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, null)<br/>  })</pre> | `{}` | no |
@@ -125,9 +123,6 @@ No requirements.
 | <a name="input_selected_regions"></a> [selected\_regions](#input\_selected\_regions) | List of uptime check region, minimum 3. Valid [USA (has 3 regions), EUROPE, SOUTH\_AMERICA, ASIA\_PACIFIC, USA\_OREGON, USA\_IOWA, USA\_VIRGINIA] | `list(string)` | `null` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as. | `string` | n/a | yes |
 | <a name="input_service_timeout_seconds"></a> [service\_timeout\_seconds](#input\_service\_timeout\_seconds) | The timeout set on the cloud run service routing the uptime check request. | `number` | `"300"` | no |
-| <a name="input_slo_notification_channels"></a> [slo\_notification\_channels](#input\_slo\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | `[]` | no |
-| <a name="input_slo_policy_link"></a> [slo\_policy\_link](#input\_slo\_policy\_link) | An optional link to the SLO policy to include in the alert documentation. | `string` | `""` | no |
-| <a name="input_slo_threshold"></a> [slo\_threshold](#input\_slo\_threshold) | The uptime percent required to meet the SLO for the service, expressed as a decimal in {0, 1} | `number` | `0.999` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. Supported values 1-60s | `string` | `"60s"` | no |
 | <a name="input_uptime_alert_duration"></a> [uptime\_alert\_duration](#input\_uptime\_alert\_duration) | duration for uptime alert policy. | `string` | `"600s"` | no |
@@ -138,7 +133,6 @@ No requirements.
 | Name | Description |
 |------|-------------|
 | <a name="output_alert_id"></a> [alert\_id](#output\_alert\_id) | n/a |
-| <a name="output_slo_alert_id"></a> [slo\_alert\_id](#output\_slo\_alert\_id) | n/a |
 | <a name="output_uptime_check"></a> [uptime\_check](#output\_uptime\_check) | n/a |
 | <a name="output_uptime_check_name"></a> [uptime\_check\_name](#output\_uptime\_check\_name) | n/a |
 <!-- END_TF_DOCS -->

@@ -19,7 +19,3 @@ output "uptime_check_name" {
 output "alert_id" {
   value = var.enable_alert ? google_monitoring_alert_policy.uptime_alert[0].id : ""
 }
-
-output "slo_alert_id" {
-  value = var.enable_slo_alert ? google_monitoring_alert_policy.slo_alert[0].id : ""
-}
