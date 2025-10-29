@@ -176,3 +176,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "default_compute_class_enabled" {
+  default     = false
+  type        = bool
+  description = "Specifies whether default compute class behavior is enabled. If enabled, cluster autoscaler will use Compute Class with name default for all the workloads, if not overridden."
+}
