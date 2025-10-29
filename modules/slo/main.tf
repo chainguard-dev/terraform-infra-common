@@ -22,8 +22,8 @@ resource "google_monitoring_slo" "success_cr" {
   for_each = local.rolling_periods
 
   service      = google_monitoring_custom_service.this.service_id
-  slo_id       = "${var.service_name}-success-multi-region-${each.key}"
-  display_name = "${var.service_name} - Multi-region Success ${each.key} Cloud Run SLO"
+  slo_id       = "${var.service_name}-success-multi-region-${each.key}d"
+  display_name = "${var.service_name} - Multi-region Success ${each.key}d Cloud Run SLO"
   project      = var.project_id
 
   goal                = var.slo.success.multi_region_goal
@@ -53,8 +53,8 @@ resource "google_monitoring_slo" "success_cr_per_region" {
   for_each = local.region_rolling_period_map
 
   service      = google_monitoring_custom_service.this.service_id
-  slo_id       = "${var.service_name}-success-${each.value.region}-${each.value.rolling_period_key}"
-  display_name = "${var.service_name} - ${each.key} Success ${each.value.rolling_period_key} Cloud Run SLO"
+  slo_id       = "${var.service_name}-success-${each.value.region}-${each.value.rolling_period_key}d"
+  display_name = "${var.service_name} - ${each.key} Success ${each.value.rolling_period_key}d Cloud Run SLO"
   project      = var.project_id
 
   goal                = var.slo.success.per_region_goal
@@ -85,8 +85,8 @@ resource "google_monitoring_slo" "success_gclb" {
   for_each = var.slo.monitor_gclb ? local.rolling_periods : {}
 
   service      = google_monitoring_custom_service.this.service_id
-  slo_id       = "${var.service_name}-success-gclb-multi-region-${each.key}"
-  display_name = "${var.service_name} - Multi-region Success ${each.key} GCLB SLO"
+  slo_id       = "${var.service_name}-success-gclb-multi-region-${each.key}d"
+  display_name = "${var.service_name} - Multi-region Success ${each.key}d GCLB SLO"
   project      = var.project_id
 
   goal                = var.slo.success.multi_region_goal
@@ -116,12 +116,12 @@ resource "google_monitoring_slo" "success_gclb" {
 resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
   for_each = var.slo.monitor_gclb ? local.rolling_periods : {}
 
-  display_name = "${var.service_name} - Multi-region ${each.key} SLO Burn Rate Alert"
+  display_name = "${var.service_name} - Multi-region ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "Multi-region ${each.key} SLO burn rate too high"
+    display_name = "Multi-region ${each.key}d SLO burn rate too high"
 
     condition_threshold {
       filter = <<-EOT
@@ -162,12 +162,12 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
 resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
   for_each = var.slo.enable_alerting ? local.region_rolling_period_map : {}
 
-  display_name = "${var.service_name} - ${each.value.region} ${each.value.rolling_period_key} SLO Burn Rate Alert"
+  display_name = "${var.service_name} - ${each.value.region} ${each.value.rolling_period_key}d SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "${var.service_name} ${each.value.region} ${each.value.rolling_period_key} SLO burn rate too high"
+    display_name = "${var.service_name} ${each.value.region} ${each.value.rolling_period_key}d SLO burn rate too high"
 
     condition_threshold {
       filter = <<-EOT
@@ -197,7 +197,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
 
       Current SLO target: ${var.slo.success.per_region_goal * 100}% success over ${each.value.rolling_period_key} days
 
-      Please investigate the Cloud Run service in ${each.value} for errors or performance issues.
+      Please investigate the Cloud Run service in ${each.value.region} for errors or performance issues.
     EOT
     mime_type = "text/markdown"
   }
@@ -207,12 +207,12 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
 resource "google_monitoring_alert_policy" "slo_burn_rate_gclb" {
   for_each = var.slo.enable_alerting && var.slo.monitor_gclb ? local.rolling_periods : {}
 
-  display_name = "${var.service_name} - GCLB ${each.key} SLO Burn Rate Alert"
+  display_name = "${var.service_name} - GCLB ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "GCLB ${each.key} SLO burn rate too high"
+    display_name = "GCLB ${each.key}d SLO burn rate too high"
 
     condition_threshold {
       filter = <<-EOT
