@@ -1,5 +1,16 @@
 locals {
-  region_filter = "one_of(${join(", ", formatlist("%q", var.regions))})"
+  rolling_periods = {
+    "07" = 7
+    "30" = 30
+  }
+  region_rolling_period_map = {
+    for pair in setproduct(var.regions, keys(local.rolling_periods)) :
+    "${pair[0]}-${pair[1]}" => {
+      region              = pair[0]
+      rolling_period_key  = pair[1]
+      rolling_period_days = local.rolling_periods[pair[1]]
+    }
+  }
 }
 
 resource "google_monitoring_custom_service" "this" {
@@ -8,13 +19,15 @@ resource "google_monitoring_custom_service" "this" {
 }
 
 resource "google_monitoring_slo" "success_cr" {
+  for_each = local.rolling_periods
+
   service      = google_monitoring_custom_service.this.service_id
-  slo_id       = "${var.service_name}-success-multi-region"
-  display_name = "${var.service_name} - Multi-region Success Cloud Run SLO"
+  slo_id       = "${var.service_name}-success-multi-region-${each.key}"
+  display_name = "${var.service_name} - Multi-region Success ${each.key} Cloud Run SLO"
   project      = var.project_id
 
   goal                = var.slo.success.multi_region_goal
-  rolling_period_days = 30
+  rolling_period_days = each.value
 
   request_based_sli {
     good_total_ratio {
@@ -37,15 +50,15 @@ resource "google_monitoring_slo" "success_cr" {
 }
 
 resource "google_monitoring_slo" "success_cr_per_region" {
-  for_each = toset(var.regions)
+  for_each = local.region_rolling_period_map
 
   service      = google_monitoring_custom_service.this.service_id
-  slo_id       = "${var.service_name}-success-${each.value}"
-  display_name = "${var.service_name} - ${each.key} Success Cloud Run SLO"
+  slo_id       = "${var.service_name}-success-${each.value.region}-${each.value.rolling_period_key}"
+  display_name = "${var.service_name} - ${each.key} Success ${each.value.rolling_period_key} Cloud Run SLO"
   project      = var.project_id
 
   goal                = var.slo.success.per_region_goal
-  rolling_period_days = 30
+  rolling_period_days = each.value.rolling_period_days
 
   request_based_sli {
     good_total_ratio {
@@ -69,15 +82,15 @@ resource "google_monitoring_slo" "success_cr_per_region" {
 }
 
 resource "google_monitoring_slo" "success_gclb" {
-  count = var.slo.monitor_gclb ? 1 : 0
+  for_each = var.slo.monitor_gclb ? local.rolling_periods : {}
 
   service      = google_monitoring_custom_service.this.service_id
-  slo_id       = "${var.service_name}-success-gclb-multi-region"
-  display_name = "${var.service_name} - Multi-region Success GCLB SLO"
+  slo_id       = "${var.service_name}-success-gclb-multi-region-${each.key}"
+  display_name = "${var.service_name} - Multi-region Success ${each.key} GCLB SLO"
   project      = var.project_id
 
   goal                = var.slo.success.multi_region_goal
-  rolling_period_days = 30
+  rolling_period_days = each.value
 
   request_based_sli {
     good_total_ratio {
@@ -101,18 +114,18 @@ resource "google_monitoring_slo" "success_gclb" {
 
 # Alert policy for multi-region success SLO burn rate
 resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
-  count = var.slo.enable_alerting ? 1 : 0
+  for_each = var.slo.monitor_gclb ? local.rolling_periods : {}
 
-  display_name = "${var.service_name} - Multi-region SLO Burn Rate Alert"
+  display_name = "${var.service_name} - Multi-region ${each.key} SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "Multi-region SLO burn rate too high"
+    display_name = "Multi-region ${each.key} SLO burn rate too high"
 
     condition_threshold {
       filter = <<-EOT
-        select_slo_burn_rate("${google_monitoring_slo.success_cr.id}", "60m")
+        select_slo_burn_rate("${google_monitoring_slo.success_cr[each.key].id}", "60m")
       EOT
 
       duration        = "0s"
@@ -136,7 +149,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
     content   = <<-EOT
       The multi-region SLO for ${var.service_name} is burning through its error budget too quickly.
 
-      Current SLO target: ${var.slo.success.multi_region_goal * 100}% success over 30 days
+      Current SLO target: ${var.slo.success.multi_region_goal * 100}% success over ${each.key} days
       Monitored regions: us-central1, us-west1, us-east1
 
       Please investigate the Cloud Run service for errors or performance issues across regions.
@@ -147,18 +160,18 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
 
 # Alert policies for per-region success SLO burn rates
 resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
-  for_each = var.slo.enable_alerting ? toset(var.regions) : []
+  for_each = var.slo.enable_alerting ? local.region_rolling_period_map : {}
 
-  display_name = "${var.service_name} - ${each.value} SLO Burn Rate Alert"
+  display_name = "${var.service_name} - ${each.value.region} ${each.value.rolling_period_key} SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "${each.value} SLO burn rate too high"
+    display_name = "${var.service_name} ${each.value.region} ${each.value.rolling_period_key} SLO burn rate too high"
 
     condition_threshold {
       filter = <<-EOT
-        select_slo_burn_rate("${google_monitoring_slo.success_cr_per_region[each.value].id}", "60m")
+        select_slo_burn_rate("${google_monitoring_slo.success_cr_per_region[each.key].id}", "60m")
       EOT
 
       duration        = "0s"
@@ -180,9 +193,9 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
 
   documentation {
     content   = <<-EOT
-      The SLO for ${var.service_name} in ${each.value} is burning through its error budget too quickly.
+      The SLO for ${var.service_name} in ${each.value.region} is burning through its error budget too quickly.
 
-      Current SLO target: ${var.slo.success.per_region_goal * 100}% success over 30 days
+      Current SLO target: ${var.slo.success.per_region_goal * 100}% success over ${each.value.rolling_period_key} days
 
       Please investigate the Cloud Run service in ${each.value} for errors or performance issues.
     EOT
@@ -192,18 +205,18 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
 
 # Alert policy for success GCLB SLO burn rate
 resource "google_monitoring_alert_policy" "slo_burn_rate_gclb" {
-  count = var.slo.enable_alerting && var.slo.monitor_gclb ? 1 : 0
+  for_each = var.slo.enable_alerting && var.slo.monitor_gclb ? local.rolling_periods : {}
 
-  display_name = "${var.service_name} - GCLB SLO Burn Rate Alert"
+  display_name = "${var.service_name} - GCLB ${each.key} SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "GCLB SLO burn rate too high"
+    display_name = "GCLB ${each.key} SLO burn rate too high"
 
     condition_threshold {
       filter = <<-EOT
-        select_slo_burn_rate("${google_monitoring_slo.success_gclb[0].id}", "60m")
+        select_slo_burn_rate("${google_monitoring_slo.success_gclb[each.key].id}", "60m")
       EOT
 
       duration        = "0s"
@@ -227,7 +240,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_gclb" {
     content   = <<-EOT
       The GCLB SLO for ${var.service_name} is burning through its error budget too quickly.
 
-      Current SLO target: ${var.slo.success.multi_region_goal * 100}% success over 30 days
+      Current SLO target: ${var.slo.success.multi_region_goal * 100}% success over ${each.key} days
 
       Please investigate the Cloud Run service for errors or performance issues across regions.
     EOT
