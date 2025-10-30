@@ -54,7 +54,7 @@ resource "google_monitoring_slo" "success_cr_per_region" {
 
   service      = google_monitoring_custom_service.this.service_id
   slo_id       = "${var.service_name}-success-${each.value.region}-${each.value.rolling_period_key}d"
-  display_name = "${var.service_name} - ${each.key} Success ${each.value.rolling_period_key}d Cloud Run SLO"
+  display_name = "${var.service_name} - ${each.value.region} Success ${each.value.rolling_period_key}d Cloud Run SLO"
   project      = var.project_id
 
   goal                = var.slo.success.per_region_goal
@@ -67,7 +67,7 @@ resource "google_monitoring_slo" "success_cr_per_region" {
         "metric.type=\"run.googleapis.com/request_count\"",
         "resource.type=\"cloud_run_revision\"",
         "resource.label.\"service_name\"=\"${var.service_name}\"",
-        "resource.label.\"location\"=\"${each.key}\""
+        "resource.label.\"location\"=\"${each.value.region}\""
       ])
 
       # Bad requests
