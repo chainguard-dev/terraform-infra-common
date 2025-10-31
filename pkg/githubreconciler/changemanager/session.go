@@ -9,9 +9,11 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
 	"github.com/google/go-github/v75/github"
 )
 
@@ -72,6 +74,7 @@ func (s *Session[T]) CloseAnyOutstanding(ctx context.Context, message string) er
 
 // Upsert creates a new PR or updates an existing one with the provided properties.
 // It only calls makeChanges when refresh is needed or when creating a new PR.
+// Returns a RequeueAfter error if GitHub is still computing the PR's mergeable status.
 func (s *Session[T]) Upsert(
 	ctx context.Context,
 	data *T,
@@ -82,7 +85,11 @@ func (s *Session[T]) Upsert(
 	log := clog.FromContext(ctx)
 
 	// Check if refresh is needed
-	if !s.needsRefresh(ctx, data) {
+	needsRefresh, err := s.needsRefresh(ctx, data)
+	if err != nil {
+		return "", err
+	}
+	if !needsRefresh {
 		log.Info("PR is up to date, no refresh needed")
 		return s.existingPR.GetHTMLURL(), nil
 	}
@@ -158,31 +165,41 @@ func (s *Session[T]) Upsert(
 
 // needsRefresh determines if an existing PR needs to be refreshed.
 // Returns true if no existing PR, PR has merge conflict, or embedded data differs.
-func (s *Session[T]) needsRefresh(ctx context.Context, expected *T) bool {
+// Returns an error if the Mergeable status is still being computed by GitHub (RequeueAfter 5 minutes).
+func (s *Session[T]) needsRefresh(ctx context.Context, expected *T) (bool, error) {
 	if s.existingPR == nil {
-		return true
+		return true, nil
 	}
 
 	log := clog.FromContext(ctx)
 
+	// Check if GitHub is still computing the mergeable status
+	// See: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request
+	// "The value of the mergeable attribute can be true, false, or null. If the value is null,
+	// then GitHub has started a background job to compute the mergeability."
+	if s.existingPR.Mergeable == nil {
+		log.Info("PR mergeable status is still being computed by GitHub, requeueing")
+		return false, workqueue.RequeueAfter(5 * time.Minute)
+	}
+
 	// Check for merge conflicts
-	if s.existingPR.Mergeable != nil && !*s.existingPR.Mergeable {
+	if !*s.existingPR.Mergeable {
 		log.Info("PR has merge conflict, refresh needed")
-		return true
+		return true, nil
 	}
 
 	// Extract embedded data from PR body
 	existing, err := s.manager.extractData(s.existingPR.GetBody())
 	if err != nil {
 		log.Warnf("Failed to extract data from PR body: %v", err)
-		return true
+		return true, nil
 	}
 
 	// Compare data using deep equality
 	if !reflect.DeepEqual(existing, expected) {
 		log.Info("PR data differs, refresh needed")
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
