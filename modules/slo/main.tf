@@ -114,7 +114,7 @@ resource "google_monitoring_slo" "success_gclb" {
 
 # Alert policy for multi-region success SLO burn rate
 resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
-  for_each = var.slo.monitor_gclb ? local.rolling_periods : {}
+  for_each = var.slo.enable_alerting ? local.rolling_periods : {}
 
   display_name = "${var.service_name} - Multi-region ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
