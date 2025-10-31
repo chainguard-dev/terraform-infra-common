@@ -7,6 +7,7 @@ package changemanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"text/template"
 
@@ -24,12 +25,20 @@ type CM[T any] struct {
 
 // New creates a new CM with the given identity and templates.
 // The templates are executed with data of type T when creating or updating PRs.
-func New[T any](identity string, titleTemplate *template.Template, bodyTemplate *template.Template) *CM[T] {
+// Returns an error if titleTemplate or bodyTemplate is nil.
+func New[T any](identity string, titleTemplate *template.Template, bodyTemplate *template.Template) (*CM[T], error) {
+	if titleTemplate == nil {
+		return nil, errors.New("titleTemplate cannot be nil")
+	}
+	if bodyTemplate == nil {
+		return nil, errors.New("bodyTemplate cannot be nil")
+	}
+
 	return &CM[T]{
 		identity:      identity,
 		titleTemplate: titleTemplate,
 		bodyTemplate:  bodyTemplate,
-	}
+	}, nil
 }
 
 // NewSession creates a new Session for the given resource.

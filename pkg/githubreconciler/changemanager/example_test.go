@@ -28,7 +28,11 @@ func Example() {
 {{if .Commit}}**Commit**: {{.Commit}}{{end}}`))
 
 	// Create manager once per identity
-	cm := changemanager.New[UpdateData]("update-bot", titleTmpl, bodyTmpl)
+	cm, err := changemanager.New[UpdateData]("update-bot", titleTmpl, bodyTmpl)
+	if err != nil {
+		// handle error
+		return
+	}
 
 	// In your reconciler, create a session per resource
 	ctx := context.Background()

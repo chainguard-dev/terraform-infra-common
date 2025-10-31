@@ -18,7 +18,12 @@ type testData struct {
 }
 
 func Test_embedData(t *testing.T) {
-	cm := New[testData]("test-bot", nil, nil)
+	titleTmpl := template.Must(template.New("title").Parse("{{.PackageName}}"))
+	bodyTmpl := template.Must(template.New("body").Parse("{{.Version}}"))
+	cm, err := New[testData]("test-bot", titleTmpl, bodyTmpl)
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
 
 	data := &testData{
 		PackageName: "foo",
@@ -63,10 +68,15 @@ func Test_embedData(t *testing.T) {
 }
 
 func Test_extractData_notFound(t *testing.T) {
-	cm := New[testData]("test-bot", nil, nil)
+	titleTmpl := template.Must(template.New("title").Parse("{{.PackageName}}"))
+	bodyTmpl := template.Must(template.New("body").Parse("{{.Version}}"))
+	cm, err := New[testData]("test-bot", titleTmpl, bodyTmpl)
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
 
 	body := "This is a PR body without embedded data"
-	_, err := cm.extractData(body)
+	_, err = cm.extractData(body)
 	if err == nil {
 		t.Error("extractData should have failed for body without embedded data")
 	}
@@ -74,7 +84,11 @@ func Test_extractData_notFound(t *testing.T) {
 
 func Test_executeTemplate(t *testing.T) {
 	titleTmpl := template.Must(template.New("title").Parse("{{.PackageName}}/{{.Version}}"))
-	cm := New[testData]("test-bot", titleTmpl, nil)
+	bodyTmpl := template.Must(template.New("body").Parse("Update"))
+	cm, err := New[testData]("test-bot", titleTmpl, bodyTmpl)
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
 
 	data := &testData{
 		PackageName: "foo",
@@ -89,5 +103,71 @@ func Test_executeTemplate(t *testing.T) {
 	expected := "foo/1.2.3"
 	if result != expected {
 		t.Errorf("template result: got = %q, wanted = %q", result, expected)
+	}
+}
+
+func TestNew(t *testing.T) {
+	titleTmpl := template.Must(template.New("title").Parse("{{.PackageName}}/{{.Version}}"))
+	bodyTmpl := template.Must(template.New("body").Parse("Update {{.PackageName}} to {{.Version}}"))
+
+	tests := []struct {
+		name          string
+		identity      string
+		titleTemplate *template.Template
+		bodyTemplate  *template.Template
+		wantErr       bool
+		errContains   string
+	}{{
+		name:          "valid templates",
+		identity:      "test-bot",
+		titleTemplate: titleTmpl,
+		bodyTemplate:  bodyTmpl,
+		wantErr:       false,
+	}, {
+		name:          "nil title template",
+		identity:      "test-bot",
+		titleTemplate: nil,
+		bodyTemplate:  bodyTmpl,
+		wantErr:       true,
+		errContains:   "titleTemplate cannot be nil",
+	}, {
+		name:          "nil body template",
+		identity:      "test-bot",
+		titleTemplate: titleTmpl,
+		bodyTemplate:  nil,
+		wantErr:       true,
+		errContains:   "bodyTemplate cannot be nil",
+	}, {
+		name:          "both templates nil",
+		identity:      "test-bot",
+		titleTemplate: nil,
+		bodyTemplate:  nil,
+		wantErr:       true,
+		errContains:   "titleTemplate cannot be nil",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cm, err := New[testData](tt.identity, tt.titleTemplate, tt.bodyTemplate)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("New() error: got = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("New() should have returned an error")
+				} else if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("New() error message: got = %q, wanted to contain %q", err.Error(), tt.errContains)
+				}
+			} else {
+				if cm == nil {
+					t.Fatal("New() returned nil CM when error is nil")
+				}
+				if cm.identity != tt.identity {
+					t.Errorf("New() identity: got = %q, wanted = %q", cm.identity, tt.identity)
+				}
+			}
+		})
 	}
 }
