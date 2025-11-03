@@ -761,3 +761,12 @@ func (c GitHubClient) GetCommitDetails(ctx context.Context, owner, repo, sha str
 
 	return cDetails, nil
 }
+
+// AddIssueComment Adds a new comment to the given issue.
+func (c GitHubClient) AddIssueComment(ctx context.Context, owner, repo string, issueNum int, comment *github.IssueComment) (*github.IssueComment, error) {
+	comment, _, err := c.inner.Issues.CreateComment(ctx, owner, repo, issueNum, comment)
+	if err != nil {
+		return nil, fmt.Errorf("creating issue comment: %w", err)
+	}
+	return comment, nil
+}
