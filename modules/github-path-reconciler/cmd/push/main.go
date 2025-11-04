@@ -149,17 +149,60 @@ func (h *pushHandler) handlePushEvent(ctx context.Context, event cloudevents.Eve
 		return fmt.Errorf("failed to get GitHub client: %w", err)
 	}
 
-	// Use the GitHub API to compare commits to get all changed files
-	// This handles all merge strategies correctly (merge commits, squash, rebase)
-	comparison, _, err := ghClient.Repositories.CompareCommits(ctx, owner, repo, before, after, &github.ListOptions{})
+	// Use Git Tree comparison to get all changed files
+	// CompareCommits is limited to 300 files, but GetTree has no such limit
+	// Get the commit objects to access their tree SHAs
+	beforeCommit, _, err := ghClient.Git.GetCommit(ctx, owner, repo, before)
 	if err != nil {
-		return fmt.Errorf("failed to compare commits: %w", err)
+		return fmt.Errorf("failed to get before commit: %w", err)
 	}
 
-	// Collect all changed files from the comparison
+	afterCommit, _, err := ghClient.Git.GetCommit(ctx, owner, repo, after)
+	if err != nil {
+		return fmt.Errorf("failed to get after commit: %w", err)
+	}
+
+	// Get recursive trees for both commits
+	beforeTree, _, err := ghClient.Git.GetTree(ctx, owner, repo, beforeCommit.Tree.GetSHA(), true)
+	if err != nil {
+		return fmt.Errorf("failed to get before tree: %w", err)
+	}
+
+	afterTree, _, err := ghClient.Git.GetTree(ctx, owner, repo, afterCommit.Tree.GetSHA(), true)
+	if err != nil {
+		return fmt.Errorf("failed to get after tree: %w", err)
+	}
+
+	// Build maps of file paths to their blob SHAs
+	beforeFiles := make(map[string]string) // path -> SHA
+	for _, entry := range beforeTree.Entries {
+		if entry.GetType() == "blob" {
+			beforeFiles[entry.GetPath()] = entry.GetSHA()
+		}
+	}
+
+	afterFiles := make(map[string]string) // path -> SHA
+	for _, entry := range afterTree.Entries {
+		if entry.GetType() == "blob" {
+			afterFiles[entry.GetPath()] = entry.GetSHA()
+		}
+	}
+
+	// Find all changed files (added, modified, or deleted)
 	changedFiles := make(map[string]struct{})
-	for _, file := range comparison.Files {
-		changedFiles[file.GetFilename()] = struct{}{}
+
+	// Find added or modified files
+	for path, afterSHA := range afterFiles {
+		if beforeSHA, exists := beforeFiles[path]; !exists || beforeSHA != afterSHA {
+			changedFiles[path] = struct{}{}
+		}
+	}
+
+	// Find deleted files
+	for path := range beforeFiles {
+		if _, exists := afterFiles[path]; !exists {
+			changedFiles[path] = struct{}{}
+		}
 	}
 
 	log.Infof("Processing %d changed files", len(changedFiles))
