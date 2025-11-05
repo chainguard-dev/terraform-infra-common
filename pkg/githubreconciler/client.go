@@ -10,9 +10,11 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpratelimit"
 	"github.com/google/go-github/v75/github"
 	"golang.org/x/oauth2"
 )
@@ -81,9 +83,13 @@ func (cc *ClientCache) Get(ctx context.Context, org, repo string) (*github.Clien
 	// Create OAuth2 client with the token source
 	oauthClient := oauth2.NewClient(ctx, tokenSource)
 
-	// Wrap the transport with metrics instrumentation for GitHub API monitoring
+	// Build transport chain: rate limiting -> metrics
+	// Rate limiting is applied first to prevent hitting GitHub API limits
+	rateLimitedTransport := httpratelimit.NewTransport(oauthClient.Transport, time.Minute)
+	metricsTransport := httpmetrics.WrapTransport(rateLimitedTransport)
+
 	httpClient := &http.Client{
-		Transport: httpmetrics.WrapTransport(oauthClient.Transport),
+		Transport: metricsTransport,
 	}
 
 	client = github.NewClient(httpClient)

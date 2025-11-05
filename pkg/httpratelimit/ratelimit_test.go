@@ -1,4 +1,9 @@
-package sdk
+/*
+Copyright 2025 Chainguard, Inc.
+SPDX-License-Identifier: Apache-2.0
+*/
+
+package httpratelimit
 
 import (
 	"context"
@@ -7,8 +12,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/chainguard-dev/terraform-infra-common/pkg/httpratelimit"
 )
 
 type testRT struct {
@@ -28,7 +31,7 @@ func (t *testRT) RoundTrip(_ *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func TestSecondaryRateLimitWaiter(t *testing.T) {
+func TestTransport_RateLimiting(t *testing.T) {
 	defaultRetryAfter := 1 * time.Second
 
 	tests := []struct {
@@ -48,7 +51,7 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "Rate limit with `x-ratelimit-reset`",
+			name: "Rate limit with x-ratelimit-reset",
 			responses: func(baseTime time.Time) []*http.Response {
 				return []*http.Response{
 					{
@@ -66,7 +69,7 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "Rate limit with `x-ratelimit-remaining`",
+			name: "Rate limit with x-ratelimit-remaining",
 			responses: func(baseTime time.Time) []*http.Response {
 				return []*http.Response{
 					{
@@ -86,7 +89,7 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "Rate limit with `retry-after`",
+			name: "Rate limit with retry-after",
 			responses: func(_ time.Time) []*http.Response {
 				return []*http.Response{
 					{
@@ -119,6 +122,23 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			expectedWait:   defaultRetryAfter,
 			expectedStatus: http.StatusOK,
 		},
+		{
+			name: "Rate limit with 429 status code",
+			responses: func(_ time.Time) []*http.Response {
+				return []*http.Response{
+					{
+						StatusCode: http.StatusTooManyRequests,
+						Header: http.Header{
+							HeaderRetryAfter: {"1"},
+						},
+					},
+					{StatusCode: http.StatusOK},
+				}
+			},
+			expectedCalls:  2,
+			expectedWait:   1 * time.Second,
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
@@ -133,10 +153,10 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			}
 
 			client := &http.Client{
-				Transport: httpratelimit.NewTransport(trt, defaultRetryAfter),
+				Transport: NewTransport(trt, defaultRetryAfter),
 			}
 
-			req, err := http.NewRequest(http.MethodGet, "https://foobear.com", nil)
+			req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
 			if err != nil {
 				t.Fatalf("failed to create request: %v", err)
 			}
@@ -157,13 +177,13 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 				t.Fatalf("expected %d calls, got %d", tt.expectedCalls, trt.callCount)
 			}
 
-			// Apply some buffer to account for these bad tests and the fact that we're not mocking the clock
+			// Apply some buffer to account for timing variations
 			if tt.expectedWait == 0 {
 				if elapsed > 100*time.Millisecond {
 					t.Fatalf("expected no significant wait, but got %s", elapsed)
 				}
 			} else {
-				buffer := tt.expectedWait / 4 // 10% of expected wait
+				buffer := tt.expectedWait / 4 // 25% buffer
 				minExpectedWait := tt.expectedWait - buffer
 				maxExpectedWait := tt.expectedWait + buffer
 
@@ -172,5 +192,53 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNewClient(t *testing.T) {
+	client := NewClient(nil)
+	if client == nil {
+		t.Fatal("expected non-nil client")
+	}
+
+	transport, ok := client.Transport.(*Transport)
+	if !ok {
+		t.Fatal("expected transport to be *Transport")
+	}
+
+	if transport.defaultRetryAfter != time.Minute {
+		t.Fatalf("expected default retry after to be 1 minute, got %v", transport.defaultRetryAfter)
+	}
+}
+
+func TestLimiter_ConcurrentPause(t *testing.T) {
+	l := &limiter{
+		base: nil, // Not used in this test
+	}
+
+	var wg sync.WaitGroup
+	pauseDurations := []time.Duration{100 * time.Millisecond, 200 * time.Millisecond, 50 * time.Millisecond}
+
+	// Pause concurrently with different durations
+	for _, d := range pauseDurations {
+		wg.Add(1)
+		go func(duration time.Duration) {
+			defer wg.Done()
+			l.PauseFor(duration)
+		}(d)
+	}
+
+	wg.Wait()
+
+	// The longest pause should win
+	expectedPauseUntil := time.Now().Add(200 * time.Millisecond)
+	l.mu.Lock()
+	actualPauseUntil := l.pauseUntil
+	l.mu.Unlock()
+
+	// Allow some timing variance
+	diff := actualPauseUntil.Sub(expectedPauseUntil)
+	if diff < -50*time.Millisecond || diff > 50*time.Millisecond {
+		t.Fatalf("expected pause until around %v, got %v (diff: %v)", expectedPauseUntil, actualPauseUntil, diff)
 	}
 }
