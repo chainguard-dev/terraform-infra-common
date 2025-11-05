@@ -161,9 +161,13 @@ func TestNew(t *testing.T) {
 					t.Errorf("New() error message: got = %q, wanted to contain %q", err.Error(), tt.errContains)
 				}
 			} else {
-				if cm == nil {
-					t.Fatal("New() returned nil CM when error is nil")
+				// When error is nil, cm must not be nil
+				require := func(cond bool, msg string) {
+					if !cond {
+						t.Fatal(msg)
+					}
 				}
+				require(cm != nil, "New() returned nil CM when error is nil")
 				if cm.identity != tt.identity {
 					t.Errorf("New() identity: got = %q, wanted = %q", cm.identity, tt.identity)
 				}

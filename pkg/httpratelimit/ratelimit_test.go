@@ -197,14 +197,16 @@ func TestTransport_RateLimiting(t *testing.T) {
 
 func TestNewClient(t *testing.T) {
 	client := NewClient(nil)
-	if client == nil {
-		t.Fatal("expected non-nil client")
+	require := func(cond bool, msg string) {
+		if !cond {
+			t.Fatal(msg)
+		}
 	}
 
+	require(client != nil, "expected non-nil client")
+
 	transport, ok := client.Transport.(*Transport)
-	if !ok {
-		t.Fatal("expected transport to be *Transport")
-	}
+	require(ok, "expected transport to be *Transport")
 
 	if transport.defaultRetryAfter != time.Minute {
 		t.Fatalf("expected default retry after to be 1 minute, got %v", transport.defaultRetryAfter)
@@ -289,11 +291,8 @@ func TestTransport_ProactiveThrottling(t *testing.T) {
 	transport := NewTransport(trt, time.Minute)
 	client := &http.Client{Transport: transport}
 
-	// Make requests and track timing
-	var requestTimes []time.Time
-
+	// Make requests (timing tracked implicitly by rate limiter)
 	for i := 0; i < len(responses); i++ {
-		requestTimes = append(requestTimes, time.Now())
 		req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
 		if err != nil {
 			t.Fatalf("failed to create request: %v", err)
