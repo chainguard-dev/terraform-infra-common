@@ -242,3 +242,139 @@ func TestLimiter_ConcurrentPause(t *testing.T) {
 		t.Fatalf("expected pause until around %v, got %v (diff: %v)", expectedPauseUntil, actualPauseUntil, diff)
 	}
 }
+
+func TestTransport_ProactiveThrottling(t *testing.T) {
+	// Test that the transport proactively throttles when quota is low
+	baseTime := time.Now()
+	resetTime := baseTime.Add(60 * time.Second)
+
+	// Simulate responses with decreasing rate limit quota
+	responses := []*http.Response{
+		// First request: 5000/5000 remaining (100%)
+		{
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Remaining": []string{"5000"},
+				"X-Ratelimit-Reset":     []string{fmt.Sprintf("%d", resetTime.Unix())},
+			},
+		},
+		// Second request: 500/5000 remaining (10%)
+		{
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Remaining": []string{"500"},
+				"X-Ratelimit-Reset":     []string{fmt.Sprintf("%d", resetTime.Unix())},
+			},
+		},
+		// Third request: 50/5000 remaining (1%)
+		{
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Remaining": []string{"50"},
+				"X-Ratelimit-Reset":     []string{fmt.Sprintf("%d", resetTime.Unix())},
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	trt := &testRT{
+		responses: responses,
+	}
+
+	transport := NewTransport(trt, time.Minute)
+	client := &http.Client{Transport: transport}
+
+	// Make requests and track timing
+	var requestTimes []time.Time
+
+	for i := 0; i < len(responses); i++ {
+		requestTimes = append(requestTimes, time.Now())
+		req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+		req = req.WithContext(ctx)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("failed to make request %d: %v", i, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("request %d: expected status 200, got %d", i, resp.StatusCode)
+		}
+	}
+
+	// Verify the transport is tracking state
+	transport.mu.RLock()
+	lastRemaining := transport.lastRemaining
+	lastLimit := transport.lastLimit
+	transport.mu.RUnlock()
+
+	if lastRemaining != 50 {
+		t.Errorf("expected last remaining to be 50, got %d", lastRemaining)
+	}
+	if lastLimit != 5000 {
+		t.Errorf("expected last limit to be 5000, got %d", lastLimit)
+	}
+
+	// Note: We don't check timing delays here because rate limiting introduces
+	// variable delays that are hard to test deterministically
+}
+
+func TestTransport_MonitoringSuccessfulResponses(t *testing.T) {
+	// Test that we monitor rate limit headers on ALL responses, not just errors
+	baseTime := time.Now()
+	resetTime := baseTime.Add(60 * time.Second)
+
+	resp := &http.Response{
+		StatusCode: http.StatusOK, // Success, not an error!
+		Header: http.Header{
+			"X-Ratelimit-Limit":     []string{"5000"},
+			"X-Ratelimit-Remaining": []string{"4500"},
+			"X-Ratelimit-Reset":     []string{fmt.Sprintf("%d", resetTime.Unix())},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	trt := &testRT{
+		responses: []*http.Response{resp},
+	}
+
+	transport := NewTransport(trt, time.Minute)
+	client := &http.Client{Transport: transport}
+
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req = req.WithContext(ctx)
+
+	_, err = client.Do(req)
+	if err != nil {
+		t.Fatalf("failed to make request: %v", err)
+	}
+
+	// Verify we tracked the rate limit info from the successful response
+	transport.mu.RLock()
+	lastRemaining := transport.lastRemaining
+	lastLimit := transport.lastLimit
+	lastReset := transport.lastReset
+	transport.mu.RUnlock()
+
+	if lastRemaining != 4500 {
+		t.Errorf("expected lastRemaining to be 4500, got %d", lastRemaining)
+	}
+	if lastLimit != 5000 {
+		t.Errorf("expected lastLimit to be 5000, got %d", lastLimit)
+	}
+	if lastReset.IsZero() {
+		t.Error("expected lastReset to be set")
+	}
+}

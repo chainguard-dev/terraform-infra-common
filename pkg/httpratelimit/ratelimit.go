@@ -35,6 +35,12 @@ type Transport struct {
 	base              http.RoundTripper
 	limiter           *limiter
 	defaultRetryAfter time.Duration
+
+	// Track rate limit state across requests
+	mu            sync.RWMutex
+	lastRemaining int
+	lastLimit     int
+	lastReset     time.Time
 }
 
 // NewTransport creates a new rate limiting transport wrapper.
@@ -81,8 +87,11 @@ func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 
-	// Check if we hit a rate limit and need to retry
-	if rt.processRateLimit(ctx, resp) {
+	// Monitor rate limit headers on ALL responses (not just errors)
+	rt.monitorRateLimitHeaders(ctx, resp)
+
+	// Check if we hit a rate limit error and need to retry
+	if rt.processRateLimitError(ctx, resp) {
 		// Recursively retry the request after waiting
 		return rt.RoundTrip(req)
 	}
@@ -90,12 +99,81 @@ func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-// processRateLimit checks if the response indicates rate limiting and pauses future requests.
+// monitorRateLimitHeaders tracks rate limit state from ALL responses to enable proactive throttling.
+// This function reads x-ratelimit headers from every response to understand our quota usage.
+func (rt *Transport) monitorRateLimitHeaders(ctx context.Context, resp *http.Response) {
+	log := clog.FromContext(ctx)
+
+	var (
+		limit     int
+		remaining int
+		reset     time.Time
+	)
+
+	// Parse x-ratelimit-limit
+	if v := resp.Header.Get("X-Ratelimit-Limit"); v != "" {
+		if l, err := strconv.Atoi(v); err == nil {
+			limit = l
+		}
+	}
+
+	// Parse x-ratelimit-remaining
+	if v := resp.Header.Get(HeaderXRateLimitRemaining); v != "" {
+		if r, err := strconv.Atoi(v); err == nil {
+			remaining = r
+		}
+	}
+
+	// Parse x-ratelimit-reset
+	if v := resp.Header.Get(HeaderXRateLimitReset); v != "" {
+		if seconds, err := strconv.ParseInt(v, 10, 64); err == nil {
+			reset = time.Unix(seconds, 0)
+		}
+	}
+
+	// Update tracked state
+	rt.mu.Lock()
+	rt.lastRemaining = remaining
+	rt.lastLimit = limit
+	rt.lastReset = reset
+	rt.mu.Unlock()
+
+	// Proactively throttle if we're running low on quota
+	// We use a threshold to slow down before hitting 0
+	if limit > 0 && remaining > 0 {
+		percentRemaining := float64(remaining) / float64(limit)
+
+		// If we're below 10% of our quota, start throttling proactively
+		if percentRemaining < 0.10 {
+			timeUntilReset := time.Until(reset)
+			if timeUntilReset > 0 {
+				// Calculate a safe request rate: spread remaining requests over time until reset
+				// Add 10 second buffer to be conservative
+				delayPerRequest := (timeUntilReset + 10*time.Second) / time.Duration(remaining)
+
+				log.With(
+					"remaining", remaining,
+					"limit", limit,
+					"reset_in", timeUntilReset,
+					"delay_per_request", delayPerRequest,
+				).Info("Proactively throttling due to low rate limit quota")
+
+				// Update the rate limiter to throttle future requests
+				rt.limiter.SetRate(delayPerRequest)
+			}
+		} else if percentRemaining > 0.50 {
+			// If we have plenty of quota (>50%), ensure we're not throttling
+			rt.limiter.ResetRate()
+		}
+	}
+}
+
+// processRateLimitError checks if the response indicates a rate limit error and pauses future requests.
 // Returns true if the request should be retried after the pause.
 //
 // GitHub rate limit documentation:
 // https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api#exceeding-the-rate-limit
-func (rt *Transport) processRateLimit(ctx context.Context, resp *http.Response) bool {
+func (rt *Transport) processRateLimitError(ctx context.Context, resp *http.Response) bool {
 	log := clog.FromContext(ctx)
 
 	// Check for rate limit status codes
@@ -228,4 +306,27 @@ func (l *limiter) PauseFor(d time.Duration) {
 			l.mu.Unlock()
 		}(l.pauseCh)
 	}
+}
+
+// SetRate adjusts the rate limiter to allow one request per the specified interval.
+// This enables proactive throttling based on remaining quota.
+func (l *limiter) SetRate(interval time.Duration) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	// Calculate requests per second from the interval
+	// e.g., if interval is 2 seconds, rate is 0.5 req/sec
+	if interval > 0 {
+		rps := rate.Limit(float64(time.Second) / float64(interval))
+		l.base.SetLimit(rps)
+		l.base.SetBurst(1) // Allow minimal burst when throttling
+	}
+}
+
+// ResetRate restores the rate limiter to unlimited (no proactive throttling).
+func (l *limiter) ResetRate() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.base.SetLimit(rate.Inf)
+	l.base.SetBurst(100) // Restore default burst
 }
