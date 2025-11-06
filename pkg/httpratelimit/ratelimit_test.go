@@ -153,7 +153,11 @@ func TestTransport_RateLimiting(t *testing.T) {
 			}
 
 			client := &http.Client{
-				Transport: NewTransport(trt, defaultRetryAfter, 100), // High rate for tests
+				Transport: NewTransport(
+					trt,
+					WithDefaultRetryAfter(defaultRetryAfter),
+					WithMaxRequestsPerSecond(100), // High rate for tests
+				),
 			}
 
 			req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
@@ -260,7 +264,7 @@ func TestTransport_VelocityBasedRateLimiting(t *testing.T) {
 	}
 
 	client := &http.Client{
-		Transport: NewTransport(mockRT, time.Minute, maxRPS),
+		Transport: NewTransport(mockRT, WithMaxRequestsPerSecond(maxRPS)),
 	}
 
 	ctx := context.Background()

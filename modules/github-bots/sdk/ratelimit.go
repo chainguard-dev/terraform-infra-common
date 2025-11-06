@@ -22,7 +22,7 @@ func NewSecondaryRateLimitWaiterClient(base http.RoundTripper) *http.Client {
 	}
 
 	return &http.Client{
-		Transport: httpratelimit.NewTransport(base, httpratelimit.DefaultRetryAfter, httpratelimit.DefaultMaxRequestsPerSecond),
+		Transport: httpratelimit.NewTransport(base),
 	}
 }
 

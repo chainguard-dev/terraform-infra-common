@@ -52,50 +52,69 @@ type Transport struct {
 	maxRequestsPerSec float64
 }
 
+// TransportOption is a functional option for configuring Transport.
+type TransportOption func(*Transport)
+
+// WithDefaultRetryAfter sets the default retry duration when rate limited but no retry-after header is provided.
+func WithDefaultRetryAfter(d time.Duration) TransportOption {
+	return func(t *Transport) {
+		t.defaultRetryAfter = d
+	}
+}
+
+// WithMaxRequestsPerSecond sets the maximum requests per second to prevent secondary rate limits.
+// Secondary rate limits are triggered by request velocity, not total quota, and don't provide warning headers.
+func WithMaxRequestsPerSecond(rps float64) TransportOption {
+	return func(t *Transport) {
+		t.maxRequestsPerSec = rps
+	}
+}
+
 // NewTransport creates a new rate limiting transport wrapper.
 //
 // Parameters:
 //   - base: The underlying http.RoundTripper to wrap (uses http.DefaultTransport if nil)
-//   - defaultRetryAfter: How long to wait when rate limited but no retry-after header is provided (uses DefaultRetryAfter if 0)
-//   - maxRequestsPerSec: Maximum requests per second to prevent secondary rate limits (uses DefaultMaxRequestsPerSecond if 0)
+//   - opts: Optional configuration options (WithDefaultRetryAfter, WithMaxRequestsPerSecond)
 //
+// By default, uses DefaultRetryAfter (1 minute) and DefaultMaxRequestsPerSecond (15 RPS).
 // The maxRequestsPerSec limit prevents GitHub's secondary rate limits which are triggered
-// by request velocity, not total quota. Secondary limits don't provide warning headers,
-// so we must prevent them proactively.
-func NewTransport(base http.RoundTripper, defaultRetryAfter time.Duration, maxRequestsPerSec float64) *Transport {
+// by request velocity, not total quota.
+func NewTransport(base http.RoundTripper, opts ...TransportOption) *Transport {
 	if base == nil {
 		base = http.DefaultTransport
 	}
-	if defaultRetryAfter == 0 {
-		defaultRetryAfter = DefaultRetryAfter
+
+	t := &Transport{
+		base:              base,
+		defaultRetryAfter: DefaultRetryAfter,
+		maxRequestsPerSec: DefaultMaxRequestsPerSecond,
 	}
-	if maxRequestsPerSec == 0 {
-		maxRequestsPerSec = DefaultMaxRequestsPerSecond
+
+	// Apply options
+	for _, opt := range opts {
+		opt(t)
 	}
 
 	// Create rate limiter with specified RPS
 	// Burst allows some flexibility for occasional bursts while maintaining average rate
-	burst := int(maxRequestsPerSec * BurstMultiplier)
+	burst := int(t.maxRequestsPerSec * BurstMultiplier)
 	if burst < 1 {
 		burst = 1
 	}
 
-	return &Transport{
-		base: base,
-		limiter: &limiter{
-			base: rate.NewLimiter(rate.Limit(maxRequestsPerSec), burst),
-			mu:   sync.Mutex{},
-		},
-		defaultRetryAfter: defaultRetryAfter,
-		maxRequestsPerSec: maxRequestsPerSec,
+	t.limiter = &limiter{
+		base: rate.NewLimiter(rate.Limit(t.maxRequestsPerSec), burst),
+		mu:   sync.Mutex{},
 	}
+
+	return t
 }
 
 // NewClient creates a new HTTP client with rate limiting enabled using default settings.
 // This is a convenience function that wraps the given base transport with default constants.
 func NewClient(base http.RoundTripper) *http.Client {
 	return &http.Client{
-		Transport: NewTransport(base, DefaultRetryAfter, DefaultMaxRequestsPerSecond),
+		Transport: NewTransport(base),
 	}
 }
 

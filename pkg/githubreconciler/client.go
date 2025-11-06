@@ -103,7 +103,10 @@ func (cc *ClientCache) Get(ctx context.Context, org, repo string) (*github.Clien
 
 	// Build transport chain: rate limiting -> metrics
 	// Rate limiting is applied first to prevent hitting GitHub API limits (both primary and secondary)
-	rateLimitedTransport := httpratelimit.NewTransport(oauthClient.Transport, httpratelimit.DefaultRetryAfter, cc.maxRequestsPerSecond)
+	rateLimitedTransport := httpratelimit.NewTransport(
+		oauthClient.Transport,
+		httpratelimit.WithMaxRequestsPerSecond(cc.maxRequestsPerSecond),
+	)
 	metricsTransport := httpmetrics.WrapTransport(rateLimitedTransport)
 
 	httpClient := &http.Client{

@@ -355,7 +355,7 @@ func TestClientCache_RateLimitTransportChain(t *testing.T) {
 func TestNewTransport_UsesRateLimiter(t *testing.T) {
 	// This test verifies that our rate limiter is correctly created
 	baseTransport := http.DefaultTransport
-	rateLimitTransport := httpratelimit.NewTransport(baseTransport, 0, 0)
+	rateLimitTransport := httpratelimit.NewTransport(baseTransport)
 
 	if rateLimitTransport == nil {
 		t.Fatal("Expected rate limit transport to be non-nil")
