@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpratelimit"
 )
@@ -23,11 +22,12 @@ func NewSecondaryRateLimitWaiterClient(base http.RoundTripper) *http.Client {
 	}
 
 	return &http.Client{
-		Transport: httpratelimit.NewTransport(base, 1*time.Minute),
+		Transport: httpratelimit.NewTransport(base, httpratelimit.DefaultRetryAfter, httpratelimit.DefaultMaxRequestsPerSecond),
 	}
 }
 
 // Header constants for backward compatibility.
+//
 // Deprecated: Use constants from httpratelimit package directly.
 const (
 	HeaderRetryAfter          = httpratelimit.HeaderRetryAfter

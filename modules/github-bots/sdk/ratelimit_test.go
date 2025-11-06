@@ -133,7 +133,7 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			}
 
 			client := &http.Client{
-				Transport: httpratelimit.NewTransport(trt, defaultRetryAfter),
+				Transport: httpratelimit.NewTransport(trt, defaultRetryAfter, 100), // High rate for tests
 			}
 
 			req, err := http.NewRequest(http.MethodGet, "https://foobear.com", nil)

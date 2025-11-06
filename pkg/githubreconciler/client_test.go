@@ -340,11 +340,10 @@ func TestClientCache_RateLimitTransportChain(t *testing.T) {
 	// The client should be usable and requests should go through the transport chain
 
 	// Create a simple test request to verify the transport chain works
-	req, err := http.NewRequest("GET", "https://api.github.com/test", nil)
+	_, err = http.NewRequest("GET", "https://api.github.com/test", nil)
 	if err != nil {
 		t.Fatalf("Failed to create test request: %v", err)
 	}
-	req = req.WithContext(ctx)
 
 	// We don't actually execute the request (would fail with 404),
 	// but we verify the transport chain is properly constructed
@@ -356,7 +355,7 @@ func TestClientCache_RateLimitTransportChain(t *testing.T) {
 func TestNewTransport_UsesRateLimiter(t *testing.T) {
 	// This test verifies that our rate limiter is correctly created
 	baseTransport := http.DefaultTransport
-	rateLimitTransport := httpratelimit.NewTransport(baseTransport, 0)
+	rateLimitTransport := httpratelimit.NewTransport(baseTransport, 0, 0)
 
 	if rateLimitTransport == nil {
 		t.Fatal("Expected rate limit transport to be non-nil")

@@ -153,7 +153,7 @@ func TestTransport_RateLimiting(t *testing.T) {
 			}
 
 			client := &http.Client{
-				Transport: NewTransport(trt, defaultRetryAfter),
+				Transport: NewTransport(trt, defaultRetryAfter, 100), // High rate for tests
 			}
 
 			req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
@@ -241,4 +241,67 @@ func TestLimiter_ConcurrentPause(t *testing.T) {
 	if diff < -50*time.Millisecond || diff > 50*time.Millisecond {
 		t.Fatalf("expected pause until around %v, got %v (diff: %v)", expectedPauseUntil, actualPauseUntil, diff)
 	}
+}
+
+func TestTransport_VelocityBasedRateLimiting(t *testing.T) {
+	// Test that velocity-based rate limiting actually enforces the RPS limit
+	maxRPS := 10.0 // 10 requests per second
+	requestCount := 25
+
+	// Mock transport that always returns 200 OK
+	mockRT := &testRT{
+		responses: make([]*http.Response, requestCount),
+	}
+	for i := 0; i < requestCount; i++ {
+		mockRT.responses[i] = &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{},
+		}
+	}
+
+	client := &http.Client{
+		Transport: NewTransport(mockRT, time.Minute, maxRPS),
+	}
+
+	ctx := context.Background()
+	startTime := time.Now()
+
+	// Make requests and measure time
+	for i := 0; i < requestCount; i++ {
+		req, err := http.NewRequest(http.MethodGet, "https://api.github.com/test", nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+		req = req.WithContext(ctx)
+
+		_, err = client.Do(req)
+		if err != nil {
+			t.Fatalf("request %d failed: %v", i, err)
+		}
+	}
+
+	elapsed := time.Since(startTime)
+
+	// Calculate expected minimum time based on rate limit
+	// For 25 requests at 10 RPS, minimum time should be ~2.5 seconds
+	// We account for burst (2x) so first ~20 requests can be fast, then throttled
+	// Expected: (requestCount - burst) / maxRPS
+	burst := int(maxRPS * BurstMultiplier)
+	throttledRequests := requestCount - burst
+	if throttledRequests < 0 {
+		throttledRequests = 0
+	}
+	expectedMinTime := time.Duration(float64(throttledRequests)/maxRPS*1000) * time.Millisecond
+
+	// Allow 20% tolerance for timing variations
+	tolerance := expectedMinTime / 5
+	minAcceptable := expectedMinTime - tolerance
+
+	if elapsed < minAcceptable {
+		t.Errorf("Rate limiting not enforced: expected at least %v, got %v (tolerance: %v)",
+			expectedMinTime, elapsed, tolerance)
+	}
+
+	t.Logf("Rate limiting working: %d requests took %v (expected minimum: %v)",
+		requestCount, elapsed, expectedMinTime)
 }

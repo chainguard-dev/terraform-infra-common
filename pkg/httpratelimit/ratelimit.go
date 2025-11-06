@@ -28,41 +28,74 @@ const (
 	HeaderXRateLimitRemaining = "X-Ratelimit-Remaining"
 )
 
+// Rate limiting configuration constants
+const (
+	// DefaultMaxRequestsPerSecond is a conservative default to prevent GitHub secondary rate limits
+	// Secondary rate limits are triggered by request velocity, not quota, and don't provide warning headers.
+	DefaultMaxRequestsPerSecond = 15.0
+
+	// DefaultRetryAfter is the default wait time when rate limited but no retry-after header is provided
+	DefaultRetryAfter = time.Minute
+
+	// BurstMultiplier determines the burst capacity as a multiple of the rate limit
+	// This allows some flexibility for occasional bursts while maintaining average rate
+	BurstMultiplier = 2
+)
+
 // Transport wraps an http.RoundTripper to provide proactive rate limiting
-// for GitHub API requests. It monitors rate limit headers and automatically throttles
-// requests to prevent hitting rate limits.
+// for GitHub API requests. It prevents both primary rate limits (quota-based)
+// and secondary rate limits (velocity-based) by enforcing a maximum requests-per-second.
 type Transport struct {
 	base              http.RoundTripper
 	limiter           *limiter
 	defaultRetryAfter time.Duration
+	maxRequestsPerSec float64
 }
 
 // NewTransport creates a new rate limiting transport wrapper.
-// The defaultRetryAfter specifies how long to wait when rate limited but no
-// retry-after header is provided by GitHub (defaults to 1 minute).
-func NewTransport(base http.RoundTripper, defaultRetryAfter time.Duration) *Transport {
+//
+// Parameters:
+//   - base: The underlying http.RoundTripper to wrap (uses http.DefaultTransport if nil)
+//   - defaultRetryAfter: How long to wait when rate limited but no retry-after header is provided (uses DefaultRetryAfter if 0)
+//   - maxRequestsPerSec: Maximum requests per second to prevent secondary rate limits (uses DefaultMaxRequestsPerSecond if 0)
+//
+// The maxRequestsPerSec limit prevents GitHub's secondary rate limits which are triggered
+// by request velocity, not total quota. Secondary limits don't provide warning headers,
+// so we must prevent them proactively.
+func NewTransport(base http.RoundTripper, defaultRetryAfter time.Duration, maxRequestsPerSec float64) *Transport {
 	if base == nil {
 		base = http.DefaultTransport
 	}
 	if defaultRetryAfter == 0 {
-		defaultRetryAfter = time.Minute
+		defaultRetryAfter = DefaultRetryAfter
+	}
+	if maxRequestsPerSec == 0 {
+		maxRequestsPerSec = DefaultMaxRequestsPerSecond
+	}
+
+	// Create rate limiter with specified RPS
+	// Burst allows some flexibility for occasional bursts while maintaining average rate
+	burst := int(maxRequestsPerSec * BurstMultiplier)
+	if burst < 1 {
+		burst = 1
 	}
 
 	return &Transport{
 		base: base,
 		limiter: &limiter{
-			base: rate.NewLimiter(rate.Inf, 100),
+			base: rate.NewLimiter(rate.Limit(maxRequestsPerSec), burst),
 			mu:   sync.Mutex{},
 		},
 		defaultRetryAfter: defaultRetryAfter,
+		maxRequestsPerSec: maxRequestsPerSec,
 	}
 }
 
-// NewClient creates a new HTTP client with rate limiting enabled.
-// This is a convenience function that wraps the given base transport.
+// NewClient creates a new HTTP client with rate limiting enabled using default settings.
+// This is a convenience function that wraps the given base transport with default constants.
 func NewClient(base http.RoundTripper) *http.Client {
 	return &http.Client{
-		Transport: NewTransport(base, time.Minute),
+		Transport: NewTransport(base, DefaultRetryAfter, DefaultMaxRequestsPerSecond),
 	}
 }
 
