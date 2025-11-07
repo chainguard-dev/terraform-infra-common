@@ -46,7 +46,7 @@ jobs:
           # Convert to JSON array
           json_modules=$(printf '%s\n' "${sorted_modules[@]}" | jq -R -s -c 'split("\n")[:-1]')
           echo "modules=$json_modules" >> $GITHUB_OUTPUT
-          echo "Found modules: $json_modules"
+          echo "Found modules: ${json_modules}"
 
   docs:
     runs-on: ubuntu-latest
@@ -80,10 +80,10 @@ jobs:
       - if: failure()
         name: Dump the expected README.md
         run: |
-          echo === Differences ===
+          echo "=== Differences ==="
           git diff --cached "modules/${{ matrix.module }}/README.md"
 
-          echo === Full expected file ===
+          echo "=== Full expected file ==="
           cat "modules/${{ matrix.module }}/README.md"
 
   conclusion:
