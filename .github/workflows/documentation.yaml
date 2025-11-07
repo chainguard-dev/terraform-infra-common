@@ -1,4 +1,3 @@
-# Triggering change
 name: Generate terraform docs
 
 on:
