@@ -50,9 +50,9 @@ jobs:
         shell: bash
         run: |
           git diff --stat
-          echo "create_pr_update=false" >> $GITHUB_OUTPUT
+          echo "create_pr_update=false" >> "$GITHUB_OUTPUT"
           if [[ "$(git diff --stat)" != '' ]]; then
-            echo "create_pr_update=true" >> $GITHUB_OUTPUT
+            echo "create_pr_update=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: chainguard-dev/actions/setup-gitsign@1b32103f5aa389c31ab0be75a8edc38d7e4750d8 # v1.5.7

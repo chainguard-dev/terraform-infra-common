@@ -45,7 +45,7 @@ jobs:
 
           # Convert to JSON array
           json_modules=$(printf '%s\n' "${sorted_modules[@]}" | jq -R -s -c 'split("\n")[:-1]')
-          echo "modules=$json_modules" >> $GITHUB_OUTPUT
+          echo "modules=${json_modules}" >> "$GITHUB_OUTPUT"
           echo "Found modules: ${json_modules}"
 
   docs:
