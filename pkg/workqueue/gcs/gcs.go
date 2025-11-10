@@ -230,7 +230,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 				if notBefore, err := time.Parse(time.RFC3339, nbf); err != nil {
 					clog.WarnContextf(ctx, "Failed to parse not-before: %v", err)
 				} else if time.Now().UTC().Before(notBefore) {
-					clog.InfoContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
+					clog.DebugContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
 					notbefore++
 					continue
 				}
