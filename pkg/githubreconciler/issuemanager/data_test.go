@@ -12,14 +12,14 @@ import (
 )
 
 type testData struct {
-	CVE_ID      string
+	CVEID       string
 	PackageName string
 	Version     string
 	Severity    string
 }
 
 func Test_embedData(t *testing.T) {
-	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVE_ID}}"))
+	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVEID}}"))
 	bodyTmpl := template.Must(template.New("body").Parse("{{.PackageName}} {{.Version}}"))
 	im, err := New[testData]("security-bot", titleTmpl, bodyTmpl)
 	if err != nil {
@@ -27,7 +27,7 @@ func Test_embedData(t *testing.T) {
 	}
 
 	data := &testData{
-		CVE_ID:      "2024-1234",
+		CVEID:       "2024-1234",
 		PackageName: "openssl",
 		Version:     "3.0.0",
 		Severity:    "HIGH",
@@ -58,8 +58,8 @@ func Test_embedData(t *testing.T) {
 		t.Fatalf("extractData failed: %v", err)
 	}
 
-	if extracted.CVE_ID != data.CVE_ID {
-		t.Errorf("CVE_ID: got = %q, wanted = %q", extracted.CVE_ID, data.CVE_ID)
+	if extracted.CVEID != data.CVEID {
+		t.Errorf("CVEID: got = %q, wanted = %q", extracted.CVEID, data.CVEID)
 	}
 	if extracted.PackageName != data.PackageName {
 		t.Errorf("PackageName: got = %q, wanted = %q", extracted.PackageName, data.PackageName)
@@ -73,7 +73,7 @@ func Test_embedData(t *testing.T) {
 }
 
 func Test_extractData_notFound(t *testing.T) {
-	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVE_ID}}"))
+	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVEID}}"))
 	bodyTmpl := template.Must(template.New("body").Parse("{{.PackageName}}"))
 	im, err := New[testData]("security-bot", titleTmpl, bodyTmpl)
 	if err != nil {
@@ -88,7 +88,7 @@ func Test_extractData_notFound(t *testing.T) {
 }
 
 func Test_executeTemplate(t *testing.T) {
-	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVE_ID}} in {{.PackageName}}"))
+	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVEID}} in {{.PackageName}}"))
 	bodyTmpl := template.Must(template.New("body").Parse("Update"))
 	im, err := New[testData]("security-bot", titleTmpl, bodyTmpl)
 	if err != nil {
@@ -96,7 +96,7 @@ func Test_executeTemplate(t *testing.T) {
 	}
 
 	data := &testData{
-		CVE_ID:      "2024-1234",
+		CVEID:       "2024-1234",
 		PackageName: "openssl",
 	}
 
@@ -112,7 +112,7 @@ func Test_executeTemplate(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVE_ID}}"))
+	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVEID}}"))
 	bodyTmpl := template.Must(template.New("body").Parse("Vulnerability in {{.PackageName}}"))
 
 	tests := []struct {
@@ -178,7 +178,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestNew_withLabelTemplates(t *testing.T) {
-	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVE_ID}}"))
+	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVEID}}"))
 	bodyTmpl := template.Must(template.New("body").Parse("Vulnerability in {{.PackageName}}"))
 	labelTmpl1 := template.Must(template.New("severity").Parse("severity:{{.Severity}}"))
 	labelTmpl2 := template.Must(template.New("package").Parse("package:{{.PackageName}}"))
@@ -198,7 +198,7 @@ func TestNew_withLabelTemplates(t *testing.T) {
 }
 
 func Test_executeLabelTemplates(t *testing.T) {
-	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVE_ID}}"))
+	titleTmpl := template.Must(template.New("title").Parse("CVE-{{.CVEID}}"))
 	bodyTmpl := template.Must(template.New("body").Parse("Update"))
 	labelTmpl1 := template.Must(template.New("severity").Parse("severity:{{.Severity}}"))
 	labelTmpl2 := template.Must(template.New("package").Parse("package:{{.PackageName}}"))
@@ -209,7 +209,7 @@ func Test_executeLabelTemplates(t *testing.T) {
 	}
 
 	data := &testData{
-		CVE_ID:      "2024-1234",
+		CVEID:       "2024-1234",
 		PackageName: "openssl",
 		Severity:    "HIGH",
 	}

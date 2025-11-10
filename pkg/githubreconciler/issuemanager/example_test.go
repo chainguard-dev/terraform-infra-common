@@ -15,7 +15,7 @@ import (
 )
 
 type VulnerabilityData struct {
-	CVE_ID      string
+	CVEID       string
 	PackageName string
 	Version     string
 	Severity    string
@@ -23,8 +23,8 @@ type VulnerabilityData struct {
 
 func Example() {
 	// Parse templates once at initialization
-	titleTmpl := template.Must(template.New("title").Parse(`CVE-{{.CVE_ID}}: {{.Severity}} vulnerability in {{.PackageName}}`))
-	bodyTmpl := template.Must(template.New("body").Parse(`Vulnerability **{{.CVE_ID}}** detected in {{.PackageName}} {{.Version}}
+	titleTmpl := template.Must(template.New("title").Parse(`CVE-{{.CVEID}}: {{.Severity}} vulnerability in {{.PackageName}}`))
+	bodyTmpl := template.Must(template.New("body").Parse(`Vulnerability **{{.CVEID}}** detected in {{.PackageName}} {{.Version}}
 
 **Severity**: {{.Severity}}
 
@@ -61,13 +61,13 @@ Please update to a patched version.`))
 	// Define desired issues with data
 	desired := []*VulnerabilityData{
 		{
-			CVE_ID:      "2024-1234",
+			CVEID:       "2024-1234",
 			PackageName: "openssl",
 			Version:     "3.0.0",
 			Severity:    "HIGH",
 		},
 		{
-			CVE_ID:      "2024-5678",
+			CVEID:       "2024-5678",
 			PackageName: "curl",
 			Version:     "8.0.0",
 			Severity:    "MEDIUM",
@@ -76,7 +76,7 @@ Please update to a patched version.`))
 
 	// Define a matcher function to identify issues
 	matcher := func(a, b VulnerabilityData) bool {
-		return a.CVE_ID == b.CVE_ID && a.PackageName == b.PackageName
+		return a.CVEID == b.CVEID && a.PackageName == b.PackageName
 	}
 
 	// Upsert multiple issues

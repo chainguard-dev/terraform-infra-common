@@ -37,8 +37,8 @@ SPDX-License-Identifier: Apache-2.0
 //
 // Create an IssueManager once per identity with parsed templates:
 //
-//	titleTmpl, _ := template.New("title").Parse(`CVE-{{.CVE_ID}} in {{.PackageName}}`)
-//	bodyTmpl, _ := template.New("body").Parse(`Vulnerability {{.CVE_ID}} found in {{.PackageName}} {{.Version}}`)
+//	titleTmpl, _ := template.New("title").Parse(`CVE-{{.CVEID}} in {{.PackageName}}`)
+//	bodyTmpl, _ := template.New("body").Parse(`Vulnerability {{.CVEID}} found in {{.PackageName}} {{.Version}}`)
 //
 //	im := issuemanager.New[MyData]("security-bot", titleTmpl, bodyTmpl)
 //
@@ -65,7 +65,7 @@ SPDX-License-Identifier: Apache-2.0
 // Define a matcher function to identify which issues correspond to which data:
 //
 //	matcher := func(a, b MyData) bool {
-//	    return a.CVE_ID == b.CVE_ID && a.PackageName == b.PackageName
+//	    return a.CVEID == b.CVEID && a.PackageName == b.PackageName
 //	}
 //
 // Upsert multiple issues with data:

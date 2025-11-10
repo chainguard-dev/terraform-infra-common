@@ -239,14 +239,14 @@ func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []str
 
 	// Generate labels from templates and merge with static labels
 	generatedLabels := s.generateLabels(ctx, data)
-	allLabels := append(labels, generatedLabels...)
+	labels = append(labels, generatedLabels...)
 
 	log.Info("Creating new issue")
 
 	issue, _, err := s.client.Issues.Create(ctx, s.resource.Owner, s.resource.Repo, &github.IssueRequest{
 		Title:  github.Ptr(title),
 		Body:   github.Ptr(body),
-		Labels: &allLabels,
+		Labels: &labels,
 	})
 	if err != nil {
 		return "", fmt.Errorf("creating issue: %w", err)
@@ -289,10 +289,10 @@ func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, 
 
 	// Generate labels from templates and merge with static labels
 	generatedLabels := s.generateLabels(ctx, data)
-	allLabels := append(labels, generatedLabels...)
+	labels = append(labels, generatedLabels...)
 
 	// Replace labels
-	if _, _, err := s.client.Issues.ReplaceLabelsForIssue(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), allLabels); err != nil {
+	if _, _, err := s.client.Issues.ReplaceLabelsForIssue(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), labels); err != nil {
 		return "", fmt.Errorf("replacing labels: %w", err)
 	}
 
