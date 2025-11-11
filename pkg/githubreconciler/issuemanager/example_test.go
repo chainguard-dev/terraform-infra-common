@@ -57,13 +57,8 @@ Additional details here.`))
 		return
 	}
 
-	// Check for skip label
-	if session.HasSkipLabel() {
-		// skip this resource
-		return
-	}
-
 	// Define desired issues with data
+	// Note: Issues with skip labels (skip:example-manager) will be automatically preserved
 	desired := []*ExampleData{{
 		Foo: "foo",
 		Bar: "bar",

@@ -26,19 +26,13 @@ type IssueSession[T Comparable[T]] struct {
 	existingIssues []*github.Issue
 }
 
-// HasSkipLabel checks if any existing issue has a skip label.
-// Returns false if no existing issues exist.
-func (s *IssueSession[T]) HasSkipLabel() bool {
-	if len(s.existingIssues) == 0 {
-		return false
-	}
-
+// hasSkipLabel checks if a specific issue has the skip label.
+// Returns true if the issue has a label matching "skip:{identity}".
+func (s *IssueSession[T]) hasSkipLabel(issue *github.Issue) bool {
 	skipLabel := "skip:" + s.manager.identity
-	for _, issue := range s.existingIssues {
-		for _, label := range issue.Labels {
-			if label.GetName() == skipLabel {
-				return true
-			}
+	for _, label := range issue.Labels {
+		if label.GetName() == skipLabel {
+			return true
 		}
 	}
 	return false
@@ -65,6 +59,13 @@ func (s *IssueSession[T]) UpsertMany(
 		existingIssue := s.findMatchingIssue(ctx, data)
 
 		if existingIssue != nil {
+			// Check if issue has skip label
+			if s.hasSkipLabel(existingIssue) {
+				log.Infof("Issue #%d has skip label, skipping update", existingIssue.GetNumber())
+				issueURLs[i] = existingIssue.GetHTMLURL()
+				continue
+			}
+
 			// Check if update is needed
 			needsUpdate, err := s.needsUpdate(ctx, existingIssue, data)
 			if err != nil {
@@ -107,6 +108,12 @@ func (s *IssueSession[T]) CloseAnyOutstanding(
 	log := clog.FromContext(ctx)
 
 	for _, issue := range s.existingIssues {
+		// Check if issue has skip label
+		if s.hasSkipLabel(issue) {
+			log.Infof("Issue #%d has skip label, preserving issue", issue.GetNumber())
+			continue
+		}
+
 		// Extract embedded data from issue
 		existing, err := s.manager.extractData(issue.GetBody())
 		if err != nil {

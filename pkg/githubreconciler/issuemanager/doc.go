@@ -37,7 +37,7 @@ SPDX-License-Identifier: Apache-2.0
 //   - NewSession queries GitHub for all open issues matching the identity label
 //   - Each issue's body is parsed to extract embedded structured data
 //   - The Session maintains a map of existing issues keyed by their data
-//   - Skip labels are detected to allow manual opt-out of reconciliation
+//   - Issues with skip labels (skip:{identity}) are preserved during reconciliation
 //
 // The Session provides a snapshot of current state for the reconciliation cycle.
 //
@@ -103,13 +103,8 @@ SPDX-License-Identifier: Apache-2.0
 //	    return err
 //	}
 //
-// Check if reconciliation should be skipped:
-//
-//	if session.HasSkipLabel() {
-//	    return nil // User manually added skip label
-//	}
-//
-// Reconcile to desired state by upserting issues:
+// Reconcile to desired state by upserting issues.
+// Issues with skip labels will be automatically preserved:
 //
 //	desiredStates := []*IssueData{
 //	    {ID: "001", Status: "active", Priority: "high"},
