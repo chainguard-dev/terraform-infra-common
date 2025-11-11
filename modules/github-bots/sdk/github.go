@@ -24,6 +24,7 @@ import (
 
 	"chainguard.dev/sdk/octosts"
 	"github.com/chainguard-dev/clog"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/google/go-github/v75/github"
 	"golang.org/x/oauth2"
 )
@@ -40,8 +41,10 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 		policyName: policyName,
 	})
 
+	httpClient := oauth2.NewClient(ctx, ts)
+	httpClient.Transport = httpmetrics.WrapTransport(httpClient.Transport)
 	client := GitHubClient{
-		inner:   github.NewClient(oauth2.NewClient(ctx, ts)),
+		inner:   github.NewClient(httpClient),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -81,7 +84,7 @@ func NewInstallationClient(ctx context.Context, org, repo string, tr *ghinstalla
 		transport: tr,
 	})
 	client := GitHubClient{
-		inner:   github.NewClient(&http.Client{Transport: tr}),
+		inner:   github.NewClient(&http.Client{Transport: httpmetrics.WrapTransport(tr)}),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
