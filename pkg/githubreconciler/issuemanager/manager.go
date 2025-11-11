@@ -70,21 +70,33 @@ func (im *IM[T]) NewSession(
 	pathLabel := im.identity + ":" + res.Path
 
 	// Query for existing issues with this label
-	issues, _, err := client.Issues.ListByRepo(ctx, res.Owner, res.Repo, &github.IssueListByRepoOptions{
+	var allIssues []*github.Issue
+	opts := &github.IssueListByRepoOptions{
 		State:  "open",
 		Labels: []string{pathLabel},
 		ListOptions: github.ListOptions{
-			PerPage: 100, // Handle up to 100 issues per path
+			PerPage: 100,
 		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("listing issues: %w", err)
+	}
+
+	for {
+		issues, resp, err := client.Issues.ListByRepo(ctx, res.Owner, res.Repo, opts)
+		if err != nil {
+			return nil, fmt.Errorf("listing issues: %w", err)
+		}
+
+		allIssues = append(allIssues, issues...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.ListOptions.Page = resp.NextPage
 	}
 
 	// Filter out pull requests (GitHub's API returns both)
 	var existingIssues []*github.Issue
-	for _, issue := range issues {
-		if issue.PullRequestLinks == nil {
+	for _, issue := range allIssues {
+		if !issue.IsPullRequest() {
 			existingIssues = append(existingIssues, issue)
 		}
 	}

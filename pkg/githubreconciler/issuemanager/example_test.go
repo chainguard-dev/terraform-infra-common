@@ -14,28 +14,33 @@ import (
 	"github.com/google/go-github/v75/github"
 )
 
-type VulnerabilityData struct {
-	CVEID       string
-	PackageName string
-	Version     string
-	Severity    string
+type ExampleData struct {
+	Foo string
+	Bar string
+	Baz string
+}
+
+// Equal implements the Comparable interface for ExampleData.
+// It compares Foo and Bar to determine if two instances represent the same issue.
+func (e ExampleData) Equal(other ExampleData) bool {
+	return e.Foo == other.Foo && e.Bar == other.Bar
 }
 
 func Example() {
 	// Parse templates once at initialization
-	titleTmpl := template.Must(template.New("title").Parse(`CVE-{{.CVEID}}: {{.Severity}} vulnerability in {{.PackageName}}`))
-	bodyTmpl := template.Must(template.New("body").Parse(`Vulnerability **{{.CVEID}}** detected in {{.PackageName}} {{.Version}}
+	titleTmpl := template.Must(template.New("title").Parse(`Issue {{.Foo}}: {{.Baz}}`))
+	bodyTmpl := template.Must(template.New("body").Parse(`This is issue **{{.Foo}}** for {{.Bar}}
 
-**Severity**: {{.Severity}}
+**Status**: {{.Baz}}
 
-Please update to a patched version.`))
+Additional details here.`))
 
 	// Optional: Define label templates to generate dynamic labels from issue data
-	labelTmpl1 := template.Must(template.New("severity").Parse(`severity:{{.Severity}}`))
-	labelTmpl2 := template.Must(template.New("package").Parse(`package:{{.PackageName}}`))
+	labelTmpl1 := template.Must(template.New("label1").Parse(`status:{{.Baz}}`))
+	labelTmpl2 := template.Must(template.New("label2").Parse(`category:{{.Bar}}`))
 
 	// Create manager once per identity with label templates
-	im, err := issuemanager.New[VulnerabilityData]("security-bot", titleTmpl, bodyTmpl, labelTmpl1, labelTmpl2)
+	im, err := issuemanager.New[ExampleData]("example-manager", titleTmpl, bodyTmpl, labelTmpl1, labelTmpl2)
 	if err != nil {
 		// handle error
 		return
@@ -59,35 +64,25 @@ Please update to a patched version.`))
 	}
 
 	// Define desired issues with data
-	desired := []*VulnerabilityData{
-		{
-			CVEID:       "2024-1234",
-			PackageName: "openssl",
-			Version:     "3.0.0",
-			Severity:    "HIGH",
-		},
-		{
-			CVEID:       "2024-5678",
-			PackageName: "curl",
-			Version:     "8.0.0",
-			Severity:    "MEDIUM",
-		},
-	}
+	desired := []*ExampleData{{
+		Foo: "foo",
+		Bar: "bar",
+		Baz: "baz",
+	}, {
+		Foo: "bar",
+		Bar: "baz",
+		Baz: "foo",
+	}}
 
-	// Define a matcher function to identify issues
-	matcher := func(a, b VulnerabilityData) bool {
-		return a.CVEID == b.CVEID && a.PackageName == b.PackageName
-	}
-
-	// Upsert multiple issues
-	_, err = session.UpsertMany(ctx, desired, matcher, []string{"security", "automated"})
+	// Upsert multiple issues (matching is done using the Equal method)
+	_, err = session.UpsertMany(ctx, desired, []string{"example", "automated"})
 	if err != nil {
 		// handle error
 		return
 	}
 
 	// Close any issues that are no longer in the desired set
-	err = session.CloseAnyOutstanding(ctx, desired, matcher, "Vulnerability has been resolved")
+	err = session.CloseAnyOutstanding(ctx, desired, "Issue no longer relevant")
 	if err != nil {
 		// handle error
 		return
