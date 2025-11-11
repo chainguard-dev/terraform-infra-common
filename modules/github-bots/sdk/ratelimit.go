@@ -8,7 +8,56 @@ import (
 	"time"
 
 	"github.com/chainguard-dev/clog"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/time/rate"
+)
+
+var (
+	// secondaryRateLimitTriggered tracks when secondary rate limits are detected
+	secondaryRateLimitTriggered = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "github_secondary_rate_limit_triggered_total",
+			Help: "Total number of times GitHub secondary rate limit was triggered",
+		},
+		[]string{"status_code", "reason"},
+	)
+
+	// secondaryRateLimitWaitSeconds tracks duration of rate limit pauses
+	secondaryRateLimitWaitSeconds = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "github_secondary_rate_limit_wait_seconds",
+			Help:    "Duration of secondary rate limit pauses in seconds",
+			Buckets: []float64{0.1, 0.5, 1, 5, 10, 30, 60, 120, 300, 600, 1800, 3600},
+		},
+		[]string{"reason"},
+	)
+
+	// secondaryRateLimitRetries tracks automatic retries after rate limits
+	secondaryRateLimitRetries = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "github_secondary_rate_limit_retries_total",
+			Help: "Total number of automatic retries after secondary rate limit",
+		},
+		[]string{"outcome"},
+	)
+
+	// secondaryRateLimitPausedRequests tracks current number of paused requests
+	secondaryRateLimitPausedRequests = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "github_secondary_rate_limit_paused_requests",
+			Help: "Current number of requests paused due to secondary rate limit",
+		},
+	)
+
+	// secondaryRateLimitHeaderErrors tracks header parsing failures
+	secondaryRateLimitHeaderErrors = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "github_secondary_rate_limit_header_errors_total",
+			Help: "Total number of errors parsing rate limit headers",
+		},
+		[]string{"header"},
+	)
 )
 
 // SecondaryRateLimitWaiter
@@ -48,7 +97,14 @@ func (w *SecondaryRateLimitWaiter) RoundTrip(req *http.Request) (*http.Response,
 	}
 
 	if w.processLimit(ctx, resp) {
-		return w.RoundTrip(req)
+		// Track that we're retrying after a rate limit
+		retryResp, retryErr := w.RoundTrip(req)
+		if retryErr != nil {
+			secondaryRateLimitRetries.WithLabelValues("error").Inc()
+		} else {
+			secondaryRateLimitRetries.WithLabelValues("ok").Inc()
+		}
+		return retryResp, retryErr
 	}
 
 	return resp, nil
@@ -75,6 +131,7 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 		seconds, err := strconv.Atoi(v)
 		if err != nil {
 			log.Warnf("failed to parse retry-after header: %v", err)
+			secondaryRateLimitHeaderErrors.WithLabelValues("Retry-After").Inc()
 		} else {
 			retryAfter = time.Duration(seconds) * time.Second
 		}
@@ -85,6 +142,7 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 		r, err := strconv.Atoi(v)
 		if err != nil {
 			log.Warnf("failed to parse x-ratelimit-remaining header: %v", err)
+			secondaryRateLimitHeaderErrors.WithLabelValues("X-Ratelimit-Remaining").Inc()
 		} else {
 			remaining = r
 		}
@@ -95,12 +153,17 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 		seconds, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			log.Warnf("failed to parse x-ratelimit-reset header: %v", err)
+			secondaryRateLimitHeaderErrors.WithLabelValues("X-Ratelimit-Reset").Inc()
 		} else {
 			reset = time.Unix(seconds, 0)
 		}
 	}
 
+	statusCode := strconv.Itoa(resp.StatusCode)
+
 	if retryAfter > 0 {
+		secondaryRateLimitTriggered.WithLabelValues(statusCode, "retry_after").Inc()
+		secondaryRateLimitWaitSeconds.WithLabelValues("retry_after").Observe(retryAfter.Seconds())
 		w.limiter.PauseFor(retryAfter)
 		return true
 	}
@@ -108,11 +171,15 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 	// If remaining is 0 and reset is not zero, wait until reset time
 	if remaining == 0 && !reset.IsZero() {
 		retryAfter = time.Until(reset)
+		secondaryRateLimitTriggered.WithLabelValues(statusCode, "remaining_zero").Inc()
+		secondaryRateLimitWaitSeconds.WithLabelValues("remaining_zero").Observe(retryAfter.Seconds())
 		w.limiter.PauseFor(retryAfter)
 		return true
 	}
 
 	// Default fallback if no rate-limit headers are present
+	secondaryRateLimitTriggered.WithLabelValues(statusCode, "default_fallback").Inc()
+	secondaryRateLimitWaitSeconds.WithLabelValues("default_fallback").Observe(w.defaultRetryAfter.Seconds())
 	w.limiter.PauseFor(w.defaultRetryAfter)
 	return true
 }
@@ -140,6 +207,9 @@ func (l *limiter) Wait(ctx context.Context) error {
 	l.mu.Unlock()
 
 	if pauseCh != nil {
+		secondaryRateLimitPausedRequests.Inc()
+		defer secondaryRateLimitPausedRequests.Dec()
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
