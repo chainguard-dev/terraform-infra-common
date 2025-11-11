@@ -283,23 +283,19 @@ func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, 
 		return "", fmt.Errorf("embedding data: %w", err)
 	}
 
-	log.Infof("Updating existing issue #%d", issue.GetNumber())
-
-	updated, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
-		Title: github.Ptr(title),
-		Body:  github.Ptr(body),
-	})
-	if err != nil {
-		return "", fmt.Errorf("updating issue: %w", err)
-	}
-
 	// Generate labels from templates and merge with static labels
 	generatedLabels := s.generateLabels(ctx, data)
 	labels = append(labels, generatedLabels...)
 
-	// Replace labels
-	if _, _, err := s.client.Issues.ReplaceLabelsForIssue(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), labels); err != nil {
-		return "", fmt.Errorf("replacing labels: %w", err)
+	log.Infof("Updating existing issue #%d", issue.GetNumber())
+
+	updated, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
+		Title:  github.Ptr(title),
+		Body:   github.Ptr(body),
+		Labels: &labels,
+	})
+	if err != nil {
+		return "", fmt.Errorf("updating issue: %w", err)
 	}
 
 	log.Infof("Updated issue #%d: %s", issue.GetNumber(), updated.GetHTMLURL())
