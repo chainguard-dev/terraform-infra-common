@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/time/rate"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpratelimit"
 )
 
 type testRT struct {
@@ -133,14 +133,11 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			}
 
 			client := &http.Client{
-				Transport: &SecondaryRateLimitWaiter{
-					base: trt,
-					limiter: &limiter{
-						base: rate.NewLimiter(rate.Inf, 100),
-						mu:   sync.Mutex{},
-					},
-					defaultRetryAfter: defaultRetryAfter,
-				},
+				Transport: httpratelimit.NewTransport(
+					trt,
+					httpratelimit.WithDefaultRetryAfter(defaultRetryAfter),
+					httpratelimit.WithMaxRequestsPerSecond(100), // High rate for tests
+				),
 			}
 
 			req, err := http.NewRequest(http.MethodGet, "https://foobear.com", nil)

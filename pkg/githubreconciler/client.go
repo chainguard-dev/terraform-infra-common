@@ -13,6 +13,7 @@ import (
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpratelimit"
 	"github.com/google/go-github/v75/github"
 	"golang.org/x/oauth2"
 )
@@ -22,17 +23,36 @@ type TokenSourceFunc func(ctx context.Context, org, repo string) (oauth2.TokenSo
 
 // ClientCache manages GitHub clients for multiple org/repo combinations.
 type ClientCache struct {
-	tokenSourceFunc TokenSourceFunc
-	mu              sync.RWMutex
-	clients         map[string]*github.Client
+	tokenSourceFunc      TokenSourceFunc
+	mu                   sync.RWMutex
+	clients              map[string]*github.Client
+	maxRequestsPerSecond float64
+}
+
+// ClientCacheOption is a functional option for configuring ClientCache.
+type ClientCacheOption func(*ClientCache)
+
+// WithMaxRequestsPerSecond configures the maximum requests per second for rate limiting.
+// This helps prevent GitHub's secondary rate limits which are based on request velocity.
+func WithMaxRequestsPerSecond(rps float64) ClientCacheOption {
+	return func(cc *ClientCache) {
+		cc.maxRequestsPerSecond = rps
+	}
 }
 
 // NewClientCache creates a new client cache with the provided token source function.
-func NewClientCache(tokenSourceFunc TokenSourceFunc) *ClientCache {
-	return &ClientCache{
-		tokenSourceFunc: tokenSourceFunc,
-		clients:         make(map[string]*github.Client),
+func NewClientCache(tokenSourceFunc TokenSourceFunc, opts ...ClientCacheOption) *ClientCache {
+	cc := &ClientCache{
+		tokenSourceFunc:      tokenSourceFunc,
+		clients:              make(map[string]*github.Client),
+		maxRequestsPerSecond: httpratelimit.DefaultMaxRequestsPerSecond,
 	}
+
+	for _, opt := range opts {
+		opt(cc)
+	}
+
+	return cc
 }
 
 // getKey returns the cache key for an org/repo combination.
@@ -81,9 +101,16 @@ func (cc *ClientCache) Get(ctx context.Context, org, repo string) (*github.Clien
 	// Create OAuth2 client with the token source
 	oauthClient := oauth2.NewClient(ctx, tokenSource)
 
-	// Wrap the transport with metrics instrumentation for GitHub API monitoring
+	// Build transport chain: rate limiting -> metrics
+	// Rate limiting is applied first to prevent hitting GitHub API limits (both primary and secondary)
+	rateLimitedTransport := httpratelimit.NewTransport(
+		oauthClient.Transport,
+		httpratelimit.WithMaxRequestsPerSecond(cc.maxRequestsPerSecond),
+	)
+	metricsTransport := httpmetrics.WrapTransport(rateLimitedTransport)
+
 	httpClient := &http.Client{
-		Transport: httpmetrics.WrapTransport(oauthClient.Transport),
+		Transport: metricsTransport,
 	}
 
 	client = github.NewClient(httpClient)
