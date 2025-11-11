@@ -88,6 +88,24 @@ func TestGitHubClientConfiguration(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "WithSecondaryRateLimitWaiter modifies transport",
+			opts: []GitHubClientOption{
+				WithClient(github.NewClient(&http.Client{
+					Transport: &http.Transport{},
+				})),
+				WithSecondaryRateLimitWaiter(),
+			},
+			want: func(t *testing.T, client GitHubClient) {
+				t.Helper()
+
+				// Transport was wrapped with SecondaryRateLimitWaiter
+				transport := client.Client().Client().Transport
+				if _, ok := transport.(*SecondaryRateLimitWaiter); !ok {
+					t.Errorf("expected SecondaryRateLimitWaiter transport, got %T", transport)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
