@@ -15,10 +15,18 @@ import (
 	"github.com/google/go-github/v75/github"
 )
 
+// Comparable is the interface that types must implement to be used with IssueManager.
+// The Equal method determines if two instances represent the same issue based on
+// identity fields (e.g., ID, unique combination of fields, etc.).
+type Comparable[T any] interface {
+	Equal(T) bool
+}
+
 // IM manages the lifecycle of GitHub Issues for a specific identity.
 // It uses Go templates to generate issue titles and bodies from generic data of type T.
 // Unlike ChangeManager which handles one PR per path, IssueManager handles multiple issues per path.
-type IM[T any] struct {
+// T must implement the Comparable interface to enable matching between existing and desired issues.
+type IM[T Comparable[T]] struct {
 	identity       string
 	titleTemplate  *template.Template
 	bodyTemplate   *template.Template
@@ -29,7 +37,8 @@ type IM[T any] struct {
 // The templates are executed with data of type T when creating or updating issues.
 // Returns an error if titleTemplate or bodyTemplate is nil.
 // labelTemplates are optional and will be executed with each issue's data to generate additional labels.
-func New[T any](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, labelTemplates ...*template.Template) (*IM[T], error) {
+// T must implement the Comparable interface to enable matching between existing and desired issues.
+func New[T Comparable[T]](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, labelTemplates ...*template.Template) (*IM[T], error) {
 	if titleTemplate == nil {
 		return nil, errors.New("titleTemplate cannot be nil")
 	}

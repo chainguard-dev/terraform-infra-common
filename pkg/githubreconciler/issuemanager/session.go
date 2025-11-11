@@ -17,7 +17,8 @@ import (
 
 // IssueSession represents work on multiple issues for a specific resource path.
 // Unlike Session in changemanager which handles a single PR, IssueSession manages multiple issues.
-type IssueSession[T any] struct {
+// T must implement the Comparable interface to enable matching between existing and desired issues.
+type IssueSession[T Comparable[T]] struct {
 	manager        *IM[T]
 	client         *github.Client
 	resource       *githubreconciler.Resource
@@ -44,13 +45,12 @@ func (s *IssueSession[T]) HasSkipLabel() bool {
 }
 
 // UpsertMany creates or updates multiple issues based on the provided data.
-// It uses the matcher function to determine which existing issues correspond to which desired data.
+// It uses the Equal method on T to determine which existing issues correspond to which desired data.
 // The pathLabel is automatically added to the provided labels.
 // Returns a slice of issue URLs in the same order as the input data.
 func (s *IssueSession[T]) UpsertMany(
 	ctx context.Context,
 	desired []*T,
-	matcher func(T, T) bool,
 	labels []string,
 ) ([]string, error) {
 	log := clog.FromContext(ctx)
@@ -62,7 +62,7 @@ func (s *IssueSession[T]) UpsertMany(
 
 	for i, data := range desired {
 		// Try to find matching existing issue
-		existingIssue := s.findMatchingIssue(ctx, data, matcher)
+		existingIssue := s.findMatchingIssue(ctx, data)
 
 		if existingIssue != nil {
 			// Check if update is needed
@@ -97,12 +97,11 @@ func (s *IssueSession[T]) UpsertMany(
 }
 
 // CloseAnyOutstanding closes any existing issues that don't match the desired data set.
-// It uses the matcher function to determine which issues should be kept.
+// It uses the Equal method on T to determine which issues should be kept.
 // If message is non-empty, it posts the message as a comment before closing.
 func (s *IssueSession[T]) CloseAnyOutstanding(
 	ctx context.Context,
 	desired []*T,
-	matcher func(T, T) bool,
 	message string,
 ) error {
 	log := clog.FromContext(ctx)
@@ -118,7 +117,7 @@ func (s *IssueSession[T]) CloseAnyOutstanding(
 		// Check if this issue matches any desired data
 		matched := false
 		for _, data := range desired {
-			if matcher(*existing, *data) {
+			if (*existing).Equal(*data) {
 				matched = true
 				break
 			}
@@ -151,9 +150,9 @@ func (s *IssueSession[T]) CloseAnyOutstanding(
 	return nil
 }
 
-// findMatchingIssue finds an existing issue that matches the given data using the matcher function.
+// findMatchingIssue finds an existing issue that matches the given data using the Equal method.
 // Returns nil if no match is found.
-func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T, matcher func(T, T) bool) *github.Issue {
+func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T) *github.Issue {
 	log := clog.FromContext(ctx)
 
 	for _, issue := range s.existingIssues {
@@ -163,7 +162,7 @@ func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T, matche
 			continue
 		}
 
-		if matcher(*existing, *data) {
+		if (*existing).Equal(*data) {
 			return issue
 		}
 	}
@@ -200,7 +199,7 @@ func (s *IssueSession[T]) generateLabels(ctx context.Context, data *T) []string 
 	}
 
 	log := clog.FromContext(ctx)
-	var labels []string
+	labels := make([]string, 0, len(s.manager.labelTemplates))
 
 	for _, tmpl := range s.manager.labelTemplates {
 		label, err := s.manager.executeTemplate(tmpl, data)

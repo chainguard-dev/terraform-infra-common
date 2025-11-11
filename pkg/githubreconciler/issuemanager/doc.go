@@ -3,78 +3,130 @@ Copyright 2025 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package issuemanager provides an abstraction for managing GitHub Issue
-// lifecycle operations, similar to how the changemanager handles GitHub Pull Requests.
+// Package issuemanager provides a reconciler-style abstraction for managing
+// GitHub Issues based on desired state. It discovers current state, compares
+// it to desired state, and performs the necessary create/update/close operations
+// to align reality with intent.
 //
-// The IssueManager encapsulates common issue patterns including:
-//   - Finding existing issues by labels
-//   - Embedding/extracting structured data in issue bodies
-//   - Creating or updating multiple issues (upsert pattern)
-//   - Matching existing issues to desired issues via custom matcher function
-//   - Checking for skip labels
-//   - Closing any outstanding issues not in the desired set
+// # Reconciliation Model
 //
-// # Key Differences from ChangeManager
+// IssueManager follows a declarative reconciliation pattern:
 //
-// Unlike ChangeManager which assumes one PR per resource path, IssueManager
-// handles multiple issues per resource path:
-//   - Session tracks multiple existing issues instead of a single PR
-//   - UpsertMany handles a slice of desired issue states
-//   - Custom matcher function determines which existing issues match desired ones
-//   - Queries use labels (e.g., "identity:path") to find relevant issues
-//   - No branch or code change concepts since issues don't require branches
+//  1. Discover Current State: Query GitHub for existing issues using labels
+//     to identify issues managed by this reconciler instance
+//
+//  2. Extract Embedded Data: Read structured data embedded in issue bodies
+//     to understand the current state each issue represents
+//
+//  3. Compare with Desired State: Match existing issues to desired states
+//     using the Equal method defined on the data type
+//
+//  4. Reconcile Differences:
+//     - Create new issues for desired states with no existing issue
+//     - Update existing issues if their embedded data differs from desired
+//     - Close existing issues that no longer have a corresponding desired state
+//
+// This makes it ideal for reconcilers that need to maintain a set of GitHub
+// issues reflecting some external state (e.g., scan results, configuration
+// drift, policy violations).
+//
+// # Session-Based Discovery
+//
+// Each reconciliation begins with a Session that discovers current state:
+//
+//   - NewSession queries GitHub for all open issues matching the identity label
+//   - Each issue's body is parsed to extract embedded structured data
+//   - The Session maintains a map of existing issues keyed by their data
+//   - Skip labels are detected to allow manual opt-out of reconciliation
+//
+// The Session provides a snapshot of current state for the reconciliation cycle.
+//
+// # Desired State Reconciliation
+//
+// The reconciler declares desired state as a slice of data objects:
+//
+//   - UpsertMany accepts the desired states
+//   - Each data object's Equal method determines if an existing issue corresponds to it
+//   - For matches, issues are updated only if the embedded data changed
+//   - For non-matches, new issues are created
+//   - CloseAnyOutstanding closes issues not in the desired set
+//
+// This ensures GitHub issues always reflect the latest desired state.
 //
 // # Generic Type Parameter
 //
-// IssueManager is generic over a type T that represents structured data to be
-// embedded in issue bodies. This data is used to:
-//   - Execute Go templates for issue titles and bodies
-//   - Determine if an issue needs to be refreshed
-//   - Match existing issues to desired issues
-//   - Store metadata about the issue's purpose
+// IssueManager is generic over type T, which must implement the Comparable[T]
+// interface. This interface requires an Equal(T) bool method that determines
+// when two instances represent the same logical issue.
 //
-// # Usage
+// The type T represents the structured data embedded in each issue. This data:
 //
-// Create an IssueManager once per identity with parsed templates:
+//   - Populates Go templates for issue titles and bodies
+//   - Is embedded as JSON in HTML comments within the issue body
+//   - Determines whether an issue needs updating (by comparing embedded vs desired)
+//   - Enables matching between existing and desired issues via the Equal method
 //
-//	titleTmpl, _ := template.New("title").Parse(`CVE-{{.CVEID}} in {{.PackageName}}`)
-//	bodyTmpl, _ := template.New("body").Parse(`Vulnerability {{.CVEID}} found in {{.PackageName}} {{.Version}}`)
+// The type T must be JSON-serializable and contain the fields needed to
+// identify and describe the issue's purpose. The Equal method typically
+// compares identifying fields (like IDs) rather than all fields.
 //
-//	im := issuemanager.New[MyData]("security-bot", titleTmpl, bodyTmpl)
+// # Usage Example
 //
-// Optionally, include label templates to generate dynamic labels from issue data:
+// Create an IssueManager with templates for title and body:
 //
-//	labelTmpl1, _ := template.New("severity").Parse(`severity:{{.Severity}}`)
-//	labelTmpl2, _ := template.New("package").Parse(`package:{{.PackageName}}`)
+//	type IssueData struct {
+//	    ID       string
+//	    Status   string
+//	    Priority string
+//	}
 //
-//	im := issuemanager.New[MyData]("security-bot", titleTmpl, bodyTmpl, labelTmpl1, labelTmpl2)
+//	// Equal implements the Comparable interface for IssueData.
+//	// Issues are considered the same if they have the same ID.
+//	func (d IssueData) Equal(other IssueData) bool {
+//	    return d.ID == other.ID
+//	}
 //
-// Create a session per reconciliation:
+//	titleTmpl := template.Must(template.New("title").Parse("Issue {{.ID}}"))
+//	bodyTmpl := template.Must(template.New("body").Parse("Status: {{.Status}}\nPriority: {{.Priority}}"))
 //
-//	session, err := im.NewSession(ctx, ghClient, resource)
+//	im := issuemanager.New[IssueData]("my-reconciler", titleTmpl, bodyTmpl)
+//
+// Optionally add label templates to generate dynamic labels from data:
+//
+//	labelTmpl := template.Must(template.New("priority").Parse("priority:{{.Priority}}"))
+//	im := issuemanager.New[IssueData]("my-reconciler", titleTmpl, bodyTmpl, labelTmpl)
+//
+// Start a reconciliation session to discover current state:
+//
+//	session, err := im.NewSession(ctx, ghClient, "owner/repo")
 //	if err != nil {
 //	    return err
 //	}
 //
-// Check for skip labels:
+// Check if reconciliation should be skipped:
 //
 //	if session.HasSkipLabel() {
-//	    return nil
+//	    return nil // User manually added skip label
 //	}
 //
-// Define a matcher function to identify which issues correspond to which data:
+// Reconcile to desired state by upserting issues:
 //
-//	matcher := func(a, b MyData) bool {
-//	    return a.CVEID == b.CVEID && a.PackageName == b.PackageName
+//	desiredStates := []*IssueData{
+//	    {ID: "001", Status: "active", Priority: "high"},
+//	    {ID: "002", Status: "pending", Priority: "medium"},
 //	}
 //
-// Upsert multiple issues with data:
-//
-//	issueURLs, err := session.UpsertMany(ctx, []*MyData{data1, data2, data3}, matcher, labels)
-//
-// Close any outstanding issues not in the desired set:
-//
-//	if err := session.CloseAnyOutstanding(ctx, []*MyData{data1, data2, data3}, matcher, "Closing resolved issue"); err != nil {
+//	urls, err := session.UpsertMany(ctx, desiredStates, []string{"automated"})
+//	if err != nil {
 //	    return err
 //	}
+//
+// Close any issues that are no longer in desired state:
+//
+//	err = session.CloseAnyOutstanding(ctx, desiredStates, "No longer relevant")
+//	if err != nil {
+//	    return err
+//	}
+//
+// This ensures exactly the desired set of issues exists and is up-to-date.
 package issuemanager
