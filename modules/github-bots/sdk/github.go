@@ -137,18 +137,11 @@ type GitHubClientOption func(*GitHubClient)
 // returns a new http.Client instance on each call, so we cannot mutate it in place.
 func replaceGitHubClientTransport(original *github.Client, newTransport http.RoundTripper) *github.Client {
 	// Get the current http.Client to copy its settings
-	oldHTTPClient := original.Client()
-
-	// Create a new http.Client with the new transport but same other settings
-	newHTTPClient := &http.Client{
-		Transport:     newTransport,
-		CheckRedirect: oldHTTPClient.CheckRedirect,
-		Jar:           oldHTTPClient.Jar,
-		Timeout:       oldHTTPClient.Timeout,
-	}
+	httpClient := original.Client()
+	httpClient.Transport = newTransport
 
 	// Create a new github.Client with the new http.Client
-	newGHClient := github.NewClient(newHTTPClient)
+	newGHClient := github.NewClient(httpClient)
 
 	// Copy over the github.Client settings
 	newGHClient.BaseURL = original.BaseURL
