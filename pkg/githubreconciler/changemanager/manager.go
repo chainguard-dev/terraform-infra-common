@@ -12,15 +12,17 @@ import (
 	"text/template"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
+	internaltemplate "github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler/internal/template"
 	"github.com/google/go-github/v75/github"
 )
 
 // CM manages the lifecycle of GitHub Pull Requests for a specific identity.
 // It uses Go templates to generate PR titles and bodies from generic data of type T.
 type CM[T any] struct {
-	identity      string
-	titleTemplate *template.Template
-	bodyTemplate  *template.Template
+	identity         string
+	titleTemplate    *template.Template
+	bodyTemplate     *template.Template
+	templateExecutor *internaltemplate.Template[T]
 }
 
 // New creates a new CM with the given identity and templates.
@@ -35,9 +37,10 @@ func New[T any](identity string, titleTemplate *template.Template, bodyTemplate 
 	}
 
 	return &CM[T]{
-		identity:      identity,
-		titleTemplate: titleTemplate,
-		bodyTemplate:  bodyTemplate,
+		identity:         identity,
+		titleTemplate:    titleTemplate,
+		bodyTemplate:     bodyTemplate,
+		templateExecutor: internaltemplate.New[T](identity, "-pr-data", "PR"),
 	}, nil
 }
 

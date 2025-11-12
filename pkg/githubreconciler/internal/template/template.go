@@ -13,9 +13,28 @@ import (
 	"text/template"
 )
 
-// ExecuteTemplate executes the given template with the provided data.
-// This is a standalone function that doesn't require any receiver.
-func ExecuteTemplate[T any](tmpl *template.Template, data *T) (string, error) {
+// Template provides template execution and data embedding/extraction capabilities.
+// It is parameterized by type T which represents the data type to be embedded/extracted.
+type Template[T any] struct {
+	identity     string
+	markerSuffix string
+	entityType   string
+}
+
+// New creates a new Template instance with the specified identity, markerSuffix, and entityType.
+// The identity distinguishes between different manager instances.
+// The markerSuffix differentiates between different entity types (e.g., "-pr-data" or "-issue-data").
+// The entityType is used in error messages (e.g., "PR" or "issue").
+func New[T any](identity string, markerSuffix string, entityType string) *Template[T] {
+	return &Template[T]{
+		identity:     identity,
+		markerSuffix: markerSuffix,
+		entityType:   entityType,
+	}
+}
+
+// Execute executes the given template with the provided data.
+func (t *Template[T]) Execute(tmpl *template.Template, data *T) (string, error) {
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("executing template: %w", err)
@@ -23,27 +42,24 @@ func ExecuteTemplate[T any](tmpl *template.Template, data *T) (string, error) {
 	return buf.String(), nil
 }
 
-// EmbedData embeds the given data as JSON in HTML comments within the body.
-// The embedded data is placed at the end of the body using the provided marker.
-// The markerSuffix parameter allows customization (e.g., "-pr-data" or "-issue-data").
-func EmbedData[T any](body string, identity string, markerSuffix string, data *T) (string, error) {
+// Embed embeds the given data as JSON in HTML comments within the body.
+// The embedded data is placed at the end of the body using the configured marker.
+func (t *Template[T]) Embed(body string, data *T) (string, error) {
 	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("marshaling data: %w", err)
 	}
 
-	marker := identity + markerSuffix
+	marker := t.identity + t.markerSuffix
 	embedded := fmt.Sprintf("\n\n<!--%s-->\n<!--\n%s\n-->\n<!--/%s-->", marker, string(jsonData), marker)
 
 	return body + embedded, nil
 }
 
-// ExtractData extracts embedded data from the body text.
-// The markerSuffix parameter should match what was used in EmbedData.
-// The entityType parameter is used for error messages (e.g., "PR" or "issue").
+// Extract extracts embedded data from the body text.
 // Returns an error if the data cannot be found or parsed.
-func ExtractData[T any](body string, identity string, markerSuffix string, entityType string) (*T, error) {
-	marker := identity + markerSuffix
+func (t *Template[T]) Extract(body string) (*T, error) {
+	marker := t.identity + t.markerSuffix
 	pattern := fmt.Sprintf(`(?s)<!--%s-->\s*<!--\s*(.+?)\s*-->\s*<!--/%s-->`, regexp.QuoteMeta(marker), regexp.QuoteMeta(marker))
 
 	re, err := regexp.Compile(pattern)
@@ -53,7 +69,7 @@ func ExtractData[T any](body string, identity string, markerSuffix string, entit
 
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
-		return nil, fmt.Errorf("embedded data not found in %s body", entityType)
+		return nil, fmt.Errorf("embedded data not found in %s body", t.entityType)
 	}
 
 	var data T

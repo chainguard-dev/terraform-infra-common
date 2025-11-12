@@ -41,17 +41,17 @@ func Test_executeLabelTemplates(t *testing.T) {
 	}
 
 	// Test executing label templates
-	label1, err := im.executeTemplate(labelTmpl1, data)
+	label1, err := im.templateExecutor.Execute(labelTmpl1, data)
 	if err != nil {
-		t.Fatalf("executeTemplate for label1 failed: %v", err)
+		t.Fatalf("Execute for label1 failed: %v", err)
 	}
 	if label1 != "label1:baz" {
 		t.Errorf("label1: got = %q, wanted = %q", label1, "label1:baz")
 	}
 
-	label2, err := im.executeTemplate(labelTmpl2, data)
+	label2, err := im.templateExecutor.Execute(labelTmpl2, data)
 	if err != nil {
-		t.Fatalf("executeTemplate for label2 failed: %v", err)
+		t.Fatalf("Execute for label2 failed: %v", err)
 	}
 	if label2 != "label2:bar" {
 		t.Errorf("label2: got = %q, wanted = %q", label2, "label2:bar")
@@ -74,9 +74,9 @@ func Test_embedData_withComparableInterface(t *testing.T) {
 	}
 
 	body := "This is the issue body"
-	embedded, err := im.embedData(body, data)
+	embedded, err := im.templateExecutor.Embed(body, data)
 	if err != nil {
-		t.Fatalf("embedData() failed: %v", err)
+		t.Fatalf("Embed() failed: %v", err)
 	}
 
 	// Verify the original body is present
@@ -122,9 +122,9 @@ func Test_extractData_withComparableInterface(t *testing.T) {
 -->
 <!--/test-manager-issue-data-->`
 
-	extracted, err := im.extractData(body)
+	extracted, err := im.templateExecutor.Extract(body)
 	if err != nil {
-		t.Fatalf("extractData() failed: %v", err)
+		t.Fatalf("Extract() failed: %v", err)
 	}
 
 	if extracted.Foo != "bar" {
@@ -155,15 +155,15 @@ func Test_embedThenExtract_roundTrip(t *testing.T) {
 
 	// Embed the data
 	body := "Original body content"
-	embedded, err := im.embedData(body, original)
+	embedded, err := im.templateExecutor.Embed(body, original)
 	if err != nil {
-		t.Fatalf("embedData() failed: %v", err)
+		t.Fatalf("Embed() failed: %v", err)
 	}
 
 	// Extract the data
-	extracted, err := im.extractData(embedded)
+	extracted, err := im.templateExecutor.Extract(embedded)
 	if err != nil {
-		t.Fatalf("extractData() failed: %v", err)
+		t.Fatalf("Extract() failed: %v", err)
 	}
 
 	// Verify all fields match
@@ -226,9 +226,9 @@ func Test_extractData_notFound(t *testing.T) {
 	}
 
 	body := "This is an issue body without embedded data"
-	_, err = im.extractData(body)
+	_, err = im.templateExecutor.Extract(body)
 	if err == nil {
-		t.Error("extractData() should have failed for body without embedded data")
+		t.Error("Extract() should have failed for body without embedded data")
 	}
 }
 
@@ -249,9 +249,9 @@ this is not valid JSON
 -->
 <!--/test-manager-issue-data-->`
 
-	_, err = im.extractData(body)
+	_, err = im.templateExecutor.Extract(body)
 	if err == nil {
-		t.Error("extractData() should have failed for invalid JSON")
+		t.Error("Extract() should have failed for invalid JSON")
 	}
 
 	if !strings.Contains(err.Error(), "unmarshaling data") {

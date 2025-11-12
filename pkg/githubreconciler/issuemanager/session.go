@@ -8,7 +8,6 @@ package issuemanager
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
@@ -115,7 +114,7 @@ func (s *IssueSession[T]) CloseAnyOutstanding(
 		}
 
 		// Extract embedded data from issue
-		existing, err := s.manager.extractData(issue.GetBody())
+		existing, err := s.manager.templateExecutor.Extract(issue.GetBody())
 		if err != nil {
 			log.Warnf("Failed to extract data from issue #%d body, skipping: %v", issue.GetNumber(), err)
 			continue
@@ -163,7 +162,7 @@ func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T) *githu
 	log := clog.FromContext(ctx)
 
 	for _, issue := range s.existingIssues {
-		existing, err := s.manager.extractData(issue.GetBody())
+		existing, err := s.manager.templateExecutor.Extract(issue.GetBody())
 		if err != nil {
 			log.Warnf("Failed to extract data from issue #%d body, skipping: %v", issue.GetNumber(), err)
 			continue
@@ -183,14 +182,14 @@ func (s *IssueSession[T]) needsUpdate(ctx context.Context, issue *github.Issue, 
 	log := clog.FromContext(ctx)
 
 	// Extract embedded data from issue body
-	existing, err := s.manager.extractData(issue.GetBody())
+	existing, err := s.manager.templateExecutor.Extract(issue.GetBody())
 	if err != nil {
 		log.Warnf("Failed to extract data from issue #%d body: %v", issue.GetNumber(), err)
 		return true, nil
 	}
 
-	// Compare data using deep equality
-	if !reflect.DeepEqual(existing, expected) {
+	// Compare data for equality
+	if !(*existing).Equal(*expected) {
 		log.Infof("Issue #%d data differs, update needed", issue.GetNumber())
 		return true, nil
 	}
@@ -209,7 +208,7 @@ func (s *IssueSession[T]) generateLabels(ctx context.Context, data *T) []string 
 	labels := make([]string, 0, len(s.manager.labelTemplates))
 
 	for _, tmpl := range s.manager.labelTemplates {
-		label, err := s.manager.executeTemplate(tmpl, data)
+		label, err := s.manager.templateExecutor.Execute(tmpl, data)
 		if err != nil {
 			log.Warnf("Failed to execute label template %q: %v", tmpl.Name(), err)
 			continue
@@ -227,18 +226,18 @@ func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []str
 	log := clog.FromContext(ctx)
 
 	// Generate issue title and body from templates
-	title, err := s.manager.executeTemplate(s.manager.titleTemplate, data)
+	title, err := s.manager.templateExecutor.Execute(s.manager.titleTemplate, data)
 	if err != nil {
 		return "", fmt.Errorf("executing title template: %w", err)
 	}
 
-	body, err := s.manager.executeTemplate(s.manager.bodyTemplate, data)
+	body, err := s.manager.templateExecutor.Execute(s.manager.bodyTemplate, data)
 	if err != nil {
 		return "", fmt.Errorf("executing body template: %w", err)
 	}
 
 	// Embed data in body
-	body, err = s.manager.embedData(body, data)
+	body, err = s.manager.templateExecutor.Embed(body, data)
 	if err != nil {
 		return "", fmt.Errorf("embedding data: %w", err)
 	}
@@ -267,18 +266,18 @@ func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, 
 	log := clog.FromContext(ctx)
 
 	// Generate issue title and body from templates
-	title, err := s.manager.executeTemplate(s.manager.titleTemplate, data)
+	title, err := s.manager.templateExecutor.Execute(s.manager.titleTemplate, data)
 	if err != nil {
 		return "", fmt.Errorf("executing title template: %w", err)
 	}
 
-	body, err := s.manager.executeTemplate(s.manager.bodyTemplate, data)
+	body, err := s.manager.templateExecutor.Execute(s.manager.bodyTemplate, data)
 	if err != nil {
 		return "", fmt.Errorf("executing body template: %w", err)
 	}
 
 	// Embed data in body
-	body, err = s.manager.embedData(body, data)
+	body, err = s.manager.templateExecutor.Embed(body, data)
 	if err != nil {
 		return "", fmt.Errorf("embedding data: %w", err)
 	}

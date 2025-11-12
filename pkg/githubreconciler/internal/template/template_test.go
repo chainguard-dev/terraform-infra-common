@@ -47,16 +47,17 @@ func Test_ExecuteTemplate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpl := template.Must(template.New("test").Parse(tt.tmplStr))
+			executor := New[testData]("test-identity", "-test-data", "test-entity")
 
-			result, err := ExecuteTemplate(tmpl, tt.data)
+			result, err := executor.Execute(tmpl, tt.data)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ExecuteTemplate() error: got = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("Execute() error: got = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 
 			if !tt.wantErr && result != tt.expected {
-				t.Errorf("ExecuteTemplate() result: got = %q, wanted = %q", result, tt.expected)
+				t.Errorf("Execute() result: got = %q, wanted = %q", result, tt.expected)
 			}
 		})
 	}
@@ -99,9 +100,11 @@ func Test_EmbedData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			embedded, err := EmbedData(tt.body, tt.identity, tt.markerSuffix, tt.data)
+			executor := New[testData](tt.identity, tt.markerSuffix, tt.entityType)
+
+			embedded, err := executor.Embed(tt.body, tt.data)
 			if err != nil {
-				t.Fatalf("EmbedData() failed: %v", err)
+				t.Fatalf("Embed() failed: %v", err)
 			}
 
 			// Verify the original body is present
@@ -120,9 +123,9 @@ func Test_EmbedData(t *testing.T) {
 			}
 
 			// Verify we can extract the data back
-			extracted, extractErr := ExtractData[testData](embedded, tt.identity, tt.markerSuffix, tt.entityType)
+			extracted, extractErr := executor.Extract(embedded)
 			if extractErr != nil {
-				t.Fatalf("ExtractData() failed: %v", extractErr)
+				t.Fatalf("Extract() failed: %v", extractErr)
 			}
 
 			if extracted.Foo != tt.data.Foo {
@@ -250,19 +253,20 @@ func Test_ExtractData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			extracted, err := ExtractData[testData](tt.body, tt.identity, tt.markerSuffix, tt.entityType)
+			executor := New[testData](tt.identity, tt.markerSuffix, tt.entityType)
+			extracted, err := executor.Extract(tt.body)
 
 			if tt.wantErr {
 				// Test error cases
 				if err == nil {
-					t.Error("ExtractData() should have failed")
+					t.Error("Extract() should have failed")
 				} else if !strings.Contains(err.Error(), tt.wantErrContains) {
 					t.Errorf("error message should contain %q: %v", tt.wantErrContains, err)
 				}
 			} else {
 				// Test success cases
 				if err != nil {
-					t.Fatalf("ExtractData() failed: %v", err)
+					t.Fatalf("Extract() failed: %v", err)
 				}
 
 				if extracted.Foo != tt.wantData.Foo {

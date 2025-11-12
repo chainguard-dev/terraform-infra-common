@@ -12,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
+	internaltemplate "github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler/internal/template"
 	"github.com/google/go-github/v75/github"
 )
 
@@ -24,13 +25,14 @@ type Comparable[T any] interface {
 
 // IM manages the lifecycle of GitHub Issues for a specific identity.
 // It uses Go templates to generate issue titles and bodies from generic data of type T.
-// Unlike ChangeManager which handles one PR per path, IssueManager handles multiple issues per path.
+// IssueManager can handle multiple issues per path.
 // T must implement the Comparable interface to enable matching between existing and desired issues.
 type IM[T Comparable[T]] struct {
-	identity       string
-	titleTemplate  *template.Template
-	bodyTemplate   *template.Template
-	labelTemplates []*template.Template
+	identity         string
+	titleTemplate    *template.Template
+	bodyTemplate     *template.Template
+	labelTemplates   []*template.Template
+	templateExecutor *internaltemplate.Template[T]
 }
 
 // New creates a new IM with the given identity and templates.
@@ -47,10 +49,11 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 	}
 
 	return &IM[T]{
-		identity:       identity,
-		titleTemplate:  titleTemplate,
-		bodyTemplate:   bodyTemplate,
-		labelTemplates: labelTemplates,
+		identity:         identity,
+		titleTemplate:    titleTemplate,
+		bodyTemplate:     bodyTemplate,
+		labelTemplates:   labelTemplates,
+		templateExecutor: internaltemplate.New[T](identity, "-issue-data", "issue"),
 	}, nil
 }
 
