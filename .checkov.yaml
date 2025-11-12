@@ -1,0 +1,22 @@
+# Copyright 2025 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+# See https://www.checkov.io/2.Basics/Suppressing%20and%20Skipping%20Policies.html
+
+# Download and check external modules referenced in Terraform files
+# This makes the workflow take >1h when running on all files...
+# download-external-modules: true
+
+skip-path:
+
+# Skip specific checks globally
+skip-check:
+  - CKV_TF_1 # Ensure Terraform module sources use a commit hash
+
+  - CKV_GCP_16 # Ensure that DNSSEC is enabled for Cloud DNS
+  - CKV_GCP_62 # Bucket should log access
+  - CKV_GCP_78 # Ensure Cloud storage has versioning enabled
+  - CKV_GCP_80 # Ensure Big Query Tables are encrypted with Customer Supplied Encryption Keys (CSEK)
+  - CKV_GCP_81 # Ensure Big Query Datasets are encrypted with Customer Supplied Encryption Keys (CSEK)
+  - CKV_GCP_83 # Ensure PubSub Topics are encrypted with Customer Supplied Encryption Keys (CSEK)
+  - CKV_GCP_84 # Ensure Artifact Registry Repositories are encrypted with Customer Supplied Encryption Keys (CSEK)
