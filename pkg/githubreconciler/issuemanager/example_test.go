@@ -69,15 +69,9 @@ Additional details here.`))
 		Baz: "foo",
 	}}
 
-	// Upsert multiple issues (matching is done using the Equal method)
-	_, err = session.UpsertMany(ctx, desired, []string{"example", "automated"})
-	if err != nil {
-		// handle error
-		return
-	}
-
-	// Close any issues that are no longer in the desired set
-	err = session.CloseAnyOutstanding(ctx, desired, "Issue no longer relevant")
+	// Reconcile performs a complete reconciliation: create, update, and close operations
+	// Matching is done using the Equal method
+	_, err = session.Reconcile(ctx, desired, []string{"example", "automated"}, "Issue no longer relevant")
 	if err != nil {
 		// handle error
 		return

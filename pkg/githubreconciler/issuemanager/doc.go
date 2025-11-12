@@ -45,11 +45,12 @@ SPDX-License-Identifier: Apache-2.0
 //
 // The reconciler declares desired state as a slice of data objects:
 //
-//   - UpsertMany accepts the desired states
+//   - Reconcile accepts the desired states and performs a complete reconciliation
 //   - Each data object's Equal method determines if an existing issue corresponds to it
 //   - For matches, issues are updated only if the embedded data changed
 //   - For non-matches, new issues are created
-//   - CloseAnyOutstanding closes issues not in the desired set
+//   - Issues not in the desired set are automatically closed
+//   - Issues with skip labels are preserved throughout all phases
 //
 // This ensures GitHub issues always reflect the latest desired state.
 //
@@ -103,22 +104,16 @@ SPDX-License-Identifier: Apache-2.0
 //	    return err
 //	}
 //
-// Reconcile to desired state by upserting issues.
-// Issues with skip labels will be automatically preserved:
+// Reconcile to desired state with a single call.
+// This performs create, update, and close operations atomically.
+// Issues with skip labels are automatically preserved:
 //
 //	desiredStates := []*IssueData{
 //	    {ID: "001", Status: "active", Priority: "high"},
 //	    {ID: "002", Status: "pending", Priority: "medium"},
 //	}
 //
-//	urls, err := session.UpsertMany(ctx, desiredStates, []string{"automated"})
-//	if err != nil {
-//	    return err
-//	}
-//
-// Close any issues that are no longer in desired state:
-//
-//	err = session.CloseAnyOutstanding(ctx, desiredStates, "No longer relevant")
+//	urls, err := session.Reconcile(ctx, desiredStates, []string{"automated"}, "No longer relevant")
 //	if err != nil {
 //	    return err
 //	}

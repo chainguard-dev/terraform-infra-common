@@ -37,14 +37,19 @@ func (s *IssueSession[T]) hasSkipLabel(issue *github.Issue) bool {
 	return false
 }
 
-// UpsertMany creates or updates multiple issues based on the provided data.
-// It uses the Equal method on T to determine which existing issues correspond to which desired data.
+// Reconcile reconciles the issue state with the desired state by creating, updating, and closing issues.
+// It performs a complete reconciliation:
+// - Creates new issues for desired states without matching existing issues
+// - Updates existing issues that match desired states (if content changed)
+// - Closes existing issues that don't match any desired state
+// Issues with the skip label are preserved and not modified in any phase.
 // The pathLabel is automatically added to the provided labels.
 // Returns a slice of issue URLs in the same order as the input data.
-func (s *IssueSession[T]) UpsertMany(
+func (s *IssueSession[T]) Reconcile(
 	ctx context.Context,
 	desired []*T,
 	labels []string,
+	closeMessage string,
 ) ([]string, error) {
 	log := clog.FromContext(ctx)
 
@@ -53,11 +58,18 @@ func (s *IssueSession[T]) UpsertMany(
 
 	issueURLs := make([]string, len(desired))
 
+	// Track which existing issues matched the desired state
+	matchedIssues := make(map[int]bool)
+
+	// Phase 1: Create or update issues for desired state
 	for i, data := range desired {
 		// Try to find matching existing issue
 		existingIssue := s.findMatchingIssue(ctx, data)
 
 		if existingIssue != nil {
+			// Mark this issue as matched
+			matchedIssues[existingIssue.GetNumber()] = true
+
 			// Check if issue has skip label
 			if s.hasSkipLabel(existingIssue) {
 				log.Infof("Issue #%d has skip label, skipping update", existingIssue.GetNumber())
@@ -93,67 +105,49 @@ func (s *IssueSession[T]) UpsertMany(
 		}
 	}
 
-	return issueURLs, nil
-}
-
-// CloseAnyOutstanding closes any existing issues that don't match the desired data set.
-// It uses the Equal method on T to determine which issues should be kept.
-// If message is non-empty, it posts the message as a comment before closing.
-func (s *IssueSession[T]) CloseAnyOutstanding(
-	ctx context.Context,
-	desired []*T,
-	message string,
-) error {
-	log := clog.FromContext(ctx)
-
+	// Phase 2: Close any unmatched existing issues
 	for _, issue := range s.existingIssues {
+		// Skip if this issue matched desired state
+		if matchedIssues[issue.GetNumber()] {
+			continue
+		}
+
 		// Check if issue has skip label
 		if s.hasSkipLabel(issue) {
 			log.Infof("Issue #%d has skip label, preserving issue", issue.GetNumber())
 			continue
 		}
 
-		// Extract embedded data from issue
-		existing, err := s.manager.templateExecutor.Extract(issue.GetBody())
+		// Extract embedded data to verify this is a managed issue
+		_, err := s.manager.templateExecutor.Extract(issue.GetBody())
 		if err != nil {
 			log.Warnf("Failed to extract data from issue #%d body, skipping: %v", issue.GetNumber(), err)
 			continue
 		}
 
-		// Check if this issue matches any desired data
-		matched := false
-		for _, data := range desired {
-			if (*existing).Equal(*data) {
-				matched = true
-				break
-			}
-		}
+		// Close the issue
+		log.Infof("Closing issue #%d as it's not in the desired set", issue.GetNumber())
 
-		if !matched {
-			// Close the issue
-			log.Infof("Closing issue #%d as it's not in the desired set", issue.GetNumber())
-
-			// Post message as a comment if provided
-			if message != "" {
-				if _, _, err := s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueComment{
-					Body: github.Ptr(message),
-				}); err != nil {
-					return fmt.Errorf("posting comment on issue #%d: %w", issue.GetNumber(), err)
-				}
-			}
-
-			// Close the issue
-			if _, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
-				State: github.Ptr("closed"),
+		// Post message as a comment if provided
+		if closeMessage != "" {
+			if _, _, err := s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueComment{
+				Body: github.Ptr(closeMessage),
 			}); err != nil {
-				return fmt.Errorf("closing issue #%d: %w", issue.GetNumber(), err)
+				return nil, fmt.Errorf("posting comment on issue #%d: %w", issue.GetNumber(), err)
 			}
-
-			log.Infof("Closed issue #%d", issue.GetNumber())
 		}
+
+		// Close the issue
+		if _, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
+			State: github.Ptr("closed"),
+		}); err != nil {
+			return nil, fmt.Errorf("closing issue #%d: %w", issue.GetNumber(), err)
+		}
+
+		log.Infof("Closed issue #%d", issue.GetNumber())
 	}
 
-	return nil
+	return issueURLs, nil
 }
 
 // findMatchingIssue finds an existing issue that matches the given data using the Equal method.
