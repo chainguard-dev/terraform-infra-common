@@ -43,6 +43,7 @@ variable "sections" {
   description = "Configure visibility of optional dashboard sections"
   type = object({
     github = optional(bool, false)
+    agents = optional(bool, false)
   })
   default = {}
 }

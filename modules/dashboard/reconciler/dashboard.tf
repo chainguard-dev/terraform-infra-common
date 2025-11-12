@@ -56,6 +56,14 @@ module "github" {
   filter = []
 }
 
+module "agents" {
+  source = "../sections/agents"
+  title  = "Agent Metrics"
+  filter = [
+    "metric.label.\"service_name\"=\"${local.service_name}\""
+  ]
+}
+
 module "resources" {
   source                = "../sections/resources"
   title                 = "Reconciler Resources"
@@ -87,6 +95,7 @@ module "layout" {
       module.grpc.section,
     ],
     var.sections.github ? [module.github.section] : [],
+    var.sections.agents ? [module.agents.section] : [],
     [module.resources.section],
   )
 }

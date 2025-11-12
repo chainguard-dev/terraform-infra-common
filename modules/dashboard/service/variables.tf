@@ -31,11 +31,13 @@ variable "sections" {
     grpc   = optional(bool, true)  // Include GRPC section
     github = optional(bool, false) // Include GitHub API section
     gorm   = optional(bool, false) // Include GORM section
+    agents = optional(bool, false) // Include Agent metrics section
   })
   default = {
     http   = true
     grpc   = true
     github = false
     gorm   = false
+    agents = false
   }
 }

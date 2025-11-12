@@ -39,6 +39,14 @@ module "gorm" {
   service_name = var.service_name
 }
 
+module "agents" {
+  source = "../sections/agents"
+  title  = "Agent Metrics"
+  filter = [
+    "metric.label.\"service_name\"=\"${var.service_name}\""
+  ]
+}
+
 module "resources" {
   source                = "../sections/resources"
   title                 = "Resources"
@@ -70,6 +78,7 @@ module "layout" {
     var.sections.grpc ? [module.grpc.section] : [],
     var.sections.github ? [module.github.section] : [],
     var.sections.gorm ? [module.gorm.section] : [],
+    var.sections.agents ? [module.agents.section] : [],
     [module.resources.section],
   )
 }
