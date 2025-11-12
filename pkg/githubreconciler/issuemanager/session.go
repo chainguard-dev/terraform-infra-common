@@ -28,6 +28,8 @@ type IssueSession[T Comparable[T]] struct {
 	manager        *IM[T]
 	client         *github.Client
 	resource       *githubreconciler.Resource
+	owner          string
+	repo           string
 	pathLabel      string
 	existingIssues []existingIssue[T]
 }
@@ -59,6 +61,11 @@ func (s *IssueSession[T]) Reconcile(
 	closeMessage string,
 ) ([]string, error) {
 	log := clog.FromContext(ctx)
+
+	// Check if desired issues exceed the limit
+	if len(desired) > s.manager.maxDesiredIssues {
+		return nil, fmt.Errorf("desired issues (%d) exceeds limit (%d) for path %s", len(desired), s.manager.maxDesiredIssues, s.resource.Path)
+	}
 
 	// Add pathLabel to labels
 	allLabels := append([]string{s.pathLabel}, labels...)
@@ -125,7 +132,7 @@ func (s *IssueSession[T]) Reconcile(
 
 		// Post message as a comment if provided
 		if closeMessage != "" {
-			if _, _, err := s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, existing.issue.GetNumber(), &github.IssueComment{
+			if _, _, err := s.client.Issues.CreateComment(ctx, s.owner, s.repo, existing.issue.GetNumber(), &github.IssueComment{
 				Body: github.Ptr(closeMessage),
 			}); err != nil {
 				return nil, fmt.Errorf("posting comment on issue #%d: %w", existing.issue.GetNumber(), err)
@@ -133,7 +140,7 @@ func (s *IssueSession[T]) Reconcile(
 		}
 
 		// Close the issue
-		if _, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, existing.issue.GetNumber(), &github.IssueRequest{
+		if _, _, err := s.client.Issues.Edit(ctx, s.owner, s.repo, existing.issue.GetNumber(), &github.IssueRequest{
 			State: github.Ptr("closed"),
 		}); err != nil {
 			return nil, fmt.Errorf("closing issue #%d: %w", existing.issue.GetNumber(), err)
@@ -233,7 +240,7 @@ func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []str
 
 	log.Info("Creating new issue")
 
-	issue, _, err := s.client.Issues.Create(ctx, s.resource.Owner, s.resource.Repo, &github.IssueRequest{
+	issue, _, err := s.client.Issues.Create(ctx, s.owner, s.repo, &github.IssueRequest{
 		Title:  github.Ptr(title),
 		Body:   github.Ptr(body),
 		Labels: &allLabels,
@@ -257,7 +264,7 @@ func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, 
 
 	log.Infof("Updating existing issue #%d", issue.GetNumber())
 
-	updated, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
+	updated, _, err := s.client.Issues.Edit(ctx, s.owner, s.repo, issue.GetNumber(), &github.IssueRequest{
 		Title:  github.Ptr(title),
 		Body:   github.Ptr(body),
 		Labels: &allLabels,

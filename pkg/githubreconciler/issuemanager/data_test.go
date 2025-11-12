@@ -29,7 +29,7 @@ func Test_executeLabelTemplates(t *testing.T) {
 	labelTmpl1 := template.Must(template.New("label1").Parse("label1:{{.Baz}}"))
 	labelTmpl2 := template.Must(template.New("label2").Parse("label2:{{.Bar}}"))
 
-	im, err := New[testData]("test-manager", titleTmpl, bodyTmpl, labelTmpl1, labelTmpl2)
+	im, err := New[testData]("test-manager", titleTmpl, bodyTmpl, WithLabelTemplates[testData](labelTmpl1, labelTmpl2))
 	if err != nil {
 		t.Fatalf("New() failed: %v", err)
 	}

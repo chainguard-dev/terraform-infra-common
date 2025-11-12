@@ -95,7 +95,10 @@ SPDX-License-Identifier: Apache-2.0
 // Optionally add label templates to generate dynamic labels from data:
 //
 //	labelTmpl := template.Must(template.New("priority").Parse("priority:{{.Priority}}"))
-//	im := issuemanager.New[IssueData]("my-reconciler", titleTmpl, bodyTmpl, labelTmpl)
+//	im := issuemanager.New[IssueData]("my-reconciler", titleTmpl, bodyTmpl,
+//	    issuemanager.WithLabelTemplates(labelTmpl),
+//	    issuemanager.WithMaxDesiredIssuesPerPath(1), // default, increase with caution
+//	)
 //
 // Start a reconciliation session to discover current state:
 //

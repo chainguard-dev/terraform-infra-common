@@ -40,7 +40,9 @@ Additional details here.`))
 	labelTmpl2 := template.Must(template.New("label2").Parse(`category:{{.Bar}}`))
 
 	// Create manager once per identity with label templates
-	im, err := issuemanager.New[ExampleData]("example-manager", titleTmpl, bodyTmpl, labelTmpl1, labelTmpl2)
+	im, err := issuemanager.New[ExampleData]("example-manager", titleTmpl, bodyTmpl,
+		issuemanager.WithLabelTemplates[ExampleData](labelTmpl1, labelTmpl2),
+	)
 	if err != nil {
 		// handle error
 		return

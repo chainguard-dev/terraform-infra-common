@@ -23,6 +23,9 @@ type Comparable[T any] interface {
 	Equal(T) bool
 }
 
+// Option configures an IM (IssueManager).
+type Option[T Comparable[T]] func(*IM[T])
+
 // IM manages the lifecycle of GitHub Issues for a specific identity.
 // It uses Go templates to generate issue titles and bodies from generic data of type T.
 // IssueManager can handle multiple issues per path.
@@ -33,14 +36,48 @@ type IM[T Comparable[T]] struct {
 	bodyTemplate     *template.Template
 	labelTemplates   []*template.Template
 	templateExecutor *internaltemplate.Template[T]
+	owner            string
+	repo             string
+	maxDesiredIssues int
+}
+
+// WithLabelTemplates sets the label templates for generating dynamic labels from issue data.
+func WithLabelTemplates[T Comparable[T]](templates ...*template.Template) Option[T] {
+	return func(im *IM[T]) {
+		im.labelTemplates = templates
+	}
+}
+
+// WithOwner overrides the GitHub owner (org or user) from the resource.
+// When set, all issue operations will use this owner instead of the resource's owner.
+func WithOwner[T Comparable[T]](owner string) Option[T] {
+	return func(im *IM[T]) {
+		im.owner = owner
+	}
+}
+
+// WithRepo overrides the GitHub repository from the resource.
+// When set, all issue operations will use this repo instead of the resource's repo.
+func WithRepo[T Comparable[T]](repo string) Option[T] {
+	return func(im *IM[T]) {
+		im.repo = repo
+	}
+}
+
+// WithMaxDesiredIssuesPerPath sets the maximum number of desired issues allowed per path.
+// Default is 1. WARNING: High values can cause GitHub API rate limit issues.
+// The default of 1 is strongly recommended. Only increase if you understand the rate limit implications.
+func WithMaxDesiredIssuesPerPath[T Comparable[T]](max int) Option[T] {
+	return func(im *IM[T]) {
+		im.maxDesiredIssues = max
+	}
 }
 
 // New creates a new IM with the given identity and templates.
 // The templates are executed with data of type T when creating or updating issues.
 // Returns an error if titleTemplate or bodyTemplate is nil.
-// labelTemplates are optional and will be executed with each issue's data to generate additional labels.
 // T must implement the Comparable interface to enable matching between existing and desired issues.
-func New[T Comparable[T]](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, labelTemplates ...*template.Template) (*IM[T], error) {
+func New[T Comparable[T]](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, opts ...Option[T]) (*IM[T], error) {
 	if titleTemplate == nil {
 		return nil, errors.New("titleTemplate cannot be nil")
 	}
@@ -48,13 +85,19 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 		return nil, errors.New("bodyTemplate cannot be nil")
 	}
 
-	return &IM[T]{
+	im := &IM[T]{
 		identity:         identity,
 		titleTemplate:    titleTemplate,
 		bodyTemplate:     bodyTemplate,
-		labelTemplates:   labelTemplates,
 		templateExecutor: internaltemplate.New[T](identity, "-issue-data", "issue"),
-	}, nil
+		maxDesiredIssues: 1,
+	}
+
+	for _, opt := range opts {
+		opt(im)
+	}
+
+	return im, nil
 }
 
 // NewSession creates a new IssueSession for the given resource.
@@ -67,6 +110,16 @@ func (im *IM[T]) NewSession(
 ) (*IssueSession[T], error) {
 	if res.Type != githubreconciler.ResourceTypePath {
 		return nil, fmt.Errorf("issue manager only supports Path resources, got: %v", res.Type)
+	}
+
+	// Determine which owner/repo to use
+	owner := res.Owner
+	repo := res.Repo
+	if im.owner != "" {
+		owner = im.owner
+	}
+	if im.repo != "" {
+		repo = im.repo
 	}
 
 	// Create a label to identify issues for this path
@@ -83,7 +136,7 @@ func (im *IM[T]) NewSession(
 	}
 
 	for {
-		issues, resp, err := client.Issues.ListByRepo(ctx, res.Owner, res.Repo, opts)
+		issues, resp, err := client.Issues.ListByRepo(ctx, owner, repo, opts)
 		if err != nil {
 			return nil, fmt.Errorf("listing issues: %w", err)
 		}
@@ -117,6 +170,8 @@ func (im *IM[T]) NewSession(
 		manager:        im,
 		client:         client,
 		resource:       res,
+		owner:          owner,
+		repo:           repo,
 		pathLabel:      pathLabel,
 		existingIssues: existingIssues,
 	}, nil
