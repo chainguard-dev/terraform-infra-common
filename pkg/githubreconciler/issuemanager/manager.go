@@ -67,9 +67,9 @@ func WithRepo[T Comparable[T]](repo string) Option[T] {
 // WithMaxDesiredIssuesPerPath sets the maximum number of desired issues allowed per path.
 // Default is 1. WARNING: High values can cause GitHub API rate limit issues.
 // The default of 1 is strongly recommended. Only increase if you understand the rate limit implications.
-func WithMaxDesiredIssuesPerPath[T Comparable[T]](max int) Option[T] {
+func WithMaxDesiredIssuesPerPath[T Comparable[T]](limit int) Option[T] {
 	return func(im *IM[T]) {
-		im.maxDesiredIssues = max
+		im.maxDesiredIssues = limit
 	}
 }
 

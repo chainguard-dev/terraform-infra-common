@@ -78,7 +78,7 @@ func (s *IssueSession[T]) Reconcile(
 	// Phase 1: Create or update issues for desired state
 	for i, data := range desired {
 		// Try to find matching existing issue
-		existing := s.findMatchingIssue(ctx, data)
+		existing := s.findMatchingIssue(data)
 
 		if existing != nil {
 			// Mark this issue as matched
@@ -154,7 +154,7 @@ func (s *IssueSession[T]) Reconcile(
 
 // findMatchingIssue finds an existing issue that matches the given data using the Equal method.
 // Returns nil if no match is found.
-func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T) *existingIssue[T] {
+func (s *IssueSession[T]) findMatchingIssue(data *T) *existingIssue[T] {
 	for _, existing := range s.existingIssues {
 		if (*existing.data).Equal(*data) {
 			return &existing
@@ -224,9 +224,9 @@ func (s *IssueSession[T]) prepareIssueRequest(ctx context.Context, data *T, labe
 
 	// Generate labels from templates and merge with static labels
 	generatedLabels := s.generateLabels(ctx, data)
-	allLabels := append(labels, generatedLabels...)
+	labels = append(labels, generatedLabels...)
 
-	return title, body, allLabels, nil
+	return title, body, labels, nil
 }
 
 // createIssue creates a new issue with the provided data and labels.
