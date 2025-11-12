@@ -59,6 +59,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_agents"></a> [agents](#module\_agents) | ../sections/agents | n/a |
 | <a name="module_alerts"></a> [alerts](#module\_alerts) | ../sections/alerts | n/a |
 | <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../ | n/a |
 | <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
@@ -83,7 +84,7 @@ No resources.
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard. | `map` | `{}` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | ID of the GCP project | `string` | n/a | yes |
-| <a name="input_sections"></a> [sections](#input\_sections) | Sections to include in the dashboard | <pre>object({<br/>    http   = optional(bool, true)  // Include HTTP section<br/>    grpc   = optional(bool, true)  // Include GRPC section<br/>    github = optional(bool, false) // Include GitHub API section<br/>    gorm   = optional(bool, false) // Include GORM section<br/>  })</pre> | <pre>{<br/>  "github": false,<br/>  "gorm": false,<br/>  "grpc": true,<br/>  "http": true<br/>}</pre> | no |
+| <a name="input_sections"></a> [sections](#input\_sections) | Sections to include in the dashboard | <pre>object({<br/>    http   = optional(bool, true)  // Include HTTP section<br/>    grpc   = optional(bool, true)  // Include GRPC section<br/>    github = optional(bool, false) // Include GitHub API section<br/>    gorm   = optional(bool, false) // Include GORM section<br/>    agents = optional(bool, false) // Include Agent metrics section<br/>  })</pre> | <pre>{<br/>  "agents": false,<br/>  "github": false,<br/>  "gorm": false,<br/>  "grpc": true,<br/>  "http": true<br/>}</pre> | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of the service(s) to monitor | `string` | n/a | yes |
 
 ## Outputs
