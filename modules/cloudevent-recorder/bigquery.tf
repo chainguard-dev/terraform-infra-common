@@ -28,6 +28,8 @@ resource "google_bigquery_table" "types" {
     expiration_ms = (var.retention-period) * 24 * 60 * 60 * 1000
   }
 
+  clustering = each.value.clustering
+
   deletion_protection = var.deletion_protection
 }
 
