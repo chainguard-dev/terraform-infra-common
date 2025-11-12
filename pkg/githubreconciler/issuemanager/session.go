@@ -14,6 +14,13 @@ import (
 	"github.com/google/go-github/v75/github"
 )
 
+// existingIssue represents an existing GitHub issue along with its extracted data.
+// This avoids the need to extract data multiple times during reconciliation.
+type existingIssue[T Comparable[T]] struct {
+	issue *github.Issue
+	data  *T
+}
+
 // IssueSession represents work on multiple issues for a specific resource path.
 // Unlike Session in changemanager which handles a single PR, IssueSession manages multiple issues.
 // T must implement the Comparable interface to enable matching between existing and desired issues.
@@ -22,7 +29,7 @@ type IssueSession[T Comparable[T]] struct {
 	client         *github.Client
 	resource       *githubreconciler.Resource
 	pathLabel      string
-	existingIssues []*github.Issue
+	existingIssues []existingIssue[T]
 }
 
 // hasSkipLabel checks if a specific issue has the skip label.
@@ -64,35 +71,30 @@ func (s *IssueSession[T]) Reconcile(
 	// Phase 1: Create or update issues for desired state
 	for i, data := range desired {
 		// Try to find matching existing issue
-		existingIssue := s.findMatchingIssue(ctx, data)
+		existing := s.findMatchingIssue(ctx, data)
 
-		if existingIssue != nil {
+		if existing != nil {
 			// Mark this issue as matched
-			matchedIssues[existingIssue.GetNumber()] = true
+			matchedIssues[existing.issue.GetNumber()] = true
 
 			// Check if issue has skip label
-			if s.hasSkipLabel(existingIssue) {
-				log.Infof("Issue #%d has skip label, skipping update", existingIssue.GetNumber())
-				issueURLs[i] = existingIssue.GetHTMLURL()
+			if s.hasSkipLabel(existing.issue) {
+				log.Infof("Issue #%d has skip label, skipping update", existing.issue.GetNumber())
+				issueURLs[i] = existing.issue.GetHTMLURL()
 				continue
 			}
 
 			// Check if update is needed
-			needsUpdate, err := s.needsUpdate(ctx, existingIssue, data)
-			if err != nil {
-				return nil, fmt.Errorf("checking if issue #%d needs update: %w", existingIssue.GetNumber(), err)
-			}
-
-			if !needsUpdate {
-				log.Infof("Issue #%d is up to date, no refresh needed", existingIssue.GetNumber())
-				issueURLs[i] = existingIssue.GetHTMLURL()
+			if !s.needsUpdate(ctx, existing, data) {
+				log.Infof("Issue #%d is up to date, no refresh needed", existing.issue.GetNumber())
+				issueURLs[i] = existing.issue.GetHTMLURL()
 				continue
 			}
 
 			// Update existing issue
-			url, err := s.updateIssue(ctx, existingIssue, data, allLabels)
+			url, err := s.updateIssue(ctx, existing.issue, data, allLabels)
 			if err != nil {
-				return nil, fmt.Errorf("updating issue #%d: %w", existingIssue.GetNumber(), err)
+				return nil, fmt.Errorf("updating issue #%d: %w", existing.issue.GetNumber(), err)
 			}
 			issueURLs[i] = url
 		} else {
@@ -106,45 +108,38 @@ func (s *IssueSession[T]) Reconcile(
 	}
 
 	// Phase 2: Close any unmatched existing issues
-	for _, issue := range s.existingIssues {
+	for _, existing := range s.existingIssues {
 		// Skip if this issue matched desired state
-		if matchedIssues[issue.GetNumber()] {
+		if matchedIssues[existing.issue.GetNumber()] {
 			continue
 		}
 
 		// Check if issue has skip label
-		if s.hasSkipLabel(issue) {
-			log.Infof("Issue #%d has skip label, preserving issue", issue.GetNumber())
-			continue
-		}
-
-		// Extract embedded data to verify this is a managed issue
-		_, err := s.manager.templateExecutor.Extract(issue.GetBody())
-		if err != nil {
-			log.Warnf("Failed to extract data from issue #%d body, skipping: %v", issue.GetNumber(), err)
+		if s.hasSkipLabel(existing.issue) {
+			log.Infof("Issue #%d has skip label, preserving issue", existing.issue.GetNumber())
 			continue
 		}
 
 		// Close the issue
-		log.Infof("Closing issue #%d as it's not in the desired set", issue.GetNumber())
+		log.Infof("Closing issue #%d as it's not in the desired set", existing.issue.GetNumber())
 
 		// Post message as a comment if provided
 		if closeMessage != "" {
-			if _, _, err := s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueComment{
+			if _, _, err := s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, existing.issue.GetNumber(), &github.IssueComment{
 				Body: github.Ptr(closeMessage),
 			}); err != nil {
-				return nil, fmt.Errorf("posting comment on issue #%d: %w", issue.GetNumber(), err)
+				return nil, fmt.Errorf("posting comment on issue #%d: %w", existing.issue.GetNumber(), err)
 			}
 		}
 
 		// Close the issue
-		if _, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
+		if _, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, existing.issue.GetNumber(), &github.IssueRequest{
 			State: github.Ptr("closed"),
 		}); err != nil {
-			return nil, fmt.Errorf("closing issue #%d: %w", issue.GetNumber(), err)
+			return nil, fmt.Errorf("closing issue #%d: %w", existing.issue.GetNumber(), err)
 		}
 
-		log.Infof("Closed issue #%d", issue.GetNumber())
+		log.Infof("Closed issue #%d", existing.issue.GetNumber())
 	}
 
 	return issueURLs, nil
@@ -152,18 +147,10 @@ func (s *IssueSession[T]) Reconcile(
 
 // findMatchingIssue finds an existing issue that matches the given data using the Equal method.
 // Returns nil if no match is found.
-func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T) *github.Issue {
-	log := clog.FromContext(ctx)
-
-	for _, issue := range s.existingIssues {
-		existing, err := s.manager.templateExecutor.Extract(issue.GetBody())
-		if err != nil {
-			log.Warnf("Failed to extract data from issue #%d body, skipping: %v", issue.GetNumber(), err)
-			continue
-		}
-
-		if (*existing).Equal(*data) {
-			return issue
+func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T) *existingIssue[T] {
+	for _, existing := range s.existingIssues {
+		if (*existing.data).Equal(*data) {
+			return &existing
 		}
 	}
 
@@ -172,23 +159,16 @@ func (s *IssueSession[T]) findMatchingIssue(ctx context.Context, data *T) *githu
 
 // needsUpdate determines if an existing issue needs to be updated.
 // Returns true if the embedded data differs from expected.
-func (s *IssueSession[T]) needsUpdate(ctx context.Context, issue *github.Issue, expected *T) (bool, error) {
+func (s *IssueSession[T]) needsUpdate(ctx context.Context, existing *existingIssue[T], expected *T) bool {
 	log := clog.FromContext(ctx)
 
-	// Extract embedded data from issue body
-	existing, err := s.manager.templateExecutor.Extract(issue.GetBody())
-	if err != nil {
-		log.Warnf("Failed to extract data from issue #%d body: %v", issue.GetNumber(), err)
-		return true, nil
-	}
-
 	// Compare data for equality
-	if !(*existing).Equal(*expected) {
-		log.Infof("Issue #%d data differs, update needed", issue.GetNumber())
-		return true, nil
+	if !(*existing.data).Equal(*expected) {
+		log.Infof("Issue #%d data differs, update needed", existing.issue.GetNumber())
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 // generateLabels generates labels from label templates by executing them with the provided data.

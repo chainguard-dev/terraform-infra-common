@@ -96,11 +96,20 @@ func (im *IM[T]) NewSession(
 		opts.ListOptions.Page = resp.NextPage
 	}
 
-	// Filter out pull requests (GitHub's API returns both)
-	var existingIssues []*github.Issue
+	// Filter out pull requests and extract data upfront (GitHub's API returns both)
+	var existingIssues []existingIssue[T]
 	for _, issue := range allIssues {
 		if !issue.IsPullRequest() {
-			existingIssues = append(existingIssues, issue)
+			// Extract embedded data from issue body
+			data, err := im.templateExecutor.Extract(issue.GetBody())
+			if err != nil {
+				// Skip issues with malformed data - they won't be matched anyway
+				continue
+			}
+			existingIssues = append(existingIssues, existingIssue[T]{
+				issue: issue,
+				data:  data,
+			})
 		}
 	}
 
