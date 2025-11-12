@@ -8,6 +8,7 @@ package issuemanager
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
@@ -62,13 +63,24 @@ func (s *IssueSession[T]) Reconcile(
 ) ([]string, error) {
 	log := clog.FromContext(ctx)
 
+	// Check for duplicate desired states
+	for i := 0; i < len(desired); i++ {
+		for j := i + 1; j < len(desired); j++ {
+			if (*desired[i]).Equal(*desired[j]) {
+				return nil, fmt.Errorf("duplicate desired state detected: entries at index %d and %d have matching identity fields", i, j)
+			}
+		}
+	}
+
 	// Check if desired issues exceed the limit
 	if len(desired) > s.manager.maxDesiredIssues {
 		return nil, fmt.Errorf("desired issues (%d) exceeds limit (%d) for path %s", len(desired), s.manager.maxDesiredIssues, s.resource.Path)
 	}
 
 	// Add pathLabel to labels
-	allLabels := append([]string{s.pathLabel}, labels...)
+	allLabels := make([]string, 0, 1+len(labels))
+	allLabels = append(allLabels, s.pathLabel)
+	allLabels = append(allLabels, labels...)
 
 	issueURLs := make([]string, len(desired))
 
@@ -170,7 +182,7 @@ func (s *IssueSession[T]) needsUpdate(ctx context.Context, existing *existingIss
 	log := clog.FromContext(ctx)
 
 	// Compare data for equality
-	if !(*existing.data).Equal(*expected) {
+	if !reflect.DeepEqual(*existing.data, *expected) {
 		log.Infof("Issue #%d data differs, update needed", existing.issue.GetNumber())
 		return true
 	}
@@ -224,9 +236,11 @@ func (s *IssueSession[T]) prepareIssueRequest(ctx context.Context, data *T, labe
 
 	// Generate labels from templates and merge with static labels
 	generatedLabels := s.generateLabels(ctx, data)
-	labels = append(labels, generatedLabels...)
+	allLabels := make([]string, 0, len(labels)+len(generatedLabels))
+	allLabels = append(allLabels, labels...)
+	allLabels = append(allLabels, generatedLabels...)
 
-	return title, body, labels, nil
+	return title, body, allLabels, nil
 }
 
 // createIssue creates a new issue with the provided data and labels.

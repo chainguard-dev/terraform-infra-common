@@ -47,7 +47,10 @@ func Test_ExecuteTemplate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpl := template.Must(template.New("test").Parse(tt.tmplStr))
-			executor := New[testData]("test-identity", "-test-data", "test-entity")
+			executor, err := New[testData]("test-identity", "-test-data", "test-entity")
+			if err != nil {
+				t.Fatalf("New() failed: %v", err)
+			}
 
 			result, err := executor.Execute(tmpl, tt.data)
 
@@ -100,7 +103,10 @@ func Test_EmbedData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			executor := New[testData](tt.identity, tt.markerSuffix, tt.entityType)
+			executor, err := New[testData](tt.identity, tt.markerSuffix, tt.entityType)
+			if err != nil {
+				t.Fatalf("New() failed: %v", err)
+			}
 
 			embedded, err := executor.Embed(tt.body, tt.data)
 			if err != nil {
@@ -253,7 +259,10 @@ func Test_ExtractData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			executor := New[testData](tt.identity, tt.markerSuffix, tt.entityType)
+			executor, err := New[testData](tt.identity, tt.markerSuffix, tt.entityType)
+			if err != nil {
+				t.Fatalf("New() failed: %v", err)
+			}
 			extracted, err := executor.Extract(tt.body)
 
 			if tt.wantErr {

@@ -19,18 +19,28 @@ type Template[T any] struct {
 	identity     string
 	markerSuffix string
 	entityType   string
+	regex        *regexp.Regexp
 }
 
 // New creates a new Template instance with the specified identity, markerSuffix, and entityType.
 // The identity distinguishes between different manager instances.
 // The markerSuffix differentiates between different entity types (e.g., "-pr-data" or "-issue-data").
 // The entityType is used in error messages (e.g., "PR" or "issue").
-func New[T any](identity string, markerSuffix string, entityType string) *Template[T] {
+// Returns an error if identity validation fails or regex compilation fails.
+func New[T any](identity string, markerSuffix string, entityType string) (*Template[T], error) {
+	marker := identity + markerSuffix
+	pattern := fmt.Sprintf(`(?s)<!--%s-->\s*<!--\s*(.+?)\s*-->\s*<!--/%s-->`, regexp.QuoteMeta(marker), regexp.QuoteMeta(marker))
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("compiling regex: %w", err)
+	}
+
 	return &Template[T]{
 		identity:     identity,
 		markerSuffix: markerSuffix,
 		entityType:   entityType,
-	}
+		regex:        regex,
+	}, nil
 }
 
 // Execute executes the given template with the provided data.
@@ -59,15 +69,7 @@ func (t *Template[T]) Embed(body string, data *T) (string, error) {
 // Extract extracts embedded data from the body text.
 // Returns an error if the data cannot be found or parsed.
 func (t *Template[T]) Extract(body string) (*T, error) {
-	marker := t.identity + t.markerSuffix
-	pattern := fmt.Sprintf(`(?s)<!--%s-->\s*<!--\s*(.+?)\s*-->\s*<!--/%s-->`, regexp.QuoteMeta(marker), regexp.QuoteMeta(marker))
-
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		return nil, fmt.Errorf("compiling regex: %w", err)
-	}
-
-	matches := re.FindStringSubmatch(body)
+	matches := t.regex.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		return nil, fmt.Errorf("embedded data not found in %s body", t.entityType)
 	}

@@ -71,12 +71,17 @@ func newStatusManager[T any](ctx context.Context, identity string, readOnly bool
 		return nil, errors.New("K_SERVICE environment variable not set")
 	}
 
+	templateExecutor, err := internaltemplate.New[Status[T]](identity, "-status", "status")
+	if err != nil {
+		return nil, fmt.Errorf("creating template executor: %w", err)
+	}
+
 	return &StatusManager[T]{
 		identity:         identity,
 		projectID:        projectID,
 		serviceName:      serviceName,
 		readOnly:         readOnly,
-		templateExecutor: internaltemplate.New[Status[T]](identity, "-status", "status"),
+		templateExecutor: templateExecutor,
 	}, nil
 }
 

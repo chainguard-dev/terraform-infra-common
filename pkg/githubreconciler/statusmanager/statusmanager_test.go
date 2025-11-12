@@ -49,12 +49,18 @@ func (d TestDetailsWithMarkdown) Markdown() string {
 func TestRoundtripWithoutMarkdown(t *testing.T) {
 	identity := "test-reconciler"
 
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]](identity, "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a StatusManager instance
 	sm := &StatusManager[TestDetails]{
 		identity:         identity,
 		projectID:        "test-project",
 		serviceName:      "test-service",
-		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	tests := []struct {
@@ -155,12 +161,18 @@ func TestRoundtripWithoutMarkdown(t *testing.T) {
 func TestRoundtripWithMarkdown(t *testing.T) {
 	identity := "markdown-reconciler"
 
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetailsWithMarkdown]](identity, "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a StatusManager instance
 	sm := &StatusManager[TestDetailsWithMarkdown]{
 		identity:         identity,
 		projectID:        "test-project",
 		serviceName:      "test-service",
-		templateExecutor: internaltemplate.New[Status[TestDetailsWithMarkdown]](identity, "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	status := Status[TestDetailsWithMarkdown]{
@@ -218,12 +230,18 @@ func TestRoundtripWithMarkdown(t *testing.T) {
 func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 	identity := "test-reconciler"
 
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]](identity, "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a StatusManager instance
 	sm := &StatusManager[TestDetails]{
 		identity:         identity,
 		projectID:        "test-project",
 		serviceName:      "test-service",
-		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	expectedMarker := "<!--" + identity + "-status-->"
@@ -303,12 +321,18 @@ func TestComplexRoundtrip(t *testing.T) {
 	// Test with special characters and escaping
 	identity := "test-reconciler"
 
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]](identity, "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a StatusManager instance
 	sm := &StatusManager[TestDetails]{
 		identity:         identity,
 		projectID:        "test-project",
 		serviceName:      "test-service",
-		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	status := Status[TestDetails]{
@@ -349,12 +373,18 @@ func TestComplexRoundtrip(t *testing.T) {
 }
 
 func TestNewSession(t *testing.T) {
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]]("test-autofix", "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a StatusManager
 	sm := &StatusManager[TestDetails]{
 		identity:         "test-autofix",
 		projectID:        "my-gcp-project",
 		serviceName:      "autofix-service",
-		templateExecutor: internaltemplate.New[Status[TestDetails]]("test-autofix", "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	tests := []struct {
@@ -546,13 +576,19 @@ func TestCheckRunNameValidation(t *testing.T) {
 }
 
 func TestGetSetCheckRunID(t *testing.T) {
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a test session manually
 	session := &Session[TestDetails]{
 		manager: &StatusManager[TestDetails]{
 			identity:         "test-reconciler",
 			projectID:        "test-project",
 			serviceName:      "test-service",
-			templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
+			templateExecutor: templateExecutor,
 		},
 		resource: &githubreconciler.Resource{
 			Owner: "test-owner",
@@ -605,6 +641,12 @@ func TestGetSetCheckRunID(t *testing.T) {
 }
 
 func TestBuildDetailsURL(t *testing.T) {
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	tests := []struct {
 		name         string
 		session      *Session[TestDetails]
@@ -616,7 +658,7 @@ func TestBuildDetailsURL(t *testing.T) {
 				identity:         "test-reconciler",
 				projectID:        "my-project",
 				serviceName:      "autofix-service",
-				templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
+				templateExecutor: templateExecutor,
 			},
 			resource: &githubreconciler.Resource{
 				Owner: "chainguard-dev",
@@ -640,7 +682,7 @@ func TestBuildDetailsURL(t *testing.T) {
 				identity:         "test-reconciler",
 				projectID:        "project-with-dash",
 				serviceName:      "service_with_underscore",
-				templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
+				templateExecutor: templateExecutor,
 			},
 			resource: &githubreconciler.Resource{
 				Owner: "test-org",
@@ -683,12 +725,18 @@ func TestBuildDetailsURL(t *testing.T) {
 func TestJSONFormattingConsistency(t *testing.T) {
 	identity := "test-reconciler"
 
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]](identity, "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a StatusManager instance
 	sm := &StatusManager[TestDetails]{
 		identity:         identity,
 		projectID:        "test-project",
 		serviceName:      "test-service",
-		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	status := Status[TestDetails]{
@@ -730,13 +778,19 @@ func TestJSONFormattingConsistency(t *testing.T) {
 }
 
 func TestReadOnlyStatusManager(t *testing.T) {
+	// Create template executor
+	templateExecutor, err := internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status")
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
 	// Create a read-only status manager
 	sm := &StatusManager[TestDetails]{
 		identity:         "test-reconciler",
 		projectID:        "test-project",
 		serviceName:      "test-service",
 		readOnly:         true,
-		templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
+		templateExecutor: templateExecutor,
 	}
 
 	// Create a session
@@ -763,7 +817,7 @@ func TestReadOnlyStatusManager(t *testing.T) {
 		},
 	}
 
-	err := session.SetActualState(context.TODO(), "Test", status)
+	err = session.SetActualState(context.TODO(), "Test", status)
 	if err == nil {
 		t.Fatal("SetActualState should fail for read-only session")
 	}

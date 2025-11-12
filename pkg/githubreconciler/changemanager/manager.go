@@ -36,11 +36,16 @@ func New[T any](identity string, titleTemplate *template.Template, bodyTemplate 
 		return nil, errors.New("bodyTemplate cannot be nil")
 	}
 
+	templateExecutor, err := internaltemplate.New[T](identity, "-pr-data", "PR")
+	if err != nil {
+		return nil, fmt.Errorf("creating template executor: %w", err)
+	}
+
 	return &CM[T]{
 		identity:         identity,
 		titleTemplate:    titleTemplate,
 		bodyTemplate:     bodyTemplate,
-		templateExecutor: internaltemplate.New[T](identity, "-pr-data", "PR"),
+		templateExecutor: templateExecutor,
 	}, nil
 }
 

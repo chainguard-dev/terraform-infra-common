@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
 	internaltemplate "github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler/internal/template"
 	"github.com/google/go-github/v75/github"
@@ -85,11 +86,16 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 		return nil, errors.New("bodyTemplate cannot be nil")
 	}
 
+	templateExecutor, err := internaltemplate.New[T](identity, "-issue-data", "issue")
+	if err != nil {
+		return nil, fmt.Errorf("creating template executor: %w", err)
+	}
+
 	im := &IM[T]{
 		identity:         identity,
 		titleTemplate:    titleTemplate,
 		bodyTemplate:     bodyTemplate,
-		templateExecutor: internaltemplate.New[T](identity, "-issue-data", "issue"),
+		templateExecutor: templateExecutor,
 		maxDesiredIssues: 1,
 	}
 
@@ -126,6 +132,8 @@ func (im *IM[T]) NewSession(
 	pathLabel := im.identity + ":" + res.Path
 
 	// Query for existing issues with this label
+	// Set a reasonable upper limit to prevent quota issues
+	maxExistingIssues := 100
 	var allIssues []*github.Issue
 	opts := &github.IssueListByRepoOptions{
 		State:  "open",
@@ -143,11 +151,18 @@ func (im *IM[T]) NewSession(
 
 		allIssues = append(allIssues, issues...)
 
+		// Check if we've exceeded the limit
+		if len(allIssues) >= maxExistingIssues {
+			return nil, fmt.Errorf("found %d or more issues with label %q, exceeding safety limit of %d", len(allIssues), pathLabel, maxExistingIssues)
+		}
+
 		if resp.NextPage == 0 {
 			break
 		}
 		opts.ListOptions.Page = resp.NextPage
 	}
+
+	log := clog.FromContext(ctx)
 
 	// Filter out pull requests and extract data upfront (GitHub's API returns both)
 	var existingIssues []existingIssue[T]
@@ -157,6 +172,7 @@ func (im *IM[T]) NewSession(
 			data, err := im.templateExecutor.Extract(issue.GetBody())
 			if err != nil {
 				// Skip issues with malformed data - they won't be matched anyway
+				log.Warnf("Skipping issue #%d: failed to extract embedded data: %v", issue.GetNumber(), err)
 				continue
 			}
 			existingIssues = append(existingIssues, existingIssue[T]{
