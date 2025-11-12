@@ -195,37 +195,48 @@ func (s *IssueSession[T]) generateLabels(ctx context.Context, data *T) []string 
 	return labels
 }
 
-// createIssue creates a new issue with the provided data and labels.
-func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []string) (string, error) {
-	log := clog.FromContext(ctx)
-
+// prepareIssueRequest generates the title, body, and labels for an issue from the provided data.
+// This is used by both createIssue and updateIssue to avoid code duplication.
+func (s *IssueSession[T]) prepareIssueRequest(ctx context.Context, data *T, labels []string) (string, string, []string, error) {
 	// Generate issue title and body from templates
 	title, err := s.manager.templateExecutor.Execute(s.manager.titleTemplate, data)
 	if err != nil {
-		return "", fmt.Errorf("executing title template: %w", err)
+		return "", "", nil, fmt.Errorf("executing title template: %w", err)
 	}
 
 	body, err := s.manager.templateExecutor.Execute(s.manager.bodyTemplate, data)
 	if err != nil {
-		return "", fmt.Errorf("executing body template: %w", err)
+		return "", "", nil, fmt.Errorf("executing body template: %w", err)
 	}
 
 	// Embed data in body
 	body, err = s.manager.templateExecutor.Embed(body, data)
 	if err != nil {
-		return "", fmt.Errorf("embedding data: %w", err)
+		return "", "", nil, fmt.Errorf("embedding data: %w", err)
 	}
 
 	// Generate labels from templates and merge with static labels
 	generatedLabels := s.generateLabels(ctx, data)
-	labels = append(labels, generatedLabels...)
+	allLabels := append(labels, generatedLabels...)
+
+	return title, body, allLabels, nil
+}
+
+// createIssue creates a new issue with the provided data and labels.
+func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []string) (string, error) {
+	log := clog.FromContext(ctx)
+
+	title, body, allLabels, err := s.prepareIssueRequest(ctx, data, labels)
+	if err != nil {
+		return "", err
+	}
 
 	log.Info("Creating new issue")
 
 	issue, _, err := s.client.Issues.Create(ctx, s.resource.Owner, s.resource.Repo, &github.IssueRequest{
 		Title:  github.Ptr(title),
 		Body:   github.Ptr(body),
-		Labels: &labels,
+		Labels: &allLabels,
 	})
 	if err != nil {
 		return "", fmt.Errorf("creating issue: %w", err)
@@ -239,33 +250,17 @@ func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []str
 func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, data *T, labels []string) (string, error) {
 	log := clog.FromContext(ctx)
 
-	// Generate issue title and body from templates
-	title, err := s.manager.templateExecutor.Execute(s.manager.titleTemplate, data)
+	title, body, allLabels, err := s.prepareIssueRequest(ctx, data, labels)
 	if err != nil {
-		return "", fmt.Errorf("executing title template: %w", err)
+		return "", err
 	}
-
-	body, err := s.manager.templateExecutor.Execute(s.manager.bodyTemplate, data)
-	if err != nil {
-		return "", fmt.Errorf("executing body template: %w", err)
-	}
-
-	// Embed data in body
-	body, err = s.manager.templateExecutor.Embed(body, data)
-	if err != nil {
-		return "", fmt.Errorf("embedding data: %w", err)
-	}
-
-	// Generate labels from templates and merge with static labels
-	generatedLabels := s.generateLabels(ctx, data)
-	labels = append(labels, generatedLabels...)
 
 	log.Infof("Updating existing issue #%d", issue.GetNumber())
 
 	updated, _, err := s.client.Issues.Edit(ctx, s.resource.Owner, s.resource.Repo, issue.GetNumber(), &github.IssueRequest{
 		Title:  github.Ptr(title),
 		Body:   github.Ptr(body),
-		Labels: &labels,
+		Labels: &allLabels,
 	})
 	if err != nil {
 		return "", fmt.Errorf("updating issue: %w", err)
