@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-github/v75/github"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
+	internaltemplate "github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler/internal/template"
 )
 
 // TestDetails is a test implementation of Details
@@ -45,66 +46,16 @@ func (d TestDetailsWithMarkdown) Markdown() string {
 	return b.String()
 }
 
-func TestGetStatusMarker(t *testing.T) {
-	tests := []struct {
-		name     string
-		identity string
-		want     string
-	}{{
-		name:     "simple identity",
-		identity: "autofix",
-		want:     "<!--autofix-status-->",
-	}, {
-		name:     "identity with spaces",
-		identity: "my reconciler",
-		want:     "<!--my reconciler-status-->",
-	}, {
-		name:     "identity with special chars",
-		identity: "test-reconciler_v1.0",
-		want:     "<!--test-reconciler_v1.0-status-->",
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := getStatusMarker(tt.identity)
-			if got != tt.want {
-				t.Errorf("getStatusMarker() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGetStatusEndMarker(t *testing.T) {
-	tests := []struct {
-		name     string
-		identity string
-		want     string
-	}{{
-		name:     "simple identity",
-		identity: "autofix",
-		want:     "<!--/autofix-status-->",
-	}, {
-		name:     "identity with spaces",
-		identity: "my reconciler",
-		want:     "<!--/my reconciler-status-->",
-	}, {
-		name:     "identity with special chars",
-		identity: "test-reconciler_v1.0",
-		want:     "<!--/test-reconciler_v1.0-status-->",
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := getStatusEndMarker(tt.identity)
-			if got != tt.want {
-				t.Errorf("getStatusEndMarker() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestRoundtripWithoutMarkdown(t *testing.T) {
 	identity := "test-reconciler"
+
+	// Create a StatusManager instance
+	sm := &StatusManager[TestDetails]{
+		identity:         identity,
+		projectID:        "test-project",
+		serviceName:      "test-service",
+		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+	}
 
 	tests := []struct {
 		name   string
@@ -158,21 +109,23 @@ func TestRoundtripWithoutMarkdown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Build the output
-			output, err := buildCheckRunOutput(identity, &tt.status)
+			output, err := sm.buildCheckRunOutput(&tt.status)
 			if err != nil {
 				t.Fatalf("buildCheckRunOutput() error = %v", err)
 			}
 
 			// Verify markers are present
-			if !strings.Contains(output, getStatusMarker(identity)) {
+			expectedMarker := "<!--" + identity + "-status-->"
+			expectedEndMarker := "<!--/" + identity + "-status-->"
+			if !strings.Contains(output, expectedMarker) {
 				t.Errorf("Output missing start marker")
 			}
-			if !strings.Contains(output, getStatusEndMarker(identity)) {
+			if !strings.Contains(output, expectedEndMarker) {
 				t.Errorf("Output missing end marker")
 			}
 
 			// Since TestDetails doesn't implement Markdown(), output should start with markers
-			if !strings.HasPrefix(strings.TrimSpace(output), getStatusMarker(identity)) {
+			if !strings.HasPrefix(strings.TrimSpace(output), expectedMarker) {
 				t.Errorf("Output should start with marker when no Markdown() method")
 			}
 
@@ -181,7 +134,7 @@ func TestRoundtripWithoutMarkdown(t *testing.T) {
 				Summary: github.Ptr(output),
 			}
 
-			extracted, err := extractStatusFromOutput[TestDetails](identity, checkRunOutput)
+			extracted, err := sm.extractStatusFromOutput(checkRunOutput)
 			if err != nil {
 				t.Fatalf("extractStatusFromOutput() error = %v", err)
 			}
@@ -202,6 +155,14 @@ func TestRoundtripWithoutMarkdown(t *testing.T) {
 func TestRoundtripWithMarkdown(t *testing.T) {
 	identity := "markdown-reconciler"
 
+	// Create a StatusManager instance
+	sm := &StatusManager[TestDetailsWithMarkdown]{
+		identity:         identity,
+		projectID:        "test-project",
+		serviceName:      "test-service",
+		templateExecutor: internaltemplate.New[Status[TestDetailsWithMarkdown]](identity, "-status", "status"),
+	}
+
 	status := Status[TestDetailsWithMarkdown]{
 		ObservedGeneration: "abc123def456",
 		Status:             "completed",
@@ -214,7 +175,7 @@ func TestRoundtripWithMarkdown(t *testing.T) {
 	}
 
 	// Build the output
-	output, err := buildCheckRunOutput(identity, &status)
+	output, err := sm.buildCheckRunOutput(&status)
 	if err != nil {
 		t.Fatalf("buildCheckRunOutput() error = %v", err)
 	}
@@ -227,7 +188,8 @@ func TestRoundtripWithMarkdown(t *testing.T) {
 
 	// Verify the markdown comes before the markers
 	markdownIndex := strings.Index(output, expectedMarkdown)
-	markerIndex := strings.Index(output, getStatusMarker(identity))
+	expectedMarker := "<!--" + identity + "-status-->"
+	markerIndex := strings.Index(output, expectedMarker)
 	if markdownIndex > markerIndex {
 		t.Errorf("Markdown should appear before status markers")
 	}
@@ -237,7 +199,7 @@ func TestRoundtripWithMarkdown(t *testing.T) {
 		Summary: github.Ptr(output),
 	}
 
-	extracted, err := extractStatusFromOutput[TestDetailsWithMarkdown](identity, checkRunOutput)
+	extracted, err := sm.extractStatusFromOutput(checkRunOutput)
 	if err != nil {
 		t.Fatalf("extractStatusFromOutput() error = %v", err)
 	}
@@ -255,6 +217,17 @@ func TestRoundtripWithMarkdown(t *testing.T) {
 
 func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 	identity := "test-reconciler"
+
+	// Create a StatusManager instance
+	sm := &StatusManager[TestDetails]{
+		identity:         identity,
+		projectID:        "test-project",
+		serviceName:      "test-service",
+		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+	}
+
+	expectedMarker := "<!--" + identity + "-status-->"
+	expectedEndMarker := "<!--/" + identity + "-status-->"
 
 	tests := []struct {
 		name    string
@@ -277,16 +250,18 @@ func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 			Summary: github.Ptr(""),
 		},
 		wantNil: true,
+		wantErr: true,
 	}, {
 		name: "no markers in summary",
 		output: &github.CheckRunOutput{
 			Summary: github.Ptr("Just some random text without markers"),
 		},
 		wantNil: true,
+		wantErr: true,
 	}, {
 		name: "only start marker",
 		output: &github.CheckRunOutput{
-			Summary: github.Ptr(fmt.Sprintf("%s\n<!--\n{}\n", getStatusMarker(identity))),
+			Summary: github.Ptr(fmt.Sprintf("%s\n<!--\n{}\n", expectedMarker)),
 		},
 		wantNil: true, // Should return nil
 		wantErr: true, // With error for missing end marker
@@ -294,7 +269,7 @@ func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 		name: "malformed JSON",
 		output: &github.CheckRunOutput{
 			Summary: github.Ptr(fmt.Sprintf("%s\n<!--\n{invalid json}\n-->\n%s",
-				getStatusMarker(identity), getStatusEndMarker(identity))),
+				expectedMarker, expectedEndMarker)),
 		},
 		wantNil: true, // Returns nil when JSON unmarshal fails
 		wantErr: true, // And returns error
@@ -302,7 +277,7 @@ func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 		name: "valid but empty JSON",
 		output: &github.CheckRunOutput{
 			Summary: github.Ptr(fmt.Sprintf("%s\n<!--\n{}\n-->\n%s",
-				getStatusMarker(identity), getStatusEndMarker(identity))),
+				expectedMarker, expectedEndMarker)),
 		},
 		wantNil: false,
 		wantErr: false,
@@ -310,7 +285,7 @@ func TestExtractStatusFromOutputEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := extractStatusFromOutput[TestDetails](identity, tt.output)
+			got, err := sm.extractStatusFromOutput(tt.output)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("extractStatusFromOutput() error = %v, wantErr %v", err, tt.wantErr)
@@ -328,6 +303,14 @@ func TestComplexRoundtrip(t *testing.T) {
 	// Test with special characters and escaping
 	identity := "test-reconciler"
 
+	// Create a StatusManager instance
+	sm := &StatusManager[TestDetails]{
+		identity:         identity,
+		projectID:        "test-project",
+		serviceName:      "test-service",
+		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+	}
+
 	status := Status[TestDetails]{
 		ObservedGeneration: "sha-with-special-chars!@#$%",
 		Status:             "completed",
@@ -340,7 +323,7 @@ func TestComplexRoundtrip(t *testing.T) {
 	}
 
 	// Build and extract
-	output, err := buildCheckRunOutput(identity, &status)
+	output, err := sm.buildCheckRunOutput(&status)
 	if err != nil {
 		t.Fatalf("buildCheckRunOutput() error = %v", err)
 	}
@@ -349,7 +332,7 @@ func TestComplexRoundtrip(t *testing.T) {
 		Summary: github.Ptr(output),
 	}
 
-	extracted, err := extractStatusFromOutput[TestDetails](identity, checkRunOutput)
+	extracted, err := sm.extractStatusFromOutput(checkRunOutput)
 	if err != nil {
 		t.Fatalf("extractStatusFromOutput() error = %v", err)
 	}
@@ -368,9 +351,10 @@ func TestComplexRoundtrip(t *testing.T) {
 func TestNewSession(t *testing.T) {
 	// Create a StatusManager
 	sm := &StatusManager[TestDetails]{
-		identity:    "test-autofix",
-		projectID:   "my-gcp-project",
-		serviceName: "autofix-service",
+		identity:         "test-autofix",
+		projectID:        "my-gcp-project",
+		serviceName:      "autofix-service",
+		templateExecutor: internaltemplate.New[Status[TestDetails]]("test-autofix", "-status", "status"),
 	}
 
 	tests := []struct {
@@ -565,9 +549,10 @@ func TestGetSetCheckRunID(t *testing.T) {
 	// Create a test session manually
 	session := &Session[TestDetails]{
 		manager: &StatusManager[TestDetails]{
-			identity:    "test-reconciler",
-			projectID:   "test-project",
-			serviceName: "test-service",
+			identity:         "test-reconciler",
+			projectID:        "test-project",
+			serviceName:      "test-service",
+			templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
 		},
 		resource: &githubreconciler.Resource{
 			Owner: "test-owner",
@@ -596,14 +581,14 @@ func TestGetSetCheckRunID(t *testing.T) {
 	// Test concurrent access (basic race condition test)
 	done := make(chan bool)
 	go func() {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			session.setCheckRunID(int64(i))
 		}
 		done <- true
 	}()
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = session.getCheckRunID()
 		}
 		done <- true
@@ -628,9 +613,10 @@ func TestBuildDetailsURL(t *testing.T) {
 		name: "standard session",
 		session: &Session[TestDetails]{
 			manager: &StatusManager[TestDetails]{
-				identity:    "test-reconciler",
-				projectID:   "my-project",
-				serviceName: "autofix-service",
+				identity:         "test-reconciler",
+				projectID:        "my-project",
+				serviceName:      "autofix-service",
+				templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
 			},
 			resource: &githubreconciler.Resource{
 				Owner: "chainguard-dev",
@@ -651,9 +637,10 @@ func TestBuildDetailsURL(t *testing.T) {
 		name: "session with special characters",
 		session: &Session[TestDetails]{
 			manager: &StatusManager[TestDetails]{
-				identity:    "test-reconciler",
-				projectID:   "project-with-dash",
-				serviceName: "service_with_underscore",
+				identity:         "test-reconciler",
+				projectID:        "project-with-dash",
+				serviceName:      "service_with_underscore",
+				templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
 			},
 			resource: &githubreconciler.Resource{
 				Owner: "test-org",
@@ -696,6 +683,14 @@ func TestBuildDetailsURL(t *testing.T) {
 func TestJSONFormattingConsistency(t *testing.T) {
 	identity := "test-reconciler"
 
+	// Create a StatusManager instance
+	sm := &StatusManager[TestDetails]{
+		identity:         identity,
+		projectID:        "test-project",
+		serviceName:      "test-service",
+		templateExecutor: internaltemplate.New[Status[TestDetails]](identity, "-status", "status"),
+	}
+
 	status := Status[TestDetails]{
 		ObservedGeneration: "test123",
 		Status:             "in_progress",
@@ -705,7 +700,7 @@ func TestJSONFormattingConsistency(t *testing.T) {
 		},
 	}
 
-	output, err := buildCheckRunOutput(identity, &status)
+	output, err := sm.buildCheckRunOutput(&status)
 	if err != nil {
 		t.Fatalf("buildCheckRunOutput() error = %v", err)
 	}
@@ -737,10 +732,11 @@ func TestJSONFormattingConsistency(t *testing.T) {
 func TestReadOnlyStatusManager(t *testing.T) {
 	// Create a read-only status manager
 	sm := &StatusManager[TestDetails]{
-		identity:    "test-reconciler",
-		projectID:   "test-project",
-		serviceName: "test-service",
-		readOnly:    true,
+		identity:         "test-reconciler",
+		projectID:        "test-project",
+		serviceName:      "test-service",
+		readOnly:         true,
+		templateExecutor: internaltemplate.New[Status[TestDetails]]("test-reconciler", "-status", "status"),
 	}
 
 	// Create a session
