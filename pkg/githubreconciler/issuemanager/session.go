@@ -64,10 +64,10 @@ func (s *IssueSession[T]) Reconcile(
 	log := clog.FromContext(ctx)
 
 	// Check for duplicate desired states
-	for i := 0; i < len(desired); i++ {
+	for i := range desired {
 		for j := i + 1; j < len(desired); j++ {
 			if (*desired[i]).Equal(*desired[j]) {
-				return nil, fmt.Errorf("duplicate desired state detected: entries at index %d and %d have matching identity fields", i, j)
+				return nil, fmt.Errorf("duplicate desired state detected: entries at index %d and %d are equivalent", i, j)
 			}
 		}
 	}
@@ -85,7 +85,7 @@ func (s *IssueSession[T]) Reconcile(
 	issueURLs := make([]string, len(desired))
 
 	// Track which existing issues matched the desired state
-	matchedIssues := make(map[int]bool)
+	matchedIssues := make(map[int]struct{})
 
 	// Phase 1: Create or update issues for desired state
 	for i, data := range desired {
@@ -94,7 +94,7 @@ func (s *IssueSession[T]) Reconcile(
 
 		if existing != nil {
 			// Mark this issue as matched
-			matchedIssues[existing.issue.GetNumber()] = true
+			matchedIssues[existing.issue.GetNumber()] = struct{}{}
 
 			// Check if issue has skip label
 			if s.hasSkipLabel(existing.issue) {
@@ -129,7 +129,7 @@ func (s *IssueSession[T]) Reconcile(
 	// Phase 2: Close any unmatched existing issues
 	for _, existing := range s.existingIssues {
 		// Skip if this issue matched desired state
-		if matchedIssues[existing.issue.GetNumber()] {
+		if _, matched := matchedIssues[existing.issue.GetNumber()]; matched {
 			continue
 		}
 
