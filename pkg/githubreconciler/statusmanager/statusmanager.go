@@ -7,18 +7,17 @@ package statusmanager
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
 	"os"
-	"strings"
 	"sync"
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/google/go-github/v75/github"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
+	internaltemplate "github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler/internal/template"
 )
 
 // Status represents the overall status of reconciliation
@@ -41,10 +40,11 @@ type Status[T any] struct {
 
 // StatusManager manages reconciliation status via GitHub Check Runs
 type StatusManager[T any] struct {
-	identity    string
-	projectID   string
-	serviceName string
-	readOnly    bool
+	identity         string
+	projectID        string
+	serviceName      string
+	readOnly         bool
+	templateExecutor *internaltemplate.Template[Status[T]]
 }
 
 // NewStatusManager creates a new status manager with the given identity
@@ -71,11 +71,17 @@ func newStatusManager[T any](ctx context.Context, identity string, readOnly bool
 		return nil, errors.New("K_SERVICE environment variable not set")
 	}
 
+	templateExecutor, err := internaltemplate.New[Status[T]](identity, "-status", "status")
+	if err != nil {
+		return nil, fmt.Errorf("creating template executor: %w", err)
+	}
+
 	return &StatusManager[T]{
-		identity:    identity,
-		projectID:   projectID,
-		serviceName: serviceName,
-		readOnly:    readOnly,
+		identity:         identity,
+		projectID:        projectID,
+		serviceName:      serviceName,
+		readOnly:         readOnly,
+		templateExecutor: templateExecutor,
 	}, nil
 }
 
@@ -169,7 +175,7 @@ func (s *Session[T]) ObservedState(ctx context.Context) (*Status[T], error) {
 			s.setCheckRunID(run.GetID())
 
 			// Extract status from output
-			return extractStatusFromOutput[T](s.manager.identity, run.Output)
+			return s.manager.extractStatusFromOutput(run.Output)
 		}
 	}
 
@@ -201,7 +207,7 @@ func (sm *StatusManager[T]) ObservedStateAtSHA(
 
 	for _, run := range checkRuns.CheckRuns {
 		if run.GetName() == name {
-			return extractStatusFromOutput[T](sm.identity, run.Output)
+			return sm.extractStatusFromOutput(run.Output)
 		}
 	}
 
@@ -223,7 +229,7 @@ func (s *Session[T]) SetActualState(ctx context.Context, title string, status *S
 	status.ObservedGeneration = s.sha
 
 	// Build markdown output with embedded JSON
-	output, err := buildCheckRunOutput(s.manager.identity, status)
+	output, err := s.manager.buildCheckRunOutput(status)
 	if err != nil {
 		return fmt.Errorf("building output: %w", err)
 	}
@@ -317,79 +323,27 @@ func checkRunName(identity string, res *githubreconciler.Resource) (string, erro
 	}
 }
 
-// getStatusMarker returns the HTML comment marker for status data
-func getStatusMarker(identity string) string {
-	return fmt.Sprintf("<!--%s-status-->", identity)
-}
-
-// getStatusEndMarker returns the HTML comment end marker for status data
-func getStatusEndMarker(identity string) string {
-	return fmt.Sprintf("<!--/%s-status-->", identity)
-}
-
 // buildCheckRunOutput builds the markdown output with embedded status data
-func buildCheckRunOutput[T any](identity string, status *Status[T]) (string, error) {
-	var output strings.Builder
+func (sm *StatusManager[T]) buildCheckRunOutput(status *Status[T]) (string, error) {
+	var markdown string
 
 	// Check if Details implements Markdown() method
 	if provider, ok := any(status.Details).(markdownProvider); ok {
 		// Use the custom markdown representation
-		markdown := provider.Markdown()
-		if markdown != "" {
-			output.WriteString(markdown)
-		}
+		markdown = provider.Markdown()
 	}
 	// If no Markdown() method or empty output, no visible content
 
-	// Serialize status to JSON
-	statusJSON, err := json.MarshalIndent(status, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("marshaling status: %w", err)
-	}
-
-	// Embed status data in HTML comments
-	output.WriteString("\n\n")
-	output.WriteString(getStatusMarker(identity))
-	output.WriteString("\n<!--\n")
-	output.WriteString(string(statusJSON))
-	output.WriteString("\n-->\n")
-	output.WriteString(getStatusEndMarker(identity))
-
-	return output.String(), nil
+	// Embed status data using the template executor
+	return sm.templateExecutor.Embed(markdown, status)
 }
 
 // extractStatusFromOutput extracts the status JSON from check run output
-func extractStatusFromOutput[T any](identity string, output *github.CheckRunOutput) (*Status[T], error) {
+func (sm *StatusManager[T]) extractStatusFromOutput(output *github.CheckRunOutput) (*Status[T], error) {
 	if output == nil || output.Summary == nil {
 		return nil, nil
 	}
 
-	body := *output.Summary
-	statusMarker := getStatusMarker(identity)
-	statusEndMarker := getStatusEndMarker(identity)
-
-	// Find the status data between markers
-	startIdx := strings.Index(body, statusMarker)
-	if startIdx == -1 {
-		return nil, nil
-	}
-	startIdx += len(statusMarker)
-
-	endIdx := strings.Index(body[startIdx:], statusEndMarker)
-	if endIdx == -1 {
-		return nil, errors.New("malformed status: missing end marker")
-	}
-
-	statusJSON := strings.TrimSpace(body[startIdx : startIdx+endIdx])
-
-	// Remove HTML comment wrapper
-	statusJSON = strings.TrimPrefix(statusJSON, "<!--")
-	statusJSON = strings.TrimSuffix(statusJSON, "-->")
-
-	var status Status[T]
-	if err := json.Unmarshal([]byte(statusJSON), &status); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal status JSON: %w", err)
-	}
-
-	return &status, nil
+	// Extract status data using the template executor
+	return sm.templateExecutor.Extract(*output.Summary)
 }

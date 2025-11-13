@@ -100,18 +100,18 @@ func (s *Session[T]) Upsert(
 	}
 
 	// Generate PR title and body from templates
-	title, err := s.manager.executeTemplate(s.manager.titleTemplate, data)
+	title, err := s.manager.templateExecutor.Execute(s.manager.titleTemplate, data)
 	if err != nil {
 		return "", fmt.Errorf("executing title template: %w", err)
 	}
 
-	body, err := s.manager.executeTemplate(s.manager.bodyTemplate, data)
+	body, err := s.manager.templateExecutor.Execute(s.manager.bodyTemplate, data)
 	if err != nil {
 		return "", fmt.Errorf("executing body template: %w", err)
 	}
 
 	// Embed data in body
-	body, err = s.manager.embedData(body, data)
+	body, err = s.manager.templateExecutor.Embed(body, data)
 	if err != nil {
 		return "", fmt.Errorf("embedding data: %w", err)
 	}
@@ -189,7 +189,7 @@ func (s *Session[T]) needsRefresh(ctx context.Context, expected *T) (bool, error
 	}
 
 	// Extract embedded data from PR body
-	existing, err := s.manager.extractData(s.existingPR.GetBody())
+	existing, err := s.manager.templateExecutor.Extract(s.existingPR.GetBody())
 	if err != nil {
 		log.Warnf("Failed to extract data from PR body: %v", err)
 		return true, nil
