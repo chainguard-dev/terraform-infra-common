@@ -22,6 +22,8 @@ type Session[T any] struct {
 	manager    *CM[T]
 	client     *github.Client
 	resource   *githubreconciler.Resource
+	owner      string
+	repo       string
 	branchName string
 	existingPR *github.PullRequest
 }
@@ -55,14 +57,14 @@ func (s *Session[T]) CloseAnyOutstanding(ctx context.Context, message string) er
 
 	// Post message as a comment if provided
 	if message != "" {
-		if _, _, err := s.client.Issues.CreateComment(ctx, s.resource.Owner, s.resource.Repo, s.existingPR.GetNumber(), &github.IssueComment{
+		if _, _, err := s.client.Issues.CreateComment(ctx, s.owner, s.repo, s.existingPR.GetNumber(), &github.IssueComment{
 			Body: github.Ptr(message),
 		}); err != nil {
 			return fmt.Errorf("posting comment: %w", err)
 		}
 	}
 
-	_, _, err := s.client.PullRequests.Edit(ctx, s.resource.Owner, s.resource.Repo, s.existingPR.GetNumber(), &github.PullRequest{
+	_, _, err := s.client.PullRequests.Edit(ctx, s.owner, s.repo, s.existingPR.GetNumber(), &github.PullRequest{
 		State: github.Ptr("closed"),
 	})
 	if err != nil {
@@ -120,7 +122,7 @@ func (s *Session[T]) Upsert(
 		// Create new PR
 		log.Infof("Creating new PR with head %s and base %s", s.branchName, s.resource.Ref)
 
-		pr, _, err := s.client.PullRequests.Create(ctx, s.resource.Owner, s.resource.Repo, &github.NewPullRequest{
+		pr, _, err := s.client.PullRequests.Create(ctx, s.owner, s.repo, &github.NewPullRequest{
 			Title: github.Ptr(title),
 			Body:  github.Ptr(body),
 			Head:  github.Ptr(s.branchName),
@@ -133,7 +135,7 @@ func (s *Session[T]) Upsert(
 
 		// Apply labels
 		if len(labels) > 0 {
-			if _, _, err := s.client.Issues.AddLabelsToIssue(ctx, s.resource.Owner, s.resource.Repo, pr.GetNumber(), labels); err != nil {
+			if _, _, err := s.client.Issues.AddLabelsToIssue(ctx, s.owner, s.repo, pr.GetNumber(), labels); err != nil {
 				return "", fmt.Errorf("adding labels: %w", err)
 			}
 		}
@@ -145,7 +147,7 @@ func (s *Session[T]) Upsert(
 	// Update existing PR
 	log.Infof("Updating existing PR #%d", s.existingPR.GetNumber())
 
-	_, _, err = s.client.PullRequests.Edit(ctx, s.resource.Owner, s.resource.Repo, s.existingPR.GetNumber(), &github.PullRequest{
+	_, _, err = s.client.PullRequests.Edit(ctx, s.owner, s.repo, s.existingPR.GetNumber(), &github.PullRequest{
 		Title: github.Ptr(title),
 		Body:  github.Ptr(body),
 		Draft: github.Ptr(draft),
@@ -155,7 +157,7 @@ func (s *Session[T]) Upsert(
 	}
 
 	// Replace labels
-	if _, _, err := s.client.Issues.ReplaceLabelsForIssue(ctx, s.resource.Owner, s.resource.Repo, s.existingPR.GetNumber(), labels); err != nil {
+	if _, _, err := s.client.Issues.ReplaceLabelsForIssue(ctx, s.owner, s.repo, s.existingPR.GetNumber(), labels); err != nil {
 		return "", fmt.Errorf("replacing labels: %w", err)
 	}
 
