@@ -16,6 +16,25 @@ import (
 	"github.com/google/go-github/v75/github"
 )
 
+// Option configures a CM (ChangeManager).
+type Option[T any] func(*CM[T])
+
+// WithOwner overrides the GitHub owner (org or user) from the resource.
+// When set, all PR operations will use this owner instead of the resource's owner.
+func WithOwner[T any](owner string) Option[T] {
+	return func(cm *CM[T]) {
+		cm.owner = owner
+	}
+}
+
+// WithRepo overrides the GitHub repository from the resource.
+// When set, all PR operations will use this repo instead of the resource's repo.
+func WithRepo[T any](repo string) Option[T] {
+	return func(cm *CM[T]) {
+		cm.repo = repo
+	}
+}
+
 // CM manages the lifecycle of GitHub Pull Requests for a specific identity.
 // It uses Go templates to generate PR titles and bodies from generic data of type T.
 type CM[T any] struct {
@@ -23,12 +42,14 @@ type CM[T any] struct {
 	titleTemplate    *template.Template
 	bodyTemplate     *template.Template
 	templateExecutor *internaltemplate.Template[T]
+	owner            string
+	repo             string
 }
 
 // New creates a new CM with the given identity and templates.
 // The templates are executed with data of type T when creating or updating PRs.
 // Returns an error if titleTemplate or bodyTemplate is nil.
-func New[T any](identity string, titleTemplate *template.Template, bodyTemplate *template.Template) (*CM[T], error) {
+func New[T any](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, opts ...Option[T]) (*CM[T], error) {
 	if titleTemplate == nil {
 		return nil, errors.New("titleTemplate cannot be nil")
 	}
@@ -41,12 +62,18 @@ func New[T any](identity string, titleTemplate *template.Template, bodyTemplate 
 		return nil, fmt.Errorf("creating template executor: %w", err)
 	}
 
-	return &CM[T]{
+	cm := &CM[T]{
 		identity:         identity,
 		titleTemplate:    titleTemplate,
 		bodyTemplate:     bodyTemplate,
 		templateExecutor: templateExecutor,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(cm)
+	}
+
+	return cm, nil
 }
 
 // NewSession creates a new Session for the given resource.
@@ -61,11 +88,21 @@ func (cm *CM[T]) NewSession(
 		return nil, fmt.Errorf("change manager only supports Path resources, got: %v", res.Type)
 	}
 
+	// Determine which owner/repo to use
+	owner := res.Owner
+	repo := res.Repo
+	if cm.owner != "" {
+		owner = cm.owner
+	}
+	if cm.repo != "" {
+		repo = cm.repo
+	}
+
 	branchName := cm.identity + "/" + res.Path
-	headRef := res.Owner + ":" + branchName
+	headRef := owner + ":" + branchName
 
 	// Query for existing PRs with this head branch
-	prs, _, err := client.PullRequests.List(ctx, res.Owner, res.Repo, &github.PullRequestListOptions{
+	prs, _, err := client.PullRequests.List(ctx, owner, repo, &github.PullRequestListOptions{
 		State: "open",
 		Head:  headRef,
 		Base:  res.Ref,
@@ -78,7 +115,7 @@ func (cm *CM[T]) NewSession(
 	if len(prs) > 0 {
 		// Fetch the full PR details to populate fields like Mergeable
 		// These fields are not populated by the List operation
-		existingPR, _, err = client.PullRequests.Get(ctx, res.Owner, res.Repo, prs[0].GetNumber())
+		existingPR, _, err = client.PullRequests.Get(ctx, owner, repo, prs[0].GetNumber())
 		if err != nil {
 			return nil, fmt.Errorf("getting pull request #%d: %w", prs[0].GetNumber(), err)
 		}
@@ -88,6 +125,8 @@ func (cm *CM[T]) NewSession(
 		manager:    cm,
 		client:     client,
 		resource:   res,
+		owner:      owner,
+		repo:       repo,
 		branchName: branchName,
 		existingPR: existingPR,
 	}, nil
