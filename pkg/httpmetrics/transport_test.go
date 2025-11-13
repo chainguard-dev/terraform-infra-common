@@ -133,3 +133,109 @@ func TestExtractInnerTransport(t *testing.T) {
 		}
 	})
 }
+
+func TestTransport_GitHubAPI(t *testing.T) {
+	SetBuckets(map[string]string{
+		"api.github.com": "GH API",
+	})
+
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer s.Close()
+
+	tests := []struct {
+		name     string
+		url      string
+		endpoint string
+	}{{
+		name:     "repos endpoint",
+		url:      "https://api.github.com/repos/octocat/hello-world",
+		endpoint: "/repos/{org}/{repo}",
+	}, {
+		name:     "pulls endpoint",
+		url:      "https://api.github.com/repos/octocat/hello-world/pulls/42",
+		endpoint: "/repos/{org}/{repo}/pulls/{number}",
+	}, {
+		name:     "issues endpoint",
+		url:      "https://api.github.com/repos/octocat/hello-world/issues/123",
+		endpoint: "/repos/{org}/{repo}/issues/{number}",
+	}, {
+		name:     "user endpoint",
+		url:      "https://api.github.com/user",
+		endpoint: "/user",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedEndpoint string
+			testTransport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				capturedEndpoint = getEndpoint(r.Context())
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       http.NoBody,
+					Header:     make(http.Header),
+				}, nil
+			})
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, tt.url, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			transport := WrapTransport(testTransport)
+			resp, err := (&http.Client{Transport: transport}).Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+
+			if capturedEndpoint != tt.endpoint {
+				t.Errorf("endpoint: got = %q, want = %q", capturedEndpoint, tt.endpoint)
+			}
+		})
+	}
+}
+
+func TestTransport_NonGitHubAPI(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+	}{{
+		name: "example.com",
+		url:  "https://example.com/test",
+	}, {
+		name: "google.com",
+		url:  "https://google.com/search",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedEndpoint string
+			testTransport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				capturedEndpoint = getEndpoint(r.Context())
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       http.NoBody,
+					Header:     make(http.Header),
+				}, nil
+			})
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, tt.url, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			transport := WrapTransport(testTransport)
+			resp, err := (&http.Client{Transport: transport}).Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+
+			if capturedEndpoint != "" {
+				t.Errorf("endpoint: got = %q, want = \"\"", capturedEndpoint)
+			}
+		})
+	}
+}
