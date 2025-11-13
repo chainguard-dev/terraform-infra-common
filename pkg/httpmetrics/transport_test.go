@@ -53,7 +53,7 @@ func TestTransport(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "testce",
-		"endpoint":      "",
+		"path":          "",
 	})); got != 1 {
 		t.Errorf("want metric in-flight = 1, got %f", got)
 	}
@@ -73,7 +73,7 @@ func TestTransport(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "testce",
-		"endpoint":      "",
+		"path":          "",
 	})); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
@@ -83,7 +83,7 @@ func TestTransport(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "testce",
-		"endpoint":      "",
+		"path":          "",
 	})); got != 0 {
 		t.Errorf("want metric in-flight = 0, got %f", got)
 	}
@@ -111,7 +111,7 @@ func TestTransport_SkipBucketize(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "",
-		"endpoint":      "",
+		"path":          "",
 	})); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
@@ -145,32 +145,32 @@ func TestTransport_GitHubAPI(t *testing.T) {
 	defer s.Close()
 
 	tests := []struct {
-		name     string
-		url      string
-		endpoint string
+		name string
+		url  string
+		path string
 	}{{
-		name:     "repos endpoint",
-		url:      "https://api.github.com/repos/octocat/hello-world",
-		endpoint: "/repos/{org}/{repo}",
+		name: "repos path",
+		url:  "https://api.github.com/repos/octocat/hello-world",
+		path: "/repos/{org}/{repo}",
 	}, {
-		name:     "pulls endpoint",
-		url:      "https://api.github.com/repos/octocat/hello-world/pulls/42",
-		endpoint: "/repos/{org}/{repo}/pulls/{number}",
+		name: "pulls path",
+		url:  "https://api.github.com/repos/octocat/hello-world/pulls/42",
+		path: "/repos/{org}/{repo}/pulls/{number}",
 	}, {
-		name:     "issues endpoint",
-		url:      "https://api.github.com/repos/octocat/hello-world/issues/123",
-		endpoint: "/repos/{org}/{repo}/issues/{number}",
+		name: "issues path",
+		url:  "https://api.github.com/repos/octocat/hello-world/issues/123",
+		path: "/repos/{org}/{repo}/issues/{number}",
 	}, {
-		name:     "user endpoint",
-		url:      "https://api.github.com/user",
-		endpoint: "/user",
+		name: "user path",
+		url:  "https://api.github.com/user",
+		path: "/user",
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var capturedEndpoint string
+			var capturedPath string
 			testTransport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
-				capturedEndpoint = getEndpoint(r.Context())
+				capturedPath = getPath(r.Context())
 				return &http.Response{
 					StatusCode: http.StatusOK,
 					Body:       http.NoBody,
@@ -190,8 +190,8 @@ func TestTransport_GitHubAPI(t *testing.T) {
 			}
 			defer resp.Body.Close()
 
-			if capturedEndpoint != tt.endpoint {
-				t.Errorf("endpoint: got = %q, want = %q", capturedEndpoint, tt.endpoint)
+			if capturedPath != tt.path {
+				t.Errorf("path: got = %q, want = %q", capturedPath, tt.path)
 			}
 		})
 	}
@@ -211,9 +211,9 @@ func TestTransport_NonGitHubAPI(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var capturedEndpoint string
+			var capturedPath string
 			testTransport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
-				capturedEndpoint = getEndpoint(r.Context())
+				capturedPath = getPath(r.Context())
 				return &http.Response{
 					StatusCode: http.StatusOK,
 					Body:       http.NoBody,
@@ -233,8 +233,8 @@ func TestTransport_NonGitHubAPI(t *testing.T) {
 			}
 			defer resp.Body.Close()
 
-			if capturedEndpoint != "" {
-				t.Errorf("endpoint: got = %q, want = \"\"", capturedEndpoint)
+			if capturedPath != "" {
+				t.Errorf("path: got = %q, want = \"\"", capturedPath)
 			}
 		})
 	}

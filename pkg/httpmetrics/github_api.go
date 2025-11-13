@@ -7,10 +7,7 @@ import (
 	"context"
 	"net/http"
 	"regexp"
-	"sync"
-	"sync/atomic"
 
-	"github.com/chainguard-dev/clog"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -147,23 +144,13 @@ var githubAPIPatterns = []pathPattern{{
 	bucket:  "/users/{user}/repos",
 }}
 
-var seenPathMap = sync.Map{}
-
-func bucketizePath(ctx context.Context, path string) string {
+func bucketizePath(_ context.Context, path string) string {
 	for _, p := range githubAPIPatterns {
 		if p.pattern.MatchString(path) {
 			return p.bucket
 		}
 	}
-
-	// Only log every 10th occurrence of an unknown path.
-	v, _ := seenPathMap.LoadOrStore(path, &atomic.Int64{})
-	vInt := v.(*atomic.Int64)
-	if seen := vInt.Add(1); (seen-1)%10 == 0 {
-		clog.WarnContext(ctx, `bucketing GitHub API path as "other"`, "path", path, "seen", seen)
-	}
-
-	return "other"
+	return ""
 }
 
 func instrumentGitHubAPI(next http.RoundTripper) promhttp.RoundTripperFunc {
@@ -172,8 +159,8 @@ func instrumentGitHubAPI(next http.RoundTripper) promhttp.RoundTripperFunc {
 			return next.RoundTrip(r)
 		}
 
-		endpoint := bucketizePath(r.Context(), r.URL.Path)
-		ctx := withEndpoint(r.Context(), endpoint)
+		path := bucketizePath(r.Context(), r.URL.Path)
+		ctx := withPath(r.Context(), path)
 		r = r.WithContext(ctx)
 
 		return next.RoundTrip(r)
