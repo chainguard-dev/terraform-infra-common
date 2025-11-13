@@ -132,42 +132,16 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 // GitHubClientOption configures the client, these are ran after the default setup.
 type GitHubClientOption func(*GitHubClient)
 
-// replaceGitHubClientTransport creates a new github.Client that is identical to the
-// original but uses the provided transport. This is necessary because github.Client.Client()
-// returns a new http.Client instance on each call, so we cannot mutate it in place.
-func replaceGitHubClientTransport(original *github.Client, newTransport http.RoundTripper) *github.Client {
-	// Get the current http.Client to copy its settings
-	httpClient := original.Client()
-	httpClient.Transport = newTransport
-
-	// Create a new github.Client with the new http.Client
-	newGHClient := github.NewClient(httpClient)
-
-	// Copy over the github.Client settings
-	newGHClient.BaseURL = original.BaseURL
-	newGHClient.UploadURL = original.UploadURL
-	newGHClient.UserAgent = original.UserAgent
-	newGHClient.DisableRateLimitCheck = original.DisableRateLimitCheck
-	newGHClient.MaxSecondaryRateLimitRetryAfterDuration = original.MaxSecondaryRateLimitRetryAfterDuration
-	newGHClient.RateLimitRedirectionalEndpoints = original.RateLimitRedirectionalEndpoints
-
-	return newGHClient
-}
-
+// WithSecondaryRateLimitWaiter is intended to change the underlying transport to respect GitHub's rate-limiting requests.
+// As of today, it is a no-op.
+// Using this option will not change the behavior of `GitHubClient`.
 func WithSecondaryRateLimitWaiter() GitHubClientOption {
 	return func(c *GitHubClient) {
-		// Get the current transport
-		currentTransport := c.inner.Client().Transport
-
-		// Wrap it with SecondaryRateLimitWaiter using the existing helper
-		wrappedClient := NewSecondaryRateLimitWaiterClient(
+		c.inner.Client().Transport = NewSecondaryRateLimitWaiterClient(
 			&oauth2.Transport{
-				Base: currentTransport,
+				Base: c.inner.Client().Transport,
 			},
-		)
-
-		// Replace the github client with a new one using the wrapped transport
-		c.inner = replaceGitHubClientTransport(c.inner, wrappedClient.Transport)
+		).Transport
 	}
 }
 
