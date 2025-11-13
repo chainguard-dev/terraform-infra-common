@@ -25,20 +25,35 @@ const (
 	OriginalTraceHeader   string = "original-traceparent"
 )
 
+type contextKey string
+
+const pathKey contextKey = "path"
+
+func withPath(ctx context.Context, path string) context.Context {
+	return context.WithValue(ctx, pathKey, path)
+}
+
+func getPath(ctx context.Context) string {
+	if v := ctx.Value(pathKey); v != nil {
+		return v.(string)
+	}
+	return ""
+}
+
 var (
 	mReqCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_client_request_count",
 			Help: "The total number of HTTP requests",
 		},
-		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type"},
+		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type", "path"},
 	)
 	mReqInFlight = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "http_client_request_in_flight",
 			Help: "The number of outgoing HTTP requests currently inflight",
 		},
-		[]string{"method", "host", "service_name", "revision_name", "ce_type"},
+		[]string{"method", "host", "service_name", "revision_name", "ce_type", "path"},
 	)
 	mReqDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -46,7 +61,7 @@ var (
 			Help:    "The duration of HTTP requests",
 			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
 		},
-		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type"},
+		[]string{"code", "method", "host", "service_name", "revision_name", "ce_type", "path"},
 	)
 	seenHostMap = sync.Map{}
 )
@@ -92,10 +107,12 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 	return &MetricsTransport{
 		RoundTripper: useGoogClientTraceparent(
 			instrumentRequest(
-				instrumentGitHubRateLimits(
-					instrumentDockerHubRateLimit(
-						otelhttp.NewTransport(
-							newPreserveTraceparentTransport(t),
+				instrumentGitHubAPI(
+					instrumentGitHubRateLimits(
+						instrumentDockerHubRateLimit(
+							otelhttp.NewTransport(
+								newPreserveTraceparentTransport(t),
+							),
 						),
 					),
 				), topts.skipBucketize,
@@ -158,6 +175,7 @@ func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.Roun
 			"service_name":  env.KnativeServiceName,
 			"revision_name": env.KnativeRevisionName,
 			"ce_type":       r.Header.Get(CeTypeHeader),
+			"path":          getPath(ctx),
 		}
 
 		g := mReqInFlight.With(baseLabels)
