@@ -53,6 +53,7 @@ func TestTransport(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "testce",
+		"endpoint":      "",
 	})); got != 1 {
 		t.Errorf("want metric in-flight = 1, got %f", got)
 	}
@@ -72,6 +73,7 @@ func TestTransport(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "testce",
+		"endpoint":      "",
 	})); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
@@ -81,6 +83,7 @@ func TestTransport(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "testce",
+		"endpoint":      "",
 	})); got != 0 {
 		t.Errorf("want metric in-flight = 0, got %f", got)
 	}
@@ -108,6 +111,7 @@ func TestTransport_SkipBucketize(t *testing.T) {
 		"service_name":  "unknown",
 		"revision_name": "unknown",
 		"ce_type":       "",
+		"endpoint":      "",
 	})); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
