@@ -108,6 +108,45 @@ func Test_bucketizePath(t *testing.T) {
 		path:   "/users/octocat/repos",
 		bucket: "/users/{user}/repos",
 	}, {
+		path:   "/repos/octocat/hello-world/issues/42/labels",
+		bucket: "/repos/{org}/{repo}/issues/{number}/labels",
+	}, {
+		path:   "/repos/octocat/hello-world/check-runs/123",
+		bucket: "/repos/{org}/{repo}/check-runs/{id}",
+	}, {
+		path:   "/repos/octocat/hello-world/commits/abc123/check-runs",
+		bucket: "/repos/{org}/{repo}/commits/{ref}/check-runs",
+	}, {
+		path:   "/repos/octocat/hello-world/commits/abc123/branches-where-head",
+		bucket: "/repos/{org}/{repo}/commits/{sha}/branches-where-head",
+	}, {
+		path:   "/repos/octocat/hello-world/commits/abc123/pulls",
+		bucket: "/repos/{org}/{repo}/commits/{sha}/pulls",
+	}, {
+		path:   "/repos/octocat/hello-world/branches/main/rename",
+		bucket: "/repos/{org}/{repo}/branches/{branch}/rename",
+	}, {
+		path:   "/repos/octocat/hello-world/merge-upstream",
+		bucket: "/repos/{org}/{repo}/merge-upstream",
+	}, {
+		path:   "/repos/octocat/hello-world/merges",
+		bucket: "/repos/{org}/{repo}/merges",
+	}, {
+		path:   "/repos/octocat/hello-world/git/refs",
+		bucket: "/repos/{org}/{repo}/git/refs",
+	}, {
+		path:   "/repos/octocat/hello-world/git/refs/heads/main",
+		bucket: "/repos/{org}/{repo}/git/refs/{ref}",
+	}, {
+		path:   "/repos/octocat/hello-world/git/matching-refs/heads/feature",
+		bucket: "/repos/{org}/{repo}/git/matching-refs/{ref}",
+	}, {
+		path:   "/repos/octocat/hello-world/pulls/42/merge",
+		bucket: "/repos/{org}/{repo}/pulls/{number}/merge",
+	}, {
+		path:   "/repos/octocat/hello-world/pulls/42/update-branch",
+		bucket: "/repos/{org}/{repo}/pulls/{number}/update-branch",
+	}, {
 		path:   "/some/unknown/path",
 		bucket: "",
 	}}
