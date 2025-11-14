@@ -154,14 +154,6 @@ func bucketizePath(path string) string {
 
 func instrumentGitHubAPI(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
-		if r.URL.Host != "api.github.com" {
-			return next.RoundTrip(r)
-		}
-
-		path := bucketizePath(r.URL.Path)
-		ctx := withPath(r.Context(), path)
-		r = r.WithContext(ctx)
-
 		return next.RoundTrip(r)
 	}
 }
