@@ -207,9 +207,3 @@ func bucketizePath(path string) string {
 	}
 	return ""
 }
-
-func instrumentGitHubAPI(next http.RoundTripper) promhttp.RoundTripperFunc {
-	return func(r *http.Request) (*http.Response, error) {
-		return next.RoundTrip(r)
-	}
-}
