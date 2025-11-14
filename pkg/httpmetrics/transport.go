@@ -25,21 +25,6 @@ const (
 	OriginalTraceHeader   string = "original-traceparent"
 )
 
-type contextKey string
-
-const pathKey contextKey = "path"
-
-func withPath(ctx context.Context, path string) context.Context {
-	return context.WithValue(ctx, pathKey, path)
-}
-
-func getPath(ctx context.Context) string {
-	if v := ctx.Value(pathKey); v != nil {
-		return v.(string)
-	}
-	return ""
-}
-
 var (
 	mReqCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
@@ -107,12 +92,10 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 	return &MetricsTransport{
 		RoundTripper: useGoogClientTraceparent(
 			instrumentRequest(
-				instrumentGitHubAPI(
-					instrumentGitHubRateLimits(
-						instrumentDockerHubRateLimit(
-							otelhttp.NewTransport(
-								newPreserveTraceparentTransport(t),
-							),
+				instrumentGitHubRateLimits(
+					instrumentDockerHubRateLimit(
+						otelhttp.NewTransport(
+							newPreserveTraceparentTransport(t),
 						),
 					),
 				), topts.skipBucketize,
@@ -169,13 +152,18 @@ func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.Roun
 		r = r.WithContext(ctx)
 		defer span.End()
 
+		path := ""
+		if r.URL.Host == "api.github.com" {
+			path = bucketizePath(r.URL.Path)
+		}
+
 		baseLabels := prometheus.Labels{
 			"method":        r.Method,
 			"host":          host,
 			"service_name":  env.KnativeServiceName,
 			"revision_name": env.KnativeRevisionName,
 			"ce_type":       r.Header.Get(CeTypeHeader),
-			"path":          getPath(ctx),
+			"path":          path,
 		}
 
 		g := mReqInFlight.With(baseLabels)

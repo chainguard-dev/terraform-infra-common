@@ -4,7 +4,6 @@
 package httpmetrics
 
 import (
-	"net/http"
 	"testing"
 )
 
@@ -109,103 +108,55 @@ func Test_bucketizePath(t *testing.T) {
 		path:   "/users/octocat/repos",
 		bucket: "/users/{user}/repos",
 	}, {
+		path:   "/repos/octocat/hello-world/issues/42/labels",
+		bucket: "/repos/{org}/{repo}/issues/{number}/labels",
+	}, {
+		path:   "/repos/octocat/hello-world/check-runs/123",
+		bucket: "/repos/{org}/{repo}/check-runs/{id}",
+	}, {
+		path:   "/repos/octocat/hello-world/commits/abc123/check-runs",
+		bucket: "/repos/{org}/{repo}/commits/{ref}/check-runs",
+	}, {
+		path:   "/repos/octocat/hello-world/commits/abc123/branches-where-head",
+		bucket: "/repos/{org}/{repo}/commits/{sha}/branches-where-head",
+	}, {
+		path:   "/repos/octocat/hello-world/commits/abc123/pulls",
+		bucket: "/repos/{org}/{repo}/commits/{sha}/pulls",
+	}, {
+		path:   "/repos/octocat/hello-world/branches/main/rename",
+		bucket: "/repos/{org}/{repo}/branches/{branch}/rename",
+	}, {
+		path:   "/repos/octocat/hello-world/merge-upstream",
+		bucket: "/repos/{org}/{repo}/merge-upstream",
+	}, {
+		path:   "/repos/octocat/hello-world/merges",
+		bucket: "/repos/{org}/{repo}/merges",
+	}, {
+		path:   "/repos/octocat/hello-world/git/refs",
+		bucket: "/repos/{org}/{repo}/git/refs",
+	}, {
+		path:   "/repos/octocat/hello-world/git/refs/heads/main",
+		bucket: "/repos/{org}/{repo}/git/refs/{ref}",
+	}, {
+		path:   "/repos/octocat/hello-world/git/matching-refs/heads/feature",
+		bucket: "/repos/{org}/{repo}/git/matching-refs/{ref}",
+	}, {
+		path:   "/repos/octocat/hello-world/pulls/42/merge",
+		bucket: "/repos/{org}/{repo}/pulls/{number}/merge",
+	}, {
+		path:   "/repos/octocat/hello-world/pulls/42/update-branch",
+		bucket: "/repos/{org}/{repo}/pulls/{number}/update-branch",
+	}, {
 		path:   "/some/unknown/path",
 		bucket: "",
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.path, func(t *testing.T) {
-			got := bucketizePath(t.Context(), tt.path)
+			got := bucketizePath(tt.path)
 			if got != tt.bucket {
 				t.Errorf("bucketizePath() = %v, want = %v", got, tt.bucket)
 			}
 		})
 	}
-}
-
-func Test_instrumentGitHubAPI(t *testing.T) {
-	// Set up buckets for GitHub API
-	SetBuckets(map[string]string{
-		"api.github.com": "GH API",
-	})
-
-	tests := []struct {
-		path   string
-		bucket string
-	}{{
-		path:   "/repos/octocat/hello-world",
-		bucket: "/repos/{org}/{repo}",
-	}, {
-		path:   "/repos/octocat/hello-world/pulls/42",
-		bucket: "/repos/{org}/{repo}/pulls/{number}",
-	}, {
-		path:   "/user",
-		bucket: "/user",
-	}}
-
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
-			// Create a test transport that verifies the path was set
-			var capturedPath string
-			testTransport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
-				capturedPath = getPath(r.Context())
-				return &http.Response{
-					StatusCode: http.StatusOK,
-					Body:       http.NoBody,
-					Header:     make(http.Header),
-				}, nil
-			})
-
-			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, "https://api.github.com"+tt.path, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			transport := WrapTransport(testTransport)
-			resp, err := (&http.Client{Transport: transport}).Do(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer resp.Body.Close()
-
-			if capturedPath != tt.bucket {
-				t.Errorf("path: got = %q, want = %q", capturedPath, tt.bucket)
-			}
-		})
-	}
-}
-
-func Test_instrumentGitHubAPI_nonGitHub(t *testing.T) {
-	// Verify that non-GitHub requests don't get a path set
-	var capturedPath string
-	testTransport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		capturedPath = getPath(r.Context())
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       http.NoBody,
-			Header:     make(http.Header),
-		}, nil
-	})
-
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, "https://example.com/test", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	transport := WrapTransport(testTransport)
-	resp, err := (&http.Client{Transport: transport}).Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	if capturedPath != "" {
-		t.Errorf("path: got = %q, want = \"\"", capturedPath)
-	}
-}
-
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
-	return f(r)
 }

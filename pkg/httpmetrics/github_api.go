@@ -4,11 +4,7 @@
 package httpmetrics
 
 import (
-	"context"
-	"net/http"
 	"regexp"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type pathPattern struct {
@@ -34,6 +30,10 @@ var githubAPIPatterns = []pathPattern{{
 	// https://docs.github.com/en/rest/issues/comments#list-issue-comments
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/issues/\d+/comments$`),
 	bucket:  "/repos/{org}/{repo}/issues/{number}/comments",
+}, {
+	// https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/issues/\d+/labels$`),
+	bucket:  "/repos/{org}/{repo}/issues/{number}/labels",
 }, {
 	// https://docs.github.com/en/rest/pulls/pulls#list-pull-requests
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls$`),
@@ -111,6 +111,58 @@ var githubAPIPatterns = []pathPattern{{
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/actions/workflows/[^/]+$`),
 	bucket:  "/repos/{org}/{repo}/actions/workflows/{id}",
 }, {
+	// https://docs.github.com/en/rest/checks/runs#create-a-check-run
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-runs$`),
+	bucket:  "/repos/{org}/{repo}/check-runs",
+}, {
+	// https://docs.github.com/en/rest/checks/runs#get-a-check-run
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-runs/\d+$`),
+	bucket:  "/repos/{org}/{repo}/check-runs/{id}",
+}, {
+	// https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+/check-runs$`),
+	bucket:  "/repos/{org}/{repo}/commits/{ref}/check-runs",
+}, {
+	// https://docs.github.com/en/rest/commits/commits#list-branches-for-head-commit
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+/branches-where-head$`),
+	bucket:  "/repos/{org}/{repo}/commits/{sha}/branches-where-head",
+}, {
+	// https://docs.github.com/en/rest/commits/commits#list-pull-requests-associated-with-a-commit
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+/pulls$`),
+	bucket:  "/repos/{org}/{repo}/commits/{sha}/pulls",
+}, {
+	// https://docs.github.com/en/rest/branches/branches#rename-a-branch
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/branches/[^/]+/rename$`),
+	bucket:  "/repos/{org}/{repo}/branches/{branch}/rename",
+}, {
+	// https://docs.github.com/en/rest/branches/branches#sync-a-fork-branch-with-the-upstream-repository
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/merge-upstream$`),
+	bucket:  "/repos/{org}/{repo}/merge-upstream",
+}, {
+	// https://docs.github.com/en/rest/branches/branches#merge-a-branch
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/merges$`),
+	bucket:  "/repos/{org}/{repo}/merges",
+}, {
+	// https://docs.github.com/en/rest/git/refs#create-a-reference (used for creating branches)
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/refs$`),
+	bucket:  "/repos/{org}/{repo}/git/refs",
+}, {
+	// https://docs.github.com/en/rest/git/refs#get-a-reference
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/refs/.+$`),
+	bucket:  "/repos/{org}/{repo}/git/refs/{ref}",
+}, {
+	// https://docs.github.com/en/rest/git/refs#list-matching-references
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/matching-refs/.+$`),
+	bucket:  "/repos/{org}/{repo}/git/matching-refs/{ref}",
+}, {
+	// https://docs.github.com/en/rest/pulls/pulls#check-if-a-pull-request-has-been-merged
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls/\d+/merge$`),
+	bucket:  "/repos/{org}/{repo}/pulls/{number}/merge",
+}, {
+	// https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request-branch
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls/\d+/update-branch$`),
+	bucket:  "/repos/{org}/{repo}/pulls/{number}/update-branch",
+}, {
 	// https://docs.github.com/en/rest/orgs/orgs#get-an-organization
 	pattern: regexp.MustCompile(`^/orgs/[^/]+$`),
 	bucket:  "/orgs/{org}",
@@ -144,25 +196,11 @@ var githubAPIPatterns = []pathPattern{{
 	bucket:  "/users/{user}/repos",
 }}
 
-func bucketizePath(_ context.Context, path string) string {
+func bucketizePath(path string) string {
 	for _, p := range githubAPIPatterns {
 		if p.pattern.MatchString(path) {
 			return p.bucket
 		}
 	}
 	return ""
-}
-
-func instrumentGitHubAPI(next http.RoundTripper) promhttp.RoundTripperFunc {
-	return func(r *http.Request) (*http.Response, error) {
-		if r.URL.Host != "api.github.com" {
-			return next.RoundTrip(r)
-		}
-
-		path := bucketizePath(r.Context(), r.URL.Path)
-		ctx := withPath(r.Context(), path)
-		r = r.WithContext(ctx)
-
-		return next.RoundTrip(r)
-	}
 }
