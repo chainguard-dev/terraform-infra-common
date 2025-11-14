@@ -4,10 +4,7 @@
 package httpmetrics
 
 import (
-	"net/http"
 	"regexp"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type pathPattern struct {
