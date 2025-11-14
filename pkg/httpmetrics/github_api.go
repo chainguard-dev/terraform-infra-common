@@ -34,6 +34,10 @@ var githubAPIPatterns = []pathPattern{{
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/issues/\d+/comments$`),
 	bucket:  "/repos/{org}/{repo}/issues/{number}/comments",
 }, {
+	// https://docs.github.com/en/rest/issues/labels#add-labels-to-an-issue
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/issues/\d+/labels$`),
+	bucket:  "/repos/{org}/{repo}/issues/{number}/labels",
+}, {
 	// https://docs.github.com/en/rest/pulls/pulls#list-pull-requests
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls$`),
 	bucket:  "/repos/{org}/{repo}/pulls",
@@ -109,6 +113,10 @@ var githubAPIPatterns = []pathPattern{{
 	// https://docs.github.com/en/rest/actions/workflows#get-a-workflow
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/actions/workflows/[^/]+$`),
 	bucket:  "/repos/{org}/{repo}/actions/workflows/{id}",
+}, {
+	// https://docs.github.com/en/rest/checks/runs#create-a-check-run
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-runs$`),
+	bucket:  "/repos/{org}/{repo}/check-runs",
 }, {
 	// https://docs.github.com/en/rest/orgs/orgs#get-an-organization
 	pattern: regexp.MustCompile(`^/orgs/[^/]+$`),
