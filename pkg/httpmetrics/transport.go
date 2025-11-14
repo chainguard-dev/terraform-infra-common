@@ -92,12 +92,10 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 	return &MetricsTransport{
 		RoundTripper: useGoogClientTraceparent(
 			instrumentRequest(
-				instrumentGitHubAPI(
-					instrumentGitHubRateLimits(
-						instrumentDockerHubRateLimit(
-							otelhttp.NewTransport(
-								newPreserveTraceparentTransport(t),
-							),
+				instrumentGitHubRateLimits(
+					instrumentDockerHubRateLimit(
+						otelhttp.NewTransport(
+							newPreserveTraceparentTransport(t),
 						),
 					),
 				), topts.skipBucketize,
