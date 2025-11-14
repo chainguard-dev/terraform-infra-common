@@ -160,5 +160,3 @@ func Test_bucketizePath(t *testing.T) {
 		})
 	}
 }
-
-
