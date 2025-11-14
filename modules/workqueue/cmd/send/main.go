@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"flag"
 	"log"
-	"log/slog"
 	"math/big"
 	"net/url"
 	"os"
@@ -27,7 +26,6 @@ import (
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	ctx = clog.WithLogger(ctx, clog.New(slog.Default().Handler()))
 
 	httpTarget := flag.String("target", "", "The target to send work to.")
 	requests := flag.Int("requests", 100000, "The number of requests to send.")

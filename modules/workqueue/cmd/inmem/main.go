@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,7 +36,6 @@ type envConfig struct {
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	ctx = clog.WithLogger(ctx, clog.New(slog.Default().Handler()))
 
 	var env envConfig
 	envconfig.MustProcess(ctx, &env)

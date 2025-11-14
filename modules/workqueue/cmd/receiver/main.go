@@ -6,14 +6,12 @@ package main
 import (
 	"context"
 	"log"
-	"log/slog"
 	"os"
 	"os/signal"
 	"time"
 
 	"chainguard.dev/go-grpc-kit/pkg/duplex"
 	"cloud.google.com/go/storage"
-	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/sethvargo/go-envconfig"
@@ -36,7 +34,6 @@ type envConfig struct {
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	ctx = clog.WithLogger(ctx, clog.New(slog.Default().Handler()))
 
 	var env envConfig
 	envconfig.MustProcess(ctx, &env)
