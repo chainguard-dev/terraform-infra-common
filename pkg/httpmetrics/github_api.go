@@ -138,9 +138,25 @@ var githubAPIPatterns = []pathPattern{{
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/branches/[^/]+/rename$`),
 	bucket:  "/repos/{org}/{repo}/branches/{branch}/rename",
 }, {
+	// https://docs.github.com/en/rest/branches/branches#sync-a-fork-branch-with-the-upstream-repository
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/merge-upstream$`),
+	bucket:  "/repos/{org}/{repo}/merge-upstream",
+}, {
 	// https://docs.github.com/en/rest/branches/branches#merge-a-branch
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/merges$`),
 	bucket:  "/repos/{org}/{repo}/merges",
+}, {
+	// https://docs.github.com/en/rest/git/refs#create-a-reference (used for creating branches)
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/refs$`),
+	bucket:  "/repos/{org}/{repo}/git/refs",
+}, {
+	// https://docs.github.com/en/rest/git/refs#get-a-reference
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/refs/.+$`),
+	bucket:  "/repos/{org}/{repo}/git/refs/{ref}",
+}, {
+	// https://docs.github.com/en/rest/git/refs#list-matching-references
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/matching-refs/.+$`),
+	bucket:  "/repos/{org}/{repo}/git/matching-refs/{ref}",
 }, {
 	// https://docs.github.com/en/rest/pulls/pulls#check-if-a-pull-request-has-been-merged
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls/\d+/merge$`),
