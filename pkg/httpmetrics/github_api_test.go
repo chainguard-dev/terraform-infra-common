@@ -115,7 +115,7 @@ func Test_bucketizePath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.path, func(t *testing.T) {
-			got := bucketizePath(t.Context(), tt.path)
+			got := bucketizePath(tt.path)
 			if got != tt.bucket {
 				t.Errorf("bucketizePath() = %v, want = %v", got, tt.bucket)
 			}

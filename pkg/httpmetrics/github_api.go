@@ -4,7 +4,6 @@
 package httpmetrics
 
 import (
-	"context"
 	"net/http"
 	"regexp"
 
@@ -144,7 +143,7 @@ var githubAPIPatterns = []pathPattern{{
 	bucket:  "/users/{user}/repos",
 }}
 
-func bucketizePath(_ context.Context, path string) string {
+func bucketizePath(path string) string {
 	for _, p := range githubAPIPatterns {
 		if p.pattern.MatchString(path) {
 			return p.bucket
@@ -159,7 +158,7 @@ func instrumentGitHubAPI(next http.RoundTripper) promhttp.RoundTripperFunc {
 			return next.RoundTrip(r)
 		}
 
-		path := bucketizePath(r.Context(), r.URL.Path)
+		path := bucketizePath(r.URL.Path)
 		ctx := withPath(r.Context(), path)
 		r = r.WithContext(ctx)
 
