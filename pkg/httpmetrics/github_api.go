@@ -118,6 +118,38 @@ var githubAPIPatterns = []pathPattern{{
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-runs$`),
 	bucket:  "/repos/{org}/{repo}/check-runs",
 }, {
+	// https://docs.github.com/en/rest/checks/runs#get-a-check-run
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-runs/\d+$`),
+	bucket:  "/repos/{org}/{repo}/check-runs/{id}",
+}, {
+	// https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+/check-runs$`),
+	bucket:  "/repos/{org}/{repo}/commits/{ref}/check-runs",
+}, {
+	// https://docs.github.com/en/rest/commits/commits#list-branches-for-head-commit
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+/branches-where-head$`),
+	bucket:  "/repos/{org}/{repo}/commits/{sha}/branches-where-head",
+}, {
+	// https://docs.github.com/en/rest/commits/commits#list-pull-requests-associated-with-a-commit
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+/pulls$`),
+	bucket:  "/repos/{org}/{repo}/commits/{sha}/pulls",
+}, {
+	// https://docs.github.com/en/rest/branches/branches#rename-a-branch
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/branches/[^/]+/rename$`),
+	bucket:  "/repos/{org}/{repo}/branches/{branch}/rename",
+}, {
+	// https://docs.github.com/en/rest/branches/branches#merge-a-branch
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/merges$`),
+	bucket:  "/repos/{org}/{repo}/merges",
+}, {
+	// https://docs.github.com/en/rest/pulls/pulls#check-if-a-pull-request-has-been-merged
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls/\d+/merge$`),
+	bucket:  "/repos/{org}/{repo}/pulls/{number}/merge",
+}, {
+	// https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request-branch
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls/\d+/update-branch$`),
+	bucket:  "/repos/{org}/{repo}/pulls/{number}/update-branch",
+}, {
 	// https://docs.github.com/en/rest/orgs/orgs#get-an-organization
 	pattern: regexp.MustCompile(`^/orgs/[^/]+$`),
 	bucket:  "/orgs/{org}",
