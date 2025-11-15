@@ -26,6 +26,23 @@ module "time_to_reset" {
   primary_reduce  = "REDUCE_MIN"
 }
 
+module "api_calls" {
+  source = "../../widgets/xy"
+  title  = "GitHub API Calls by Endpoint"
+  filter = concat(var.filter, [
+    "metric.type=\"prometheus.googleapis.com/http_client_request_count_total/counter\"",
+    "resource.type=\"prometheus_target\"",
+    "metric.label.\"host\"=\"api.github.com\"",
+  ])
+  group_by_fields = [
+    "metric.label.\"path\"",
+    "metric.label.\"method\"",
+  ]
+  plot_type      = "STACKED_BAR"
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+}
+
 locals {
   columns = 3
   unit    = module.width.size / local.columns
@@ -36,14 +53,21 @@ locals {
 
   tiles = [
     {
-      yPos   = local.unit,
+      yPos   = 0,
       xPos   = local.col[0],
       height = local.unit,
-      width  = 2 * local.unit,
+      width  = local.unit,
+      widget = module.api_calls.widget,
+    },
+    {
+      yPos   = 0,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
       widget = module.used.widget,
     },
     {
-      yPos   = local.unit,
+      yPos   = 0,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
