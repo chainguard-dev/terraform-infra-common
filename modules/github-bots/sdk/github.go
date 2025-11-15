@@ -135,6 +135,9 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 // GitHubClientOption configures the client, these are ran after the default setup.
 type GitHubClientOption func(*GitHubClient)
 
+// WithSecondaryRateLimitWaiter is intended to change the underlying transport to respect GitHub's rate-limiting requests.
+// As of today, it is a no-op.
+// Using this option will not change the behavior of `GitHubClient`.
 func WithSecondaryRateLimitWaiter() GitHubClientOption {
 	return func(c *GitHubClient) {
 		c.inner.Client().Transport = NewSecondaryRateLimitWaiterClient(
