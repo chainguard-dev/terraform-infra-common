@@ -88,6 +88,34 @@ func TestGitHubClientConfiguration(t *testing.T) {
 				}
 			},
 		},
+		{
+			// `WithSecondaryRateLimitWaiter` ought to change the underlying transport to SecondaryRateLimitWaiter.
+			// At the moment, it does not.
+			// We *could* fix it, but at the time of writing we are trying to get a better handle
+			// on how we relate to GitHub rate-limiting.
+			// Rather than enable a new rate-limiting feature that's not been production tested,
+			// we've documented that the option doesn't do anything, and will leave this test here,
+			// but with the assertion inverted, to indicate that the no-op behavior is intentional.
+			//
+			// See https://github.com/chainguard-dev/terraform-infra-common/pull/1211/
+			// and https://chainguard-dev.slack.com/archives/C05SJTTHE79/p1763040569561639
+			name: "WithSecondaryRateLimitWaiter modifies transport (xfail)",
+			opts: []GitHubClientOption{
+				WithClient(github.NewClient(&http.Client{
+					Transport: &http.Transport{},
+				})),
+				WithSecondaryRateLimitWaiter(),
+			},
+			want: func(t *testing.T, client GitHubClient) {
+				t.Helper()
+
+				// Transport was wrapped with SecondaryRateLimitWaiter
+				transport := client.Client().Client().Transport
+				if _, ok := transport.(*SecondaryRateLimitWaiter); ok {
+					t.Errorf("transport unexpectedly changed to SecondaryRateLimitWaiter")
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
