@@ -154,7 +154,7 @@ func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.Roun
 
 		path := ""
 		if r.URL.Host == "api.github.com" {
-			path = bucketizePath(r.URL.Path)
+			path = bucketizeGitHubPath(r.URL.Path)
 		}
 
 		baseLabels := prometheus.Labels{

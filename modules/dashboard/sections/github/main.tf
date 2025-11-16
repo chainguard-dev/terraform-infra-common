@@ -32,7 +32,7 @@ module "api_calls" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/http_client_request_count_total/counter\"",
     "resource.type=\"prometheus_target\"",
-    "metric.label.\"host\"=\"api.github.com\"",
+    "metric.label.\"path\"!=\"\"",
   ])
   group_by_fields = [
     "metric.label.\"path\"",

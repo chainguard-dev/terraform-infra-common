@@ -196,11 +196,11 @@ var githubAPIPatterns = []pathPattern{{
 	bucket:  "/users/{user}/repos",
 }}
 
-func bucketizePath(path string) string {
+func bucketizeGitHubPath(path string) string {
 	for _, p := range githubAPIPatterns {
 		if p.pattern.MatchString(path) {
 			return p.bucket
 		}
 	}
-	return ""
+	return "unknown_gh_path"
 }
