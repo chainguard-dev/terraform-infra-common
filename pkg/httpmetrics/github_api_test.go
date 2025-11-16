@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func Test_bucketizePath(t *testing.T) {
+func Test_bucketizeGitHubPath(t *testing.T) {
 	tests := []struct {
 		path   string
 		bucket string
@@ -148,14 +148,14 @@ func Test_bucketizePath(t *testing.T) {
 		bucket: "/repos/{org}/{repo}/pulls/{number}/update-branch",
 	}, {
 		path:   "/some/unknown/path",
-		bucket: "",
+		bucket: "unknown_gh_path",
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.path, func(t *testing.T) {
-			got := bucketizePath(tt.path)
+			got := bucketizeGitHubPath(tt.path)
 			if got != tt.bucket {
-				t.Errorf("bucketizePath() = %v, want = %v", got, tt.bucket)
+				t.Errorf("bucketizeGitHubPath() = %v, want = %v", got, tt.bucket)
 			}
 		})
 	}
