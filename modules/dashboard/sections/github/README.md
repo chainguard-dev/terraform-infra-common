@@ -11,6 +11,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_api_calls"></a> [api\_calls](#module\_api\_calls) | ../../widgets/xy | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
 | <a name="module_time_to_reset"></a> [time\_to\_reset](#module\_time\_to\_reset) | ../../widgets/xy | n/a |
 | <a name="module_used"></a> [used](#module\_used) | ../../widgets/xy | n/a |
