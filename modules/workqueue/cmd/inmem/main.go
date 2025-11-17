@@ -30,6 +30,7 @@ import (
 type envConfig struct {
 	Port        int    `env:"PORT, required"`
 	Concurrency int    `env:"WORKQUEUE_CONCURRENCY, required"`
+	BatchSize   int    `env:"WORKQUEUE_BATCH_SIZE, default=0"`
 	Target      string `env:"WORKQUEUE_TARGET, required"`
 }
 
@@ -67,7 +68,7 @@ func main() {
 				// dispatch loop.
 				eg.Go(func() error {
 					return dispatcher.Handle(context.WithoutCancel(ctx), wq,
-						env.Concurrency, dispatcher.ServiceCallback(client))
+						env.Concurrency, env.BatchSize, dispatcher.ServiceCallback(client))
 				})
 			}
 		}

@@ -42,18 +42,22 @@ func ServiceCallback(client workqueue.WorkqueueServiceClient) Callback {
 type Future func() error
 
 // Handle is a synchronous form of HandleAsync.
-func Handle(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback) error {
-	return HandleAsync(ctx, wq, concurrency, f, 0)()
+func Handle(ctx context.Context, wq workqueue.Interface, concurrency, batchSize int, f Callback) error {
+	return HandleAsync(ctx, wq, concurrency, batchSize, f, 0)()
 }
 
 // HandleAsync initiates a single iteration of the dispatcher, possibly invoking
 // the callback for several different keys.  It returns a future that can be
 // used to block on the result.
-func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f Callback, maxRetry int) Future {
+func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency, batchSize int, f Callback, maxRetry int) Future {
 	// Enumerate the state of the queue.
 	wip, next, err := wq.Enumerate(ctx)
 	if err != nil {
 		return func() error { return fmt.Errorf("enumerate() = %w", err) }
+	}
+
+	if batchSize <= 0 || batchSize > concurrency {
+		batchSize = concurrency
 	}
 
 	eg := errgroup.Group{}
@@ -82,8 +86,13 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 	// Attempt to launch a new piece of work for each open slot we have available
 	// which is: N - active.
 	openSlots := concurrency - nWIP
+	launchLimit := openSlots
+	if batchSize < launchLimit {
+		launchLimit = batchSize
+	}
+
 	idx, launched := 0, 0
-	for ; idx < len(next) && launched < openSlots; idx++ {
+	for ; idx < len(next) && launched < launchLimit; idx++ {
 		nextKey := next[idx]
 
 		// If the next key is already in progress, then move to the next candidate.
@@ -154,7 +163,7 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency int, f
 			return nil
 		})
 	}
-	clog.InfoContextf(ctx, "Launched %d new keys (wip: %d)", launched, nWIP)
+	clog.InfoContextf(ctx, "Launched %d new keys (wip: %d, batch: %d)", launched, nWIP, batchSize)
 
 	// Return the future to wait on outstanding work.
 	return eg.Wait

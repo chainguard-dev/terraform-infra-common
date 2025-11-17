@@ -19,6 +19,7 @@ module "workqueue" {
   regions    = var.regions
 
   concurrent-work = var.concurrent-work
+  batch-size      = var.batch-size
   max-retry       = var.max-retry
 
   reconciler-service = {

@@ -19,6 +19,12 @@ variable "concurrent-work" {
   type        = number
 }
 
+variable "batch-size" {
+  description = "Optional cap on how much work to launch per dispatcher pass. Defaults to ceil(concurrent-work / number of regions) when unset."
+  type        = number
+  default     = null
+}
+
 variable "max-retry" {
   description = "The maximum number of retry attempts before a task is moved to the dead letter queue. Set this to 0 to have unlimited retries."
   type        = number

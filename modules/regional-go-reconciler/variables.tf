@@ -33,6 +33,12 @@ variable "concurrent-work" {
   default     = 20
 }
 
+variable "batch-size" {
+  description = "Optional cap on how much work to launch per dispatcher pass."
+  type        = number
+  default     = null
+}
+
 variable "multi_regional_location" {
   description = "The multi-regional location for the global workqueue bucket. Options: US, EU, ASIA."
   type        = string
