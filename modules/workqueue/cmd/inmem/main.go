@@ -30,7 +30,7 @@ import (
 type envConfig struct {
 	Port        int    `env:"PORT, required"`
 	Concurrency int    `env:"WORKQUEUE_CONCURRENCY, required"`
-	BatchSize   int    `env:"WORKQUEUE_BATCH_SIZE, default=0"`
+	BatchSize   int    `env:"WORKQUEUE_BATCH_SIZE, required"`
 	Target      string `env:"WORKQUEUE_TARGET, required"`
 }
 

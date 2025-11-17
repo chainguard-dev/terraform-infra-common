@@ -28,7 +28,7 @@ import (
 type envConfig struct {
 	Port        int    `env:"PORT, required"`
 	Concurrency int    `env:"WORKQUEUE_CONCURRENCY, required"`
-	BatchSize   int    `env:"WORKQUEUE_BATCH_SIZE, default=0"`
+	BatchSize   int    `env:"WORKQUEUE_BATCH_SIZE, required"`
 	Mode        string `env:"WORKQUEUE_MODE, required"`
 	Bucket      string `env:"WORKQUEUE_BUCKET"`
 	Target      string `env:"WORKQUEUE_TARGET, required"`
