@@ -192,6 +192,7 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_batch-size"></a> [batch-size](#input\_batch-size) | Optional cap on how much work to launch per dispatcher pass. Defaults to ceil(concurrent-work / number of regions) when unset. | `number` | `null` | no |
 | <a name="input_concurrent-work"></a> [concurrent-work](#input\_concurrent-work) | The amount of concurrent work to dispatch at a given time. | `number` | n/a | yes |
 | <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | Set to false for a region in order to use instance-based billing. Defaults to true. | `map(map(bool))` | <pre>{<br/>  "dispatcher": {},<br/>  "receiver": {}<br/>}</pre> | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
@@ -201,7 +202,7 @@ No requirements.
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
-| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
+| <a name="input_project_id"></a> [project\_project_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_reconciler-service"></a> [reconciler-service](#input\_reconciler-service) | The name of the reconciler service that the workqueue will dispatch work to. | <pre>object({<br/>    name = string<br/>  })</pre> | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A service will be created in each region configured to egress the specified traffic via the specified subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_scope"></a> [scope](#input\_scope) | The scope of the workqueue. Must be 'global' for a single multi-regional workqueue. | `string` | `"global"` | no |
