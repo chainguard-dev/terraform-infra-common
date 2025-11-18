@@ -40,4 +40,10 @@ module "cron" {
 
   # Required team label for the job
   team = "example-team"
+
+  # Optional custom labels for all resources
+  labels = {
+    environment = "dev"
+    cost-center = "engineering"
+  }
 }
