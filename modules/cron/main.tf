@@ -25,6 +25,11 @@ resource "google_project_service" "cloudscheduler" {
 locals {
   repo = var.repository != "" ? var.repository : "gcr.io/${var.project_id}/${var.name}"
 
+  default_labels = {
+    basename(abspath(path.module)) = var.name
+    terraform-module               = basename(abspath(path.module))
+  }
+
   squad_label = {
     "squad" : var.team
     "team" : var.team
@@ -78,14 +83,14 @@ resource "google_cloud_run_v2_job" "job" {
 
   name     = "${var.name}-cron"
   location = var.region
-  labels   = merge(var.labels, local.squad_label, local.product_label, local.product_label)
+  labels   = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
 
   deletion_protection = var.deletion_protection
 
   template {
     parallelism = var.parallelism
     task_count  = var.task_count
-    labels      = merge(var.labels, local.squad_label, local.product_label, local.product_label)
+    labels      = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
 
     template {
       execution_environment = var.execution_environment
@@ -337,6 +342,8 @@ resource "google_monitoring_alert_policy" "success" {
   combiner     = "OR"
 
   severity = "ERROR"
+
+  user_labels = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
 
   conditions {
     display_name = "Cloud Run Job Success Execution: ${var.name}"
