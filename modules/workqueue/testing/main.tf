@@ -6,6 +6,10 @@ terraform {
   }
 }
 
+locals {
+  dispatcher_batch_size = coalesce(var.batch-size, var.concurrent-work)
+}
+
 resource "kubernetes_manifest" "svc-acct" {
   manifest = {
     "apiVersion" : "v1",
@@ -56,6 +60,10 @@ resource "kubernetes_manifest" "inmem-ksvc" {
                 {
                   "name"  = "WORKQUEUE_CONCURRENCY"
                   "value" = var.concurrent-work
+                },
+                {
+                  "name"  = "WORKQUEUE_BATCH_SIZE"
+                  "value" = local.dispatcher_batch_size
                 },
                 {
                   "name"  = "WORKQUEUE_TARGET"

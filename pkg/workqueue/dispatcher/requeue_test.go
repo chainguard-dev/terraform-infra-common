@@ -74,7 +74,7 @@ func TestRequeueWithDelay(t *testing.T) {
 			}
 
 			// Process with our test callback
-			if err := Handle(ctx, wq, 1, tt.callback); err != nil {
+			if err := Handle(ctx, wq, 1, 0, tt.callback); err != nil {
 				t.Fatalf("Handle failed: %v", err)
 			}
 

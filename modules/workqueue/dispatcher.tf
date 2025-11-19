@@ -1,3 +1,7 @@
+locals {
+  dispatcher_batch_size = var.batch-size != null ? var.batch-size : ceil(var.concurrent-work / length(var.regions))
+}
+
 // Compute a suffix that satisfies the regex:
 // ^[a-z](?:[-a-z0-9]{4,28}[a-z0-9])$
 resource "random_string" "dispatcher" {
@@ -66,6 +70,10 @@ module "dispatcher-service" {
           name  = "WORKQUEUE_MAX_RETRY"
           value = "${var.max-retry}"
         },
+        {
+          name  = "WORKQUEUE_BATCH_SIZE"
+          value = tostring(local.dispatcher_batch_size)
+        }
       ]
       regional-env = [
         {

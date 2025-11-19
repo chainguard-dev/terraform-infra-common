@@ -28,6 +28,7 @@ import (
 type envConfig struct {
 	Port        int    `env:"PORT, required"`
 	Concurrency int    `env:"WORKQUEUE_CONCURRENCY, required"`
+	BatchSize   int    `env:"WORKQUEUE_BATCH_SIZE, required"`
 	Mode        string `env:"WORKQUEUE_MODE, required"`
 	Bucket      string `env:"WORKQUEUE_BUCKET"`
 	Target      string `env:"WORKQUEUE_TARGET, required"`
@@ -80,7 +81,7 @@ func main() {
 	}
 	defer client.Close()
 
-	h := dispatcher.Handler(wq, env.Concurrency, dispatcher.ServiceCallback(client), env.MaxRetry)
+	h := dispatcher.Handler(wq, env.Concurrency, env.BatchSize, dispatcher.ServiceCallback(client), env.MaxRetry)
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		Handler:           h2c.NewHandler(h, &http2.Server{}),

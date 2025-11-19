@@ -63,7 +63,7 @@ func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 				// Do this in a go routine, so it doesn't block the
 				// dispatch loop.
 				eg.Go(func() error {
-					return dispatcher.Handle(context.WithoutCancel(ctx), wq, 5, cb)
+					return dispatcher.Handle(context.WithoutCancel(ctx), wq, 5, 0, cb)
 				})
 			}
 		}
