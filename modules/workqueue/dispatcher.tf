@@ -38,8 +38,9 @@ module "dispatcher-service" {
   project_id = var.project_id
   name       = "${var.name}-dsp"
   regions    = var.regions
-  labels     = { "service" : "workqueue-dispatcher" }
+  labels     = merge({ "service" : "workqueue-dispatcher" }, local.default_labels)
   team       = var.team
+  product    = var.product
 
   # Give the things in the workqueue a lot of time to process the key.
   request_timeout_seconds = 3600
@@ -206,7 +207,7 @@ resource "google_pubsub_subscription" "global-this" {
 
   name   = "${var.name}-global-${each.key}"
   topic  = google_pubsub_topic.global-object-change-notifications[each.key].id
-  labels = local.merged_labels
+  labels = merge({ "service" : "workqueue-dispatcher" }, local.merged_labels)
 
   ack_deadline_seconds = 600 // Maximum value
 
