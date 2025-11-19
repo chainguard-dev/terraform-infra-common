@@ -74,6 +74,7 @@ func TestNew(t *testing.T) {
 			} else {
 				if cm == nil {
 					t.Fatal("New() returned nil CM when error is nil")
+					return
 				}
 				if cm.identity != tt.identity {
 					t.Errorf("New() identity: got = %q, wanted = %q", cm.identity, tt.identity)
