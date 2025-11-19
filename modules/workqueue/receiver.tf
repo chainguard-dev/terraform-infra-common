@@ -21,8 +21,9 @@ module "receiver-service" {
   project_id = var.project_id
   name       = "${var.name}-rcv"
   regions    = var.regions
-  labels     = { "service" : "workqueue-receiver" }
+  labels     = merge({ "service" : "workqueue-receiver" }, local.default_labels)
   team       = var.team
+  product    = var.product
 
   deletion_protection = var.deletion_protection
 
