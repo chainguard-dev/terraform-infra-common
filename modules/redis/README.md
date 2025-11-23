@@ -128,7 +128,7 @@ limitations under the License.
 | <a name="input_connect_mode"></a> [connect\_mode](#input\_connect\_mode) | The connection mode of the Redis instance. Valid values: DIRECT\_PEERING, PRIVATE\_SERVICE\_ACCESS. | `string` | `"PRIVATE_SERVICE_ACCESS"` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | The resource labels to represent user-provided metadata. | `map(string)` | `{}` | no |
 | <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | Maintenance policy for an instance. | <pre>object({<br/>    day = string<br/>    start_time = object({<br/>      hours   = number<br/>      minutes = number<br/>      seconds = number<br/>      nanos   = number<br/>    })<br/>  })</pre> | `null` | no |
-| <a name="input_memory_size_gb"></a> [memory\_size\_gb](#input\_memory\_size\_gb) | Redis memory size in GiB. Minimum 1 GB, maximum 300 GB. | `number` | `1` | no |
+| <a name="input_memory_size_gb"></a> [memory\_size](#input\_memory\_size\_gb) | Redis memory size in GiB. Minimum 1 GB, maximum 300 GB. | `number` | `1` | no |
 | <a name="input_name"></a> [name](#input\_name) | The ID of the instance or a fully qualified identifier for the instance. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_persistence_config"></a> [persistence\_config](#input\_persistence\_config) | Configuration of the persistence functionality. | <pre>object({<br/>    persistence_mode    = string<br/>    rdb_snapshot_period = optional(string)<br/>  })</pre> | <pre>{<br/>  "persistence_mode": "DISABLED"<br/>}</pre> | no |
