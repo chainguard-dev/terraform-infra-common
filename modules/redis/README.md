@@ -120,7 +120,7 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_alternative_location_id"></a> [alternative\_location\_id](#input\_alternative\_location\_id) | The alternative zone where the instance will failover when zone is unavailable. | `string` | `""` | no |
+| <a name="input_alternative_location_id"></a> [alternative\_location\_id](#input) | The alternative zone where the instance will failover when zone is unavailable. | `string` | `""` | no |
 | <a name="input_auth_enabled"></a> [auth\_enabled](#input\_auth\_enabled) | Indicates whether AUTH is enabled for the instance. | `bool` | `true` | no |
 | <a name="input_authorized_client_editor_service_accounts"></a> [authorized\_client\_editor\_service\_accounts](#input\_authorized\_client\_editor\_service\_accounts) | List of service account emails that should be granted Redis editor (read-write) access | `list(string)` | `[]` | no |
 | <a name="input_authorized_client_service_accounts"></a> [authorized\_client\_service\_accounts](#input\_authorized\_client\_service\_accounts) | List of service account emails that should be granted Redis viewer (read-only) access | `list(string)` | `[]` | no |
