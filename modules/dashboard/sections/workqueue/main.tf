@@ -98,7 +98,7 @@ module "wait-latency" {
   title  = "Work wait times"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
-    "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_seconds/histogram\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_from_scheduled_seconds/histogram\"",
     "metric.label.\"service_name\"=\"${local.dsp_name}\"",
   ])
   group_by_fields = null
