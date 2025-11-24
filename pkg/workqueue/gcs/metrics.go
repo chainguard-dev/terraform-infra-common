@@ -75,6 +75,14 @@ var (
 		},
 		[]string{"service_name", "revision_name", "priority_class"},
 	)
+	mWaitLatencyFromScheduled = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "workqueue_wait_latency_from_scheduled_seconds",
+			Help:    "The duration the key waited to start from its scheduled time.",
+			Buckets: []float64{.25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60, 120, 240, 480, 960, 3600, 7200},
+		},
+		[]string{"service_name", "revision_name", "priority_class"},
+	)
 	mAddedKeys = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "workqueue_added_keys",
