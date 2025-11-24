@@ -168,3 +168,9 @@ variable "enable_high_retry" {
   type        = bool
   default     = false
 }
+
+variable "unused_variable" {
+  description = "This variable is unused"
+  type        = string
+  default     = "unused"
+}
