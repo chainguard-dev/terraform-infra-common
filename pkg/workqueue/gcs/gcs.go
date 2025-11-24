@@ -702,6 +702,19 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 		"priority_class": priorityClass(q.priority),
 	}).Observe(time.Now().UTC().Sub(waitStart).Seconds())
 
+	// Calculate wait latency from scheduled time.
+	scheduledStart := waitStart
+	if notBefore, ok := q.attrs.Metadata[notBeforeMetadataKey]; ok && notBefore != "" && notBefore != noNotBefore {
+		if notBeforeTime, err := time.Parse(time.RFC3339, notBefore); err == nil {
+			scheduledStart = notBeforeTime
+		}
+	}
+	mWaitLatencyFromScheduled.With(prometheus.Labels{
+		"service_name":   env.KnativeServiceName,
+		"revision_name":  env.KnativeRevisionName,
+		"priority_class": priorityClass(q.priority),
+	}).Observe(time.Now().UTC().Sub(scheduledStart).Seconds())
+
 	// Create a copier to copy the source object, and then we will delete it
 	// upon success.
 	copier := q.client.Object(targetObject).If(storage.Conditions{
