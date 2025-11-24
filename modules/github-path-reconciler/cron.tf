@@ -4,8 +4,10 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 locals {
-  # Construct cron schedule from resync period: "0 */N * * *" for every N hours
-  cron_schedule = "0 */${var.resync_period_hours} * * *"
+  # Construct cron schedule from resync period:
+  # If < 24 hours, use "0 */N * * *" (every N hours)
+  # If >= 24 hours, use "0 0 */D * * *" (every D days)
+  cron_schedule = var.resync_period_hours < 24 ? "0 */${var.resync_period_hours} * * *" : "0 0 */${floor(var.resync_period_hours / 24)} * * *"
   # Period in minutes for time bucketing
   period_minutes = var.resync_period_hours * 60
 }

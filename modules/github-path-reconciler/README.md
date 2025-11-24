@@ -142,7 +142,7 @@ func (r *Reconciler) Process(ctx context.Context, req *workqueue.ProcessRequest)
 ## Reconciliation Triggers
 
 ### Periodic (Cron)
-- Runs every `resync_period_hours` (1-24 hours)
+- Runs every `resync_period_hours` (1-744 hours)
 - Fetches complete repository tree at HEAD
 - Uses time-bucketed delays to spread load across the period
 - Priority: 0 (normal)
@@ -187,7 +187,7 @@ Key variables:
 - `github_owner`, `github_repo`: Repository to monitor
 - `octo_sts_identity`: Octo STS identity for GitHub authentication
 - `broker`: Map of region to CloudEvents broker topic
-- `resync_period_hours`: How often to run full reconciliation (1-24)
+- `resync_period_hours`: How often to run full reconciliation (1-744)
 - `paused`: Pause both cron and push listeners
 - `deletion_protection`: Prevent accidental deletion (disable during initial rollout)
 
