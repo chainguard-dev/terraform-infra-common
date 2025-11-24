@@ -142,7 +142,7 @@ func (r *Reconciler) Process(ctx context.Context, req *workqueue.ProcessRequest)
 ## Reconciliation Triggers
 
 ### Periodic (Cron)
-- Runs every `resync_period_hours` (1-24 hours)
+- Runs every `resync_period_hours` (1-744 hours)
 - Fetches complete repository tree at HEAD
 - Uses time-bucketed delays to spread load across the period
 - Priority: 0 (normal)
@@ -187,7 +187,7 @@ Key variables:
 - `github_owner`, `github_repo`: Repository to monitor
 - `octo_sts_identity`: Octo STS identity for GitHub authentication
 - `broker`: Map of region to CloudEvents broker topic
-- `resync_period_hours`: How often to run full reconciliation (1-24)
+- `resync_period_hours`: How often to run full reconciliation (1-744)
 - `paused`: Pause both cron and push listeners
 - `deletion_protection`: Prevent accidental deletion (disable during initial rollout)
 
@@ -243,7 +243,7 @@ No resources.
 | <a name="input_regional-volumes"></a> [regional-volumes](#input\_regional-volumes) | The volumes to make available to the containers in the service for mounting. | <pre>list(object({<br/>    name = string<br/>    gcs = optional(map(object({<br/>      bucket        = string<br/>      read_only     = optional(bool, true)<br/>      mount_options = optional(list(string), [])<br/>    })), {})<br/>    nfs = optional(map(object({<br/>      server    = string<br/>      path      = string<br/>      read_only = optional(bool, true)<br/>    })), {})<br/>  }))</pre> | `[]` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A service will be created in each region configured to egress the specified traffic via the specified subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_request_timeout_seconds"></a> [request\_timeout\_seconds](#input\_request\_timeout\_seconds) | The request timeout for the service in seconds. | `number` | `300` | no |
-| <a name="input_resync_period_hours"></a> [resync\_period\_hours](#input\_resync\_period\_hours) | How often to resync all paths (in hours, must be between 1 and 24) | `number` | n/a | yes |
+| <a name="input_resync_period_hours"></a> [resync\_period\_hours](#input\_resync\_period\_hours) | How often to resync all paths (in hours, must be between 1 and 744 (31 days), and a multiple of 24 if greater than 24) | `number` | n/a | yes |
 | <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    max_instance_request_concurrency = optional(number, 1000)<br/>  })</pre> | `{}` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which to run the reconciler service. | `string` | n/a | yes |
 | <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO for the cloud run service | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    success = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), null)<br/>    monitor_gclb = optional(bool, false)<br/>  })</pre> | `{}` | no |

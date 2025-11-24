@@ -280,11 +280,11 @@ variable "path_patterns" {
 }
 
 variable "resync_period_hours" {
-  description = "How often to resync all paths (in hours, must be between 1 and 24)"
+  description = "How often to resync all paths (in hours, must be between 1 and 744 (31 days), and a multiple of 24 if greater than 24)"
   type        = number
   validation {
-    condition     = var.resync_period_hours >= 1 && var.resync_period_hours <= 24
-    error_message = "resync_period_hours must be between 1 and 24 hours"
+    condition     = var.resync_period_hours >= 1 && var.resync_period_hours <= 744 && (var.resync_period_hours < 24 || var.resync_period_hours % 24 == 0)
+    error_message = "resync_period_hours must be between 1 and 744 hours, and if greater than 24, must be a multiple of 24."
   }
 }
 
