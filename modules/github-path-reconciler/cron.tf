@@ -7,7 +7,7 @@ locals {
   # Construct cron schedule from resync period:
   # If < 24 hours, use "0 */N * * *" (every N hours)
   # If >= 24 hours, use "0 0 */D * * *" (every D days)
-  cron_schedule = var.resync_period_hours < 24 ? "0 */${var.resync_period_hours} * * *" : "0 0 */${floor(var.resync_period_hours / 24)} * * *"
+  cron_schedule = var.resync_period_hours < 24 ? "0 */${var.resync_period_hours} * * *" : "0 0 */${floor(var.resync_period_hours / 24)} * *"
   # Period in minutes for time bucketing
   period_minutes = var.resync_period_hours * 60
 }
