@@ -135,7 +135,7 @@ limitations under the License.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The ID of the project in which the resource belongs. | `string` | n/a | yes |
 | <a name="input_read_replicas_mode"></a> [read\_replicas\_mode](#input\_read\_replicas\_mode) | Read replicas mode. Can be: READ\_REPLICAS\_DISABLED or READ\_REPLICAS\_ENABLED. | `string` | `"READ_REPLICAS_DISABLED"` | no |
-| <a name="input_redis_version"></a> [redis\_version](#input\_redis\_version) | The version of Redis software. | `string` | `"REDIS_7_2"` | no |
+| <a name="input_redis_version"></a> [version](#input\_version) | The version of Redis software. | `string` | `"REDIS_7_2"` | no |
 | <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy resources to. | `string` | n/a | yes |
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replica nodes. | `number` | `0` | no |
 | <a name="input_reserved_ip_range"></a> [reserved\_ip\_range](#input\_reserved\_ip\_range) | The CIDR range of internal addresses that are reserved for this instance. | `string` | `null` | no |
