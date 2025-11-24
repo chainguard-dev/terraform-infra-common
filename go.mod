@@ -15,8 +15,8 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.17.0
 	github.com/chainguard-dev/clog v1.7.0
 	github.com/cloudevents/sdk-go/v2 v2.16.2
-	github.com/coreos/go-oidc/v3 v3.16.0
-	github.com/go-git/go-git/v5 v5.16.3
+	github.com/coreos/go-oidc/v3 v3.17.0
+	github.com/go-git/go-git/v5 v5.16.4
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v75 v75.0.0
 	github.com/jonboulle/clockwork v0.5.0
