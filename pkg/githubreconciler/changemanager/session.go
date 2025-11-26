@@ -112,6 +112,8 @@ func (s *Session[T]) Upsert(
 		return "", fmt.Errorf("executing body template: %w", err)
 	}
 
+	body += fmt.Sprintf("\n\n> **Note:** If you need to make manual changes to this PR, apply the `skip:%s` label so the reconciler won't overwrite them.", s.manager.identity)
+
 	// Embed data in body
 	body, err = s.manager.templateExecutor.Embed(body, data)
 	if err != nil {
