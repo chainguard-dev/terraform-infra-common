@@ -76,6 +76,7 @@ No modules.
 | <a name="input_signal_filter"></a> [signal\_filter](#input\_signal\_filter) | additional filter to apply to signal alert policy | `string` | `""` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
 | <a name="input_timeout_filter"></a> [timeout\_filter](#input\_timeout\_filter) | additional filter to apply to timeout alert policy | `string` | `""` | no |
+| <a name="input_unused_variable"></a> [unused\_variable](#input\_unused\_variable) | This variable is unused for testing | `string` | `"unused"` | no |
 
 ## Outputs
 
