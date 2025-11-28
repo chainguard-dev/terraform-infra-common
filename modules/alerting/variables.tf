@@ -170,7 +170,7 @@ variable "enable_high_retry" {
 }
 
 variable "unused_variable" {
-  description = "This variable is unused for testing only"
+  description = "This variable is unused for testing lint"
   type        = string
   default     = "unused"
 }
