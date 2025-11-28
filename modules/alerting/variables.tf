@@ -168,3 +168,9 @@ variable "enable_high_retry" {
   type        = bool
   default     = false
 }
+
+variable "unused_variable" {
+  description = "This variable is unused for testing lint"
+  type        = string
+  default     = "unused"
+}
