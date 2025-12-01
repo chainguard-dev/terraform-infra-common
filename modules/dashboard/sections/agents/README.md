@@ -74,12 +74,12 @@ No providers.
 | <a name="module_evaluation_failure_rate"></a> [evaluation\_failure\_rate](#module\_evaluation\_failure\_rate) | ../../widgets/xy-ratio | n/a |
 | <a name="module_evaluation_grade_p99"></a> [evaluation\_grade\_p99](#module\_evaluation\_grade\_p99) | ../../widgets/xy | n/a |
 | <a name="module_evaluation_volume"></a> [evaluation\_volume](#module\_evaluation\_volume) | ../../widgets/xy | n/a |
-| <a name="module_tokens_by_pr"></a> [tokens\_by\_pr](#module\_tokens\_by\_pr) | ../../widgets/xy | n/a |
-| <a name="module_tokens_by_model_pr"></a> [tokens\_by\_model\_pr](#module\_tokens\_by\_model\_pr) | ../../widgets/xy | n/a |
-| <a name="module_tool_calls_by_pr"></a> [tool\_calls\_by\_pr](#module\_tool\_calls\_by\_pr) | ../../widgets/xy | n/a |
-| <a name="module_tool_usage_breakdown"></a> [tool\_usage\_breakdown](#module\_tool\_usage\_breakdown) | ../../widgets/xy | n/a |
-| <a name="module_tokens_per_turn"></a> [tokens\_per\_turn](#module\_tokens\_per\_turn) | ../../widgets/xy | n/a |
+| <a name="module_tokens_by_model_reconciler"></a> [tokens\_by\_model\_reconciler](#module\_tokens\_by\_model\_reconciler) | ../../widgets/xy | n/a |
+| <a name="module_tokens_by_reconciler"></a> [tokens\_by\_reconciler](#module\_tokens\_by\_reconciler) | ../../widgets/xy | n/a |
 | <a name="module_tokens_by_repo"></a> [tokens\_by\_repo](#module\_tokens\_by\_repo) | ../../widgets/xy | n/a |
+| <a name="module_tokens_per_turn"></a> [tokens\_per\_turn](#module\_tokens\_per\_turn) | ../../widgets/xy | n/a |
+| <a name="module_tool_calls_by_reconciler"></a> [tool\_calls\_by\_reconciler](#module\_tool\_calls\_by\_reconciler) | ../../widgets/xy | n/a |
+| <a name="module_tool_usage_breakdown"></a> [tool\_usage\_breakdown](#module\_tool\_usage\_breakdown) | ../../widgets/xy | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../width | n/a |
 
 ## Resources
