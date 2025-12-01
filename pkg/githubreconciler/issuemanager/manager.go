@@ -7,6 +7,8 @@ package issuemanager
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"text/template"
@@ -77,6 +79,7 @@ func WithMaxDesiredIssuesPerPath[T Comparable[T]](limit int) Option[T] {
 // New creates a new IM with the given identity and templates.
 // The templates are executed with data of type T when creating or updating issues.
 // Returns an error if titleTemplate or bodyTemplate is nil.
+// Returns an error if identity exceeds 20 characters (required for GitHub label length limits).
 // T must implement the Comparable interface to enable matching between existing and desired issues.
 func New[T Comparable[T]](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, opts ...Option[T]) (*IM[T], error) {
 	if titleTemplate == nil {
@@ -84,6 +87,9 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 	}
 	if bodyTemplate == nil {
 		return nil, errors.New("bodyTemplate cannot be nil")
+	}
+	if len(identity) > 20 {
+		return nil, fmt.Errorf("identity must be 20 characters or less, got %d characters", len(identity))
 	}
 
 	templateExecutor, err := internaltemplate.New[T](identity, "-issue-data", "issue")
@@ -104,6 +110,17 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 	}
 
 	return im, nil
+}
+
+// truncatePathForLabel returns the path if it's 30 characters or less,
+// otherwise returns the first 24 characters of the SHA256 hash of the path.
+// This ensures the pathLabel (identity:path) stays within GitHub's 50 character label limit.
+func truncatePathForLabel(path string) string {
+	if len(path) <= 30 {
+		return path
+	}
+	hash := sha256.Sum256([]byte(path))
+	return hex.EncodeToString(hash[:])[:24]
 }
 
 // NewSession creates a new IssueSession for the given resource.
@@ -128,8 +145,9 @@ func (im *IM[T]) NewSession(
 		repo = im.repo
 	}
 
-	// Create a label to identify issues for this path
-	pathLabel := im.identity + ":" + res.Path
+	// Truncate path if needed to stay within GitHub's 50 character label limit
+	truncatedPath := truncatePathForLabel(res.Path)
+	pathLabel := im.identity + ":" + truncatedPath
 
 	// Query for existing issues with this label
 	// Set a reasonable upper limit to prevent quota issues

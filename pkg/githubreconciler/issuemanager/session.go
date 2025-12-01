@@ -192,6 +192,7 @@ func (s *IssueSession[T]) needsUpdate(ctx context.Context, existing *existingIss
 
 // generateLabels generates labels from label templates by executing them with the provided data.
 // Returns an empty slice if there are no label templates or if all templates fail to execute.
+// Labels exceeding GitHub's 50 character limit are skipped with a warning.
 func (s *IssueSession[T]) generateLabels(ctx context.Context, data *T) []string {
 	if len(s.manager.labelTemplates) == 0 {
 		return nil
@@ -207,6 +208,10 @@ func (s *IssueSession[T]) generateLabels(ctx context.Context, data *T) []string 
 			continue
 		}
 		if label != "" {
+			if len(label) > 50 {
+				log.Warnf("Skipping label from template %q: length %d exceeds GitHub's 50 character limit", tmpl.Name(), len(label))
+				continue
+			}
 			labels = append(labels, label)
 		}
 	}

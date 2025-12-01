@@ -258,3 +258,90 @@ this is not valid JSON
 		t.Errorf("error should mention unmarshaling: %v", err)
 	}
 }
+
+func Test_identityLengthValidation(t *testing.T) {
+	titleTmpl := template.Must(template.New("title").Parse("{{.Foo}}"))
+	bodyTmpl := template.Must(template.New("body").Parse("{{.Bar}}"))
+
+	tests := []struct {
+		name      string
+		identity  string
+		shouldErr bool
+	}{{
+		name:      "identity within limit (20 chars)",
+		identity:  "12345678901234567890",
+		shouldErr: false,
+	}, {
+		name:      "identity exceeds limit (21 chars)",
+		identity:  "123456789012345678901",
+		shouldErr: true,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := New[testData](tt.identity, titleTmpl, bodyTmpl)
+			if tt.shouldErr && err == nil {
+				t.Error("New() should have failed for identity exceeding 20 characters")
+			}
+			if !tt.shouldErr && err != nil {
+				t.Errorf("New() should not have failed: %v", err)
+			}
+			if tt.shouldErr && err != nil && !strings.Contains(err.Error(), "20 characters or less") {
+				t.Errorf("error should mention character limit: %v", err)
+			}
+		})
+	}
+}
+
+func Test_truncatePathForLabel(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		wantLen  int
+		wantSame bool
+	}{{
+		name:     "path at 30 chars unchanged",
+		path:     "123456789012345678901234567890",
+		wantLen:  30,
+		wantSame: true,
+	}, {
+		name:     "very long path truncated",
+		path:     strings.Repeat("a", 100),
+		wantLen:  24,
+		wantSame: false,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := truncatePathForLabel(tt.path)
+			if len(result) != tt.wantLen {
+				t.Errorf("truncatePathForLabel() length = %d, want %d", len(result), tt.wantLen)
+			}
+			if tt.wantSame && result != tt.path {
+				t.Errorf("truncatePathForLabel() should not have changed path, got = %q, want = %q", result, tt.path)
+			}
+			if !tt.wantSame && result == tt.path {
+				t.Error("truncatePathForLabel() should have changed path but didn't")
+			}
+		})
+	}
+}
+
+func Test_truncatePathForLabel_consistency(t *testing.T) {
+	// Test that the same path always produces the same hash
+	path := "this/is/a/very/long/path/that/exceeds/thirty/characters"
+	result1 := truncatePathForLabel(path)
+	result2 := truncatePathForLabel(path)
+
+	if result1 != result2 {
+		t.Errorf("truncatePathForLabel() not consistent: first = %q, second = %q", result1, result2)
+	}
+
+	// Test that different paths produce different hashes
+	path2 := "this/is/a/different/very/long/path/that/exceeds/thirty/characters"
+	result3 := truncatePathForLabel(path2)
+
+	if result1 == result3 {
+		t.Error("truncatePathForLabel() should produce different results for different paths")
+	}
+}
