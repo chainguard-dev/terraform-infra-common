@@ -71,6 +71,13 @@ SPDX-License-Identifier: Apache-2.0
 // identify and describe the issue's purpose. The Equal method typically
 // compares identifying fields (like IDs) rather than all fields.
 //
+// # Identity Length Limit
+//
+// The identity parameter must not exceed 20 characters (maxIdentityLength).
+// This ensures that labels constructed as "identity:path" stay within GitHub's
+// 50 character label limit (maxGitHubLabelLength). When the combined length
+// exceeds 50, the path is replaced with a truncated SHA256 hash.
+//
 // # Usage Example
 //
 // Create an IssueManager with templates for title and body:

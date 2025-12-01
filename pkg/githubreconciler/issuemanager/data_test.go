@@ -307,16 +307,16 @@ func Test_constructPathLabel(t *testing.T) {
 		wantLen:      15, // "test:short/path"
 		wantContains: "test:short/path",
 	}, {
-		name:         "path at exactly 50 chars unchanged",
+		name:         "path at exactly maxGitHubLabelLength unchanged",
 		identity:     "test",
 		path:         "123456789012345678901234567890123456789012345",
-		wantLen:      50,
+		wantLen:      maxGitHubLabelLength,
 		wantContains: "test:123456789012345678901234567890123456789012345",
 	}, {
 		name:         "long path truncated with hash",
 		identity:     "test",
 		path:         strings.Repeat("a", 100),
-		wantLen:      50,
+		wantLen:      maxGitHubLabelLength,
 		wantContains: "test:",
 	}}
 
@@ -357,11 +357,11 @@ func Test_constructPathLabel_consistency(t *testing.T) {
 		t.Error("constructPathLabel() should produce different results for different paths")
 	}
 
-	// Verify both results are exactly 50 characters
-	if len(result1) != 50 {
-		t.Errorf("constructPathLabel() length = %d, want 50", len(result1))
+	// Verify both results are exactly maxGitHubLabelLength characters
+	if len(result1) != maxGitHubLabelLength {
+		t.Errorf("constructPathLabel() length = %d, want %d", len(result1), maxGitHubLabelLength)
 	}
-	if len(result3) != 50 {
-		t.Errorf("constructPathLabel() length = %d, want 50", len(result3))
+	if len(result3) != maxGitHubLabelLength {
+		t.Errorf("constructPathLabel() length = %d, want %d", len(result3), maxGitHubLabelLength)
 	}
 }
