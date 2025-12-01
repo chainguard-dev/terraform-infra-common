@@ -28,6 +28,15 @@ Dashboard section for monitoring AI agent metrics including evaluation results a
 - `prometheus.googleapis.com/genai_token_prompt_total/counter` (with labels: `reconciler_key`, `reconciler_type`, `repository`, `model`, `turn`, `commit_sha`)
 - `prometheus.googleapis.com/genai_tool_calls_total/counter` (with labels: `reconciler_key`, `reconciler_type`, `repository`, `tool`, `model`)
 
+#### Label Definitions
+- `reconciler_key`: Unique identifier for the reconciler instance (e.g., `pr:chainguard-dev/enterprise-packages/41025` or `path:chainguard-dev/mono/main/images/nginx`)
+- `reconciler_type`: Type of reconciler (`pr` or `path`)
+- `repository`: Repository name extracted from reconciler_key (e.g., `chainguard-dev/enterprise-packages`)
+- `model`: Model name (e.g., `claude-opus-4-1`, `gemini-3-pro-preview`)
+- `tool`: Tool name (e.g., `git_clone`, `git_commit`)
+- `turn`: Turn number, where 0 represents the first autofix attempt
+- `commit_sha`: Full 40-character git commit SHA
+
 ## Usage
 
 ```hcl
