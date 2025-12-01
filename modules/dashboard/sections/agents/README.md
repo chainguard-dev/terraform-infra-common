@@ -1,6 +1,6 @@
 # Agent Metrics Dashboard Section
 
-Dashboard section for monitoring AI agent metrics including evaluation results and reconciler-level token/tool usage.
+Dashboard section for monitoring AI agent metrics including evaluation results and reconciler-level token/tool usage. Can be used with any agent service that emits these metrics.
 
 ## Features
 
@@ -10,12 +10,14 @@ Dashboard section for monitoring AI agent metrics including evaluation results a
 - **Agent evaluation grade (P99)**: 99th percentile of evaluation grades
 
 ### Reconciler-Level Metrics (New)
+These metrics track agent behavior at the reconciler level, enabling cost tracking and performance analysis:
+
 - **Tokens used per reconciler**: Total tokens consumed grouped by reconciler instance
 - **Tokens by model per reconciler**: Token usage broken down by model for each reconciler
 - **Tool calls per reconciler**: Number of tool invocations grouped by reconciler and tool type
 - **Tool usage breakdown**: Distribution of tool calls across different tools and models
-- **Tokens per turn**: Token consumption across multiple agent turns
-- **Token usage by repository**: Repository-level token usage aggregation
+- **Tokens per turn**: Token consumption across multiple agent turns (useful for iterative agents)
+- **Token usage by repository**: Repository-level token usage aggregation for cross-team visibility
 
 ## Metrics Used
 
@@ -34,10 +36,12 @@ Dashboard section for monitoring AI agent metrics including evaluation results a
 - `repository`: Repository name extracted from reconciler_key (e.g., `chainguard-dev/enterprise-packages`)
 - `model`: Model name (e.g., `claude-opus-4-1`, `gemini-3-pro-preview`)
 - `tool`: Tool name (e.g., `git_clone`, `git_commit`)
-- `turn`: Turn number, where 0 represents the first autofix attempt
+- `turn`: Turn number, where 0 represents the first attempt (for multi-turn agents)
 - `commit_sha`: Full 40-character git commit SHA
 
 ## Usage
+
+Use this module with any agent service that emits `genai_token_*` and `genai_tool_calls_*` metrics. Customize the filter to target your specific agent service:
 
 ```hcl
 module "agents" {
@@ -45,11 +49,13 @@ module "agents" {
 
   title  = "Agent Metrics"
   filter = [
-    "metric.label.\"service_name\"=\"autofix\""
+    "metric.label.\"service_name\"=\"your-agent-service-name\""
   ]
   collapsed = false
 }
 ```
+
+Replace `your-agent-service-name` with the actual service name of your agent that emits these metrics.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
