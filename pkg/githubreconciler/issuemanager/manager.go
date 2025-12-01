@@ -112,15 +112,24 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 	return im, nil
 }
 
-// truncatePathForLabel returns the path if it's 30 characters or less,
-// otherwise returns the first 24 characters of the SHA256 hash of the path.
-// This ensures the pathLabel (identity:path) stays within GitHub's 50 character label limit.
-func truncatePathForLabel(path string) string {
-	if len(path) <= 30 {
-		return path
+// constructPathLabel constructs a label in the format "identity:path".
+// If the combined length of identity and path (plus colon separator) exceeds 50 characters,
+// it replaces the path with a SHA256 hash truncated to fill the remaining space up to the 50 char limit.
+func constructPathLabel(identity, path string) string {
+	label := identity + ":" + path
+
+	// The label fits within the limit
+	if len(label) <= 50 {
+		return label
 	}
+
+	// 50 (total) - len(identity) - 1 (colon) = remaining space for hash
+	hashLen := 50 - len(identity) - 1
+
+	// Generate SHA256 hash and truncate to fit
 	hash := sha256.Sum256([]byte(path))
-	return hex.EncodeToString(hash[:])[:24]
+	truncatedHash := hex.EncodeToString(hash[:])[:hashLen]
+	return identity + ":" + truncatedHash
 }
 
 // NewSession creates a new IssueSession for the given resource.
@@ -145,9 +154,7 @@ func (im *IM[T]) NewSession(
 		repo = im.repo
 	}
 
-	// Truncate path if needed to stay within GitHub's 50 character label limit
-	truncatedPath := truncatePathForLabel(res.Path)
-	pathLabel := im.identity + ":" + truncatedPath
+	pathLabel := constructPathLabel(im.identity, res.Path)
 
 	// Query for existing issues with this label
 	// Set a reasonable upper limit to prevent quota issues

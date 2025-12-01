@@ -293,55 +293,75 @@ func Test_identityLengthValidation(t *testing.T) {
 	}
 }
 
-func Test_truncatePathForLabel(t *testing.T) {
+func Test_constructPathLabel(t *testing.T) {
 	tests := []struct {
-		name     string
-		path     string
-		wantLen  int
-		wantSame bool
+		name         string
+		identity     string
+		path         string
+		wantLen      int
+		wantContains string
 	}{{
-		name:     "path at 30 chars unchanged",
-		path:     "123456789012345678901234567890",
-		wantLen:  30,
-		wantSame: true,
+		name:         "short path unchanged",
+		identity:     "test",
+		path:         "short/path",
+		wantLen:      15, // "test:short/path"
+		wantContains: "test:short/path",
 	}, {
-		name:     "very long path truncated",
-		path:     strings.Repeat("a", 100),
-		wantLen:  24,
-		wantSame: false,
+		name:         "path at exactly 50 chars unchanged",
+		identity:     "test",
+		path:         "123456789012345678901234567890123456789012345",
+		wantLen:      50,
+		wantContains: "test:123456789012345678901234567890123456789012345",
+	}, {
+		name:         "long path truncated with hash",
+		identity:     "test",
+		path:         strings.Repeat("a", 100),
+		wantLen:      50,
+		wantContains: "test:",
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := truncatePathForLabel(tt.path)
+			result := constructPathLabel(tt.identity, tt.path)
 			if len(result) != tt.wantLen {
-				t.Errorf("truncatePathForLabel() length = %d, want %d", len(result), tt.wantLen)
+				t.Errorf("constructPathLabel() length = %d, want %d", len(result), tt.wantLen)
 			}
-			if tt.wantSame && result != tt.path {
-				t.Errorf("truncatePathForLabel() should not have changed path, got = %q, want = %q", result, tt.path)
+			if !strings.Contains(result, tt.wantContains) {
+				t.Errorf("constructPathLabel() = %q, want to contain %q", result, tt.wantContains)
 			}
-			if !tt.wantSame && result == tt.path {
-				t.Error("truncatePathForLabel() should have changed path but didn't")
+			// Verify format is always identity:something
+			parts := strings.SplitN(result, ":", 2)
+			if len(parts) != 2 || parts[0] != tt.identity {
+				t.Errorf("constructPathLabel() = %q, want format %q:*", result, tt.identity)
 			}
 		})
 	}
 }
 
-func Test_truncatePathForLabel_consistency(t *testing.T) {
-	// Test that the same path always produces the same hash
-	path := "this/is/a/very/long/path/that/exceeds/thirty/characters"
-	result1 := truncatePathForLabel(path)
-	result2 := truncatePathForLabel(path)
+func Test_constructPathLabel_consistency(t *testing.T) {
+	identity := "test"
+	// Test that the same path always produces the same label
+	path := "this/is/a/very/long/path/that/exceeds/fifty/characters/when/combined/with/identity"
+	result1 := constructPathLabel(identity, path)
+	result2 := constructPathLabel(identity, path)
 
 	if result1 != result2 {
-		t.Errorf("truncatePathForLabel() not consistent: first = %q, second = %q", result1, result2)
+		t.Errorf("constructPathLabel() not consistent: first = %q, second = %q", result1, result2)
 	}
 
-	// Test that different paths produce different hashes
-	path2 := "this/is/a/different/very/long/path/that/exceeds/thirty/characters"
-	result3 := truncatePathForLabel(path2)
+	// Test that different paths produce different labels
+	path2 := "this/is/a/different/very/long/path/that/exceeds/fifty/characters/when/combined/with/identity"
+	result3 := constructPathLabel(identity, path2)
 
 	if result1 == result3 {
-		t.Error("truncatePathForLabel() should produce different results for different paths")
+		t.Error("constructPathLabel() should produce different results for different paths")
+	}
+
+	// Verify both results are exactly 50 characters
+	if len(result1) != 50 {
+		t.Errorf("constructPathLabel() length = %d, want 50", len(result1))
+	}
+	if len(result3) != 50 {
+		t.Errorf("constructPathLabel() length = %d, want 50", len(result3))
 	}
 }
