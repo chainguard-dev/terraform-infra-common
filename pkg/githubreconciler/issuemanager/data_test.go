@@ -258,3 +258,110 @@ this is not valid JSON
 		t.Errorf("error should mention unmarshaling: %v", err)
 	}
 }
+
+func Test_identityLengthValidation(t *testing.T) {
+	titleTmpl := template.Must(template.New("title").Parse("{{.Foo}}"))
+	bodyTmpl := template.Must(template.New("body").Parse("{{.Bar}}"))
+
+	tests := []struct {
+		name      string
+		identity  string
+		shouldErr bool
+	}{{
+		name:      "identity within limit (20 chars)",
+		identity:  "12345678901234567890",
+		shouldErr: false,
+	}, {
+		name:      "identity exceeds limit (21 chars)",
+		identity:  "123456789012345678901",
+		shouldErr: true,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := New[testData](tt.identity, titleTmpl, bodyTmpl)
+			if tt.shouldErr && err == nil {
+				t.Error("New() should have failed for identity exceeding 20 characters")
+			}
+			if !tt.shouldErr && err != nil {
+				t.Errorf("New() should not have failed: %v", err)
+			}
+			if tt.shouldErr && err != nil && !strings.Contains(err.Error(), "20 characters or less") {
+				t.Errorf("error should mention character limit: %v", err)
+			}
+		})
+	}
+}
+
+func Test_constructPathLabel(t *testing.T) {
+	tests := []struct {
+		name         string
+		identity     string
+		path         string
+		wantLen      int
+		wantContains string
+	}{{
+		name:         "short path unchanged",
+		identity:     "test",
+		path:         "short/path",
+		wantLen:      15, // "test:short/path"
+		wantContains: "test:short/path",
+	}, {
+		name:         "path at exactly maxGitHubLabelLength unchanged",
+		identity:     "test",
+		path:         "123456789012345678901234567890123456789012345",
+		wantLen:      maxGitHubLabelLength,
+		wantContains: "test:123456789012345678901234567890123456789012345",
+	}, {
+		name:         "long path truncated with hash",
+		identity:     "test",
+		path:         strings.Repeat("a", 100),
+		wantLen:      maxGitHubLabelLength,
+		wantContains: "test:",
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := constructPathLabel(tt.identity, tt.path)
+			if len(result) != tt.wantLen {
+				t.Errorf("constructPathLabel() length = %d, want %d", len(result), tt.wantLen)
+			}
+			if !strings.Contains(result, tt.wantContains) {
+				t.Errorf("constructPathLabel() = %q, want to contain %q", result, tt.wantContains)
+			}
+			// Verify format is always identity:something
+			parts := strings.SplitN(result, ":", 2)
+			if len(parts) != 2 || parts[0] != tt.identity {
+				t.Errorf("constructPathLabel() = %q, want format %q:*", result, tt.identity)
+			}
+		})
+	}
+}
+
+func Test_constructPathLabel_consistency(t *testing.T) {
+	identity := "test"
+	// Test that the same path always produces the same label
+	path := "this/is/a/very/long/path/that/exceeds/fifty/characters/when/combined/with/identity"
+	result1 := constructPathLabel(identity, path)
+	result2 := constructPathLabel(identity, path)
+
+	if result1 != result2 {
+		t.Errorf("constructPathLabel() not consistent: first = %q, second = %q", result1, result2)
+	}
+
+	// Test that different paths produce different labels
+	path2 := "this/is/a/different/very/long/path/that/exceeds/fifty/characters/when/combined/with/identity"
+	result3 := constructPathLabel(identity, path2)
+
+	if result1 == result3 {
+		t.Error("constructPathLabel() should produce different results for different paths")
+	}
+
+	// Verify both results are exactly maxGitHubLabelLength characters
+	if len(result1) != maxGitHubLabelLength {
+		t.Errorf("constructPathLabel() length = %d, want %d", len(result1), maxGitHubLabelLength)
+	}
+	if len(result3) != maxGitHubLabelLength {
+		t.Errorf("constructPathLabel() length = %d, want %d", len(result3), maxGitHubLabelLength)
+	}
+}

@@ -7,6 +7,8 @@ package issuemanager
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"text/template"
@@ -15,6 +17,15 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
 	internaltemplate "github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler/internal/template"
 	"github.com/google/go-github/v75/github"
+)
+
+const (
+	// maxGitHubLabelLength is the maximum length for a GitHub label.
+	maxGitHubLabelLength = 50
+
+	// maxIdentityLength is the maximum allowed length for an identity.
+	// Ensures the label (identity:path/hash) stays within GitHub's limit.
+	maxIdentityLength = 20
 )
 
 // Comparable is the interface that types must implement to be used with IssueManager.
@@ -77,6 +88,8 @@ func WithMaxDesiredIssuesPerPath[T Comparable[T]](limit int) Option[T] {
 // New creates a new IM with the given identity and templates.
 // The templates are executed with data of type T when creating or updating issues.
 // Returns an error if titleTemplate or bodyTemplate is nil.
+// Returns an error if identity exceeds maxIdentityLength (20 characters).
+// This limit ensures labels (identity:path) stay within GitHub's maxGitHubLabelLength (50 characters).
 // T must implement the Comparable interface to enable matching between existing and desired issues.
 func New[T Comparable[T]](identity string, titleTemplate *template.Template, bodyTemplate *template.Template, opts ...Option[T]) (*IM[T], error) {
 	if titleTemplate == nil {
@@ -84,6 +97,9 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 	}
 	if bodyTemplate == nil {
 		return nil, errors.New("bodyTemplate cannot be nil")
+	}
+	if len(identity) > maxIdentityLength {
+		return nil, fmt.Errorf("identity must be %d characters or less, got %d characters", maxIdentityLength, len(identity))
 	}
 
 	templateExecutor, err := internaltemplate.New[T](identity, "-issue-data", "issue")
@@ -104,6 +120,26 @@ func New[T Comparable[T]](identity string, titleTemplate *template.Template, bod
 	}
 
 	return im, nil
+}
+
+// constructPathLabel constructs a label in the format "identity:path".
+// If the combined length of identity and path (plus colon separator) exceeds maxGitHubLabelLength,
+// it replaces the path with a SHA256 hash truncated to fill the remaining space up to the limit.
+func constructPathLabel(identity, path string) string {
+	label := identity + ":" + path
+
+	// The label fits within the limit
+	if len(label) <= maxGitHubLabelLength {
+		return label
+	}
+
+	// maxGitHubLabelLength (total) - len(identity) - 1 (colon) = remaining space for hash
+	hashLen := maxGitHubLabelLength - len(identity) - 1
+
+	// Generate SHA256 hash and truncate to fit
+	hash := sha256.Sum256([]byte(path))
+	truncatedHash := hex.EncodeToString(hash[:])[:hashLen]
+	return identity + ":" + truncatedHash
 }
 
 // NewSession creates a new IssueSession for the given resource.
@@ -128,8 +164,7 @@ func (im *IM[T]) NewSession(
 		repo = im.repo
 	}
 
-	// Create a label to identify issues for this path
-	pathLabel := im.identity + ":" + res.Path
+	pathLabel := constructPathLabel(im.identity, res.Path)
 
 	// Query for existing issues with this label
 	// Set a reasonable upper limit to prevent quota issues
