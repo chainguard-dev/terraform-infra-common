@@ -1,0 +1,41 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Action Lint
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+permissions: {}
+
+jobs:
+
+  action-lint:
+    name: Action lint
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Find yamls
+        id: get_yamls
+        run: |
+          yamls="$(find .github/workflows -name "*.y*ml" | grep -v dependabot. | xargs echo)"
+          echo "files=${yamls}" >> "$GITHUB_OUTPUT"
+
+      - name: Action lint
+        uses: reviewdog/action-actionlint@83e4ed25b168066ad8f62f5afbb29ebd8641d982 # v1.69.1
+        with:
+          actionlint_flags: ${{ steps.get_yamls.outputs.files }}

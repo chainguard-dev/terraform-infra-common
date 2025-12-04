@@ -1,0 +1,38 @@
+name: Validate, Lint and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions: {}
+
+jobs:
+  lint-and-validate:
+    name: "Terraform fmt and validate"
+
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - uses: chainguard-dev/actions/setup-terraform@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+        with:
+          terraform-version-file: './.terraform-version'
+          terraform-wrapper: false
+
+      - run: terraform fmt -check
+
+      - run: |
+          terraform init
+          terraform validate
