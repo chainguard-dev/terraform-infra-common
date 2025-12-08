@@ -87,8 +87,8 @@ func (r *Resource) String() string {
 //
 //nolint:gosec // Using weak random for jitter is fine, not cryptographic
 func addJitter(d time.Duration) time.Duration {
-	// Add jitter between 0% and +10%
-	jitter := time.Duration(rand.Int63n(int64(d / 10)))
+	// Add jitter between 0% and +100%
+	jitter := time.Duration(rand.Int63n(int64(d)))
 	return d + jitter
 }
 
