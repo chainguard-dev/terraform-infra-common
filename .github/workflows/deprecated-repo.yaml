@@ -67,3 +67,9 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
+
+      - name: Block PR
+        shell: bash
+        run: |
+          echo "::error::This repository is deprecated and new PRs are blocked."
+          exit 1
