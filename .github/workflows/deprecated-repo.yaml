@@ -5,9 +5,6 @@ name: Deprecate Repo Notice
 
 on:
   pull_request:
-    types:
-      # run this only when opening a PR, not every time
-      - opened
     branches:
       - "main"
 
