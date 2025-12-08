@@ -1,0 +1,32 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Do Not Submit
+
+on:
+  pull_request:
+    branches: [ 'main', 'release-*' ]
+
+permissions: {}
+
+jobs:
+
+  donotsubmit:
+    name: Do Not Submit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Do Not Submit
+        uses: chainguard-dev/actions/donotsubmit@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
