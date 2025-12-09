@@ -268,7 +268,7 @@ func TestReconciler_RateLimitHandling(t *testing.T) {
 				if !ok {
 					t.Errorf("Expected requeue error, got = %v", err)
 				}
-				// Jitter adds 0% to +10% to the base delay
+				// Jitter adds 0% to +100% to the base delay
 				minDelay := tt.wantRequeueAfter
 				maxDelay := tt.wantRequeueAfter + (tt.wantRequeueAfter)
 				if delay < minDelay || delay > maxDelay {
