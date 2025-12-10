@@ -2,9 +2,6 @@ module github.com/chainguard-dev/terraform-infra-common
 
 go 1.24.6
 
-// Ensure changes to SDK are tested before release is cut
-replace chainguard.dev/sdk => ../../sdk
-
 require (
 	chainguard.dev/go-grpc-kit v0.17.15
 	chainguard.dev/sdk v0.1.44
