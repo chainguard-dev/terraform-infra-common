@@ -1,3 +1,6 @@
+# Copyright 2025 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 issuer: https://token.actions.githubusercontent.com
 subject: repo:chainguard-dev/infra-images:pull_request
 claim_pattern:

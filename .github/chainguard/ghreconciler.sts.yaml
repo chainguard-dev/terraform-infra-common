@@ -1,3 +1,6 @@
+# Copyright 2025 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 issuer: https://accounts.google.com
 # ghreconciler@mattmoor-chainguard.iam.gserviceaccount.com
 # autofix@mattmoor-chainguard.iam.gserviceaccount.com
