@@ -1,0 +1,24 @@
+# Copyright 2025 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+spec:
+  authorities:
+    - keyless:
+        # allow commits signed by users using GitHub or Google OIDC
+        identities:
+          - issuer: https://accounts.google.com
+          - issuer: https://github.com/login/oauth
+          - issuer: https://token.actions.githubusercontent.com
+            subject: https://github.com/chainguard-dev/terraform-infra-common/.github/workflows/digest-bot.yaml@refs/heads/main
+    - keyless:
+        url: https://fulcio.sigstore.dev
+        identities:
+          - subjectRegExp: .+@chainguard.dev$
+            issuer: https://accounts.google.com
+          - subject: https://github.com/chainguard-dev/mono/.github/workflows/export-public-modules.yaml@refs/heads/main
+            issuer: https://token.actions.githubusercontent.com
+      ctlog:
+        url: https://rekor.sigstore.dev
+    - key:
+        # allow commits signed by GitHub, e.g. the UI
+        kms: https://github.com/web-flow.gpg
