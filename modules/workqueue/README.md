@@ -25,6 +25,9 @@ module "workqueue" {
   // Default is 0 (unlimited retries)
   max-retry = 5
 
+  // Optionally disable DLQ alerting while phasing in a queue
+  enable_dead_letter_alerting = true
+
   // It is recommended that folks use a "global" scoped workqueue to get the
   // most accurate deduplication and concurrency control.  The "regional" scope
   // offers regionalized deduplication and concurrency control, but cannot
@@ -122,6 +125,7 @@ The workqueue system supports a maximum retry limit for tasks through the `max-r
 
 - Setting `max-retry = 0` (the default) means unlimited retries
 - Setting `max-retry = 5` will move a task to the dead letter queue after 5 failed attempts
+- Setting `enable_dead_letter_alerting = false` temporarily suppresses the DLQ alert while you phase in a queue
 
 Tasks in the dead letter queue are stored with their original metadata plus:
 - A timestamp in the key name to prevent collisions
@@ -137,6 +141,9 @@ module "workqueue" {
 
   // Maximum retry limit (5 attempts before moving to dead letter queue)
   max-retry = 5
+
+  // Optional: disable DLQ alerting during phased rollout
+  enable_dead_letter_alerting = false
 }
 ```
 
@@ -170,6 +177,7 @@ No requirements.
 |------|------|
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
 | [google_cloud_scheduler_job.cron](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
+| [google_monitoring_alert_policy.dead_letter_queue](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_pubsub_subscription.global-this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_topic.global-object-change-notifications](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [google_pubsub_topic_iam_binding.global-gcs-publishes-to-topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
@@ -196,6 +204,7 @@ No requirements.
 | <a name="input_concurrent-work"></a> [concurrent-work](#input\_concurrent-work) | The amount of concurrent work to dispatch at a given time. | `number` | n/a | yes |
 | <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | Set to false for a region in order to use instance-based billing. Defaults to true. | `map(map(bool))` | <pre>{<br/>  "dispatcher": {},<br/>  "receiver": {}<br/>}</pre> | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
+| <a name="input_enable_dead_letter_alerting"></a> [enable\_dead\_letter\_alerting](#input\_enable\_dead\_letter\_alerting) | Whether to enable alerting for dead-lettered keys. | `bool` | `true` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the workqueue resources. | `map(string)` | `{}` | no |
 | <a name="input_max-retry"></a> [max-retry](#input\_max-retry) | The maximum number of retry attempts before a task is moved to the dead letter queue. Set this to 0 to have unlimited retries. | `number` | `100` | no |
 | <a name="input_multi_regional_location"></a> [multi\_regional\_location](#input\_multi\_regional\_location) | The multi-regional location for the global workqueue bucket (e.g., 'US', 'EU', 'ASIA'). Only used when scope='global'. | `string` | `"US"` | no |
