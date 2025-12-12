@@ -52,3 +52,11 @@ All modules support both `team` and `squad` variables for backward compatibility
 - `squad` is deprecated but still supported
 - `team` takes precedence if both are provided
 - If neither is specified, both labels default to "unknown"
+
+## Submitting Changes
+
+These modules are canonically located within a private Chainguard repository, and are continuously pushed from there to this repository.
+
+If you would like to submit a PR, please do make one against this repository.
+After the review process, someone at Chainguard will merge it into our internal repository,
+and the change will then be pushed here.

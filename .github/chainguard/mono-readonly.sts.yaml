@@ -1,0 +1,10 @@
+# Copyright 2025 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: repo:chainguard-dev/mono:pull_request
+claim_pattern:
+  job_workflow_ref: chainguard-dev/mono/.github/workflows/export-public-modules.yaml@.*
+
+permissions:
+  contents: read

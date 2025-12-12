@@ -71,7 +71,7 @@ module "tokens_by_reconciler" {
   title  = "Tokens used per reconciler (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_token_prompt_total/counter\"",
-    "metric.label.\"reconciler_key\"!=\"\"",  # Exclude metrics with empty reconciler_key or "unknown" fallback
+    "metric.label.\"reconciler_key\"!=\"\"", # Exclude metrics with empty reconciler_key or "unknown" fallback
   ])
 
   group_by_fields = [
@@ -87,7 +87,7 @@ module "tokens_by_model_reconciler" {
   title  = "Tokens by model per reconciler (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_token_prompt_total/counter\"",
-    "metric.label.\"reconciler_key\"!=\"\"",  # Exclude metrics with empty reconciler_key or "unknown" fallback
+    "metric.label.\"reconciler_key\"!=\"\"", # Exclude metrics with empty reconciler_key or "unknown" fallback
   ])
 
   group_by_fields = [
@@ -104,7 +104,7 @@ module "tool_calls_by_reconciler" {
   title  = "Tool calls per reconciler (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_tool_calls_total/counter\"",
-    "metric.label.\"reconciler_key\"!=\"\"",  # Exclude metrics with empty reconciler_key or "unknown" fallback
+    "metric.label.\"reconciler_key\"!=\"\"", # Exclude metrics with empty reconciler_key or "unknown" fallback
   ])
 
   group_by_fields = [
