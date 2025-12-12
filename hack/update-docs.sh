@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Copyright 2025 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 set -o errexit
 
 # Find all directories containing .tf files
