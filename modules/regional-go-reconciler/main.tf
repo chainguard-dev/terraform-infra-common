@@ -18,9 +18,10 @@ module "workqueue" {
   name       = "${var.name}-wq"
   regions    = var.regions
 
-  concurrent-work = var.concurrent-work
-  batch-size      = var.batch-size
-  max-retry       = var.max-retry
+  concurrent-work             = var.concurrent-work
+  batch-size                  = var.batch-size
+  max-retry                   = var.max-retry
+  enable_dead_letter_alerting = var.enable_dead_letter_alerting
 
   reconciler-service = {
     name = "${var.name}-rec"

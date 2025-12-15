@@ -31,6 +31,12 @@ variable "max-retry" {
   default     = 100
 }
 
+variable "enable_dead_letter_alerting" {
+  description = "Whether to enable alerting for dead-lettered keys."
+  type        = bool
+  default     = true
+}
+
 variable "reconciler-service" {
   description = "The name of the reconciler service that the workqueue will dispatch work to."
   type = object({
