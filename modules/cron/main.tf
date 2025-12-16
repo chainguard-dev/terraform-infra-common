@@ -210,6 +210,9 @@ resource "google_cloud_run_v2_job" "job" {
   lifecycle {
     ignore_changes = [
       launch_stage,
+      # GCP manages job container names automatically
+      template[0].template[0].containers[0].name,
+      template[0].template[0].containers[1].name,
     ]
   }
 }

@@ -55,7 +55,9 @@ resource "google_pubsub_topic" "global-object-change-notifications" {
   }
 }
 
-data "google_storage_project_service_account" "gcs_account" {}
+data "google_storage_project_service_account" "gcs_account" {
+  project = var.project_id
+}
 
 resource "google_pubsub_topic_iam_binding" "global-gcs-publishes-to-topic" {
   for_each = var.regions

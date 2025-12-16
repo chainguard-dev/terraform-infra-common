@@ -344,6 +344,13 @@ resource "google_cloud_run_v2_service" "this" {
   lifecycle {
     ignore_changes = [
       launch_stage,
+      # GCP manages container names automatically
+      # Supporting up to 5 total containers (main + sidecars + otel)
+      template[0].containers[0].name,
+      template[0].containers[1].name,
+      template[0].containers[2].name,
+      template[0].containers[3].name,
+      template[0].containers[4].name,
     ]
   }
 }

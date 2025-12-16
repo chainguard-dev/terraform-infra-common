@@ -104,6 +104,13 @@ resource "google_bigquery_data_transfer_config" "import-job" {
     delete_source_files             = false
     ignore_unknown_values           = var.ignore_unknown_values
   }
+
+  lifecycle {
+    ignore_changes = [
+      # GCP manages the schedule_options start_time/end_time automatically
+      schedule_options,
+    ]
+  }
 }
 
 // Alert when no successful run in 30min, it should be successful every 15min
