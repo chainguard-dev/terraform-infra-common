@@ -22,6 +22,8 @@ module "webhook-secret" {
   authorized-adder = var.secret_version_adder
 
   notification-channels = var.notification_channels
+
+  team = var.team
 }
 
 module "this" {

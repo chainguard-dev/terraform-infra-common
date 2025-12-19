@@ -172,7 +172,6 @@ variable "security-policy" {
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = ""
 }
 
 variable "deletion_protection" {

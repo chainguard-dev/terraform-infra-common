@@ -113,7 +113,7 @@ No modules.
 | <a name="input_regions"></a> [regions](#input\_regions) | The set of regions containing backends for the load balancer (regions must be added here before they can be added as serving regions). | `list` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
 | <a name="input_security-policy"></a> [security-policy](#input\_security-policy) | The security policy associated with the backend service. | `string` | `null` | no |
 | <a name="input_serving_regions"></a> [serving\_regions](#input\_serving\_regions) | The set of regions with backends suitable for serving traffic from the load balancer (regions must be removed from here before they can be removed from regions). | `list` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
-| <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | n/a | yes |
 
 ## Outputs
 

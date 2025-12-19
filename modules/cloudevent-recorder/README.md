@@ -156,7 +156,7 @@ No requirements.
 | <a name="input_retention-period"></a> [retention-period](#input\_retention-period) | The number of days to retain data in BigQuery. | `number` | n/a | yes |
 | <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    max_instance_request_concurrency = optional(number)<br/>  })</pre> | `{}` | no |
 | <a name="input_split_triggers"></a> [split\_triggers](#input\_split\_triggers) | Opt-in flag to split into per-trigger dashboards. Helpful when hitting widget limits | `bool` | `false` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_types"></a> [types](#input\_types) | A map from cloudevent types to the BigQuery schema associated with them, as well as an alert threshold and a list of notification channels (for subscription-level issues). | <pre>map(object({<br/>    schema                = string<br/>    alert_threshold       = optional(number, 50000)<br/>    notification_channels = optional(list(string), [])<br/>    partition_field       = optional(string)<br/>    clustering            = optional(list(string), null)<br/>  }))</pre> | n/a | yes |
 
 ## Outputs

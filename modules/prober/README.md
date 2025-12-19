@@ -123,7 +123,7 @@ No requirements.
 | <a name="input_selected_regions"></a> [selected\_regions](#input\_selected\_regions) | List of uptime check region, minimum 3. Valid [USA (has 3 regions), EUROPE, SOUTH\_AMERICA, ASIA\_PACIFIC, USA\_OREGON, USA\_IOWA, USA\_VIRGINIA] | `list(string)` | `null` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as. | `string` | n/a | yes |
 | <a name="input_service_timeout_seconds"></a> [service\_timeout\_seconds](#input\_service\_timeout\_seconds) | The timeout set on the cloud run service routing the uptime check request. | `number` | `"300"` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. Supported values 1-60s | `string` | `"60s"` | no |
 | <a name="input_uptime_alert_duration"></a> [uptime\_alert\_duration](#input\_uptime\_alert\_duration) | duration for uptime alert policy. | `string` | `"600s"` | no |
 | <a name="input_working_dir"></a> [working\_dir](#input\_working\_dir) | The working directory that contains the importpath. | `string` | n/a | yes |
