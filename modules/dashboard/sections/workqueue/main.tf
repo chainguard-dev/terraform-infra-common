@@ -64,8 +64,8 @@ module "work-queued" {
   ])
   group_by_fields = null
   plot_type       = "STACKED_AREA"
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MAX"
+  primary_align   = "ALIGN_MIN"
+  primary_reduce  = "REDUCE_MIN"
 }
 
 module "work-added" {
