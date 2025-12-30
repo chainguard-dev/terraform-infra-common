@@ -120,6 +120,37 @@ var (
 		},
 		[]string{"service_name", "revision_name", "priority_class", "status"},
 	)
+	mLeaseAge = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "workqueue_lease_age_seconds",
+			Help:    "The age of active (non-expired) leases for in-progress keys. Measured as time since the key moved to in-progress state.",
+			Buckets: []float64{30, 60, 120, 180, 240, 300 /* 5min */, 600 /* 10min */, 900 /* 15min */, 1200 /* 20min */, 1800 /* 30min */, 3600 /* 1h */, 7200 /* 2h */},
+		},
+		[]string{"service_name", "revision_name"},
+	)
+	mExpiredLeases = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "workqueue_expired_leases_total",
+			Help: "The total number of times leases have expired and keys were returned to the queue.",
+		},
+		[]string{"service_name", "revision_name"},
+	)
+	mTimeUntilEligible = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "workqueue_time_until_eligible_seconds",
+			Help:    "The time remaining until a queued key becomes eligible to be picked up (based on not-before timestamp). Zero or negative values indicate immediately eligible keys.",
+			Buckets: []float64{0, 30, 60, 120, 300 /* 5min */, 600 /* 10min */, 1800 /* 30min */, 3600 /* 1h */, 7200 /* 2h */, 14400 /* 4h */, 28800 /* 8h */, 43200 /* 12h */, 86400 /* 1d */, 172800 /* 2d */, 259200 /* 3d */, 345600 /* 4d */, 432000 /* 5d */, 518400 /* 6d */, 604800 /* 7d */},
+		},
+		[]string{"service_name", "revision_name"},
+	)
+	mEnumerateLatency = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "workqueue_enumerate_latency_seconds",
+			Help:    "The duration of Enumerate() calls to list and process GCS objects.",
+			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 20, 30, 45, 60},
+		},
+		[]string{"service_name", "revision_name"},
+	)
 )
 
 // priorityClass converts a priority value to a priority class label.

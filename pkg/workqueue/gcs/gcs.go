@@ -166,6 +166,16 @@ func checkPreconditionFailedOk(err error) (bool, error) {
 
 // Enumerate implements workqueue.Interface.
 func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
+	labels := prometheus.Labels{
+		"service_name":  env.KnativeServiceName,
+		"revision_name": env.KnativeRevisionName,
+	}
+
+	start := time.Now()
+	defer func() {
+		mEnumerateLatency.With(labels).Observe(time.Since(start).Seconds())
+	}()
+
 	iter := w.client.Objects(ctx, nil)
 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
@@ -219,22 +229,38 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 
 		switch {
 		case strings.HasPrefix(objAttrs.Name, inProgressPrefix):
-			wip = append(wip, &inProgressKey{
+			ipk := &inProgressKey{
 				client:   w.client,
 				attrs:    objAttrs,
 				priority: priority,
-			})
+			}
+			wip = append(wip, ipk)
+
+			// Record lease age for active (non-orphaned) keys
+			if !ipk.IsOrphaned() {
+				leaseAge := time.Since(objAttrs.Created)
+				mLeaseAge.With(labels).Observe(leaseAge.Seconds())
+			}
 
 		case strings.HasPrefix(objAttrs.Name, queuedPrefix):
-			if nbf, ok := objAttrs.Metadata[notBeforeMetadataKey]; ok && nbf != "" {
+			// Calculate time until eligible for all queued keys
+			timeUntilEligible := 0.0 // Default: immediately eligible
+			if nbf, ok := objAttrs.Metadata[notBeforeMetadataKey]; ok && nbf != "" && nbf != noNotBefore {
 				if notBefore, err := time.Parse(time.RFC3339, nbf); err != nil {
 					clog.WarnContextf(ctx, "Failed to parse not-before: %v", err)
-				} else if time.Now().UTC().Before(notBefore) {
-					clog.DebugContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
-					notbefore++
-					continue
+				} else {
+					timeUntilEligible = notBefore.Sub(time.Now().UTC()).Seconds()
+					if time.Now().UTC().Before(notBefore) {
+						clog.DebugContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
+						notbefore++
+						// Record metric before skipping
+						mTimeUntilEligible.With(labels).Observe(timeUntilEligible)
+						continue
+					}
 				}
 			}
+			// Record metric for immediately eligible keys
+			mTimeUntilEligible.With(labels).Observe(timeUntilEligible)
 
 			qd = append(qd, &queuedKey{
 				client:   w.client,
@@ -268,10 +294,6 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	}
 
 	// Set all metrics
-	labels := prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
-	}
 	mInProgressKeys.With(labels).Set(float64(len(wip)))
 	mQueuedKeys.With(labels).Set(float64(queued))
 	mNotBeforeKeys.With(labels).Set(float64(notbefore))
@@ -432,6 +454,13 @@ func (o *inProgressKey) GetAttempts() int {
 
 // Requeue implements workqueue.InProgressKey.
 func (o *inProgressKey) Requeue(ctx context.Context) error {
+	// Check if this key is orphaned (lease expired) before requeueing
+	if o.IsOrphaned() {
+		mExpiredLeases.With(prometheus.Labels{
+			"service_name":  env.KnativeServiceName,
+			"revision_name": env.KnativeRevisionName,
+		}).Add(1)
+	}
 	// Use RequeueWithOptions with an empty options struct to get default behavior
 	return o.RequeueWithOptions(ctx, workqueue.Options{})
 }
