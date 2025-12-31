@@ -42,6 +42,9 @@ module "subscriber" {
       env = [{
         name  = "EXTENSION_KEY"
         value = var.extension_key
+        }, {
+        name  = "PRIORITY"
+        value = tostring(var.priority)
       }]
       regional-env = [
         {

@@ -111,3 +111,9 @@ variable "deletion_protection" {
   type        = bool
   default     = true
 }
+
+variable "priority" {
+  description = "Priority for workqueue items (higher values = higher priority)"
+  type        = number
+  default     = 0
+}
