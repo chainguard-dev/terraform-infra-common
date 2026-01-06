@@ -1,12 +1,12 @@
 # Alert policies for monitoring log ingestion health
 resource "google_monitoring_alert_policy" "log_ingestion" {
-  for_each = var.enable_monitoring ? var.tables : {}
+  for_each = var.enable_monitoring ? var.sinks : {}
 
   project      = var.project_id
   display_name = "${var.name} - ${each.key} - No logs ingested"
 
   documentation {
-    content = "No logs have been ingested to table ${each.key} in the last ${var.alert_threshold_minutes} minutes."
+    content = "No logs have been ingested to sink ${each.key} in the last ${var.alert_threshold_minutes} minutes."
   }
 
   combiner = "OR"

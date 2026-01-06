@@ -3,16 +3,16 @@ output "dataset_id" {
   value       = google_bigquery_dataset.this.dataset_id
 }
 
-output "table_ids" {
-  description = "Map of table names to their IDs"
+output "sink_names" {
+  description = "Map of sink keys to their log sink names"
   value = {
-    for k, v in google_bigquery_table.tables : k => v.table_id
+    for k, v in google_logging_project_sink.sinks : k => v.name
   }
 }
 
-output "sink_names" {
-  description = "Map of table names to their log sink names"
+output "sink_writer_identities" {
+  description = "Map of sink keys to their writer identity service accounts"
   value = {
-    for k, v in google_logging_project_sink.sinks : k => v.name
+    for k, v in google_logging_project_sink.sinks : k => v.writer_identity
   }
 }

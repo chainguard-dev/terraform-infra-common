@@ -27,6 +27,10 @@ resource "google_bigquery_dataset" "this" {
 
   description = var.dataset_description
 
+  # Auto-created partitioned tables will have partitions expire after this duration
+  # Only applies when use_partitioned_tables is true
+  default_partition_expiration_ms = (var.retention_days) * 24 * 60 * 60 * 1000
+
   delete_contents_on_destroy = var.delete_contents_on_destroy
 
   labels = local.merged_labels
