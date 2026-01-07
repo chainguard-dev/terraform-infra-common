@@ -26,38 +26,29 @@ variable "delete_contents_on_destroy" {
   default     = false
 }
 
-variable "partition_expiration_days" {
-  description = "Global retention period in days for all table partitions"
+variable "retention_days" {
+  description = "The number of days to retain data in BigQuery. Partitions older than this will be automatically deleted. Only applies when use_partitioned_tables is true."
   type        = number
   default     = 30
 }
 
-variable "tables" {
+variable "sinks" {
   description = <<-EOT
-    Map of tables to create. Each key is the table name, and the value is an object with:
-    - schema: JSON-encoded BigQuery schema
-    - partition_field: Field name for time partitioning (required)
-    - clustering_fields: List of fields for clustering (optional)
-    - log_filter: Cloud Logging filter expression to route logs to this table
-    - description: Table description (optional)
+    Map of log sinks to create. Each key is the sink name suffix, and the value is an object with:
+    - log_filter: Cloud Logging filter expression to route logs
+    - description: Sink description (optional)
+
+    Note: Tables are auto-created by Cloud Logging based on log names.
+    See: https://cloud.google.com/logging/docs/export/bigquery
   EOT
   type = map(object({
-    schema            = string
-    partition_field   = string
-    clustering_fields = optional(list(string), null)
-    log_filter        = string
-    description       = optional(string, "")
+    log_filter  = string
+    description = optional(string, "")
   }))
 }
 
-variable "deletion_protection" {
-  description = "Enable deletion protection on tables"
-  type        = bool
-  default     = true
-}
-
 variable "use_partitioned_tables" {
-  description = "Whether to use partitioned tables in log sink destinations"
+  description = "Whether to use partitioned tables in log sink destinations. Must be true for partition expiration to work."
   type        = bool
   default     = true
 }
