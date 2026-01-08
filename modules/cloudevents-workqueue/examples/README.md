@@ -29,6 +29,7 @@ No resources.
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | Notification channels for alerts | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | GCP Project ID | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | Regions to deploy in | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources | `string` | n/a | yes |
 | <a name="input_workqueue_dispatcher_name"></a> [workqueue\_dispatcher\_name](#input\_workqueue\_dispatcher\_name) | Name of the workqueue dispatcher service | `string` | n/a | yes |
 
 ## Outputs

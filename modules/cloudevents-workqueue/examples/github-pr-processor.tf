@@ -9,6 +9,7 @@ module "github_pr_processor" {
   project_id            = var.project_id
   name                  = "github-pr-processor"
   regions               = var.regions
+  team                  = var.team
   notification_channels = var.notification_channels
 
   # Subscribe to events from the broker
@@ -41,6 +42,7 @@ module "github_issue_processor" {
   project_id            = var.project_id
   name                  = "github-issue-processor"
   regions               = var.regions
+  team                  = var.team
   notification_channels = var.notification_channels
 
   broker = var.broker
@@ -67,6 +69,7 @@ module "github_merged_pr_processor" {
   project_id            = var.project_id
   name                  = "github-merged-pr-processor"
   regions               = var.regions
+  team                  = var.team
   notification_channels = var.notification_channels
 
   broker = var.broker
@@ -94,6 +97,7 @@ module "github_specific_repo_processor" {
   project_id            = var.project_id
   name                  = "github-myrepo-processor"
   regions               = var.regions
+  team                  = var.team
   notification_channels = var.notification_channels
 
   broker = var.broker
@@ -132,6 +136,7 @@ module "github_ci_processor" {
   project_id            = var.project_id
   name                  = "github-ci-processor"
   regions               = var.regions
+  team                  = var.team
   notification_channels = var.notification_channels
 
   broker = var.broker
@@ -152,6 +157,11 @@ module "github_ci_processor" {
 # Example variables
 variable "project_id" {
   description = "GCP Project ID"
+  type        = string
+}
+
+variable "team" {
+  description = "Team label to apply to resources"
   type        = string
 }
 
