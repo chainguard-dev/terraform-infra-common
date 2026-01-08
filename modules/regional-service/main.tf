@@ -264,24 +264,27 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
     }
-    containers {
-      image = var.otel_collector_image
-      // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
-      args = ["--config=env:OTEL_CONFIG"]
-      env {
-        name = "OTEL_CONFIG"
-        value = replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
-          "REPLACE_ME_TEAM", var.team),
-          "REPLACE_ME_PROJECT_ID", var.project_id),
-        "REPLACE_ME_SERVICE", var.name)
-      }
+    dynamic "containers" {
+      for_each = var.enable_otel_sidecar ? [1] : []
+      content {
+        image = var.otel_collector_image
+        // config via env is an option; https://pkg.go.dev/go.opentelemetry.io/collector/service#section-readme
+        args = ["--config=env:OTEL_CONFIG"]
+        env {
+          name = "OTEL_CONFIG"
+          value = replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
+            "REPLACE_ME_TEAM", var.team),
+            "REPLACE_ME_PROJECT_ID", var.project_id),
+          "REPLACE_ME_SERVICE", var.name)
+        }
 
-      dynamic "resources" {
-        for_each = var.otel_resources != null ? { "" : var.otel_resources } : {}
-        content {
-          limits            = resources.value.limits
-          cpu_idle          = resources.value.cpu_idle
-          startup_cpu_boost = resources.value.startup_cpu_boost
+        dynamic "resources" {
+          for_each = var.otel_resources != null ? { "" : var.otel_resources } : {}
+          content {
+            limits            = resources.value.limits
+            cpu_idle          = resources.value.cpu_idle
+            startup_cpu_boost = resources.value.startup_cpu_boost
+          }
         }
       }
     }

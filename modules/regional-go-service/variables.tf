@@ -212,11 +212,15 @@ variable "labels" {
   default     = {}
 }
 
-
-
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
+}
+
+variable "enable_otel_sidecar" {
+  description = "Enable otel sidecar for metrics. Enabled by default, should only be disabled for exceptional cases."
+  type        = bool
+  default     = true
 }
 
 variable "otel_collector_image" {

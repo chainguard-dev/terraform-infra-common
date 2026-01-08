@@ -54,7 +54,10 @@ module "this" {
   volumes          = var.volumes
   regional-volumes = var.regional-volumes
   enable_profiler  = var.enable_profiler
-  otel_resources   = var.otel_resources
+
+  enable_otel_sidecar  = var.enable_otel_sidecar
+  otel_collector_image = var.otel_collector_image
+  otel_resources       = var.otel_resources
 
   request_timeout_seconds = var.request_timeout_seconds
   execution_environment   = var.execution_environment
