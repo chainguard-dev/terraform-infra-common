@@ -64,34 +64,34 @@ module "evaluation_grade_p99" {
   primary_reduce = "REDUCE_PERCENTILE_99"
 }
 
-# ===== Reconciler-Level Token Metrics =====
+# ===== Repository-Level Token Metrics =====
+# Note: These widgets use only bounded labels (repository, model, tool, turn, reconciler_type)
+# to prevent cardinality explosion. Per-PR details are available via trace exemplars.
 
-module "tokens_by_reconciler" {
+module "tokens_by_repo" {
   source = "../../widgets/xy"
-  title  = "Tokens used per reconciler (total)"
+  title  = "Token usage by repository (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_token_prompt_total/counter\"",
-    "metric.label.\"reconciler_key\"!=\"\"", # Exclude metrics with empty reconciler_key or "unknown" fallback
   ])
 
   group_by_fields = [
-    "metric.label.\"reconciler_key\"",
+    "metric.label.\"repository\"",
   ]
   primary_align  = "ALIGN_DELTA"
   primary_reduce = "REDUCE_SUM"
-  plot_type      = "STACKED_BAR"
+  plot_type      = "STACKED_AREA"
 }
 
-module "tokens_by_model_reconciler" {
+module "tokens_by_model_repo" {
   source = "../../widgets/xy"
-  title  = "Tokens by model per reconciler (total)"
+  title  = "Tokens by model per repository (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_token_prompt_total/counter\"",
-    "metric.label.\"reconciler_key\"!=\"\"", # Exclude metrics with empty reconciler_key or "unknown" fallback
   ])
 
   group_by_fields = [
-    "metric.label.\"reconciler_key\"",
+    "metric.label.\"repository\"",
     "metric.label.\"model\"",
   ]
   primary_align  = "ALIGN_DELTA"
@@ -99,16 +99,15 @@ module "tokens_by_model_reconciler" {
   plot_type      = "STACKED_AREA"
 }
 
-module "tool_calls_by_reconciler" {
+module "tool_calls_by_repo" {
   source = "../../widgets/xy"
-  title  = "Tool calls per reconciler (total)"
+  title  = "Tool calls per repository (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_tool_calls_total/counter\"",
-    "metric.label.\"reconciler_key\"!=\"\"", # Exclude metrics with empty reconciler_key or "unknown" fallback
   ])
 
   group_by_fields = [
-    "metric.label.\"reconciler_key\"",
+    "metric.label.\"repository\"",
     "metric.label.\"tool\"",
   ]
   primary_align  = "ALIGN_DELTA"
@@ -133,7 +132,7 @@ module "tool_usage_breakdown" {
 
 module "tokens_per_turn" {
   source = "../../widgets/xy"
-  title  = "Tokens per autofix turn (total)"
+  title  = "Tokens per agent turn (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_token_prompt_total/counter\"",
   ])
@@ -147,15 +146,16 @@ module "tokens_per_turn" {
   plot_type      = "LINE"
 }
 
-module "tokens_by_repo" {
+module "tokens_by_reconciler_type" {
   source = "../../widgets/xy"
-  title  = "Token usage by repository (total)"
+  title  = "Tokens by reconciler type (total)"
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/genai_token_prompt_total/counter\"",
   ])
 
   group_by_fields = [
-    "metric.label.\"repository\"",
+    "metric.label.\"reconciler_type\"",
+    "metric.label.\"model\"",
   ]
   primary_align  = "ALIGN_DELTA"
   primary_reduce = "REDUCE_SUM"
@@ -192,30 +192,30 @@ locals {
       widget = module.evaluation_grade_p99.widget,
     },
 
-    # Row 2: Reconciler-level token metrics
+    # Row 2: Repository-level token metrics (bounded labels only)
     {
       yPos   = local.unit * 2,
       xPos   = local.col[0],
       height = local.unit,
       width  = local.unit,
-      widget = module.tokens_by_reconciler.widget,
+      widget = module.tokens_by_repo.widget,
     },
     {
       yPos   = local.unit * 2,
       xPos   = local.col[1],
       height = local.unit,
       width  = local.unit,
-      widget = module.tokens_by_model_reconciler.widget,
+      widget = module.tokens_by_model_repo.widget,
     },
     {
       yPos   = local.unit * 2,
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
-      widget = module.tool_calls_by_reconciler.widget,
+      widget = module.tool_calls_by_repo.widget,
     },
 
-    # Row 3: Tool usage and turn metrics
+    # Row 3: Tool usage, turn metrics, and reconciler type
     {
       yPos   = local.unit * 3,
       xPos   = local.col[0],
@@ -235,7 +235,7 @@ locals {
       xPos   = local.col[2],
       height = local.unit,
       width  = local.unit,
-      widget = module.tokens_by_repo.widget,
+      widget = module.tokens_by_reconciler_type.widget,
     },
   ]
 }

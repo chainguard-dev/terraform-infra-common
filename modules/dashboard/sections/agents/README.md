@@ -9,15 +9,15 @@ Dashboard section for monitoring AI agent metrics including evaluation results a
 - **Agent evaluation failure rate**: Ratio of failed evaluations to total evaluations
 - **Agent evaluation grade (P99)**: 99th percentile of evaluation grades
 
-### Reconciler-Level Metrics (New)
-These metrics track agent behavior at the reconciler level, enabling cost tracking and performance analysis:
+### Repository-Level Metrics
+These metrics track agent behavior at the repository level, enabling cost tracking and performance analysis. Metrics use only bounded labels to prevent cardinality explosion. Per-PR details are available via trace exemplars in Cloud Trace.
 
-- **Tokens used per reconciler**: Total tokens consumed grouped by reconciler instance
-- **Tokens by model per reconciler**: Token usage broken down by model for each reconciler
-- **Tool calls per reconciler**: Number of tool invocations grouped by reconciler and tool type
+- **Token usage by repository**: Total tokens consumed grouped by repository
+- **Tokens by model per repository**: Token usage broken down by model for each repository
+- **Tool calls per repository**: Number of tool invocations grouped by repository and tool type
 - **Tool usage breakdown**: Distribution of tool calls across different tools and models
-- **Tokens per turn**: Token consumption across multiple agent turns (useful for iterative agents)
-- **Token usage by repository**: Repository-level token usage aggregation for cross-team visibility
+- **Tokens per agent turn**: Token consumption across multiple agent turns (useful for iterative agents)
+- **Tokens by reconciler type**: Token usage comparing PR-based vs path-based reconcilers
 
 ## Metrics Used
 
@@ -27,17 +27,28 @@ These metrics track agent behavior at the reconciler level, enabling cost tracki
 - `prometheus.googleapis.com/agent_evaluation_grade/gauge`
 
 ### Token & Tool Metrics
-- `prometheus.googleapis.com/genai_token_prompt_total/counter` (with labels: `reconciler_key`, `reconciler_type`, `repository`, `model`, `turn`, `commit_sha`)
-- `prometheus.googleapis.com/genai_tool_calls_total/counter` (with labels: `reconciler_key`, `reconciler_type`, `repository`, `tool`, `model`)
+- `prometheus.googleapis.com/genai_token_prompt_total/counter` (with labels: `reconciler_type`, `repository`, `model`, `turn`)
+- `prometheus.googleapis.com/genai_tool_calls_total/counter` (with labels: `reconciler_type`, `repository`, `tool`, `model`)
 
 #### Label Definitions
-- `reconciler_key`: Unique identifier for the reconciler instance (e.g., `pr:chainguard-dev/enterprise-packages/41025` or `path:chainguard-dev/mono/main/images/nginx`)
-- `reconciler_type`: Type of reconciler (`pr` or `path`)
+
+**Bounded labels (used in metrics):**
 - `repository`: Repository name extracted from reconciler_key (e.g., `chainguard-dev/enterprise-packages`)
+- `reconciler_type`: Type of reconciler (`pr` or `path`)
 - `model`: Model name (e.g., `claude-opus-4-1`, `gemini-3-pro-preview`)
 - `tool`: Tool name (e.g., `git_clone`, `git_commit`)
 - `turn`: Turn number, where 0 represents the first attempt (for multi-turn agents)
+
+**Unbounded labels (available in traces only, not in metrics):**
+- `reconciler_key`: Unique identifier for each reconciler instance (e.g., `pr:chainguard-dev/enterprise-packages/41025`)
+  - Not included in metrics to prevent cardinality explosion
+  - Available in traces for per-PR investigation
 - `commit_sha`: Full 40-character git commit SHA
+  - Not included in metrics to prevent cardinality explosion
+  - Available in traces for per-commit investigation
+
+**Accessing per-PR details:**
+Dashboard widgets show aggregated metrics by repository. To investigate specific PRs, use Cloud Trace to view detailed execution traces with full `reconciler_key` and `commit_sha` information.
 
 ## Usage
 
@@ -74,11 +85,11 @@ No providers.
 | <a name="module_evaluation_failure_rate"></a> [evaluation\_failure\_rate](#module\_evaluation\_failure\_rate) | ../../widgets/xy-ratio | n/a |
 | <a name="module_evaluation_grade_p99"></a> [evaluation\_grade\_p99](#module\_evaluation\_grade\_p99) | ../../widgets/xy | n/a |
 | <a name="module_evaluation_volume"></a> [evaluation\_volume](#module\_evaluation\_volume) | ../../widgets/xy | n/a |
-| <a name="module_tokens_by_model_reconciler"></a> [tokens\_by\_model\_reconciler](#module\_tokens\_by\_model\_reconciler) | ../../widgets/xy | n/a |
-| <a name="module_tokens_by_reconciler"></a> [tokens\_by\_reconciler](#module\_tokens\_by\_reconciler) | ../../widgets/xy | n/a |
+| <a name="module_tokens_by_model_repo"></a> [tokens\_by\_model\_repo](#module\_tokens\_by\_model\_repo) | ../../widgets/xy | n/a |
+| <a name="module_tokens_by_reconciler_type"></a> [tokens\_by\_reconciler\_type](#module\_tokens\_by\_reconciler\_type) | ../../widgets/xy | n/a |
 | <a name="module_tokens_by_repo"></a> [tokens\_by\_repo](#module\_tokens\_by\_repo) | ../../widgets/xy | n/a |
 | <a name="module_tokens_per_turn"></a> [tokens\_per\_turn](#module\_tokens\_per\_turn) | ../../widgets/xy | n/a |
-| <a name="module_tool_calls_by_reconciler"></a> [tool\_calls\_by\_reconciler](#module\_tool\_calls\_by\_reconciler) | ../../widgets/xy | n/a |
+| <a name="module_tool_calls_by_repo"></a> [tool\_calls\_by\_repo](#module\_tool\_calls\_by\_repo) | ../../widgets/xy | n/a |
 | <a name="module_tool_usage_breakdown"></a> [tool\_usage\_breakdown](#module\_tool\_usage\_breakdown) | ../../widgets/xy | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../width | n/a |
 
