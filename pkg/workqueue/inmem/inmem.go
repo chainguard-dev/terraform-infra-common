@@ -101,7 +101,7 @@ func (w *wq) Get(_ context.Context, key string) (*workqueue.KeyState, error) {
 }
 
 // Enumerate implements workqueue.Interface.
-func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
+func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, []workqueue.DeadLetteredKey, error) {
 	w.rw.RLock()
 	defer w.rw.RUnlock()
 	wip := make([]workqueue.ObservedInProgressKey, 0, len(w.wip))
@@ -156,7 +156,8 @@ func (w *wq) Enumerate(_ context.Context) ([]workqueue.ObservedInProgressKey, []
 			attempts: q.attempts,
 		})
 	}
-	return wip, qk, nil
+	// In-memory implementation doesn't support dead-lettering, return empty slice
+	return wip, qk, nil, nil
 }
 
 type inProgressKey struct {

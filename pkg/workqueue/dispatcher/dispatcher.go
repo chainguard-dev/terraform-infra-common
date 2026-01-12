@@ -51,7 +51,7 @@ func Handle(ctx context.Context, wq workqueue.Interface, concurrency, batchSize 
 // used to block on the result.
 func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency, batchSize int, f Callback, maxRetry int) Future {
 	// Enumerate the state of the queue.
-	wip, next, err := wq.Enumerate(ctx)
+	wip, next, _, err := wq.Enumerate(ctx)
 	if err != nil {
 		return func() error { return fmt.Errorf("enumerate() = %w", err) }
 	}

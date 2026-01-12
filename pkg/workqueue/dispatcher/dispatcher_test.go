@@ -88,8 +88,8 @@ type mockQueue struct {
 	err  error
 }
 
-func (m *mockQueue) Enumerate(context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
-	return m.wip, m.next, m.err
+func (m *mockQueue) Enumerate(context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, []workqueue.DeadLetteredKey, error) {
+	return m.wip, m.next, nil, m.err
 }
 
 func (m *mockQueue) Queue(_ context.Context, key string, _ workqueue.Options) error {

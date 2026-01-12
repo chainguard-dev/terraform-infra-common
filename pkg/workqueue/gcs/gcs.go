@@ -165,7 +165,7 @@ func checkPreconditionFailedOk(err error) (bool, error) {
 }
 
 // Enumerate implements workqueue.Interface.
-func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
+func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, []workqueue.DeadLetteredKey, error) {
 	labels := prometheus.Labels{
 		"service_name":  env.KnativeServiceName,
 		"revision_name": env.KnativeRevisionName,
@@ -180,6 +180,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
 	qd := make([]*queuedKey, 0, w.limit+1)
+	var dl []workqueue.DeadLetteredKey
 
 	queued, notbefore, deadlettered := 0, 0, 0
 	maxAttempts := 0 // Track the maximum number of attempts
@@ -188,7 +189,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 		if errors.Is(err, iterator.Done) {
 			break
 		} else if err != nil {
-			return nil, nil, fmt.Errorf("Next() = %w", err)
+			return nil, nil, nil, fmt.Errorf("Next() = %w", err)
 		}
 		var priority int64
 		if p, ok := objAttrs.Metadata[priorityMetadataKey]; ok {
@@ -283,7 +284,11 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 			queued++
 
 		case strings.HasPrefix(objAttrs.Name, deadLetterPrefix):
-			// Count the dead-lettered keys
+			// Collect and count the dead-lettered keys
+			dl = append(dl, &deadLetteredKey{
+				attrs:    objAttrs,
+				priority: priority,
+			})
 			deadlettered++
 		}
 	}
@@ -300,7 +305,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	mDeadLetteredKeys.With(labels).Set(float64(deadlettered))
 	// Set the max attempts metric
 	mMaxAttempts.With(labels).Set(float64(maxAttempts))
-	return wip, qk, nil
+	return wip, qk, dl, nil
 }
 
 type objectAttrs struct {
@@ -792,4 +797,42 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	oip.startHeartbeat(ctx)
 
 	return oip, nil
+}
+
+type deadLetteredKey struct {
+	attrs    *storage.ObjectAttrs
+	priority int64
+}
+
+var _ workqueue.DeadLetteredKey = (*deadLetteredKey)(nil)
+
+// Name implements workqueue.Key.
+func (d *deadLetteredKey) Name() string {
+	return strings.TrimPrefix(d.attrs.Name, deadLetterPrefix)
+}
+
+// Priority implements workqueue.Key.
+func (d *deadLetteredKey) Priority() int64 {
+	return d.priority
+}
+
+// GetFailedTime implements workqueue.DeadLetteredKey.
+func (d *deadLetteredKey) GetFailedTime() time.Time {
+	if ft, ok := d.attrs.Metadata[failedTimeMetadataKey]; ok && ft != "" {
+		if failedTime, err := time.Parse(time.RFC3339, ft); err == nil {
+			return failedTime
+		}
+	}
+	// Fall back to the object creation time if failed-time metadata is not available
+	return d.attrs.Created
+}
+
+// GetAttempts implements workqueue.DeadLetteredKey.
+func (d *deadLetteredKey) GetAttempts() int {
+	if att, ok := d.attrs.Metadata[attemptsMetadataKey]; ok && att != "" {
+		if attempts, err := strconv.Atoi(att); err == nil {
+			return attempts
+		}
+	}
+	return 0
 }

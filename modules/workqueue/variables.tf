@@ -14,6 +14,12 @@ variable "regions" {
   }))
 }
 
+variable "primary-region" {
+  description = "The primary region for single-homed resources like the reenqueue job. Defaults to the first region in the regions map."
+  type        = string
+  default     = null
+}
+
 variable "concurrent-work" {
   description = "The amount of concurrent work to dispatch at a given time."
   type        = number
