@@ -49,6 +49,7 @@ variable "types" {
 
   type = map(object({
     schema                = string
+    retention_period_days = optional(number, null)
     alert_threshold       = optional(number, 50000)
     notification_channels = optional(list(string), [])
     partition_field       = optional(string)

@@ -140,7 +140,8 @@ output "recorder-schemas" {
       schema = file("${path.module}/schemas/issue_comment.schema.json")
     }
     "dev.chainguard.github.issues" : {
-      schema = file("${path.module}/schemas/issues.schema.json")
+      schema                = file("${path.module}/schemas/issues.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.push" : {
       schema = file("${path.module}/schemas/push.schema.json")
@@ -152,7 +153,8 @@ output "recorder-schemas" {
       schema = file("${path.module}/schemas/check_suite.schema.json")
     }
     "dev.chainguard.github.projects_v2_item" : {
-      schema = file("${path.module}/schemas/projects_v2_item.schema.json")
+      schema                = file("${path.module}/schemas/projects_v2_item.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.pull_request_review" : {
       schema = file("${path.module}/schemas/pull_request_review.schema.json")

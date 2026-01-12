@@ -25,7 +25,10 @@ resource "google_bigquery_table" "types" {
     type  = "DAY"
     field = each.value.partition_field
 
-    expiration_ms = (var.retention-period) * 24 * 60 * 60 * 1000
+    expiration_ms = coalesce(
+      each.value.retention_period_days,
+      var.retention-period
+    ) * 24 * 60 * 60 * 1000
   }
 
   clustering = each.value.clustering
