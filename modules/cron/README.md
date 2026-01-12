@@ -177,7 +177,10 @@ No requirements.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_cron_name"></a> [cron\_name](#module\_cron\_name) | ../limited-concat | n/a |
+| <a name="module_delivery_name"></a> [delivery\_name](#module\_delivery\_name) | ../limited-concat | n/a |
 
 ## Resources
 
