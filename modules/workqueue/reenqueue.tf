@@ -38,7 +38,7 @@ module "reenqueue" {
   region          = local.reenqueue_region
   service_account = google_service_account.reenqueue.email
 
-  importpath  = "chainguard.dev/terraform-infra-common/modules/workqueue/cmd/reenqueue"
+  importpath  = "github.com/chainguard-dev/terraform-infra-common/modules/workqueue/cmd/reenqueue"
   working_dir = path.module
 
   # Paused by default - this job is meant to be manually triggered
