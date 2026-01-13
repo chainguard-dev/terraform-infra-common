@@ -210,6 +210,9 @@ resource "google_cloud_run_v2_job" "job" {
   lifecycle {
     ignore_changes = [
       launch_stage,
+      # GCP manages job container names automatically
+      template[0].template[0].containers[0].name,
+      template[0].template[0].containers[1].name,
     ]
   }
 }
@@ -242,9 +245,17 @@ resource "null_resource" "exec" {
   }
 }
 
+module "delivery_name" {
+  source = "../limited-concat"
+
+  prefix = var.name
+  suffix = "-dlv"
+  limit  = 30
+}
+
 resource "google_service_account" "delivery" {
   project      = var.project_id
-  account_id   = "${var.name}-dlv"
+  account_id   = module.delivery_name.result
   display_name = "Dedicated service account for invoking ${google_cloud_run_v2_job.job.name}."
 }
 
@@ -270,11 +281,19 @@ locals {
   env_list_body = join(",", [for e in var.scheduled_env_overrides : "{\"name\": ${e.name}, \"value\": ${e.value}}"])
 }
 
+module "cron_name" {
+  source = "../limited-concat"
+
+  prefix = var.name
+  suffix = "-cron"
+  limit  = 60
+}
+
 resource "google_cloud_scheduler_job" "cron" {
   project = var.project_id
   paused  = var.paused
 
-  name     = "${var.name}-cron"
+  name     = module.cron_name.result
   schedule = var.schedule
   region   = var.region
 

@@ -135,6 +135,8 @@ module "redis_auth_secret" {
   )
 
   create_placeholder_version = false
+
+  team = var.team
 }
 
 # Create the initial version of the secret with the auth string

@@ -64,8 +64,8 @@ module "work-queued" {
   ])
   group_by_fields = null
   plot_type       = "STACKED_AREA"
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MAX"
+  primary_align   = "ALIGN_MIN"
+  primary_reduce  = "REDUCE_MIN"
 }
 
 module "work-added" {
@@ -186,6 +186,53 @@ module "dead-letter-queue" {
   primary_reduce  = "REDUCE_MAX"
 }
 
+module "lease-age" {
+  source = "../../widgets/latency"
+  title  = "Active lease age (p95)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_lease_age_seconds/histogram\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = null
+}
+
+module "expired-leases" {
+  source = "../../widgets/xy"
+  title  = "Expired leases rate"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_expired_leases_total/counter\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = ["resource.label.\"location\""]
+  plot_type       = "STACKED_AREA"
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "time-until-eligible" {
+  source = "../../widgets/latency"
+  title  = "Time until eligible (p95)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_time_until_eligible_seconds/histogram\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = null
+}
+
+module "enumerate-latency" {
+  source = "../../widgets/latency"
+  title  = "Enumerate latency (p95)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_enumerate_latency_seconds/histogram\"",
+    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+  ])
+  group_by_fields = ["resource.label.\"location\""]
+}
+
 locals {
   columns = 3
   unit    = module.width.size / local.columns
@@ -257,6 +304,34 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.time-to-completion.widget,
+    },
+    {
+      yPos   = local.unit * 3,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.lease-age.widget,
+    },
+    {
+      yPos   = local.unit * 3,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.expired-leases.widget,
+    },
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.enumerate-latency.widget,
+    },
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.time-until-eligible.widget,
     }
     ],
     var.max_retry > 0 ? [

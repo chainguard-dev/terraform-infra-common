@@ -244,10 +244,11 @@ No requirements.
 | <a name="input_minimum_backoff"></a> [minimum\_backoff](#input\_minimum\_backoff) | The minimum delay between consecutive deliveries of a given message. | `number` | `10` | no |
 | <a name="input_name"></a> [name](#input\_name) | The base name for resources | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels for alerts | `list(string)` | n/a | yes |
+| <a name="input_priority"></a> [priority](#input\_priority) | Priority for workqueue items (higher values = higher priority) | `number` | `0` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map of regions to launch services in (see regional-go-service module for format) | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
-| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `"unknown"` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_workqueue"></a> [workqueue](#input\_workqueue) | The workqueue to send events to | <pre>object({<br/>    name = string<br/>  })</pre> | n/a | yes |
 
 ## Outputs

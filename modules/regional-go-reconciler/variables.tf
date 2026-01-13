@@ -19,12 +19,24 @@ variable "regions" {
   }))
 }
 
+variable "primary-region" {
+  description = "The primary region for single-homed resources like the reenqueue job. Defaults to the first region in the regions map."
+  type        = string
+  default     = null
+}
+
 // Workqueue-specific variables
 
 variable "max-retry" {
   description = "The maximum number of times a task will be retried before being moved to the dead-letter queue. Set to 0 for unlimited retries."
   type        = number
   default     = 100
+}
+
+variable "enable_dead_letter_alerting" {
+  description = "Whether to enable alerting for dead-lettered keys."
+  type        = bool
+  default     = true
 }
 
 variable "concurrent-work" {
@@ -77,7 +89,7 @@ variable "containers" {
   description = "The containers to run in the service.  Each container will be run in each region."
   type = map(object({
     source = object({
-      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:d44809cee093b550944c1f666ff13301f92484bfdd2e53ecaac82b5b6f89647d")
+      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:a301031ffd4ed67f35ca7fa6cf3dad9937b5fa47d7493955a18d9b4ca5412d1a")
       working_dir = string
       importpath  = string
       env         = optional(list(string), [])
@@ -166,7 +178,6 @@ variable "labels" {
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = ""
 }
 
 variable "product" {

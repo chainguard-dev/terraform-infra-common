@@ -91,7 +91,7 @@ No modules.
 | <a name="input_replicas_deletion_protection"></a> [replicas\_deletion\_protection](#input\_replicas\_deletion\_protection) | Enable deletion protection for read replicas. | `bool` | `false` | no |
 | <a name="input_ssl_mode"></a> [ssl\_mode](#input\_ssl\_mode) | SSL mode for the Cloud SQL instance. Default is TRUSTED\_CLIENT\_CERTIFICATE\_REQUIRED. | `string` | `"TRUSTED_CLIENT_CERTIFICATE_REQUIRED"` | no |
 | <a name="input_storage_gb"></a> [storage\_gb](#input\_storage\_gb) | Initial SSD storage size in GB. | `number` | `256` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_tier"></a> [tier](#input\_tier) | Machine tier for the Cloud SQL instance. | `string` | `"db-perf-optimized-N-16"` | no |
 
 ## Outputs

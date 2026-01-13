@@ -79,7 +79,7 @@ func TestRequeueWithDelay(t *testing.T) {
 			}
 
 			// Check the results
-			wip, queued, err := wq.Enumerate(ctx)
+			wip, queued, _, err := wq.Enumerate(ctx)
 			if err != nil {
 				t.Fatalf("Failed to enumerate: %v", err)
 			}
@@ -113,7 +113,7 @@ func TestRequeueWithDelay(t *testing.T) {
 					// Let's verify by checking that after a small wait, we still don't see it
 					// (since our delays are much longer than a millisecond)
 					time.Sleep(10 * time.Millisecond)
-					_, queued2, err := wq.Enumerate(ctx)
+					_, queued2, _, err := wq.Enumerate(ctx)
 					if err != nil {
 						t.Fatalf("Failed to enumerate after delay: %v", err)
 					}

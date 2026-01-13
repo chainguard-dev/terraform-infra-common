@@ -10,6 +10,8 @@ data "google_project" "project" {
 }
 
 locals {
+  use_custom_recorder = var.method == "trigger"
+
   regional-types = merge([
     for region in keys(var.regions) : merge([
       for type in keys(var.types) : {

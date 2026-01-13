@@ -3,7 +3,7 @@ variable "object" {
 }
 
 locals {
-  json = replace(replace(replace(replace(replace(replace(replace(replace(
+  json = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(
     jsonencode(var.object),
     "\"collapsed\":false", ""),
     ",\"xPos\":0", ""),
@@ -12,7 +12,12 @@ locals {
     ",\"crossSeriesReducer\":\"REDUCE_NONE\"", ""),
     ",\"perSeriesAligner\":\"ALIGN_NONE\"", ""),
     "\"dashboardFilters\":[],", ""),
-  ",\"groupByFields\":[]", "")
+    ",\"groupByFields\":[]", ""),
+    ",\"secondaryAggregation\":null", ""),
+    "\"secondaryAggregation\":null,", ""),
+    "\"secondaryAggregation\":null", ""),
+    ",\"groupByFields\":null", ""),
+  "\"groupByFields\":null,", "")
 }
 
 resource "google_monitoring_dashboard" "dashboard" {

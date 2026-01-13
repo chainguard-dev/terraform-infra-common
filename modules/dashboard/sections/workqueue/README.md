@@ -57,10 +57,14 @@ No providers.
 | <a name="module_attempts-at-completion"></a> [attempts-at-completion](#module\_attempts-at-completion) | ../../widgets/xy | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
 | <a name="module_dead-letter-queue"></a> [dead-letter-queue](#module\_dead-letter-queue) | ../../widgets/xy | n/a |
+| <a name="module_enumerate-latency"></a> [enumerate-latency](#module\_enumerate-latency) | ../../widgets/latency | n/a |
+| <a name="module_expired-leases"></a> [expired-leases](#module\_expired-leases) | ../../widgets/xy | n/a |
+| <a name="module_lease-age"></a> [lease-age](#module\_lease-age) | ../../widgets/latency | n/a |
 | <a name="module_max-attempts"></a> [max-attempts](#module\_max-attempts) | ../../widgets/xy | n/a |
 | <a name="module_percent-deduped"></a> [percent-deduped](#module\_percent-deduped) | ../../widgets/xy-ratio | n/a |
 | <a name="module_process-latency"></a> [process-latency](#module\_process-latency) | ../../widgets/latency | n/a |
 | <a name="module_time-to-completion"></a> [time-to-completion](#module\_time-to-completion) | ../../widgets/xy | n/a |
+| <a name="module_time-until-eligible"></a> [time-until-eligible](#module\_time-until-eligible) | ../../widgets/latency | n/a |
 | <a name="module_wait-latency"></a> [wait-latency](#module\_wait-latency) | ../../widgets/latency | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../width | n/a |
 | <a name="module_work-added"></a> [work-added](#module\_work-added) | ../../widgets/xy | n/a |

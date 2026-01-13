@@ -14,13 +14,15 @@ terraform {
 module "workqueue" {
   source = "../workqueue"
 
-  project_id = var.project_id
-  name       = "${var.name}-wq"
-  regions    = var.regions
+  project_id     = var.project_id
+  name           = "${var.name}-wq"
+  regions        = var.regions
+  primary-region = var.primary-region
 
-  concurrent-work = var.concurrent-work
-  batch-size      = var.batch-size
-  max-retry       = var.max-retry
+  concurrent-work             = var.concurrent-work
+  batch-size                  = var.batch-size
+  max-retry                   = var.max-retry
+  enable_dead_letter_alerting = var.enable_dead_letter_alerting
 
   reconciler-service = {
     name = "${var.name}-rec"

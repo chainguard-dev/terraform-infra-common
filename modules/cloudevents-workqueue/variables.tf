@@ -74,7 +74,6 @@ variable "notification_channels" {
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = "unknown"
 }
 
 variable "max_delivery_attempts" {
@@ -111,4 +110,10 @@ variable "deletion_protection" {
   description = "Whether to enable deletion protection for resources"
   type        = bool
   default     = true
+}
+
+variable "priority" {
+  description = "Priority for workqueue items (higher values = higher priority)"
+  type        = number
+  default     = 0
 }

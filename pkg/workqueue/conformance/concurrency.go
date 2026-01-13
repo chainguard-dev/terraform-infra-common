@@ -82,7 +82,7 @@ func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 	}
 
 	for {
-		wip, qd, err := wq.Enumerate(ctx)
+		wip, qd, _, err := wq.Enumerate(ctx)
 		if err != nil {
 			t.Fatalf("Enumerate failed: %v", err)
 		}

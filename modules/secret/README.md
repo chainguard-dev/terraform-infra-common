@@ -96,7 +96,7 @@ No modules.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | (Deprecated: Use service-accounts instead) The email of the service account that will access the secret. | `string` | `""` | no |
 | <a name="input_service-accounts"></a> [service-accounts](#input\_service-accounts) | The emails of the service accounts that will access the secret. | `list(string)` | `[]` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 
 ## Outputs
 

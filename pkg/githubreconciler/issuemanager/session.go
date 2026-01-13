@@ -9,6 +9,8 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/githubreconciler"
@@ -58,7 +60,7 @@ func (s *IssueSession[T]) hasSkipLabel(issue *github.Issue) bool {
 func (s *IssueSession[T]) Reconcile(
 	ctx context.Context,
 	desired []*T,
-	labels []string,
+	extralabels []string,
 	closeMessage string,
 ) ([]string, error) {
 	log := clog.FromContext(ctx)
@@ -76,11 +78,6 @@ func (s *IssueSession[T]) Reconcile(
 	if len(desired) > s.manager.maxDesiredIssues {
 		return nil, fmt.Errorf("desired issues (%d) exceeds limit (%d) for path %s", len(desired), s.manager.maxDesiredIssues, s.resource.Path)
 	}
-
-	// Add pathLabel to labels
-	allLabels := make([]string, 0, 1+len(labels))
-	allLabels = append(allLabels, s.pathLabel)
-	allLabels = append(allLabels, labels...)
 
 	issueURLs := make([]string, len(desired))
 
@@ -110,15 +107,13 @@ func (s *IssueSession[T]) Reconcile(
 				continue
 			}
 
-			// Update existing issue
-			url, err := s.updateIssue(ctx, existing.issue, data, allLabels)
+			url, err := s.updateIssue(ctx, existing.issue, data, s.pathLabel, extralabels)
 			if err != nil {
 				return nil, fmt.Errorf("updating issue #%d: %w", existing.issue.GetNumber(), err)
 			}
 			issueURLs[i] = url
 		} else {
-			// Create new issue
-			url, err := s.createIssue(ctx, data, allLabels)
+			url, err := s.createIssue(ctx, data, s.pathLabel, extralabels)
 			if err != nil {
 				return nil, fmt.Errorf("creating issue: %w", err)
 			}
@@ -207,21 +202,49 @@ func (s *IssueSession[T]) generateLabels(ctx context.Context, data *T) []string 
 			log.Warnf("Failed to execute label template %q: %v", tmpl.Name(), err)
 			continue
 		}
-		if label != "" {
-			if len(label) > 50 {
-				log.Warnf("Skipping label from template %q: length %d exceeds GitHub's 50 character limit", tmpl.Name(), len(label))
-				continue
-			}
-			labels = append(labels, label)
+		if label == "" {
+			continue
 		}
+		prefixedLabel := s.manager.identity + ":" + label
+		if len(prefixedLabel) > 50 {
+			log.Warnf("Skipping label %q: length %d exceeds GitHub's 50 character limit", label, len(prefixedLabel))
+			continue
+		}
+		labels = append(labels, prefixedLabel)
 	}
 
 	return labels
 }
 
+// mergeLabels replaces reconciler owned labels while preserving user-generated labels.
+func (s *IssueSession[T]) mergeLabels(currentLabels []*github.Label, pathLabel string, reconciledLabels []string, extraLabels []string) []string {
+	identityPrefix := s.manager.identity + ":"
+
+	// user-generated labels are labels that are not the path label,
+	// without our identity prefix, and are not an extra label
+	userLabels := make([]string, 0)
+	for _, label := range currentLabels {
+		labelName := label.GetName()
+		if strings.HasPrefix(labelName, identityPrefix) ||
+			slices.Contains(extraLabels, labelName) ||
+			labelName == pathLabel {
+			continue
+		}
+		userLabels = append(userLabels, labelName)
+	}
+
+	merged := make([]string, 0, 1+len(reconciledLabels)+len(userLabels)+len(extraLabels))
+	merged = append(merged, pathLabel)
+	merged = append(merged, userLabels...)
+	merged = append(merged, extraLabels...)
+	merged = append(merged, reconciledLabels...)
+
+	return merged
+}
+
 // prepareIssueRequest generates the title, body, and labels for an issue from the provided data.
 // This is used by both createIssue and updateIssue to avoid code duplication.
-func (s *IssueSession[T]) prepareIssueRequest(ctx context.Context, data *T, labels []string) (string, string, []string, error) {
+func (s *IssueSession[T]) prepareIssueRequest(ctx context.Context, data *T) (string, string, []string, error) {
 	// Generate issue title and body from templates
 	title, err := s.manager.templateExecutor.Execute(s.manager.titleTemplate, data)
 	if err != nil {
@@ -239,23 +262,24 @@ func (s *IssueSession[T]) prepareIssueRequest(ctx context.Context, data *T, labe
 		return "", "", nil, fmt.Errorf("embedding data: %w", err)
 	}
 
-	// Generate labels from templates and merge with static labels
-	generatedLabels := s.generateLabels(ctx, data)
-	allLabels := make([]string, 0, len(labels)+len(generatedLabels))
-	allLabels = append(allLabels, labels...)
-	allLabels = append(allLabels, generatedLabels...)
+	prefixedLabels := s.generateLabels(ctx, data)
 
-	return title, body, allLabels, nil
+	return title, body, prefixedLabels, nil
 }
 
-// createIssue creates a new issue with the provided data and labels.
-func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []string) (string, error) {
+// createIssue creates a new issue with the provided data, pathLabel, and labels.
+func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, pathLabel string, extralabels []string) (string, error) {
 	log := clog.FromContext(ctx)
 
-	title, body, allLabels, err := s.prepareIssueRequest(ctx, data, labels)
+	title, body, recLabels, err := s.prepareIssueRequest(ctx, data)
 	if err != nil {
 		return "", err
 	}
+
+	allLabels := make([]string, 0, 1+len(recLabels)+len(extralabels))
+	allLabels = append(allLabels, pathLabel)
+	allLabels = append(allLabels, recLabels...)
+	allLabels = append(allLabels, extralabels...)
 
 	log.Info("Creating new issue")
 
@@ -272,21 +296,23 @@ func (s *IssueSession[T]) createIssue(ctx context.Context, data *T, labels []str
 	return issue.GetHTMLURL(), nil
 }
 
-// updateIssue updates an existing issue with the provided data and labels.
-func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, data *T, labels []string) (string, error) {
+// updateIssue updates an existing issue with the provided data, pathLabel, and labels.
+func (s *IssueSession[T]) updateIssue(ctx context.Context, issue *github.Issue, data *T, pathLabel string, extraLabels []string) (string, error) {
 	log := clog.FromContext(ctx)
 
-	title, body, allLabels, err := s.prepareIssueRequest(ctx, data, labels)
+	title, body, recLabels, err := s.prepareIssueRequest(ctx, data)
 	if err != nil {
 		return "", err
 	}
+
+	mergedLabels := s.mergeLabels(issue.Labels, pathLabel, recLabels, extraLabels)
 
 	log.Infof("Updating existing issue #%d", issue.GetNumber())
 
 	updated, _, err := s.client.Issues.Edit(ctx, s.owner, s.repo, issue.GetNumber(), &github.IssueRequest{
 		Title:  github.Ptr(title),
 		Body:   github.Ptr(body),
-		Labels: &allLabels,
+		Labels: &mergedLabels,
 	})
 	if err != nil {
 		return "", fmt.Errorf("updating issue: %w", err)

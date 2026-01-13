@@ -3,9 +3,6 @@ Copyright 2025 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Copyright 2024 Chainguard, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 package main
 
 import (
@@ -68,7 +65,7 @@ func main() {
 				case <-ctx.Done():
 					return
 				case <-tick.C:
-					_, _, err := wq.Enumerate(ctx)
+					_, _, _, err := wq.Enumerate(ctx)
 					if err != nil {
 						log.Printf("Failed to enumerate: %v", err)
 					}

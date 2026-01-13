@@ -96,7 +96,7 @@ func Test_Get_InProgressKey(t *testing.T) {
 	}
 
 	// Start processing the key
-	_, qd, err := wq.Enumerate(ctx)
+	_, qd, _, err := wq.Enumerate(ctx)
 	if err != nil {
 		t.Fatalf("Enumerate failed: %v", err)
 	}

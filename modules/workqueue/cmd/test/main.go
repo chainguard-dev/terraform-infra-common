@@ -64,7 +64,7 @@ func main() {
 	}
 	fmt.Println("Key enqueued successfully")
 
-	wip, qd, err := wq.Enumerate(ctx)
+	wip, qd, _, err := wq.Enumerate(ctx)
 	if err != nil {
 		log.Fatalf("Failed to enumerate keys: %v", err)
 	}

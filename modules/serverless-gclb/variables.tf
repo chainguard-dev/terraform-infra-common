@@ -66,7 +66,6 @@ variable "security-policy" {
 variable "team" {
   description = "team label to apply to the service."
   type        = string
-  default     = "unknown"
 
 }
 

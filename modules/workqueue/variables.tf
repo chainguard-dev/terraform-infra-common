@@ -14,6 +14,12 @@ variable "regions" {
   }))
 }
 
+variable "primary-region" {
+  description = "The primary region for single-homed resources like the reenqueue job. Defaults to the first region in the regions map."
+  type        = string
+  default     = null
+}
+
 variable "concurrent-work" {
   description = "The amount of concurrent work to dispatch at a given time."
   type        = number
@@ -29,6 +35,12 @@ variable "max-retry" {
   description = "The maximum number of retry attempts before a task is moved to the dead letter queue. Set this to 0 to have unlimited retries."
   type        = number
   default     = 100
+}
+
+variable "enable_dead_letter_alerting" {
+  description = "Whether to enable alerting for dead-lettered keys."
+  type        = bool
+  default     = true
 }
 
 variable "reconciler-service" {

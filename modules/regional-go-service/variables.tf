@@ -52,7 +52,7 @@ variable "containers" {
   description = "The containers to run in the service.  Each container will be run in each region."
   type = map(object({
     source = object({
-      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:d44809cee093b550944c1f666ff13301f92484bfdd2e53ecaac82b5b6f89647d")
+      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:a301031ffd4ed67f35ca7fa6cf3dad9937b5fa47d7493955a18d9b4ca5412d1a")
       working_dir = string
       importpath  = string
       env         = optional(list(string), [])
@@ -212,12 +212,15 @@ variable "labels" {
   default     = {}
 }
 
-
-
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
-  default     = ""
+}
+
+variable "enable_otel_sidecar" {
+  description = "Enable otel sidecar for metrics. Enabled by default, should only be disabled for exceptional cases."
+  type        = bool
+  default     = true
 }
 
 variable "otel_collector_image" {

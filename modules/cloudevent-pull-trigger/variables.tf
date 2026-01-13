@@ -108,7 +108,6 @@ variable "ack_deadline_seconds" {
 variable "team" {
   description = "team label to apply to the service."
   type        = string
-  default     = "unknown"
 
 }
 

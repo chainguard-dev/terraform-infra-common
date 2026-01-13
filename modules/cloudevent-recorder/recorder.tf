@@ -13,7 +13,7 @@ resource "google_service_account" "recorder" {
 // The recorder service account is the only identity that should be writing
 // to the regional GCS buckets.
 resource "google_storage_bucket_iam_binding" "recorder-writes-to-gcs-buckets" {
-  for_each = var.method == "trigger" ? var.regions : {}
+  for_each = local.use_custom_recorder ? var.regions : {}
 
   bucket  = google_storage_bucket.recorder[each.key].name
   role    = "roles/storage.admin"
@@ -33,7 +33,7 @@ locals {
 }
 
 module "this" {
-  count      = var.method == "trigger" ? 1 : 0
+  count      = local.use_custom_recorder ? 1 : 0
   source     = "../regional-go-service"
   project_id = var.project_id
   name       = var.name
@@ -101,7 +101,7 @@ resource "random_id" "trigger-suffix" {
 
 // Create a trigger for each region x type that sends events to the recorder service.
 module "triggers" {
-  for_each = var.method == "trigger" ? local.regional-types : {}
+  for_each = local.use_custom_recorder ? local.regional-types : {}
 
   source = "../cloudevent-trigger"
 

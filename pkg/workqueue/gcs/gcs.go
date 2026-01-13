@@ -165,11 +165,22 @@ func checkPreconditionFailedOk(err error) (bool, error) {
 }
 
 // Enumerate implements workqueue.Interface.
-func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, error) {
+func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey, []workqueue.DeadLetteredKey, error) {
+	labels := prometheus.Labels{
+		"service_name":  env.KnativeServiceName,
+		"revision_name": env.KnativeRevisionName,
+	}
+
+	start := time.Now()
+	defer func() {
+		mEnumerateLatency.With(labels).Observe(time.Since(start).Seconds())
+	}()
+
 	iter := w.client.Objects(ctx, nil)
 
 	wip := make([]workqueue.ObservedInProgressKey, 0, w.limit)
 	qd := make([]*queuedKey, 0, w.limit+1)
+	var dl []workqueue.DeadLetteredKey
 
 	queued, notbefore, deadlettered := 0, 0, 0
 	maxAttempts := 0 // Track the maximum number of attempts
@@ -178,7 +189,7 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 		if errors.Is(err, iterator.Done) {
 			break
 		} else if err != nil {
-			return nil, nil, fmt.Errorf("Next() = %w", err)
+			return nil, nil, nil, fmt.Errorf("Next() = %w", err)
 		}
 		var priority int64
 		if p, ok := objAttrs.Metadata[priorityMetadataKey]; ok {
@@ -219,22 +230,38 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 
 		switch {
 		case strings.HasPrefix(objAttrs.Name, inProgressPrefix):
-			wip = append(wip, &inProgressKey{
+			ipk := &inProgressKey{
 				client:   w.client,
 				attrs:    objAttrs,
 				priority: priority,
-			})
+			}
+			wip = append(wip, ipk)
+
+			// Record lease age for active (non-orphaned) keys
+			if !ipk.IsOrphaned() {
+				leaseAge := time.Since(objAttrs.Created)
+				mLeaseAge.With(labels).Observe(leaseAge.Seconds())
+			}
 
 		case strings.HasPrefix(objAttrs.Name, queuedPrefix):
-			if nbf, ok := objAttrs.Metadata[notBeforeMetadataKey]; ok && nbf != "" {
+			// Calculate time until eligible for all queued keys
+			timeUntilEligible := 0.0 // Default: immediately eligible
+			if nbf, ok := objAttrs.Metadata[notBeforeMetadataKey]; ok && nbf != "" && nbf != noNotBefore {
 				if notBefore, err := time.Parse(time.RFC3339, nbf); err != nil {
 					clog.WarnContextf(ctx, "Failed to parse not-before: %v", err)
-				} else if time.Now().UTC().Before(notBefore) {
-					clog.DebugContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
-					notbefore++
-					continue
+				} else {
+					timeUntilEligible = notBefore.Sub(time.Now().UTC()).Seconds()
+					if time.Now().UTC().Before(notBefore) {
+						clog.DebugContextf(ctx, "Skipping key %q until %v", objAttrs.Name, notBefore)
+						notbefore++
+						// Record metric before skipping
+						mTimeUntilEligible.With(labels).Observe(timeUntilEligible)
+						continue
+					}
 				}
 			}
+			// Record metric for immediately eligible keys
+			mTimeUntilEligible.With(labels).Observe(timeUntilEligible)
 
 			qd = append(qd, &queuedKey{
 				client:   w.client,
@@ -257,7 +284,11 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 			queued++
 
 		case strings.HasPrefix(objAttrs.Name, deadLetterPrefix):
-			// Count the dead-lettered keys
+			// Collect and count the dead-lettered keys
+			dl = append(dl, &deadLetteredKey{
+				attrs:    objAttrs,
+				priority: priority,
+			})
 			deadlettered++
 		}
 	}
@@ -268,17 +299,13 @@ func (w *wq) Enumerate(ctx context.Context) ([]workqueue.ObservedInProgressKey, 
 	}
 
 	// Set all metrics
-	labels := prometheus.Labels{
-		"service_name":  env.KnativeServiceName,
-		"revision_name": env.KnativeRevisionName,
-	}
 	mInProgressKeys.With(labels).Set(float64(len(wip)))
 	mQueuedKeys.With(labels).Set(float64(queued))
 	mNotBeforeKeys.With(labels).Set(float64(notbefore))
 	mDeadLetteredKeys.With(labels).Set(float64(deadlettered))
 	// Set the max attempts metric
 	mMaxAttempts.With(labels).Set(float64(maxAttempts))
-	return wip, qk, nil
+	return wip, qk, dl, nil
 }
 
 type objectAttrs struct {
@@ -432,6 +459,13 @@ func (o *inProgressKey) GetAttempts() int {
 
 // Requeue implements workqueue.InProgressKey.
 func (o *inProgressKey) Requeue(ctx context.Context) error {
+	// Check if this key is orphaned (lease expired) before requeueing
+	if o.IsOrphaned() {
+		mExpiredLeases.With(prometheus.Labels{
+			"service_name":  env.KnativeServiceName,
+			"revision_name": env.KnativeRevisionName,
+		}).Add(1)
+	}
 	// Use RequeueWithOptions with an empty options struct to get default behavior
 	return o.RequeueWithOptions(ctx, workqueue.Options{})
 }
@@ -763,4 +797,42 @@ func (q *queuedKey) Start(ctx context.Context) (workqueue.OwnedInProgressKey, er
 	oip.startHeartbeat(ctx)
 
 	return oip, nil
+}
+
+type deadLetteredKey struct {
+	attrs    *storage.ObjectAttrs
+	priority int64
+}
+
+var _ workqueue.DeadLetteredKey = (*deadLetteredKey)(nil)
+
+// Name implements workqueue.Key.
+func (d *deadLetteredKey) Name() string {
+	return strings.TrimPrefix(d.attrs.Name, deadLetterPrefix)
+}
+
+// Priority implements workqueue.Key.
+func (d *deadLetteredKey) Priority() int64 {
+	return d.priority
+}
+
+// GetFailedTime implements workqueue.DeadLetteredKey.
+func (d *deadLetteredKey) GetFailedTime() time.Time {
+	if ft, ok := d.attrs.Metadata[failedTimeMetadataKey]; ok && ft != "" {
+		if failedTime, err := time.Parse(time.RFC3339, ft); err == nil {
+			return failedTime
+		}
+	}
+	// Fall back to the object creation time if failed-time metadata is not available
+	return d.attrs.Created
+}
+
+// GetAttempts implements workqueue.DeadLetteredKey.
+func (d *deadLetteredKey) GetAttempts() int {
+	if att, ok := d.attrs.Metadata[attemptsMetadataKey]; ok && att != "" {
+		if attempts, err := strconv.Atoi(att); err == nil {
+			return attempts
+		}
+	}
+	return 0
 }

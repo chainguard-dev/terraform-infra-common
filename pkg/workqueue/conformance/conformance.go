@@ -24,7 +24,7 @@ type ExpectedState struct {
 
 func checkQueue(t *testing.T, wq workqueue.Interface, es ExpectedState) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey) {
 	t.Helper()
-	wip, qd, err := wq.Enumerate(context.Background())
+	wip, qd, _, err := wq.Enumerate(context.Background())
 	if err != nil {
 		t.Fatalf("Enumerate failed: %v", err)
 	}
@@ -717,7 +717,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 
 func drain(wq workqueue.Interface) error {
 	for {
-		wip, qd, err := wq.Enumerate(context.Background())
+		wip, qd, _, err := wq.Enumerate(context.Background())
 		if err != nil {
 			return fmt.Errorf("enumerate failed: %w", err)
 		}

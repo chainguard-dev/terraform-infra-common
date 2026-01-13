@@ -29,10 +29,11 @@ type Interface interface {
 	Queue(ctx context.Context, key string, opts Options) error
 
 	// Enumerate returns:
-	// - a list of all of the in-progress keys, and
-	// - a list of the next "N" keys in the queue (according to its configured ordering), or
+	// - a list of all of the in-progress keys,
+	// - a list of the next "N" keys in the queue (according to its configured ordering),
+	// - a list of all dead-lettered keys, or
 	// - an error if the workqueue is unable to enumerate the keys.
-	Enumerate(ctx context.Context) ([]ObservedInProgressKey, []QueuedKey, error)
+	Enumerate(ctx context.Context) ([]ObservedInProgressKey, []QueuedKey, []DeadLetteredKey, error)
 
 	// Get retrieves the current state and metadata for a specific key.
 	Get(ctx context.Context, key string) (*KeyState, error)
@@ -110,4 +111,16 @@ type OwnedInProgressKey interface {
 
 	// Context is the context of the process heartbeating the key.
 	Context() context.Context
+}
+
+// DeadLetteredKey is a key that has been moved to the dead-letter queue
+// after exceeding the maximum retry attempts.
+type DeadLetteredKey interface {
+	Key
+
+	// GetFailedTime returns the time when the key was dead-lettered.
+	GetFailedTime() time.Time
+
+	// GetAttempts returns the number of attempts before the key was dead-lettered.
+	GetAttempts() int
 }

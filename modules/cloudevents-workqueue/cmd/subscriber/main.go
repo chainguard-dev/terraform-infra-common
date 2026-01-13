@@ -22,6 +22,7 @@ type Config struct {
 	Port             int    `env:"PORT,default=8080"`
 	WorkqueueService string `env:"WORKQUEUE_SERVICE,required"`
 	ExtensionKey     string `env:"EXTENSION_KEY,required"`
+	Priority         int64  `env:"PRIORITY,default=0"`
 }
 
 func main() {
@@ -64,6 +65,7 @@ func main() {
 	handler := &eventHandler{
 		queueClient:  queueClient,
 		extensionKey: cfg.ExtensionKey,
+		priority:     cfg.Priority,
 	}
 
 	// Start receiving events
@@ -76,6 +78,7 @@ func main() {
 type eventHandler struct {
 	queueClient  workqueue.Client
 	extensionKey string
+	priority     int64
 }
 
 func (h *eventHandler) handleEvent(ctx context.Context, event cloudevents.Event) error {
@@ -119,7 +122,7 @@ func (h *eventHandler) handleEvent(ctx context.Context, event cloudevents.Event)
 	// Queue the work item
 	_, err := h.queueClient.Process(ctx, &workqueue.ProcessRequest{
 		Key:      key,
-		Priority: 0, // Default priority
+		Priority: h.priority,
 	})
 	if err != nil {
 		logger.Errorf("Failed to queue work item: %v", err)

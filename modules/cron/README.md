@@ -177,7 +177,10 @@ No requirements.
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_cron_name"></a> [cron\_name](#module\_cron\_name) | ../limited-concat | n/a |
+| <a name="module_delivery_name"></a> [delivery\_name](#module\_delivery\_name) | ../limited-concat | n/a |
 
 ## Resources
 
@@ -206,7 +209,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image that will be used to build the container image. | `string` | `"cgr.dev/chainguard/static:latest-glibc@sha256:d44809cee093b550944c1f666ff13301f92484bfdd2e53ecaac82b5b6f89647d"` | no |
+| <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image that will be used to build the container image. | `string` | `"cgr.dev/chainguard/static:latest-glibc@sha256:a301031ffd4ed67f35ca7fa6cf3dad9937b5fa47d7493955a18d9b4ca5412d1a"` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the job. | `string` | `"1000m"` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Enable otel sidecar for metrics | `bool` | `true` | no |
@@ -235,7 +238,7 @@ No modules.
 | <a name="input_success_alert_alignment_period_seconds"></a> [success\_alert\_alignment\_period\_seconds](#input\_success\_alert\_alignment\_period\_seconds) | Alignment period for successful completion alert. 0 (default) to not create alert. | `number` | `0` | no |
 | <a name="input_success_alert_duration_seconds"></a> [success\_alert\_duration\_seconds](#input\_success\_alert\_duration\_seconds) | How long the absence of successful executions must persist before the alert fires. If not set or 0, defaults to success\_alert\_alignment\_period\_seconds for backward compatibility. This is the 'trigger absence time' in GCP monitoring terms. | `number` | `0` | no |
 | <a name="input_task_count"></a> [task\_count](#input\_task\_count) | The number of tasks to run. | `number` | `1` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | `""` | no |
+| <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The maximum amount of time in seconds to allow the job to run. | `string` | `"600s"` | no |
 | <a name="input_volume_mounts"></a> [volume\_mounts](#input\_volume\_mounts) | The volume mounts to mount the volumes to the container in the job. | <pre>list(object({<br/>    name       = string<br/>    mount_path = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_volumes"></a> [volumes](#input\_volumes) | The volumes to make available to the container in the job for mounting. | <pre>list(object({<br/>    name = string<br/>    empty_dir = optional(object({<br/>      medium     = optional(string, "MEMORY")<br/>      size_limit = optional(string)<br/>    }))<br/>    secret = optional(object({<br/>      secret = string<br/>      items = list(object({<br/>        version = string<br/>        path    = string<br/>      }))<br/>    }))<br/>    nfs = optional(object({<br/>      server    = string<br/>      path      = string<br/>      read_only = optional(bool, true)<br/>    }))<br/>  }))</pre> | `[]` | no |

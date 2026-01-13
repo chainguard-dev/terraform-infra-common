@@ -29,6 +29,7 @@ module "this" {
   project_id = var.project_id
   name       = var.name
   regions    = var.regions
+  team       = var.team
 
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.this.email
