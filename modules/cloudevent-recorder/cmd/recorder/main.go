@@ -41,7 +41,7 @@ func main() {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
 	if err := c.StartReceiver(ctx, func(_ context.Context, event cloudevents.Event) error {
-		dir := filepath.Join(env.LogPath, event.Type())
+		dir := filepath.Join(env.LogPath, event.Type(), event.Time().Format("2006-01-02"))
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}

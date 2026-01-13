@@ -100,7 +100,8 @@ resource "google_bigquery_data_transfer_config" "import-job" {
   // TODO(mattmoor): Bring back pubsub notification.
   # notification_pubsub_topic = google_pubsub_topic.bq_notification[each.key].id
   params = {
-    data_path_template              = "gs://${google_storage_bucket.recorder[each.value.region].name}/${each.value.type}/*"
+    // The custom recorder writes files to {type}/{date}/{file}, while Pub/Sub writes to {type}/{file}.
+    data_path_template              = local.use_custom_recorder ? "gs://${google_storage_bucket.recorder[each.value.region].name}/${each.value.type}/*/*" : "gs://${google_storage_bucket.recorder[each.value.region].name}/${each.value.type}/*"
     destination_table_name_template = google_bigquery_table.types[each.value.type].table_id
     file_format                     = "JSON"
     max_bad_records                 = 0
