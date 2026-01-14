@@ -21,6 +21,7 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 
 func SetupProfiler() {
 	if env.EnableProfiler {
+		clog.Debugf("Enabling Google Cloud Profiler (ENABLE_PROFILER = %t)", env.EnableProfiler)
 		if err := profiler.Start(profiler.Config{Service: os.Getenv("K_SERVICE")}); err != nil {
 			clog.Fatalf("failed to start profiler: %v", err)
 		}
