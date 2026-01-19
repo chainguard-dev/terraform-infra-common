@@ -10,8 +10,9 @@ terraform {
   }
 }
 
-// Stand up the workqueue infrastructure
+// Stand up the workqueue infrastructure (single shard)
 module "workqueue" {
+  count  = var.shards == 1 ? 1 : 0
   source = "../workqueue"
 
   project_id     = var.project_id
@@ -36,6 +37,42 @@ module "workqueue" {
 
   multi_regional_location = var.multi_regional_location
   cpu_idle                = var.workqueue_cpu_idle
+
+  depends_on = [module.reconciler]
+}
+
+// Preserve existing workqueue state when adding count
+moved {
+  from = module.workqueue
+  to   = module.workqueue[0]
+}
+
+// Stand up the sharded workqueue infrastructure (multiple shards)
+module "workqueue-sharded" {
+  count  = var.shards > 1 ? 1 : 0
+  source = "../workqueue/hyperqueue"
+
+  project_id = var.project_id
+  name       = "${var.name}-wq"
+  regions    = var.regions
+  shards     = var.shards
+
+  concurrent-work             = var.concurrent-work
+  batch-size                  = var.batch-size
+  max-retry                   = var.max-retry
+  enable_dead_letter_alerting = var.enable_dead_letter_alerting
+
+  reconciler-service = {
+    name = "${var.name}-rec"
+  }
+
+  team                  = var.team
+  product               = var.product
+  deletion_protection   = var.deletion_protection
+  notification_channels = var.notification_channels
+  labels                = var.labels
+
+  multi_regional_location = var.multi_regional_location
 
   depends_on = [module.reconciler]
 }

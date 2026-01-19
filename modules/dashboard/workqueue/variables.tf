@@ -14,6 +14,12 @@ variable "concurrent_work" {
   type        = number
 }
 
+variable "shards" {
+  description = "Number of workqueue shards. When > 1, dashboard shows per-shard metrics."
+  type        = number
+  default     = 1
+}
+
 variable "labels" {
   description = "Additional labels to apply to the dashboard"
   type        = map(string)

@@ -5,6 +5,7 @@ module "workqueue-state" {
   service_name    = var.name
   max_retry       = var.max_retry
   concurrent_work = var.concurrent_work
+  shards          = var.shards
   filter          = []
   collapsed       = false
 }

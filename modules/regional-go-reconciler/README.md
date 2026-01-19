@@ -127,6 +127,7 @@ No providers.
 |------|--------|---------|
 | <a name="module_reconciler"></a> [reconciler](#module\_reconciler) | ../regional-go-service | n/a |
 | <a name="module_workqueue"></a> [workqueue](#module\_workqueue) | ../workqueue | n/a |
+| <a name="module_workqueue-sharded"></a> [workqueue-sharded](#module\_workqueue-sharded) | ../workqueue/hyperqueue | n/a |
 
 ## Resources
 
@@ -158,6 +159,7 @@ No resources.
 | <a name="input_request_timeout_seconds"></a> [request\_timeout\_seconds](#input\_request\_timeout\_seconds) | The request timeout for the service in seconds. | `number` | `300` | no |
 | <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    max_instance_request_concurrency = optional(number, 1000)<br/>  })</pre> | `{}` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which to run the reconciler service. | `string` | n/a | yes |
+| <a name="input_shards"></a> [shards](#input\_shards) | Number of workqueue shards. When 1, uses standard workqueue. When >1, uses hyperqueue. | `number` | `1` | no |
 | <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO for the cloud run service | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    success = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), null)<br/>    monitor_gclb = optional(bool, false)<br/>  })</pre> | `{}` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_volumes"></a> [volumes](#input\_volumes) | The volumes to attach to the service. | <pre>list(object({<br/>    name = string<br/>    empty_dir = optional(object({<br/>      medium     = optional(string, "MEMORY")<br/>      size_limit = optional(string, "1Gi")<br/>    }), null)<br/>    csi = optional(object({<br/>      driver = string<br/>      volume_attributes = optional(object({<br/>        bucketName = string<br/>      }), null)<br/>    }), null)<br/>  }))</pre> | `[]` | no |
