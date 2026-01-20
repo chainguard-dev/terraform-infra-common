@@ -38,6 +38,12 @@ variable "concurrent_work" {
   default     = 20
 }
 
+variable "shards" {
+  description = "Number of workqueue shards. When > 1, dashboard shows per-shard metrics."
+  type        = number
+  default     = 1
+}
+
 // Section visibility
 variable "sections" {
   description = "Configure visibility of optional dashboard sections"

@@ -28,6 +28,11 @@ variable "max_retry" {
 variable "concurrent_work" {
   type = number
 }
+variable "shards" {
+  description = "Number of workqueue shards. When > 1, filters match all shards."
+  type        = number
+  default     = 1
+}
 
 locals {
   // Use provided names or derive from service_name
@@ -36,6 +41,21 @@ locals {
 
   // gmp_filter is a subset of var.filter that does not include the "resource.type" string
   gmp_filter = [for f in var.filter : f if !strcontains(f, "resource.type")]
+
+  // Per-shard concurrency threshold (ceiling division)
+  shard_concurrent_work = ceil(var.concurrent_work / var.shards)
+
+  // Filter pattern: exact match for single shard, regex for multiple
+  dsp_filter = var.shards == 1 ? (
+    "metric.label.\"service_name\"=\"${local.dsp_name}\""
+    ) : (
+    "metric.label.\"service_name\"=monitoring.regex.full_match(\"${var.service_name}-[0-9]+-dsp\")"
+  )
+  rcv_filter = var.shards == 1 ? (
+    "metric.label.\"service_name\"=\"${local.rcv_name}\""
+    ) : (
+    "metric.label.\"service_name\"=monitoring.regex.full_match(\"${var.service_name}-[0-9]+-rcv\")"
+  )
 }
 
 module "width" { source = "../width" }
@@ -46,12 +66,12 @@ module "work-in-progress" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_in_progress_keys/gauge\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
-  thresholds      = [var.concurrent_work]
+  thresholds      = [local.shard_concurrent_work]
 }
 
 module "work-queued" {
@@ -60,9 +80,9 @@ module "work-queued" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MIN"
   primary_reduce  = "REDUCE_MIN"
@@ -74,9 +94,9 @@ module "work-added" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
-    "metric.label.\"service_name\"=\"${local.rcv_name}\"",
+    local.rcv_filter,
   ])
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = ["metric.label.\"service_name\"", "resource.label.\"location\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_RATE"
   primary_reduce  = "REDUCE_SUM"
@@ -88,9 +108,9 @@ module "process-latency" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_process_latency_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = ["metric.label.\"service_name\"", "resource.label.\"location\""]
 }
 
 module "wait-latency" {
@@ -99,9 +119,9 @@ module "wait-latency" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_from_scheduled_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
 }
 
 module "percent-deduped" {
@@ -113,21 +133,21 @@ module "percent-deduped" {
   numerator_filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_deduped_keys_total/counter\"",
-    "metric.label.\"service_name\"=\"${local.rcv_name}\"",
+    local.rcv_filter,
   ])
   denominator_filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_added_keys_total/counter\"",
-    "metric.label.\"service_name\"=\"${local.rcv_name}\"",
+    local.rcv_filter,
   ])
 
   alignment_period            = "60s"
   thresholds                  = []
   numerator_align             = "ALIGN_RATE"
-  numerator_group_by_fields   = null
+  numerator_group_by_fields   = ["metric.label.\"service_name\""]
   numerator_reduce            = "REDUCE_SUM"
   denominator_align           = "ALIGN_RATE"
-  denominator_group_by_fields = null
+  denominator_group_by_fields = ["metric.label.\"service_name\""]
   denominator_reduce          = "REDUCE_SUM"
 }
 
@@ -137,11 +157,12 @@ module "attempts-at-completion" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_attempts_at_completion/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  primary_align  = "ALIGN_DELTA"
-  primary_reduce = "REDUCE_PERCENTILE_95"
-  thresholds     = var.max_retry > 0 ? [var.max_retry] : []
+  group_by_fields = ["metric.label.\"service_name\""]
+  primary_align   = "ALIGN_DELTA"
+  primary_reduce  = "REDUCE_PERCENTILE_95"
+  thresholds      = var.max_retry > 0 ? [var.max_retry] : []
 }
 
 module "max-attempts" {
@@ -150,9 +171,9 @@ module "max-attempts" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_max_attempts/gauge\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
   thresholds      = var.max_retry > 0 ? [var.max_retry] : []
@@ -164,9 +185,9 @@ module "time-to-completion" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_time_to_completion_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = ["metric.label.\"priority_class\""]
+  group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"priority_class\""]
   primary_align   = "ALIGN_DELTA"
   primary_reduce  = "REDUCE_PERCENTILE_95"
 }
@@ -178,9 +199,9 @@ module "dead-letter-queue" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_dead_lettered_keys/gauge\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
@@ -192,9 +213,9 @@ module "lease-age" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_lease_age_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
 }
 
 module "expired-leases" {
@@ -203,9 +224,9 @@ module "expired-leases" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_expired_leases_total/counter\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = ["metric.label.\"service_name\"", "resource.label.\"location\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_RATE"
   primary_reduce  = "REDUCE_SUM"
@@ -217,9 +238,9 @@ module "time-until-eligible" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_time_until_eligible_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = null
+  group_by_fields = ["metric.label.\"service_name\""]
 }
 
 module "enumerate-latency" {
@@ -228,9 +249,9 @@ module "enumerate-latency" {
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_enumerate_latency_seconds/histogram\"",
-    "metric.label.\"service_name\"=\"${local.dsp_name}\"",
+    local.dsp_filter,
   ])
-  group_by_fields = ["resource.label.\"location\""]
+  group_by_fields = ["metric.label.\"service_name\"", "resource.label.\"location\""]
 }
 
 locals {

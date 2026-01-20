@@ -27,6 +27,17 @@ variable "primary-region" {
 
 // Workqueue-specific variables
 
+variable "shards" {
+  description = "Number of workqueue shards. When 1, uses standard workqueue. When >1, uses hyperqueue."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.shards >= 1 && var.shards <= 5
+    error_message = "shards must be between 1 and 5"
+  }
+}
+
 variable "max-retry" {
   description = "The maximum number of times a task will be retried before being moved to the dead-letter queue. Set to 0 for unlimited retries."
   type        = number
