@@ -152,8 +152,6 @@ variable "flush_interval" {
   default     = ""
 }
 
-
-
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
   type        = string
@@ -173,6 +171,12 @@ variable "product" {
 
 variable "local_disk_mount" {
   description = "Whether to use alpha local disk mount option."
+  type        = bool
+  default     = false
+}
+
+variable "autoclass_bucket" {
+  description = "Enable autoclass for storage bucket"
   type        = bool
   default     = false
 }
