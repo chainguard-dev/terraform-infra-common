@@ -16,7 +16,7 @@ module "total_request_count" {
     "metric.label.\"code\""
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "request_errors" {
@@ -25,14 +25,14 @@ module "request_errors" {
   filter = concat(var.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
-    "metric.label.\"code\"=monitoring.regex.full_match(\"Error.*\")",
+    "metric.label.\"code\"!=monitoring.regex.full_match(\"(ok|record not found)\")",
   ])
   group_by_fields = [
     "metric.label.\"table\"",
     "metric.label.\"code\"",
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "table_request_count" {
@@ -47,7 +47,7 @@ module "table_request_count" {
     "metric.label.\"code\"",
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "error_rate" {
@@ -59,7 +59,7 @@ module "error_rate" {
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
-  numerator_additional_filter = ["metric.label.\"code\"=monitoring.regex.full_match(\"Error.*\")"]
+  numerator_additional_filter = ["metric.label.\"code\"!=monitoring.regex.full_match(\"(ok|record not found)\")"]
 }
 
 module "op_request_count" {
@@ -74,7 +74,7 @@ module "op_request_count" {
     "metric.label.\"code\"",
   ]
   primary_align  = "ALIGN_RATE"
-  primary_reduce = "REDUCE_NONE"
+  primary_reduce = "REDUCE_SUM"
 }
 
 module "open_connections" {
