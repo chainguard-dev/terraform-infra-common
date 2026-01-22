@@ -86,7 +86,7 @@ variable "notification_channels" {
 variable "alert_threshold_minutes" {
   description = "Minutes without log ingestion before triggering alert"
   type        = number
-  default     = 180
+  default     = 1 * 24 * 60 // 1 day
 }
 
 variable "alert_auto_close_days" {

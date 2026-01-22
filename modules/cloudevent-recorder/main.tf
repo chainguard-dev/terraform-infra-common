@@ -54,6 +54,13 @@ resource "google_storage_bucket" "recorder" {
 
   uniform_bucket_level_access = true
 
+  dynamic "autoclass" {
+    for_each = var.autoclass_bucket ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
   lifecycle_rule {
     action {
       type = "Delete"

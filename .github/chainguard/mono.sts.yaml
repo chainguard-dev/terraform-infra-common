@@ -4,7 +4,7 @@
 issuer: https://token.actions.githubusercontent.com
 subject_pattern: repo:chainguard-dev/mono:ref:refs/heads/main
 claim_pattern:
-  workflow_ref: chainguard-dev/mono/.github/workflows/(export|publish)-public-modules.yaml@refs/heads/main
+  job_workflow_ref: chainguard-dev/mono/.github/workflows/(export|publish)-public-modules.yaml@refs/heads/main
 
 permissions:
   contents: write

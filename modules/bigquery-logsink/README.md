@@ -102,7 +102,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_alert_auto_close_days"></a> [alert\_auto\_close\_days](#input\_alert\_auto\_close\_days) | Days after which to auto-close resolved alerts | `number` | `1` | no |
-| <a name="input_alert_threshold_minutes"></a> [alert\_threshold\_minutes](#input\_alert\_threshold\_minutes) | Minutes without log ingestion before triggering alert | `number` | `180` | no |
+| <a name="input_alert_threshold_minutes"></a> [alert\_threshold\_minutes](#input\_alert\_threshold\_minutes) | Minutes without log ingestion before triggering alert | `number` | `1440` | no |
 | <a name="input_dataset_description"></a> [dataset\_description](#input\_dataset\_description) | Description of the BigQuery dataset | `string` | `""` | no |
 | <a name="input_delete_contents_on_destroy"></a> [delete\_contents\_on\_destroy](#input\_delete\_contents\_on\_destroy) | Whether to delete dataset contents when destroying the dataset | `bool` | `false` | no |
 | <a name="input_enable_monitoring"></a> [enable\_monitoring](#input\_enable\_monitoring) | Enable monitoring alert policies for log ingestion | `bool` | `false` | no |
