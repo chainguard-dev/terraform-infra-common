@@ -13,27 +13,27 @@ variable "vpc_connector_arn" {
 }
 
 variable "create_service_role" {
-  description = "Whether to create the IAM service role for App Runner. Set to false to provide your own via service_role_arn."
   type        = bool
+  description = "Whether to create the IAM service role for App Runner. If false, you must provide service_role_arn."
   default     = true
 }
 
 variable "service_role_arn" {
   type        = string
-  description = "The ARN of the IAM role that App Runner will use (for ECR access and CloudWatch logs). Only required if create_service_role is false."
-  default     = null
+  description = "The ARN of the IAM role that App Runner will use (for ECR access and CloudWatch logs). Required if create_service_role is false."
+  default     = ""
 }
 
 variable "create_instance_role" {
-  description = "Whether to create the IAM instance role for the running containers. Set to false to provide your own via instance_role_arn."
   type        = bool
+  description = "Whether to create the IAM instance role for the running containers. If false, you must provide instance_role_arn."
   default     = true
 }
 
 variable "instance_role_arn" {
   type        = string
-  description = "The ARN of the IAM role that the running service will assume. Only required if create_instance_role is false."
-  default     = null
+  description = "The ARN of the IAM role that the running service will assume. Required if create_instance_role is false."
+  default     = ""
 }
 
 variable "container" {

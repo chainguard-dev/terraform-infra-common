@@ -38,3 +38,13 @@ output "authorization_secret" {
   value       = random_password.secret.result
   sensitive   = true
 }
+
+output "instance_role_arn" {
+  description = "IAM instance role ARN used by the running containers"
+  value       = module.this.instance_role_arn
+}
+
+output "instance_role_name" {
+  description = "IAM instance role name (if created by module)"
+  value       = module.this.instance_role_name
+}

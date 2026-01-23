@@ -30,6 +30,10 @@ module "this" {
   egress            = var.egress
   vpc_connector_arn = var.vpc_connector_arn
 
+  // Allow external instance role to be provided
+  create_instance_role = var.create_instance_role
+  instance_role_arn    = var.instance_role_arn
+
   container = {
     source = {
       working_dir = var.working_dir

@@ -233,3 +233,15 @@ variable "alarm_datapoints_to_alarm" {
   default     = null
   description = "The number of datapoints that must be breaching to trigger the alarm. Defaults to evaluation_periods if not set."
 }
+
+variable "create_instance_role" {
+  type        = bool
+  description = "Whether to create the IAM instance role for the running containers. If false, you must provide instance_role_arn."
+  default     = true
+}
+
+variable "instance_role_arn" {
+  type        = string
+  description = "The ARN of the IAM role that the running service will assume. Required if create_instance_role is false."
+  default     = ""
+}

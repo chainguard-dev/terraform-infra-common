@@ -236,10 +236,6 @@ For advanced use cases, you can disable automatic role creation:
 module "my_go_service" {
   # ...
 
-  # Disable automatic role creation
-  create_service_role  = false
-  create_instance_role = false
-
   # Provide your own roles
   service_role_arn  = aws_iam_role.custom_service.arn
   instance_role_arn = aws_iam_role.custom_instance.arn

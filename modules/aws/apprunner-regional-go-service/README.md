@@ -107,10 +107,6 @@ module "my_service_custom_roles" {
   name = "my-service"
   team = "platform"
 
-  # Disable automatic role creation
-  create_service_role  = false
-  create_instance_role = false
-
   # Provide your own roles
   service_role_arn  = aws_iam_role.custom_service_role.arn
   instance_role_arn = aws_iam_role.custom_instance_role.arn
@@ -319,10 +315,6 @@ module "my_service" {
   name = "my-service"
   team = "platform"
 
-  # Disable automatic role creation
-  create_service_role  = false
-  create_instance_role = false
-
   # Provide your own roles
   service_role_arn  = aws_iam_role.custom_service.arn
   instance_role_arn = aws_iam_role.custom_instance.arn
@@ -374,19 +366,19 @@ No modules.
 | <a name="input_container"></a> [container](#input\_container) | The container configuration for the service. App Runner supports one container per service. | <pre>object({<br/>    source = object({<br/>      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:a301031ffd4ed67f35ca7fa6cf3dad9937b5fa47d7493955a18d9b4ca5412d1a")<br/>      working_dir = string<br/>      importpath  = string<br/>      repo        = optional(string) # Override the default ko repository for this container<br/>      env         = optional(list(string), [])<br/>    })<br/>    args = optional(list(string), [])<br/>    port = optional(number, 8080)<br/>    env = optional(list(object({<br/>      name  = string<br/>      value = optional(string)<br/>    })), [])<br/>    # App Runner secrets from Secrets Manager or SSM Parameter Store<br/>    secrets = optional(list(object({<br/>      name  = string<br/>      value = string # ARN of the secret<br/>    })), [])<br/>    health_check = optional(object({<br/>      protocol            = optional(string, "TCP") # TCP or HTTP<br/>      path                = optional(string, "/")   # For HTTP health checks<br/>      interval            = optional(number, 5)     # Seconds between health checks<br/>      timeout             = optional(number, 2)     # Seconds to wait for response<br/>      healthy_threshold   = optional(number, 1)     # Consecutive successes needed<br/>      unhealthy_threshold = optional(number, 5)     # Consecutive failures needed<br/>    }))<br/>  })</pre> | n/a | yes |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU units for the service. Valid values: 256 (0.25 vCPU), 512 (0.5 vCPU), 1024 (1 vCPU), 2048 (2 vCPU), 4096 (4 vCPU) | `number` | `1024` | no |
 | <a name="input_create_ecr_repository"></a> [create\_ecr\_repository](#input\_create\_ecr\_repository) | Whether to create an ECR repository for the container images. Set to false if using an existing repository. | `bool` | `true` | no |
-| <a name="input_create_instance_role"></a> [create\_instance\_role](#input\_create\_instance\_role) | Whether to create the IAM instance role for the running containers. Set to false to provide your own via instance\_role\_arn. | `bool` | `true` | no |
-| <a name="input_create_service_role"></a> [create\_service\_role](#input\_create\_service\_role) | Whether to create the IAM service role for App Runner. Set to false to provide your own via service\_role\_arn. | `bool` | `true` | no |
+| <a name="input_create_instance_role"></a> [create\_instance\_role](#input\_create\_instance\_role) | Whether to create the IAM instance role for the running containers. If false, you must provide instance\_role\_arn. | `bool` | `true` | no |
+| <a name="input_create_service_role"></a> [create\_service\_role](#input\_create\_service\_role) | Whether to create the IAM service role for App Runner. If false, you must provide service\_role\_arn. | `bool` | `true` | no |
 | <a name="input_ecr_force_delete"></a> [ecr\_force\_delete](#input\_ecr\_force\_delete) | If true, will delete the ECR repository even if it contains images. Use with caution in production. | `bool` | `false` | no |
 | <a name="input_ecr_repository_name"></a> [ecr\_repository\_name](#input\_ecr\_repository\_name) | Name of the ECR repository. If not provided, defaults to the service name. | `string` | `null` | no |
 | <a name="input_egress"></a> [egress](#input\_egress) | Network egress configuration. DEFAULT for internet, VPC for private resources | `string` | `"DEFAULT"` | no |
 | <a name="input_image_repository_type"></a> [image\_repository\_type](#input\_image\_repository\_type) | The type of image repository. ECR for private AWS ECR, ECR\_PUBLIC for public ECR | `string` | `"ECR"` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | Network ingress configuration. PUBLIC for internet access, PRIVATE for VPC only | `string` | `"PUBLIC"` | no |
-| <a name="input_instance_role_arn"></a> [instance\_role\_arn](#input\_instance\_role\_arn) | The ARN of the IAM role that the running service will assume. Only required if create\_instance\_role is false. | `string` | `null` | no |
+| <a name="input_instance_role_arn"></a> [instance\_role\_arn](#input\_instance\_role\_arn) | The ARN of the IAM role that the running service will assume. Required if create\_instance\_role is false. | `string` | `""` | no |
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory in MB for the service. Valid values: 512, 1024, 2048, 3072, 4096, 6144, 8192, 10240, 12288 | `number` | `2048` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name of the App Runner service | `string` | n/a | yes |
 | <a name="input_observability_enabled"></a> [observability\_enabled](#input\_observability\_enabled) | Enable AWS X-Ray tracing | `bool` | `true` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to resources | `string` | n/a | yes |
-| <a name="input_service_role_arn"></a> [service\_role\_arn](#input\_service\_role\_arn) | The ARN of the IAM role that App Runner will use (for ECR access and CloudWatch logs). Only required if create\_service\_role is false. | `string` | `null` | no |
+| <a name="input_service_role_arn"></a> [service\_role\_arn](#input\_service\_role\_arn) | The ARN of the IAM role that App Runner will use (for ECR access and CloudWatch logs). Required if create\_service\_role is false. | `string` | `""` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources | `map(string)` | `{}` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources | `string` | n/a | yes |
 | <a name="input_vpc_connector_arn"></a> [vpc\_connector\_arn](#input\_vpc\_connector\_arn) | Optional VPC connector ARN for private resource access | `string` | `null` | no |

@@ -264,12 +264,14 @@ No requirements.
 | <a name="input_canary_schedule"></a> [canary\_schedule](#input\_canary\_schedule) | CloudWatch Synthetics canary schedule expression. | `string` | `"rate(5 minutes)"` | no |
 | <a name="input_cloudwatch_synthetics_enabled"></a> [cloudwatch\_synthetics\_enabled](#input\_cloudwatch\_synthetics\_enabled) | Enable CloudWatch Synthetics canary for uptime monitoring. | `bool` | `true` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU units for the prober. Valid values: 256, 512, 1024, 2048, 4096 | `number` | `1024` | no |
+| <a name="input_create_instance_role"></a> [create\_instance\_role](#input\_create\_instance\_role) | Whether to create the IAM instance role for the running containers. If false, you must provide instance\_role\_arn. | `bool` | `true` | no |
 | <a name="input_egress"></a> [egress](#input\_egress) | Network egress configuration. DEFAULT for internet, VPC for private resources | `string` | `"DEFAULT"` | no |
 | <a name="input_enable_alert"></a> [enable\_alert](#input\_enable\_alert) | If true, alert on failures. Outputs will return the alert ID for notification and dashboards. | `bool` | `false` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler (AWS X-Ray). | `bool` | `false` | no |
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map(string)` | `{}` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the prober application. | `string` | n/a | yes |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | Network ingress configuration. PUBLIC for internet access, PRIVATE for VPC only | `string` | `"PUBLIC"` | no |
+| <a name="input_instance_role_arn"></a> [instance\_role\_arn](#input\_instance\_role\_arn) | The ARN of the IAM role that the running service will assume. Required if create\_instance\_role is false. | `string` | `""` | no |
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory in MB for the prober. Valid values: 512, 1024, 2048, 3072, 4096, 6144, 8192, 10240, 12288 | `number` | `2048` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to prefix to created resources. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | A list of SNS topic ARNs to send alerts to. | `list(string)` | `[]` | no |
@@ -293,6 +295,8 @@ No requirements.
 | <a name="output_authorization_secret"></a> [authorization\_secret](#output\_authorization\_secret) | The shared secret used for authorization (sensitive) |
 | <a name="output_canary_arn"></a> [canary\_arn](#output\_canary\_arn) | CloudWatch Synthetics canary ARN (if enabled) |
 | <a name="output_canary_name"></a> [canary\_name](#output\_canary\_name) | CloudWatch Synthetics canary name (if enabled) |
+| <a name="output_instance_role_arn"></a> [instance\_role\_arn](#output\_instance\_role\_arn) | IAM instance role ARN used by the running containers |
+| <a name="output_instance_role_name"></a> [instance\_role\_name](#output\_instance\_role\_name) | IAM instance role name (if created by module) |
 | <a name="output_service_arn"></a> [service\_arn](#output\_service\_arn) | App Runner service ARN |
 | <a name="output_service_name"></a> [service\_name](#output\_service\_name) | App Runner service name |
 | <a name="output_service_url"></a> [service\_url](#output\_service\_url) | App Runner service URL |
