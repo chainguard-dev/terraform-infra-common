@@ -62,8 +62,7 @@ module "my_go_service" {
   product = "my-service"
 
   # IAM roles are created automatically by the module
-  # To use custom roles, set create_service_role = false and create_instance_role = false
-  # and provide service_role_arn and instance_role_arn
+  # To use custom roles provide service_role_arn and instance_role_arn
 
   # VPC connector (optional)
   # vpc_connector_arn = aws_apprunner_vpc_connector.this.arn
