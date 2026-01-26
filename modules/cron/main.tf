@@ -132,6 +132,15 @@ resource "google_cloud_run_v2_job" "job" {
               read_only = nfs.value.read_only
             }
           }
+
+          dynamic "gcs" {
+            for_each = volumes.value.gcs != null ? { "" : volumes.value.gcs } : {}
+            content {
+              bucket        = gcs.value.bucket
+              read_only     = gcs.value.read_only
+              mount_options = gcs.value.mount_options
+            }
+          }
         }
       }
       containers {
