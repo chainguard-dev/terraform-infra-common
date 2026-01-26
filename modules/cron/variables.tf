@@ -141,6 +141,11 @@ variable "volumes" {
       path      = string
       read_only = optional(bool, true)
     }))
+    gcs = optional(object({
+      bucket        = string
+      read_only     = optional(bool, true)
+      mount_options = optional(list(string), [])
+    }))
   }))
   default = []
 }
