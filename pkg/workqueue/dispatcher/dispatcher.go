@@ -63,6 +63,7 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency, batch
 	eg := errgroup.Group{}
 
 	// Remove any orphaned work by returning it to the queue.
+	// Use context.WithoutCancel to ensure requeue completes even if parent context is cancelled.
 	activeKeys := make(map[string]struct{}, len(wip))
 	for _, x := range wip {
 		if !x.IsOrphaned() {
@@ -70,7 +71,7 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency, batch
 			continue
 		}
 		eg.Go(func() error {
-			return x.Requeue(ctx)
+			return x.Requeue(context.WithoutCancel(ctx))
 		})
 	}
 
@@ -120,10 +121,16 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency, batch
 			if err := f(oip.Context(), oip.Name(), workqueue.Options{
 				Priority: oip.Priority(),
 			}); err != nil {
+				// Use context.WithoutCancel for all cleanup operations to ensure they
+				// complete even if the parent context is cancelled (e.g., SIGTERM).
+				// This prevents work items from getting stuck in "in-progress" state
+				// when the worker is terminated.
+				cleanupCtx := context.WithoutCancel(ctx)
+
 				// Check if this is a requeue error with custom delay
 				if delay, ok := workqueue.GetRequeueDelay(err); ok {
 					clog.InfoContextf(ctx, "Key %q requested requeue after %v", oip.Name(), delay)
-					if err := oip.RequeueWithOptions(ctx, workqueue.Options{
+					if err := oip.RequeueWithOptions(cleanupCtx, workqueue.Options{
 						Priority: oip.Priority(),
 						Delay:    delay,
 					}); err != nil {
@@ -140,24 +147,25 @@ func HandleAsync(ctx context.Context, wq workqueue.Interface, concurrency, batch
 					clog.InfoContextf(ctx, "Key %q has reached max retry limit (%d/%d), failing permanently",
 						oip.Name(), attempts, maxRetry)
 
-					if err := oip.Deadletter(ctx); err != nil {
+					if err := oip.Deadletter(cleanupCtx); err != nil {
 						return fmt.Errorf("fail(after reaching max retries) = %w", err)
 					}
 				} else if d := workqueue.GetNonRetriableDetails(err); d != nil {
 					clog.InfoContextf(ctx, "Key %q is marked as non-retriable - reason: %s, err: %v", oip.Name(), d.GetMessage(), err)
 					// If the error is marked as non-retriable, we should not requeue it.
-					if err := oip.Complete(ctx); err != nil {
+					if err := oip.Complete(cleanupCtx); err != nil {
 						return fmt.Errorf("complete(after non-retriable error) = %w", err)
 					}
 				} else {
-					if err := oip.Requeue(ctx); err != nil {
+					if err := oip.Requeue(cleanupCtx); err != nil {
 						return fmt.Errorf("requeue(after failed callback) = %w", err)
 					}
 				}
 				return nil // This isn't an error in the dispatcher itself.
 			}
 			// Delete the in-progress key (stops heartbeat).
-			if err := oip.Complete(ctx); err != nil {
+			// Use context.WithoutCancel to ensure completion even if context is cancelled.
+			if err := oip.Complete(context.WithoutCancel(ctx)); err != nil {
 				return fmt.Errorf("complete() = %w", err)
 			}
 			return nil

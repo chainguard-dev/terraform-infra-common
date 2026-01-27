@@ -613,19 +613,21 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string, opts *
 		return nil, fmt.Errorf("retrieving GitHub client's auth: %w", err)
 	}
 
+	depth := 0
+	if opts != nil && opts.Shallow {
+		depth = 1
+	}
+
 	// git clone <repo>
 	// git fetch origin <ref>:<ref>
 	// git checkout <ref>
 	r, err := git.PlainCloneContext(ctx, destDir, false, &git.CloneOptions{
-		URL:  repo,
-		Auth: auth,
+		URL:   repo,
+		Auth:  auth,
+		Depth: depth,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone repository: %w", err)
-	}
-	depth := 0
-	if opts != nil && opts.Shallow {
-		depth = 1
 	}
 	if err := r.FetchContext(ctx, &git.FetchOptions{
 		RemoteURL: repo,
