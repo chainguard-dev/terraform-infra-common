@@ -246,3 +246,81 @@ func TestHandleAsync_RespectsBatchSize(t *testing.T) {
 		t.Fatalf("expected to launch 2 keys, got %d", launched)
 	}
 }
+
+// TestHandleAsync_RequeueSucceedsWithCancelledContext tests that cleanup operations
+// (Requeue, Complete, Deadletter) succeed even when the parent context is cancelled.
+// This is critical for graceful shutdown - when Cloud Run sends SIGTERM, we need to
+// ensure work items are properly requeued rather than left stuck in "in-progress" state.
+func TestHandleAsync_RequeueSucceedsWithCancelledContext(t *testing.T) {
+	next := &mockKey{name: "will-fail"}
+	q := &mockQueue{next: []workqueue.QueuedKey{next}}
+
+	// Create a context that we'll cancel during the callback
+	ctx, cancel := context.WithCancel(context.Background())
+
+	future := HandleAsync(ctx, q, 1, 0, func(context.Context, string, workqueue.Options) error {
+		// Simulate SIGTERM arriving during work - cancel the context
+		cancel()
+		// Return an error to trigger requeue
+		return errors.New("work interrupted")
+	}, 0)
+
+	// The future should complete without error (dispatcher shouldn't fail)
+	if err := future(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Critical: Requeue should have been called despite context cancellation
+	if next.requeue != 1 {
+		t.Errorf("expected Requeue to be called even with cancelled context, got requeue=%d", next.requeue)
+	}
+}
+
+// TestHandleAsync_CompleteSucceedsWithCancelledContext tests that Complete succeeds
+// even when the parent context is cancelled during successful work completion.
+func TestHandleAsync_CompleteSucceedsWithCancelledContext(t *testing.T) {
+	next := &mockKey{name: "will-succeed"}
+	q := &mockQueue{next: []workqueue.QueuedKey{next}}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	future := HandleAsync(ctx, q, 1, 0, func(context.Context, string, workqueue.Options) error {
+		// Simulate context cancellation happening right before completion
+		cancel()
+		return nil // Success - should trigger Complete
+	}, 0)
+
+	if err := future(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Critical: Complete should have been called despite context cancellation
+	if next.complete != 1 {
+		t.Errorf("expected Complete to be called even with cancelled context, got complete=%d", next.complete)
+	}
+}
+
+// TestHandleAsync_OrphanRequeueSucceedsWithCancelledContext tests that orphaned work
+// requeue succeeds even when the context is cancelled.
+func TestHandleAsync_OrphanRequeueSucceedsWithCancelledContext(t *testing.T) {
+	orphan := &mockKey{name: "orphan", orphaned: true}
+	q := &mockQueue{wip: []workqueue.ObservedInProgressKey{&mockInProgressKey{mockKey: orphan}}}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	// Cancel immediately
+	cancel()
+
+	future := HandleAsync(ctx, q, 1, 0, func(context.Context, string, workqueue.Options) error {
+		t.Error("callback should not be called for orphaned key")
+		return nil
+	}, 0)
+
+	if err := future(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Critical: Orphan requeue should succeed despite cancelled context
+	if orphan.requeue != 1 {
+		t.Errorf("expected orphaned key requeue even with cancelled context, got requeue=%d", orphan.requeue)
+	}
+}
