@@ -29,7 +29,7 @@ func checkQueue(t *testing.T, wq workqueue.Interface, es ExpectedState) ([]workq
 		t.Fatalf("Enumerate failed: %v", err)
 	}
 
-	var l []string // nolint: prealloc
+	var l []string //nolint: prealloc
 	for _, k := range wip {
 		l = append(l, k.Name())
 	}
@@ -37,7 +37,7 @@ func checkQueue(t *testing.T, wq workqueue.Interface, es ExpectedState) ([]workq
 		t.Fatalf("Unexpected in-progress keys (-want, +got):\n%s", diff)
 	}
 
-	l = nil
+	l = nil //nolint: prealloc
 	for _, k := range qd {
 		l = append(l, k.Name())
 	}

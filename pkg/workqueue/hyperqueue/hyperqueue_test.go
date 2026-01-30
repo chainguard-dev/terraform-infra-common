@@ -177,7 +177,7 @@ func TestConsistentRouting(t *testing.T) {
 			}
 		}
 
-		var callsPerBackend []int64
+		callsPerBackend := make([]int64, 0, len(mocks))
 		for _, m := range mocks {
 			callsPerBackend = append(callsPerBackend, m.processCount.Load())
 		}
