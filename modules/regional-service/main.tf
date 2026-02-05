@@ -143,6 +143,16 @@ resource "google_cloud_run_v2_service" "this" {
         value = var.enable_profiler
       }
 
+      env {
+        name  = "CHAINGUARD_TEAM"
+        value = var.team
+      }
+
+      env {
+        name  = "CHAINGUARD_PRODUCT"
+        value = var.product
+      }
+
       dynamic "volume_mounts" {
         for_each = local.main_container.volume_mounts
         content {
