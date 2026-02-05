@@ -174,6 +174,16 @@ resource "google_cloud_run_v2_job" "job" {
           }
         }
 
+        env {
+          name  = "CHAINGUARD_TEAM"
+          value = var.team
+        }
+
+        env {
+          name  = "CHAINGUARD_PRODUCT"
+          value = var.product
+        }
+
         dynamic "volume_mounts" {
           for_each = var.volume_mounts
           content {
