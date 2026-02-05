@@ -36,7 +36,7 @@ resource "aws_ecr_repository" "this" {
 
 locals {
   // Determine the ECR repository URL to use
-  ecr_repository_url = var.create_ecr_repository ? aws_ecr_repository.this[0].repository_url : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${coalesce(var.ecr_repository_name, var.name)}"
+  ecr_repository_url = var.create_ecr_repository ? aws_ecr_repository.this[0].repository_url : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com/${coalesce(var.ecr_repository_name, var.name)}"
 
   // Determine which role ARNs to use (created or provided)
   service_role_arn  = var.create_service_role ? aws_iam_role.apprunner_service[0].arn : var.service_role_arn

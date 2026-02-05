@@ -62,7 +62,10 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
 resource "google_pubsub_subscription" "this" {
   for_each = var.method == "gcs" ? local.regional-types : {}
   name     = "${var.name}-${substr(md5(each.key), 0, 6)}"
-  labels   = local.merged_labels
+
+  depends_on = [google_storage_bucket_iam_binding.broker-writes-to-gcs-buckets]
+
+  labels = local.merged_labels
 
   topic = var.broker[each.value.region]
 
