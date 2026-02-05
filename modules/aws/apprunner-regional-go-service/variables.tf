@@ -40,7 +40,7 @@ variable "container" {
   description = "The container configuration for the service. App Runner supports one container per service."
   type = object({
     source = object({
-      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:a301031ffd4ed67f35ca7fa6cf3dad9937b5fa47d7493955a18d9b4ca5412d1a")
+      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:9cef3c6a78264cb7e25923bf1bf7f39476dccbcc993af9f4ffeb191b77a7951e")
       working_dir = string
       importpath  = string
       repo        = optional(string) # Override the default ko repository for this container
