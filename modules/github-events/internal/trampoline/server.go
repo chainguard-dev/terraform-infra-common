@@ -45,9 +45,11 @@ type PayloadInfo struct {
 		PullRequestInfo *struct{} `json:"pull_request,omitempty"`
 	} `json:"issue,omitempty"`
 	CheckRun struct {
-		PullRequests []struct {
-			Number int `json:"number,omitempty"`
-		} `json:"pull_requests,omitempty"`
+		CheckSuite struct {
+			PullRequests []struct {
+				Number int `json:"number,omitempty"`
+			} `json:"pull_requests,omitempty"`
+		} `json:"check_suite,omitempty"`
 	} `json:"check_run,omitempty"`
 	CheckSuite struct {
 		PullRequests []struct {
@@ -130,6 +132,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	log = log.With("hook-id", hookID)
 
 	// Unmarshal payload to extract necessary information
 	var info PayloadInfo
@@ -300,19 +303,15 @@ func extractPullRequestURL(eventType string, info PayloadInfo) string {
 		if info.Issue.PullRequestInfo != nil && info.Issue.Number > 0 {
 			prNumber = info.Issue.Number
 		}
+	case "check_run":
+		if len(info.CheckRun.CheckSuite.PullRequests) > 0 {
+			prNumber = info.CheckRun.CheckSuite.PullRequests[0].Number
+		}
+	case "check_suite":
+		if len(info.CheckSuite.PullRequests) > 0 {
+			prNumber = info.CheckSuite.PullRequests[0].Number
+		}
 	}
-	// TODO(mattmoor): Github doesn't reliably set this field, e.g. it is not
-	// populated for check runs on PRs from forks, so this is an unreliable
-	// source of this metadata.  To avoid folks falling into the trap of relying
-	// on this, disable decorating this metadata for check runs.
-	// case "check_run":
-	// 	if len(info.CheckRun.PullRequests) > 0 {
-	// 		prNumber = info.CheckRun.PullRequests[0].Number
-	// 	}
-	// case "check_suite":
-	// 	if len(info.CheckSuite.PullRequests) > 0 {
-	// 		prNumber = info.CheckSuite.PullRequests[0].Number
-	// 	}
 
 	if prNumber > 0 {
 		return fmt.Sprintf("https://github.com/%s/%s/pull/%d", owner, repo, prNumber)
