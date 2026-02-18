@@ -186,7 +186,7 @@ module "prod_api_prober" {
   source = "../"
 
   name    = "prod-api-health"
-  team    = "sre"
+  team    = "customer-platform"
   product = "platform"
 
   importpath  = "github.com/my-org/probers/api-health"
