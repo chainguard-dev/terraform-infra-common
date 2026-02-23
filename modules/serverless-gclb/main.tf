@@ -11,10 +11,24 @@ terraform {
   }
 }
 
-// Create the IP address for our LB to serve on.
+// Create the IPv4 address for our LB to serve on.
 resource "google_compute_global_address" "this" {
-  project = var.project_id
-  name    = var.name
+  project    = var.project_id
+  name       = var.name
+  ip_version = "IPV4"
+
+  labels = merge(
+    var.team == "" ? {} : { team = var.team },
+    var.product == "" ? {} : { product = var.product }
+  )
+}
+
+// Create the IPv6 address for our LB to serve on.
+resource "google_compute_global_address" "this-v6" {
+  count      = var.enable_ipv6 ? 1 : 0
+  project    = var.project_id
+  name       = "${var.name}-v6"
+  ip_version = "IPV6"
 
   labels = merge(
     var.team == "" ? {} : { team = var.team },
@@ -33,6 +47,19 @@ resource "google_dns_record_set" "public-service" {
   ttl          = 60
 
   rrdatas = [google_compute_global_address.this.address]
+}
+
+// Create AAAA records for each of our public service hostnames.
+resource "google_dns_record_set" "public-service-v6" {
+  for_each = var.enable_ipv6 ? var.public-services : {}
+
+  project      = var.project_id
+  name         = "${each.key}."
+  managed_zone = var.dns_zone
+  type         = "AAAA"
+  ttl          = 60
+
+  rrdatas = [google_compute_global_address.this-v6[0].address]
 }
 
 // Provision a managed SSL certificate for each of our public services.
@@ -161,6 +188,20 @@ resource "google_compute_global_forwarding_rule" "this" {
   load_balancing_scheme                                        = var.forwarding_rule_load_balancing.load_balancing_scheme
 }
 
+resource "google_compute_global_forwarding_rule" "this-v6" {
+  count       = var.enable_ipv6 ? 1 : 0
+  project     = var.project_id
+  name        = "${var.name}-v6"
+  ip_protocol = "TCP"
+  port_range  = 443
+  ip_address  = google_compute_global_address.this-v6[0].id
+  target      = google_compute_target_https_proxy.public-service.id
+
+  external_managed_backend_bucket_migration_state              = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_state
+  external_managed_backend_bucket_migration_testing_percentage = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_testing_percentage
+  load_balancing_scheme                                        = var.forwarding_rule_load_balancing.load_balancing_scheme
+}
+
 // What identity is deploying this?
 data "google_client_openid_userinfo" "me" {}
 
@@ -178,5 +219,7 @@ locals {
       google_compute_target_https_proxy.public-service.id,
       google_compute_global_forwarding_rule.this.id,
     ],
+    var.enable_ipv6 ? [for _, v in google_dns_record_set.public-service-v6 : v.id] : [],
+    var.enable_ipv6 ? [google_compute_global_forwarding_rule.this-v6[0].id] : [],
   )
 }

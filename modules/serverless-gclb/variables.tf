@@ -83,3 +83,9 @@ variable "forwarding_rule_load_balancing" {
   })
   default = {}
 }
+
+variable "enable_ipv6" {
+  type        = bool
+  description = "Enable dualstack ipv6+ipv4 support on the edge/public loadbalancer end point. When false (default), ipv4-only is deployed."
+  default     = false
+}
