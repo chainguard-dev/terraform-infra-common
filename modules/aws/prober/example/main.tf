@@ -93,7 +93,7 @@ module "example_prober" {
   product = "monitoring"
 
   # Go application configuration
-  importpath  = "github.com/chainguard-dev/mono/terraform/public-modules/modules/aws/prober/example/app"
+  importpath  = "github.com/chainguard-dev/mono/public/terraform-infra-common/modules/aws/prober/example/app"
   working_dir = "${path.module}/app"
 
   # Environment variables for the prober
