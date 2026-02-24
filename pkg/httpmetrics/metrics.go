@@ -29,6 +29,7 @@ import (
 	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
@@ -249,12 +250,18 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 	if err != nil {
 		log.Panicf("tracerOptionsGCP(); texporter.New() = %v", err)
 	}
-	res, err := resource.New(ctx,
+	resOpts := []resource.Option{
 		// Use the GCP resource detector to detect information about the GCP platform
 		resource.WithDetectors(gcp.NewDetector()),
 		// Keep the default detectors
 		resource.WithTelemetrySDK(),
-	)
+	}
+	if env.KnativeServiceName != "unknown" {
+		resOpts = append(resOpts, resource.WithAttributes(
+			attribute.String("service.name", env.KnativeServiceName),
+		))
+	}
+	res, err := resource.New(ctx, resOpts...)
 	if err != nil {
 		log.Panicf("tracerOptionsGCP(); resource.New() = %v", err)
 	}
@@ -281,6 +288,14 @@ func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
 	}
 	bsp := trace.NewBatchSpanProcessor(traceExporter)
 	res := resource.Default()
+	if env.KnativeServiceName != "unknown" {
+		svcRes, err := resource.New(ctx,
+			resource.WithAttributes(attribute.String("service.name", env.KnativeServiceName)),
+		)
+		if err == nil {
+			res, _ = resource.Merge(res, svcRes)
+		}
+	}
 
 	return []trace.TracerProviderOption{
 		trace.WithResource(res),
