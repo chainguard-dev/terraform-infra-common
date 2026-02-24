@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 //   - Finding existing PRs by head branch
 //   - Embedding/extracting structured data in PR bodies
 //   - Creating or updating PRs (upsert pattern)
-//   - Checking for skip labels
+//   - Checking if a PR should be skipped
 //   - Closing any outstanding PRs
 //
 // # Generic Type Parameter
@@ -37,9 +37,9 @@ SPDX-License-Identifier: Apache-2.0
 //	    return err
 //	}
 //
-// Check for skip labels:
+// Check if the PR should be skipped:
 //
-//	if session.HasSkipLabel() {
+//	if session.ShouldSkip() {
 //	    return nil
 //	}
 //

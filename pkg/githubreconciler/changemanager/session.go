@@ -28,9 +28,10 @@ type Session[T any] struct {
 	existingPR *github.PullRequest
 }
 
-// HasSkipLabel checks if the existing PR has a skip label.
+// ShouldSkip checks if the existing PR should be skipped.
+// Returns true if the PR has a skip label or is assigned to someone.
 // Returns false if no existing PR exists.
-func (s *Session[T]) HasSkipLabel() bool {
+func (s *Session[T]) ShouldSkip() bool {
 	if s.existingPR == nil {
 		return false
 	}
@@ -41,7 +42,7 @@ func (s *Session[T]) HasSkipLabel() bool {
 			return true
 		}
 	}
-	return false
+	return len(s.existingPR.Assignees) > 0
 }
 
 // CloseAnyOutstanding closes the existing PR if one exists.
