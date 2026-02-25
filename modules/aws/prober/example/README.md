@@ -56,7 +56,7 @@ curl -H "Authorization: test-secret-123" http://localhost:8080/
 ### 1. Navigate to Example Directory
 
 ```bash
-cd terraform/public-modules/modules/aws/prober/example
+cd public/terraform-infra-common/modules/aws/prober/example
 ```
 
 ### 2. Initialize Terraform

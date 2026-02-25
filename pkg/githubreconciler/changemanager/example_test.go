@@ -45,8 +45,8 @@ func Example() {
 		return
 	}
 
-	// Check for skip label
-	if session.HasSkipLabel() {
+	// Check if the PR should be skipped
+	if session.ShouldSkip() {
 		// skip this resource
 		return
 	}

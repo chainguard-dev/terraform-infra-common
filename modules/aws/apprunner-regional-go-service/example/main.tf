@@ -75,7 +75,7 @@ module "my_go_service" {
   container = {
     source = {
       working_dir = "${path.module}/app"
-      importpath  = "github.com/chainguard-dev/mono/terraform/public-modules/modules/aws/apprunner-regional-go-service/example/app"
+      importpath  = "github.com/chainguard-dev/mono/public/terraform-infra-common/modules/aws/apprunner-regional-go-service/example/app"
       # repo is optional - module will use the created ECR repository automatically
     }
 

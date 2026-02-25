@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package profiler
 
 import (
+	"cmp"
 	"context"
 	"os"
 
@@ -22,8 +23,11 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 func SetupProfiler() {
 	clog.Debugf("Current Google Cloud Profiler setting (ENABLE_PROFILER = %t)", env.EnableProfiler)
 	if env.EnableProfiler {
-		clog.Debugf("Enabling Google Cloud Profiler (ENABLE_PROFILER = %t)", env.EnableProfiler)
-		if err := profiler.Start(profiler.Config{Service: os.Getenv("K_SERVICE")}); err != nil {
+		// https://docs.cloud.google.com/run/docs/container-contract#env-vars
+		service := cmp.Or(os.Getenv("K_SERVICE"), os.Getenv("CLOUD_RUN_JOB"))
+
+		clog.Debugf("Enabling Google Cloud Profiler (ENABLE_PROFILER = %t, Service = %q)", env.EnableProfiler, service)
+		if err := profiler.Start(profiler.Config{Service: service}); err != nil {
 			clog.Fatalf("failed to start profiler: %v", err)
 		}
 	}

@@ -21,7 +21,7 @@ See: https://cloud.google.com/logging/docs/export/bigquery
 
 ```hcl
 module "bigquery_log_sink" {
-  source = "../../terraform/public-modules/modules/bigquery-logsink"
+  source = "../../public/terraform-infra-common/modules/bigquery-logsink"
 
   project_id = var.project_id
   name       = "my_service"

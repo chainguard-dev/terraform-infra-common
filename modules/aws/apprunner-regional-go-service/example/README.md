@@ -75,7 +75,7 @@ Press Ctrl+C to stop the server.
 ### 1. Navigate to Example Directory
 
 ```bash
-cd terraform/public-modules/modules/aws/apprunner-regional-go-service/example
+cd public/terraform-infra-common/modules/aws/apprunner-regional-go-service/example
 ```
 
 ### 2. (Optional) Customize Configuration
