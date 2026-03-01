@@ -120,7 +120,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	ct.scenario("queue more than concurrency limit", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
 		// Queue more keys than the limit, and then check that we only return the
 		// expected number of keys (the limit).
-		for i := 0; i < 5*ct.concurrency; i++ {
+		for i := range 5 * ct.concurrency {
 			time.Sleep(1 * time.Millisecond)
 			if err := wq.Queue(ctx, fmt.Sprintf("key-%d", i), workqueue.Options{}); err != nil {
 				t.Fatalf("Queue failed: %v", err)
@@ -610,16 +610,16 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Get failed: %v", err)
 		}
 		if state.Key != "test-key" {
-			t.Errorf("Expected key 'test-key', got %q", state.Key)
+			t.Errorf("key: got = %q, wanted = %q", state.Key, "test-key")
 		}
 		if state.Status != workqueue.KeyState_QUEUED {
-			t.Errorf("Expected status QUEUED, got %v", state.Status)
+			t.Errorf("status: got = %v, wanted = QUEUED", state.Status)
 		}
 		if state.Priority != 100 {
-			t.Errorf("Expected priority 100, got %v", state.Priority)
+			t.Errorf("priority: got = %v, wanted = 100", state.Priority)
 		}
 		if state.QueuedTime == 0 {
-			t.Error("Expected non-zero queued time")
+			t.Error("queued time: got = 0, wanted = non-zero")
 		}
 
 		// Start processing the key
@@ -637,10 +637,10 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Get failed: %v", err)
 		}
 		if state.Key != "test-key" {
-			t.Errorf("Expected key 'test-key', got %q", state.Key)
+			t.Errorf("key: got = %q, wanted = %q", state.Key, "test-key")
 		}
 		if state.Status != workqueue.KeyState_IN_PROGRESS {
-			t.Errorf("Expected status IN_PROGRESS, got %v", state.Status)
+			t.Errorf("status: got = %v, wanted = IN_PROGRESS", state.Status)
 		}
 
 		// Complete the key
@@ -697,10 +697,10 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Get failed: %v", err)
 		}
 		if state.Key != "test-key" {
-			t.Errorf("Expected key 'test-key', got %q", state.Key)
+			t.Errorf("key: got = %q, wanted = %q", state.Key, "test-key")
 		}
 		if state.Status != workqueue.KeyState_IN_PROGRESS {
-			t.Errorf("Expected status IN_PROGRESS, got %v", state.Status)
+			t.Errorf("status: got = %v, wanted = IN_PROGRESS", state.Status)
 		}
 
 		// Complete the key
