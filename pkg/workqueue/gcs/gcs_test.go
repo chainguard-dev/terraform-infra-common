@@ -26,7 +26,7 @@ func TestDeadLetterKey(t *testing.T) {
 	got := key.deadLetterKey()
 	want := "dead-letter/test-key"
 	if got != want {
-		t.Errorf("deadLetterKey() = %q, want %q", got, want)
+		t.Errorf("deadLetterKey(): got = %q, wanted = %q", got, want)
 	}
 }
 
