@@ -209,81 +209,76 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		eventType string
 		payload   PayloadInfo
 		expected  string
-	}{
-		{
-			name:      "pull_request event with valid data",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Number: 123,
-				},
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-				},
+	}{{
+		name:      "pull_request event with valid data",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Number: 123,
 			},
-			expected: "foo/bar#123",
-		},
-		{
-			name:      "not a pull_request event",
-			eventType: "push",
-			payload: PayloadInfo{
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Number: 123,
-				},
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-				},
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
 			},
-			expected: "",
 		},
-		{
-			name:      "pull_request event with missing number",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-				},
+		expected: "foo/bar#123",
+	}, {
+		name:      "not a pull_request event",
+		eventType: "push",
+		payload: PayloadInfo{
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Number: 123,
 			},
-			expected: "",
-		},
-		{
-			name:      "pull_request event with missing repo",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Number: 123,
-				},
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
 			},
-			expected: "",
 		},
-	}
+		expected: "",
+	}, {
+		name:      "pull_request event with missing number",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+			},
+		},
+		expected: "",
+	}, {
+		name:      "pull_request event with missing repo",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Number: 123,
+			},
+		},
+		expected: "",
+	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -292,7 +287,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("Expected %q, got %q", tc.expected, result)
+				t.Errorf("result: got = %q, wanted = %q", result, tc.expected)
 			}
 		})
 	}
@@ -304,94 +299,89 @@ func TestExtractPullRequestURL(t *testing.T) {
 		eventType string
 		payload   PayloadInfo
 		expected  string
-	}{
-		{
-			name:      "pull_request event with valid data",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Number: 123,
-				},
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-					Owner: struct {
-						Login string `json:"login,omitempty"`
-					}{
-						Login: "foo",
-					},
-					Name: "bar",
-				},
-			},
-			expected: "https://github.com/foo/bar/pull/123",
-		},
-		{
-			name:      "not a pull_request event",
-			eventType: "push",
-			payload: PayloadInfo{
+	}{{
+		name:      "pull_request event with valid data",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
 				Number: 123,
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-					Owner: struct {
-						Login string `json:"login,omitempty"`
-					}{
-						Login: "foo",
-					},
-					Name: "bar",
-				},
 			},
-			expected: "",
-		},
-		{
-			name:      "pull_request event with missing number",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+				Owner: struct {
+					Login string `json:"login,omitempty"`
 				}{
-					FullName: "foo/bar",
-					Owner: struct {
-						Login string `json:"login,omitempty"`
-					}{
-						Login: "foo",
-					},
-					Name: "bar",
+					Login: "foo",
 				},
+				Name: "bar",
 			},
-			expected: "",
 		},
-		{
-			name:      "pull_request event with missing repo",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
+		expected: "https://github.com/foo/bar/pull/123",
+	}, {
+		name:      "not a pull_request event",
+		eventType: "push",
+		payload: PayloadInfo{
+			Number: 123,
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+				Owner: struct {
+					Login string `json:"login,omitempty"`
 				}{
-					Number: 123,
+					Login: "foo",
 				},
+				Name: "bar",
 			},
-			expected: "",
 		},
-	}
+		expected: "",
+	}, {
+		name:      "pull_request event with missing number",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+				Owner: struct {
+					Login string `json:"login,omitempty"`
+				}{
+					Login: "foo",
+				},
+				Name: "bar",
+			},
+		},
+		expected: "",
+	}, {
+		name:      "pull_request event with missing repo",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Number: 123,
+			},
+		},
+		expected: "",
+	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -400,7 +390,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("Expected %q, got %q", tc.expected, result)
+				t.Errorf("result: got = %q, wanted = %q", result, tc.expected)
 			}
 		})
 	}
@@ -515,94 +505,90 @@ func TestExtractIssueURL(t *testing.T) {
 		eventType string
 		payload   PayloadInfo
 		expected  string
-	}{
-		{
-			name:      "issues event with valid data",
-			eventType: "issues",
-			payload: PayloadInfo{
-				Issue: struct {
-					Number          int       `json:"number,omitempty"`
-					PullRequestInfo *struct{} `json:"pull_request,omitempty"`
-				}{
-					Number: 456,
-				},
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-					Owner: struct {
-						Login string `json:"login,omitempty"`
-					}{
-						Login: "foo",
-					},
-					Name: "bar",
-				},
+	}{{
+		name:      "issues event with valid data",
+		eventType: "issues",
+		payload: PayloadInfo{
+			Issue: struct {
+				Number          int       `json:"number,omitempty"`
+				PullRequestInfo *struct{} `json:"pull_request,omitempty"`
+			}{
+				Number: 456,
 			},
-			expected: "https://github.com/foo/bar/issues/456",
-		},
-		{
-			name:      "issue_comment on issue (not PR)",
-			eventType: "issue_comment",
-			payload: PayloadInfo{
-				Issue: struct {
-					Number          int       `json:"number,omitempty"`
-					PullRequestInfo *struct{} `json:"pull_request,omitempty"`
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+				Owner: struct {
+					Login string `json:"login,omitempty"`
 				}{
-					Number:          789,
-					PullRequestInfo: nil,
+					Login: "foo",
 				},
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-					Owner: struct {
-						Login string `json:"login,omitempty"`
-					}{
-						Login: "foo",
-					},
-					Name: "bar",
-				},
+				Name: "bar",
 			},
-			expected: "https://github.com/foo/bar/issues/789",
 		},
-		{
-			name:      "issue_comment on PR (should not return issue URL)",
-			eventType: "issue_comment",
-			payload: PayloadInfo{
-				Issue: struct {
-					Number          int       `json:"number,omitempty"`
-					PullRequestInfo *struct{} `json:"pull_request,omitempty"`
-				}{
-					Number:          789,
-					PullRequestInfo: &struct{}{},
-				},
-				Repository: struct {
-					FullName string `json:"full_name,omitempty"`
-					Owner    struct {
-						Login string `json:"login,omitempty"`
-					} `json:"owner,omitempty"`
-					Name string `json:"name,omitempty"`
-				}{
-					FullName: "foo/bar",
-					Owner: struct {
-						Login string `json:"login,omitempty"`
-					}{
-						Login: "foo",
-					},
-					Name: "bar",
-				},
+		expected: "https://github.com/foo/bar/issues/456",
+	}, {
+		name:      "issue_comment on issue (not PR)",
+		eventType: "issue_comment",
+		payload: PayloadInfo{
+			Issue: struct {
+				Number          int       `json:"number,omitempty"`
+				PullRequestInfo *struct{} `json:"pull_request,omitempty"`
+			}{
+				Number:          789,
+				PullRequestInfo: nil,
 			},
-			expected: "",
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+				Owner: struct {
+					Login string `json:"login,omitempty"`
+				}{
+					Login: "foo",
+				},
+				Name: "bar",
+			},
 		},
-	}
+		expected: "https://github.com/foo/bar/issues/789",
+	}, {
+		name:      "issue_comment on PR (should not return issue URL)",
+		eventType: "issue_comment",
+		payload: PayloadInfo{
+			Issue: struct {
+				Number          int       `json:"number,omitempty"`
+				PullRequestInfo *struct{} `json:"pull_request,omitempty"`
+			}{
+				Number:          789,
+				PullRequestInfo: &struct{}{},
+			},
+			Repository: struct {
+				FullName string `json:"full_name,omitempty"`
+				Owner    struct {
+					Login string `json:"login,omitempty"`
+				} `json:"owner,omitempty"`
+				Name string `json:"name,omitempty"`
+			}{
+				FullName: "foo/bar",
+				Owner: struct {
+					Login string `json:"login,omitempty"`
+				}{
+					Login: "foo",
+				},
+				Name: "bar",
+			},
+		},
+		expected: "",
+	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -611,7 +597,7 @@ func TestExtractIssueURL(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("Expected %q, got %q", tc.expected, result)
+				t.Errorf("result: got = %q, wanted = %q", result, tc.expected)
 			}
 		})
 	}
@@ -785,69 +771,65 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 		eventType   string
 		payload     map[string]interface{}
 		expectedURL string
-	}{
-		{
-			name:      "pull_request_review event",
-			eventType: "pull_request_review",
-			payload: map[string]interface{}{
-				"action": "submitted",
-				"pull_request": map[string]interface{}{
-					"number": 456,
-				},
-				"review": map[string]interface{}{
-					"id": 789,
-				},
-				"repository": map[string]interface{}{
-					"full_name": "org/repo",
-					"owner": map[string]interface{}{
-						"login": "org",
-					},
-					"name": "repo",
-				},
+	}{{
+		name:      "pull_request_review event",
+		eventType: "pull_request_review",
+		payload: map[string]interface{}{
+			"action": "submitted",
+			"pull_request": map[string]interface{}{
+				"number": 456,
 			},
-			expectedURL: "https://github.com/org/repo/pull/456",
-		},
-		{
-			name:      "pull_request_review_comment event",
-			eventType: "pull_request_review_comment",
-			payload: map[string]interface{}{
-				"action": "created",
-				"pull_request": map[string]interface{}{
-					"number": 789,
-				},
-				"comment": map[string]interface{}{
-					"id": 123,
-				},
-				"repository": map[string]interface{}{
-					"full_name": "user/project",
-					"owner": map[string]interface{}{
-						"login": "user",
-					},
-					"name": "project",
-				},
+			"review": map[string]interface{}{
+				"id": 789,
 			},
-			expectedURL: "https://github.com/user/project/pull/789",
-		},
-		{
-			name:      "check_run event without PR",
-			eventType: "check_run",
-			payload: map[string]interface{}{
-				"action": "completed",
-				"check_run": map[string]interface{}{
-					"id":            777,
-					"pull_requests": []interface{}{}, // Empty array
+			"repository": map[string]interface{}{
+				"full_name": "org/repo",
+				"owner": map[string]interface{}{
+					"login": "org",
 				},
-				"repository": map[string]interface{}{
-					"full_name": "test/repo",
-					"owner": map[string]interface{}{
-						"login": "test",
-					},
-					"name": "repo",
-				},
+				"name": "repo",
 			},
-			expectedURL: "", // No URL expected
 		},
-	}
+		expectedURL: "https://github.com/org/repo/pull/456",
+	}, {
+		name:      "pull_request_review_comment event",
+		eventType: "pull_request_review_comment",
+		payload: map[string]interface{}{
+			"action": "created",
+			"pull_request": map[string]interface{}{
+				"number": 789,
+			},
+			"comment": map[string]interface{}{
+				"id": 123,
+			},
+			"repository": map[string]interface{}{
+				"full_name": "user/project",
+				"owner": map[string]interface{}{
+					"login": "user",
+				},
+				"name": "project",
+			},
+		},
+		expectedURL: "https://github.com/user/project/pull/789",
+	}, {
+		name:      "check_run event without PR",
+		eventType: "check_run",
+		payload: map[string]interface{}{
+			"action": "completed",
+			"check_run": map[string]interface{}{
+				"id":            777,
+				"pull_requests": []interface{}{}, // Empty array
+			},
+			"repository": map[string]interface{}{
+				"full_name": "test/repo",
+				"owner": map[string]interface{}{
+					"login": "test",
+				},
+				"name": "repo",
+			},
+		},
+		expectedURL: "", // No URL expected
+	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -889,64 +871,59 @@ func TestIsPullRequestMerged(t *testing.T) {
 		eventType string
 		payload   PayloadInfo
 		expected  bool
-	}{
-		{
-			name:      "merged pull request",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				Action: "closed",
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Merged: true,
-				},
+	}{{
+		name:      "merged pull request",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			Action: "closed",
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Merged: true,
 			},
-			expected: true,
 		},
-		{
-			name:      "closed but not merged pull request",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				Action: "closed",
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Merged: false,
-				},
+		expected: true,
+	}, {
+		name:      "closed but not merged pull request",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			Action: "closed",
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Merged: false,
 			},
-			expected: false,
 		},
-		{
-			name:      "open pull request",
-			eventType: "pull_request",
-			payload: PayloadInfo{
-				Action: "opened",
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Merged: false,
-				},
+		expected: false,
+	}, {
+		name:      "open pull request",
+		eventType: "pull_request",
+		payload: PayloadInfo{
+			Action: "opened",
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Merged: false,
 			},
-			expected: false,
 		},
-		{
-			name:      "not a pull request event",
-			eventType: "push",
-			payload: PayloadInfo{
-				Action: "closed",
-				PullRequest: struct {
-					Number int  `json:"number,omitempty"`
-					Merged bool `json:"merged,omitempty"`
-				}{
-					Merged: true,
-				},
+		expected: false,
+	}, {
+		name:      "not a pull request event",
+		eventType: "push",
+		payload: PayloadInfo{
+			Action: "closed",
+			PullRequest: struct {
+				Number int  `json:"number,omitempty"`
+				Merged bool `json:"merged,omitempty"`
+			}{
+				Merged: true,
 			},
-			expected: false,
 		},
-	}
+		expected: false,
+	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -955,7 +932,7 @@ func TestIsPullRequestMerged(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("Expected %v, got %v", tc.expected, result)
+				t.Errorf("result: got = %v, wanted = %v", result, tc.expected)
 			}
 		})
 	}
