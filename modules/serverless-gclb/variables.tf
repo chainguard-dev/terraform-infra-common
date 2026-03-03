@@ -48,9 +48,9 @@ variable "notification_channels" {
 variable "iap" {
   description = "IAP configuration for the load balancer."
   type = object({
-    oauth2_client_id     = string
-    oauth2_client_secret = string
-    enabled              = optional(bool, true)
+    oauth2_client_id     = optional(string, null)
+    oauth2_client_secret = optional(string, null)
+    enabled              = bool
   })
   default = null
 }
