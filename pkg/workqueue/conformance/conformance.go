@@ -120,7 +120,7 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 	ct.scenario("queue more than concurrency limit", func(ctx context.Context, t *testing.T, wq workqueue.Interface) {
 		// Queue more keys than the limit, and then check that we only return the
 		// expected number of keys (the limit).
-		for i := 0; i < 5*ct.concurrency; i++ {
+		for i := range 5 * ct.concurrency {
 			time.Sleep(1 * time.Millisecond)
 			if err := wq.Queue(ctx, fmt.Sprintf("key-%d", i), workqueue.Options{}); err != nil {
 				t.Fatalf("Queue failed: %v", err)
@@ -590,11 +590,11 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 		// Test getting a nonexistent key
 		_, err := wq.Get(ctx, "nonexistent")
 		if err == nil {
-			t.Fatal("Expected error for nonexistent key")
+			t.Fatal("error: got = nil, wanted = non-nil")
 		}
 		st, ok := status.FromError(err)
 		if !ok || st.Code() != codes.NotFound {
-			t.Fatalf("Expected NotFound gRPC error, got %v", err)
+			t.Fatalf("gRPC error: got = %v, wanted = NotFound", err)
 		}
 
 		// Queue a key
@@ -610,16 +610,16 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Get failed: %v", err)
 		}
 		if state.Key != "test-key" {
-			t.Errorf("Expected key 'test-key', got %q", state.Key)
+			t.Errorf("key: got = %q, wanted = %q", state.Key, "test-key")
 		}
 		if state.Status != workqueue.KeyState_QUEUED {
-			t.Errorf("Expected status QUEUED, got %v", state.Status)
+			t.Errorf("status: got = %v, wanted = QUEUED", state.Status)
 		}
 		if state.Priority != 100 {
-			t.Errorf("Expected priority 100, got %v", state.Priority)
+			t.Errorf("priority: got = %v, wanted = 100", state.Priority)
 		}
 		if state.QueuedTime == 0 {
-			t.Error("Expected non-zero queued time")
+			t.Error("queued time: got = 0, wanted = non-zero")
 		}
 
 		// Start processing the key
@@ -637,10 +637,10 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Get failed: %v", err)
 		}
 		if state.Key != "test-key" {
-			t.Errorf("Expected key 'test-key', got %q", state.Key)
+			t.Errorf("key: got = %q, wanted = %q", state.Key, "test-key")
 		}
 		if state.Status != workqueue.KeyState_IN_PROGRESS {
-			t.Errorf("Expected status IN_PROGRESS, got %v", state.Status)
+			t.Errorf("status: got = %v, wanted = IN_PROGRESS", state.Status)
 		}
 
 		// Complete the key
@@ -651,11 +651,11 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 		// Key should not be found after completion
 		_, err = wq.Get(ctx, "test-key")
 		if err == nil {
-			t.Fatal("Expected error for completed key")
+			t.Fatal("error: got = nil, wanted = non-nil")
 		}
 		st, ok = status.FromError(err)
 		if !ok || st.Code() != codes.NotFound {
-			t.Fatalf("Expected NotFound gRPC error, got %v", err)
+			t.Fatalf("gRPC error: got = %v, wanted = NotFound", err)
 		}
 	})
 
@@ -697,10 +697,10 @@ func TestSemantics(t *testing.T, ctor func(int) workqueue.Interface) {
 			t.Fatalf("Get failed: %v", err)
 		}
 		if state.Key != "test-key" {
-			t.Errorf("Expected key 'test-key', got %q", state.Key)
+			t.Errorf("key: got = %q, wanted = %q", state.Key, "test-key")
 		}
 		if state.Status != workqueue.KeyState_IN_PROGRESS {
-			t.Errorf("Expected status IN_PROGRESS, got %v", state.Status)
+			t.Errorf("status: got = %v, wanted = IN_PROGRESS", state.Status)
 		}
 
 		// Complete the key
@@ -783,7 +783,7 @@ func TestMaxRetry(t *testing.T, ctor func(int) workqueue.Interface) {
 		// Get the initial attempt count, should be 1
 		attempts := owned.GetAttempts()
 		if attempts != 1 {
-			t.Fatalf("Expected attempt count 1, got %d", attempts)
+			t.Fatalf("attempt count: got = %d, wanted = 1", attempts)
 		}
 
 		// Requeue the key to increment the retry count
@@ -816,7 +816,7 @@ func TestMaxRetry(t *testing.T, ctor func(int) workqueue.Interface) {
 		// Get the attempt count, should now be 2
 		attempts = owned.GetAttempts()
 		if attempts != 2 {
-			t.Fatalf("Expected attempt count 2, got %d", attempts)
+			t.Fatalf("attempt count: got = %d, wanted = 2", attempts)
 		}
 
 		// Now fail the key instead of requeuing it

@@ -69,7 +69,7 @@ func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 		}
 	})
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		bi, err := rand.Int(rand.Reader, big.NewInt(40))
 		if err != nil {
 			t.Fatalf("Failed to generate random number: %v", err)
