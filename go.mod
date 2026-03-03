@@ -136,4 +136,4 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
-replace chainguard.dev/sdk => ../../sdk
+replace chainguard.dev/sdk => ../../public/sdk
