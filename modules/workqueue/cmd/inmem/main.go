@@ -85,7 +85,7 @@ func main() {
 	})
 
 	if err := eg.Wait(); err != nil {
-		clog.FromContext(ctx).Errorf("Error group failed: %v", err)
+		clog.ErrorContextf(ctx, "Error group failed: %v", err)
 	}
 }
 

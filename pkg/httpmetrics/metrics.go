@@ -317,7 +317,7 @@ func instrumentHandlerCounter(counter *prometheus.CounterVec, next http.Handler)
 	return func(w http.ResponseWriter, r *http.Request) {
 		d := &delegator{
 			ResponseWriter: w,
-			Status:         200,
+			Status:         http.StatusOK,
 		}
 
 		next.ServeHTTP(d, r)

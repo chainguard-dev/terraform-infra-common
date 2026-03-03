@@ -90,7 +90,7 @@ func main() {
 		}
 		tok, err := verifier.Verify(ctx, auth)
 		if err != nil {
-			clog.FromContext(ctx).Errorf("failed to verify Authorization: %v", err)
+			clog.ErrorContextf(ctx, "failed to verify Authorization: %v", err)
 			return cloudevents.NewHTTPResult(http.StatusUnauthorized, err.Error())
 		}
 		var claims struct {
@@ -98,11 +98,11 @@ func main() {
 			EmailVerified bool   `json:"email_verified"`
 		}
 		if err := tok.Claims(&claims); err != nil {
-			clog.FromContext(ctx).Errorf("failed to extract email claims: %v", err)
+			clog.ErrorContextf(ctx, "failed to extract email claims: %v", err)
 			return cloudevents.NewHTTPResult(http.StatusUnauthorized, err.Error())
 		}
 		if !claims.EmailVerified {
-			clog.FromContext(ctx).Errorf("email claim is not verified: %s", claims.Email)
+			clog.ErrorContextf(ctx, "email claim is not verified: %s", claims.Email)
 			return cloudevents.NewHTTPResult(http.StatusUnauthorized, "Unverified email claim")
 		}
 		msg := cgpubsub.FromCloudEvent(ctx, event)
@@ -112,7 +112,7 @@ func main() {
 
 		res := topic.Publish(ctx, msg)
 		if _, err := res.Get(ctx); err != nil {
-			clog.FromContext(ctx).Errorf("failed to forward event: %v\n%v", event, err)
+			clog.ErrorContextf(ctx, "failed to forward event: %v\n%v", event, err)
 			return cloudevents.NewHTTPResult(http.StatusInternalServerError, err.Error())
 		}
 		return nil
