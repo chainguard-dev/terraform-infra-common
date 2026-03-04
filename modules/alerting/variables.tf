@@ -138,6 +138,21 @@ variable "http_error_threshold" {
   default     = 0.25
 }
 
+variable "http_error_exclude_services" {
+  description = "List of service names to exclude from the http error rate alert."
+  type        = list(string)
+  default     = []
+}
+
+variable "http_error_method_status_exclusions" {
+  description = "Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination."
+  type = map(object({
+    method = string
+    code   = string
+  }))
+  default = {}
+}
+
 variable "grpc_error_threshold" {
   description = "threshold for grpc error."
   type        = number
