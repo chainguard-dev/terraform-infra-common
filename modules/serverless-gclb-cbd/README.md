@@ -1,7 +1,11 @@
-# `serverless-gclb`
+# `serverless-gclb-cbd`
 
 This module provisions a Google Cloud Load Balancer (GCLB) that sits in front of
 some number of regionalized Cloud Run services.
+
+Difference from the `serverless-gclb-cbd` is that
+lifecycle.create-before-destory is eanbled on the url_map
+resource. Which is needed sometimes to fix deployments.
 
 ```mermaid
 flowchart LR

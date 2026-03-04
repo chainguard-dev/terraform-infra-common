@@ -8,7 +8,6 @@ package httpmetrics
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -60,7 +59,7 @@ func ServeMetrics() {
 	defer cancel()
 	go ScrapeDiskUsage(ctx)
 	if err := srv.ListenAndServe(); err != nil {
-		clog.Error("listen and serve for http /metrics", "error", err)
+		clog.ErrorContext(ctx, "listen and serve for http /metrics", "error", err)
 	}
 }
 
@@ -248,7 +247,7 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 		texporter.WithTraceClientOptions([]option.ClientOption{option.WithTelemetryDisabled()}),
 	)
 	if err != nil {
-		log.Panicf("tracerOptionsGCP(); texporter.New() = %v", err)
+		clog.FatalContextf(ctx, "tracerOptionsGCP(); texporter.New() = %v", err)
 	}
 	resOpts := []resource.Option{
 		// Use the GCP resource detector to detect information about the GCP platform
@@ -263,7 +262,7 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 	}
 	res, err := resource.New(ctx, resOpts...)
 	if err != nil {
-		log.Panicf("tracerOptionsGCP(); resource.New() = %v", err)
+		clog.FatalContextf(ctx, "tracerOptionsGCP(); resource.New() = %v", err)
 	}
 	bsp := trace.NewBatchSpanProcessor(traceExporter)
 	// Default to 10%
@@ -284,7 +283,7 @@ func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
 func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
 	traceExporter, err := otlptracehttp.New(ctx)
 	if err != nil {
-		log.Panicf("traceOptions() = %v", err)
+		clog.FatalContextf(ctx, "traceOptions() = %v", err)
 	}
 	bsp := trace.NewBatchSpanProcessor(traceExporter)
 	res := resource.Default()
@@ -317,7 +316,7 @@ func instrumentHandlerCounter(counter *prometheus.CounterVec, next http.Handler)
 	return func(w http.ResponseWriter, r *http.Request) {
 		d := &delegator{
 			ResponseWriter: w,
-			Status:         200,
+			Status:         http.StatusOK,
 		}
 
 		next.ServeHTTP(d, r)

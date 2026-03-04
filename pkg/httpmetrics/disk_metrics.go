@@ -81,7 +81,7 @@ func scrapeDiskUsage() map[string]uint64 {
 
 func ScrapeDiskUsage(ctx context.Context) {
 	once.Do(func() {
-		clog.FromContext(ctx).Info("Starting disk usage scraper with interval", "interval", DiskUsageScrapeInterval)
+		clog.InfoContext(ctx, "Starting disk usage scraper with interval", "interval", DiskUsageScrapeInterval)
 		// Check the env var for the interval.
 		interval := scrapeInterval()
 		// Start a timer to scrape disk usage every 5 seconds.

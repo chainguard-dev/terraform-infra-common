@@ -111,7 +111,7 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 	ctx, cancel := context.WithTimeoutCause(context.Background(), 1*time.Minute, errors.New("get octosts token timeout"))
 	defer cancel()
 
-	clog.FromContext(ctx).Debugf("getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
+	clog.DebugContextf(ctx, "getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
 	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 
 		if err := octosts.Revoke(ctx, ts.tok); err != nil {
 			// This isn't an error, but we should log it.
-			clog.FromContext(ctx).Warnf("failed to revoke token: %v", err)
+			clog.WarnContextf(ctx, "failed to revoke token: %v", err)
 		}
 	}
 
@@ -195,7 +195,7 @@ func (c GitHubClient) Close(ctx context.Context) error {
 
 	if err := octosts.Revoke(ctx, tok.AccessToken); err != nil {
 		// Callers might just `defer c.Close()` so we log the error here too
-		clog.FromContext(ctx).Errorf("failed to revoke token: %v", err)
+		clog.ErrorContextf(ctx, "failed to revoke token: %v", err)
 		return fmt.Errorf("revoking token: %w", err)
 	}
 
@@ -302,7 +302,7 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 		if strings.Contains(*com.Body, fmt.Sprintf("<!-- bot:%s -->", botName)) {
 			if _, resp, err := c.inner.Issues.EditComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *com.ID, &github.IssueComment{
 				Body: &content,
-			}); err != nil || resp.StatusCode != 200 {
+			}); err != nil || resp.StatusCode != http.StatusOK {
 				return validateResponse(ctx, err, resp, "editing comment")
 			}
 			return nil
@@ -310,7 +310,7 @@ func (c GitHubClient) SetComment(ctx context.Context, pr *github.PullRequest, bo
 	}
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
-	}); err != nil || resp.StatusCode != 201 {
+	}); err != nil || resp.StatusCode != http.StatusCreated {
 		return validateResponse(ctx, err, resp, "create comment")
 	}
 	return nil
@@ -578,7 +578,7 @@ func validateResponse(ctx context.Context, err error, resp *github.Response, act
 		}
 		return fmt.Errorf("failed to %s: %w", action, err)
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to %s: %v", action, resp.Status)
 	}
 	return nil
