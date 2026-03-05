@@ -1,0 +1,337 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "delivery_id",
+    "type": "STRING"
+   },
+   {
+    "name": "event",
+    "type": "STRING"
+   },
+   {
+    "name": "webhook_id",
+    "type": "STRING"
+   }
+  ],
+  "name": "headers",
+  "type": "RECORD"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "name": "type",
+    "type": "STRING"
+   },
+   {
+    "name": "url",
+    "type": "STRING"
+   },
+   {
+    "name": "createdAt",
+    "type": "STRING"
+   },
+   {
+    "name": "organizationId",
+    "type": "STRING"
+   },
+   {
+    "name": "webhookTimestamp",
+    "type": "INTEGER"
+   },
+   {
+    "name": "webhookId",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
+      "type": "STRING"
+     }
+    ],
+    "name": "actor",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "title",
+      "type": "STRING"
+     },
+     {
+      "name": "description",
+      "type": "STRING"
+     },
+     {
+      "name": "identifier",
+      "type": "STRING"
+     },
+     {
+      "name": "number",
+      "type": "INTEGER"
+     },
+     {
+      "name": "priority",
+      "type": "INTEGER"
+     },
+     {
+      "name": "priorityLabel",
+      "type": "STRING"
+     },
+     {
+      "name": "estimate",
+      "type": "FLOAT"
+     },
+     {
+      "name": "dueDate",
+      "type": "STRING"
+     },
+     {
+      "name": "url",
+      "type": "STRING"
+     },
+     {
+      "name": "branchName",
+      "type": "STRING"
+     },
+     {
+      "name": "createdAt",
+      "type": "STRING"
+     },
+     {
+      "name": "updatedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "completedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "canceledAt",
+      "type": "STRING"
+     },
+     {
+      "name": "startedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "archivedAt",
+      "type": "STRING"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       },
+       {
+        "name": "type",
+        "type": "STRING"
+       },
+       {
+        "name": "color",
+        "type": "STRING"
+       }
+      ],
+      "name": "state",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "key",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       }
+      ],
+      "name": "team",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       },
+       {
+        "name": "email",
+        "type": "STRING"
+       }
+      ],
+      "name": "assignee",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       }
+      ],
+      "name": "creator",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       },
+       {
+        "name": "color",
+        "type": "STRING"
+       }
+      ],
+      "mode": "REPEATED",
+      "name": "labels",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       }
+      ],
+      "name": "project",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "name",
+        "type": "STRING"
+       },
+       {
+        "name": "number",
+        "type": "INTEGER"
+       }
+      ],
+      "name": "cycle",
+      "type": "RECORD"
+     },
+     {
+      "fields": [
+       {
+        "name": "id",
+        "type": "STRING"
+       },
+       {
+        "name": "identifier",
+        "type": "STRING"
+       }
+      ],
+      "name": "parent",
+      "type": "RECORD"
+     }
+    ],
+    "name": "data",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "title",
+      "type": "STRING"
+     },
+     {
+      "name": "description",
+      "type": "STRING"
+     },
+     {
+      "name": "priority",
+      "type": "INTEGER"
+     },
+     {
+      "name": "priorityLabel",
+      "type": "STRING"
+     },
+     {
+      "name": "estimate",
+      "type": "FLOAT"
+     },
+     {
+      "name": "dueDate",
+      "type": "STRING"
+     },
+     {
+      "name": "updatedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "completedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "canceledAt",
+      "type": "STRING"
+     },
+     {
+      "name": "startedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "archivedAt",
+      "type": "STRING"
+     }
+    ],
+    "name": "updatedFrom",
+    "type": "RECORD"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]
