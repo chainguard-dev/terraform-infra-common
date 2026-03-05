@@ -64,11 +64,11 @@ func TestServeHTTP_validRequest(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+		t.Fatalf("w.Code = %d, want 200: %s", w.Code, w.Body.String())
 	}
 
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("len(client.events) = %d, want 1", len(client.events))
 	}
 
 	event := client.events[0]
@@ -123,7 +123,7 @@ func TestServeHTTP_invalidSignature(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d", w.Code)
+		t.Fatalf("w.Code = %d, want 403", w.Code)
 	}
 }
 
@@ -145,7 +145,7 @@ func TestServeHTTP_missingSignature(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d", w.Code)
+		t.Fatalf("w.Code = %d, want 403", w.Code)
 	}
 }
 
@@ -168,7 +168,7 @@ func TestServeHTTP_missingEventHeader(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+		t.Fatalf("w.Code = %d, want 400", w.Code)
 	}
 }
 
@@ -194,7 +194,7 @@ func TestServeHTTP_expiredTimestamp(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d: %s", w.Code, w.Body.String())
+		t.Fatalf("w.Code = %d, want 403: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -218,10 +218,10 @@ func TestServeHTTP_multipleSecrets(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+		t.Fatalf("w.Code = %d, want 200: %s", w.Code, w.Body.String())
 	}
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("len(client.events) = %d, want 1", len(client.events))
 	}
 }
 
@@ -262,10 +262,10 @@ func TestServeHTTP_differentEventTypes(t *testing.T) {
 			s.ServeHTTP(w, req)
 
 			if w.Code != http.StatusOK {
-				t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+				t.Fatalf("w.Code = %d, want 200: %s", w.Code, w.Body.String())
 			}
 			if len(client.events) != 1 {
-				t.Fatalf("expected 1 event, got %d", len(client.events))
+				t.Fatalf("len(client.events) = %d, want 1", len(client.events))
 			}
 			if got := client.events[0].Type(); got != tc.wantType {
 				t.Errorf("type = %s, want %s", got, tc.wantType)
