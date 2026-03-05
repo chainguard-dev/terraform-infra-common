@@ -24,7 +24,7 @@ type ExpectedState struct {
 
 func checkQueue(t *testing.T, wq workqueue.Interface, es ExpectedState) ([]workqueue.ObservedInProgressKey, []workqueue.QueuedKey) {
 	t.Helper()
-	wip, qd, _, err := wq.Enumerate(context.Background())
+	wip, qd, _, err := wq.Enumerate(t.Context())
 	if err != nil {
 		t.Fatalf("Enumerate failed: %v", err)
 	}
@@ -76,7 +76,7 @@ func (ct *conformanceTester) scenario(name string, f func(context.Context, *test
 			_, _ = checkQueue(t, wq, ExpectedState{})
 		})
 
-		f(context.Background(), t, wq)
+		f(t.Context(), t, wq)
 	})
 }
 
