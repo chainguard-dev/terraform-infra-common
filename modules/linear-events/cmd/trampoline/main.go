@@ -46,10 +46,9 @@ func main() {
 		clog.FatalContextf(ctx, "failed to create cloudevents client: %v", err)
 	}
 
-	srv := &http.Server{
+	clog.FatalContextf(ctx, "ListenAndServe: %v", (&http.Server{
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		ReadHeaderTimeout: 10 * time.Second,
 		Handler:           httpmetrics.Handler("linear-trampoline", trampoline.NewServer(ceclient, webhookSecrets)),
-	}
-	clog.FatalContextf(ctx, "ListenAndServe: %v", srv.ListenAndServe())
+	}).ListenAndServe())
 }

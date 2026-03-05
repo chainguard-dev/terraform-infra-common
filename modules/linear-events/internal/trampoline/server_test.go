@@ -288,50 +288,43 @@ func TestValidateSignature(t *testing.T) {
 		signature string
 		secrets   [][]byte
 		want      bool
-	}{
-		{
-			name:      "valid signature",
-			body:      body,
-			signature: validSig,
-			secrets:   [][]byte{secret},
-			want:      true,
-		},
-		{
-			name:      "invalid signature",
-			body:      body,
-			signature: "0000000000000000000000000000000000000000000000000000000000000000",
-			secrets:   [][]byte{secret},
-			want:      false,
-		},
-		{
-			name:      "non-hex signature",
-			body:      body,
-			signature: "not-hex",
-			secrets:   [][]byte{secret},
-			want:      false,
-		},
-		{
-			name:      "wrong secret",
-			body:      body,
-			signature: validSig,
-			secrets:   [][]byte{[]byte("wrong-secret")},
-			want:      false,
-		},
-		{
-			name:      "second secret matches",
-			body:      body,
-			signature: validSig,
-			secrets:   [][]byte{[]byte("wrong"), secret},
-			want:      true,
-		},
-		{
-			name:      "no secrets",
-			body:      body,
-			signature: validSig,
-			secrets:   nil,
-			want:      false,
-		},
-	}
+	}{{
+		name:      "valid signature",
+		body:      body,
+		signature: validSig,
+		secrets:   [][]byte{secret},
+		want:      true,
+	}, {
+		name:      "invalid signature",
+		body:      body,
+		signature: "0000000000000000000000000000000000000000000000000000000000000000",
+		secrets:   [][]byte{secret},
+		want:      false,
+	}, {
+		name:      "non-hex signature",
+		body:      body,
+		signature: "not-hex",
+		secrets:   [][]byte{secret},
+		want:      false,
+	}, {
+		name:      "wrong secret",
+		body:      body,
+		signature: validSig,
+		secrets:   [][]byte{[]byte("wrong-secret")},
+		want:      false,
+	}, {
+		name:      "second secret matches",
+		body:      body,
+		signature: validSig,
+		secrets:   [][]byte{[]byte("wrong"), secret},
+		want:      true,
+	}, {
+		name:      "no secrets",
+		body:      body,
+		signature: validSig,
+		secrets:   nil,
+		want:      false,
+	}}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
