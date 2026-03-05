@@ -64,7 +64,7 @@ func TestServeHTTP_validRequest(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Fatalf("w.Code = %d, want 200: %s", w.Code, w.Body.String())
+		t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
 	}
 
 	if len(client.events) != 1 {
@@ -123,7 +123,7 @@ func TestServeHTTP_invalidSignature(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("w.Code = %d, want 403", w.Code)
+		t.Fatalf("w.Code = %d, want %d", w.Code, http.StatusForbidden)
 	}
 }
 
@@ -145,7 +145,7 @@ func TestServeHTTP_missingSignature(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("w.Code = %d, want 403", w.Code)
+		t.Fatalf("w.Code = %d, want %d", w.Code, http.StatusForbidden)
 	}
 }
 
@@ -168,7 +168,7 @@ func TestServeHTTP_missingEventHeader(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("w.Code = %d, want 400", w.Code)
+		t.Fatalf("w.Code = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 }
 
@@ -194,7 +194,7 @@ func TestServeHTTP_expiredTimestamp(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("w.Code = %d, want 403: %s", w.Code, w.Body.String())
+		t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusForbidden, w.Body.String())
 	}
 }
 
@@ -218,7 +218,7 @@ func TestServeHTTP_multipleSecrets(t *testing.T) {
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Fatalf("w.Code = %d, want 200: %s", w.Code, w.Body.String())
+		t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
 	}
 	if len(client.events) != 1 {
 		t.Fatalf("len(client.events) = %d, want 1", len(client.events))
@@ -262,7 +262,7 @@ func TestServeHTTP_differentEventTypes(t *testing.T) {
 			s.ServeHTTP(w, req)
 
 			if w.Code != http.StatusOK {
-				t.Fatalf("w.Code = %d, want 200: %s", w.Code, w.Body.String())
+				t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
 			}
 			if len(client.events) != 1 {
 				t.Fatalf("len(client.events) = %d, want 1", len(client.events))
