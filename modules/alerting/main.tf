@@ -18,6 +18,11 @@ locals {
   name                           = var.team == "" ? "global" : var.team
   squad_metric_filter            = var.team == "" ? "" : "metric.labels.team=\"${var.team}\""
   squad_metric_user_label_filter = var.team == "" ? "" : "metadata.user_labels.\"team\"=\"${var.team}\""
+  http_error_all_excluded_services = distinct(concat(
+    var.http_error_exclude_services,
+    keys(var.http_error_method_status_exclusions),
+  ))
+  http_error_exclude_filter = length(local.http_error_all_excluded_services) == 0 ? "" : "metric.labels.service_name != monitoring.regex.full_match(\"${join("|", local.http_error_all_excluded_services)}\")"
 }
 
 locals {
@@ -1249,6 +1254,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         metric.labels.service_name != monitoring.regex.full_match(".*-registry")
         metric.labels.service_name != monitoring.regex.full_match("prb-.*")
         metric.labels.code != monitoring.regex.full_match("[23]..")
+        ${local.http_error_exclude_filter}
         ${local.squad_metric_filter}
       EOT
 
@@ -1263,6 +1269,87 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
 
     display_name = "http error rate ${local.name}"
   }
+
+  // For each service with method+status exclusions, generate two conditions:
+  // 1. Non-METHOD errors for the service
+  // 2. METHOD errors excluding the specific CODE for the service
+  dynamic "conditions" {
+    for_each = var.http_error_method_status_exclusions
+    content {
+      condition_threshold {
+        aggregations {
+          alignment_period     = "60s"
+          cross_series_reducer = "REDUCE_MEAN"
+          per_series_aligner   = "ALIGN_RATE"
+          group_by_fields = [
+            "metric.label.\"team\"",
+            "resource.label.\"job\"",
+          ]
+        }
+
+        comparison = "COMPARISON_GT"
+        duration   = "300s"
+        filter     = <<EOT
+          resource.type = "prometheus_target"
+          metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
+          metric.labels.service_name = "${conditions.key}"
+          metric.labels.method != "${conditions.value.method}"
+          metric.labels.code != monitoring.regex.full_match("[23]..")
+          ${local.squad_metric_filter}
+        EOT
+
+        evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
+
+        trigger {
+          count = "1"
+        }
+
+        threshold_value = var.http_error_threshold
+      }
+
+      display_name = "${conditions.key} http error rate (non-${conditions.value.method})"
+    }
+  }
+
+  dynamic "conditions" {
+    for_each = var.http_error_method_status_exclusions
+    content {
+      condition_threshold {
+        aggregations {
+          alignment_period     = "60s"
+          cross_series_reducer = "REDUCE_MEAN"
+          per_series_aligner   = "ALIGN_RATE"
+          group_by_fields = [
+            "metric.label.\"team\"",
+            "resource.label.\"job\"",
+          ]
+        }
+
+        comparison = "COMPARISON_GT"
+        duration   = "300s"
+        filter     = <<EOT
+          resource.type = "prometheus_target"
+          metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
+          metric.labels.service_name = "${conditions.key}"
+          metric.labels.method = "${conditions.value.method}"
+          metric.labels.code != monitoring.regex.full_match("[23]..")
+          metric.labels.code != "${conditions.value.code}"
+          ${local.squad_metric_filter}
+        EOT
+
+        evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
+
+        trigger {
+          count = "1"
+        }
+
+        threshold_value = var.http_error_threshold
+      }
+
+      display_name = "${conditions.key} http error rate (${conditions.value.method}, non-${conditions.value.code})"
+    }
+  }
+
   display_name = "http error rate ${local.name}"
 
   documentation {
