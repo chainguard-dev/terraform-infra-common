@@ -105,7 +105,7 @@ func (m *mockQueue) Get(_ context.Context, key string) (*workqueue.KeyState, err
 
 func TestHandleAsync_EnumerateError(t *testing.T) {
 	q := &mockQueue{err: errors.New("fail")}
-	future := HandleAsync(context.Background(), q, 1, 0, func(context.Context, string, workqueue.Options) error { return nil }, 0)
+	future := HandleAsync(t.Context(), q, 1, 0, func(context.Context, string, workqueue.Options) error { return nil }, 0)
 	if err := future(); err == nil || err.Error() != "enumerate() = fail" {
 		t.Errorf("expected enumerate error, got %v", err)
 	}
@@ -115,7 +115,7 @@ func TestHandleAsync_OrphanedWorkIsRequeued(t *testing.T) {
 	orphan := &mockKey{name: "orphan", orphaned: true}
 	q := &mockQueue{wip: []workqueue.ObservedInProgressKey{&mockInProgressKey{mockKey: orphan}}}
 	called := false
-	future := HandleAsync(context.Background(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		called = true
 		return nil
 	}, 0)
@@ -137,7 +137,7 @@ func TestHandleAsync_NoOpenSlots(t *testing.T) {
 		next: []workqueue.QueuedKey{&mockKey{name: "next"}},
 	}
 	called := false
-	future := HandleAsync(context.Background(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		called = true
 		return nil
 	}, 0)
@@ -153,7 +153,7 @@ func TestHandleAsync_LaunchesNewWork(t *testing.T) {
 	next := &mockKey{name: "next"}
 	q := &mockQueue{next: []workqueue.QueuedKey{next}}
 	var called bool
-	future := HandleAsync(context.Background(), q, 1, 0, func(_ context.Context, key string, _ workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 1, 0, func(_ context.Context, key string, _ workqueue.Options) error {
 		called = true
 		if key != "next" {
 			t.Errorf("expected key 'next', got %q", key)
@@ -174,7 +174,7 @@ func TestHandleAsync_LaunchesNewWork(t *testing.T) {
 func TestHandleAsync_CallbackFails_Requeue(t *testing.T) {
 	next := &mockKey{name: "fail"}
 	q := &mockQueue{next: []workqueue.QueuedKey{next}}
-	future := HandleAsync(context.Background(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		return errors.New("fail")
 	}, 0)
 	if err := future(); err != nil {
@@ -189,7 +189,7 @@ func TestHandleAsync_CallbackFails_DeadletterOnMaxRetry(t *testing.T) {
 	next := &mockKey{name: "fail", attempts: 3}
 	q := &mockQueue{next: []workqueue.QueuedKey{next}}
 	maxRetry := 3
-	future := HandleAsync(context.Background(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		return errors.New("fail")
 	}, maxRetry)
 	if err := future(); err != nil {
@@ -204,7 +204,7 @@ func TestHandleAsync_CallbackFails_NonRetriable(t *testing.T) {
 	next := &mockKey{name: "fail"}
 	q := &mockQueue{next: []workqueue.QueuedKey{next}}
 	nonRetriable := workqueue.NonRetriableError(errors.New("non-retriable"), "no retry")
-	future := HandleAsync(context.Background(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		return nonRetriable
 	}, 0)
 	if err := future(); err != nil {
@@ -216,11 +216,13 @@ func TestHandleAsync_CallbackFails_NonRetriable(t *testing.T) {
 }
 
 func TestHandleAsync_RespectsBatchSize(t *testing.T) {
-	keys := []*mockKey{
-		{name: "k1"},
-		{name: "k2"},
-		{name: "k3"},
-	}
+	keys := []*mockKey{{
+		name: "k1",
+	}, {
+		name: "k2",
+	}, {
+		name: "k3",
+	}}
 
 	next := make([]workqueue.QueuedKey, len(keys))
 	for i := range keys {
@@ -229,7 +231,7 @@ func TestHandleAsync_RespectsBatchSize(t *testing.T) {
 
 	q := &mockQueue{next: next}
 
-	future := HandleAsync(context.Background(), q, 3, 2, func(context.Context, string, workqueue.Options) error {
+	future := HandleAsync(t.Context(), q, 3, 2, func(context.Context, string, workqueue.Options) error {
 		return nil
 	}, 0)
 
@@ -256,7 +258,7 @@ func TestHandleAsync_RequeueSucceedsWithCancelledContext(t *testing.T) {
 	q := &mockQueue{next: []workqueue.QueuedKey{next}}
 
 	// Create a context that we'll cancel during the callback
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	future := HandleAsync(ctx, q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		// Simulate SIGTERM arriving during work - cancel the context
@@ -282,7 +284,7 @@ func TestHandleAsync_CompleteSucceedsWithCancelledContext(t *testing.T) {
 	next := &mockKey{name: "will-succeed"}
 	q := &mockQueue{next: []workqueue.QueuedKey{next}}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	future := HandleAsync(ctx, q, 1, 0, func(context.Context, string, workqueue.Options) error {
 		// Simulate context cancellation happening right before completion
@@ -306,7 +308,7 @@ func TestHandleAsync_OrphanRequeueSucceedsWithCancelledContext(t *testing.T) {
 	orphan := &mockKey{name: "orphan", orphaned: true}
 	q := &mockQueue{wip: []workqueue.ObservedInProgressKey{&mockInProgressKey{mockKey: orphan}}}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	// Cancel immediately
 	cancel()
 

@@ -1,0 +1,148 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "delivery_id",
+    "type": "STRING"
+   },
+   {
+    "name": "event",
+    "type": "STRING"
+   },
+   {
+    "name": "webhook_id",
+    "type": "STRING"
+   }
+  ],
+  "name": "headers",
+  "type": "RECORD"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "name": "type",
+    "type": "STRING"
+   },
+   {
+    "name": "url",
+    "type": "STRING"
+   },
+   {
+    "name": "createdAt",
+    "type": "STRING"
+   },
+   {
+    "name": "organizationId",
+    "type": "STRING"
+   },
+   {
+    "name": "webhookTimestamp",
+    "type": "INTEGER"
+   },
+   {
+    "name": "webhookId",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
+      "type": "STRING"
+     }
+    ],
+    "name": "actor",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "color",
+      "type": "STRING"
+     },
+     {
+      "name": "description",
+      "type": "STRING"
+     },
+     {
+      "name": "isGroup",
+      "type": "BOOLEAN"
+     },
+     {
+      "name": "teamId",
+      "type": "STRING"
+     },
+     {
+      "name": "parentId",
+      "type": "STRING"
+     },
+     {
+      "name": "creatorId",
+      "type": "STRING"
+     },
+     {
+      "name": "organizationId",
+      "type": "STRING"
+     },
+     {
+      "name": "createdAt",
+      "type": "STRING"
+     },
+     {
+      "name": "updatedAt",
+      "type": "STRING"
+     }
+    ],
+    "name": "data",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "color",
+      "type": "STRING"
+     },
+     {
+      "name": "description",
+      "type": "STRING"
+     },
+     {
+      "name": "updatedAt",
+      "type": "STRING"
+     }
+    ],
+    "name": "updatedFrom",
+    "type": "RECORD"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]

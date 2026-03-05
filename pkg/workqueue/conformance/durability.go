@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package conformance
 
 import (
-	"context"
 	"testing"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/workqueue"
@@ -16,7 +15,7 @@ import (
 // have some degree of durability.  For instance, the in-memory implementation
 // will not pass this test.
 func TestDurability(t *testing.T, ctor func(int) workqueue.Interface) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Queue some stuff
 	{

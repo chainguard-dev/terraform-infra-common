@@ -42,7 +42,7 @@ func TestConcurrency(t *testing.T, ctor func(int) workqueue.Interface) {
 	}
 
 	eg := errgroup.Group{}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	defer func() {
 		if err := eg.Wait(); err != nil {
