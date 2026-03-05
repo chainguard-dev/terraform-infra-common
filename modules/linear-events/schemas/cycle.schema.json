@@ -1,0 +1,144 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "fields": [
+   {
+    "name": "delivery_id",
+    "type": "STRING"
+   },
+   {
+    "name": "event",
+    "type": "STRING"
+   },
+   {
+    "name": "webhook_id",
+    "type": "STRING"
+   }
+  ],
+  "name": "headers",
+  "type": "RECORD"
+ },
+ {
+  "fields": [
+   {
+    "name": "action",
+    "type": "STRING"
+   },
+   {
+    "name": "type",
+    "type": "STRING"
+   },
+   {
+    "name": "url",
+    "type": "STRING"
+   },
+   {
+    "name": "createdAt",
+    "type": "STRING"
+   },
+   {
+    "name": "organizationId",
+    "type": "STRING"
+   },
+   {
+    "name": "webhookTimestamp",
+    "type": "INTEGER"
+   },
+   {
+    "name": "webhookId",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
+      "type": "STRING"
+     }
+    ],
+    "name": "actor",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "number",
+      "type": "INTEGER"
+     },
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "startsAt",
+      "type": "STRING"
+     },
+     {
+      "name": "endsAt",
+      "type": "STRING"
+     },
+     {
+      "name": "completedAt",
+      "type": "STRING"
+     },
+     {
+      "name": "teamId",
+      "type": "STRING"
+     },
+     {
+      "name": "progress",
+      "type": "FLOAT"
+     },
+     {
+      "name": "createdAt",
+      "type": "STRING"
+     },
+     {
+      "name": "updatedAt",
+      "type": "STRING"
+     }
+    ],
+    "name": "data",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "name",
+      "type": "STRING"
+     },
+     {
+      "name": "startsAt",
+      "type": "STRING"
+     },
+     {
+      "name": "endsAt",
+      "type": "STRING"
+     },
+     {
+      "name": "updatedAt",
+      "type": "STRING"
+     }
+    ],
+    "name": "updatedFrom",
+    "type": "RECORD"
+   }
+  ],
+  "name": "body",
+  "type": "RECORD"
+ }
+]

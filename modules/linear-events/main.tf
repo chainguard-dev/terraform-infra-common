@@ -112,5 +112,41 @@ output "recorder-schemas" {
     "dev.chainguard.linear.issue" : {
       schema = file("${path.module}/schemas/issue.schema.json")
     }
+    "dev.chainguard.linear.comment" : {
+      schema = file("${path.module}/schemas/comment.schema.json")
+    }
+    "dev.chainguard.linear.issuelabel" : {
+      schema = file("${path.module}/schemas/issuelabel.schema.json")
+    }
+    "dev.chainguard.linear.attachment" : {
+      schema = file("${path.module}/schemas/attachment.schema.json")
+    }
+    "dev.chainguard.linear.reaction" : {
+      schema = file("${path.module}/schemas/reaction.schema.json")
+    }
+    "dev.chainguard.linear.project" : {
+      schema = file("${path.module}/schemas/project.schema.json")
+    }
+    "dev.chainguard.linear.projectupdate" : {
+      schema = file("${path.module}/schemas/projectupdate.schema.json")
+    }
+    "dev.chainguard.linear.document" : {
+      schema = file("${path.module}/schemas/document.schema.json")
+    }
+    "dev.chainguard.linear.initiative" : {
+      schema = file("${path.module}/schemas/initiative.schema.json")
+    }
+    "dev.chainguard.linear.cycle" : {
+      schema = file("${path.module}/schemas/cycle.schema.json")
+    }
+    "dev.chainguard.linear.customer" : {
+      schema = file("${path.module}/schemas/customer.schema.json")
+    }
+    "dev.chainguard.linear.customerneed" : {
+      schema = file("${path.module}/schemas/customerneed.schema.json")
+    }
+    "dev.chainguard.linear.issuesla" : {
+      schema = file("${path.module}/schemas/issuesla.schema.json")
+    }
   }
 }
