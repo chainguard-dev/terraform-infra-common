@@ -35,7 +35,7 @@ These metrics track agent behavior at the repository level, enabling cost tracki
 **Bounded labels (used in metrics):**
 - `repository`: Repository name extracted from reconciler_key (e.g., `chainguard-dev/enterprise-packages`)
 - `reconciler_type`: Type of reconciler (`pr` or `path`)
-- `model`: Model name (e.g., `claude-opus-4-1`, `gemini-3-pro-preview`)
+- `model`: Model name (e.g., `claude-opus-4-1`, `gemini-3.1-pro-preview`)
 - `tool`: Tool name (e.g., `git_clone`, `git_commit`)
 - `turn`: Turn number, where 0 represents the first attempt (for multi-turn agents)
 
