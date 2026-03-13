@@ -73,3 +73,9 @@ variable "product" {
   type        = string
   default     = "unknown"
 }
+
+variable "create_placeholder_version" {
+  type        = bool
+  description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."
+  default     = false
+}
