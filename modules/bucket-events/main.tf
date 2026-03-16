@@ -148,7 +148,12 @@ resource "google_pubsub_topic_iam_binding" "allow-pubsub-to-send-to-dead-letter"
 // Configure the subscription to deliver the events matching our filter to this service
 // using the above identity to authorize the delivery..
 resource "google_pubsub_subscription" "this" {
-  depends_on = [module.this]
+  // Ensure the trampoline service is ready and Pub/Sub can mint OIDC tokens
+  // for the delivery SA before creating the push subscription.
+  depends_on = [
+    module.this,
+    google_service_account_iam_binding.allow-pubsub-to-mint-tokens,
+  ]
 
   name   = "${var.name}-${random_string.delivery-suffix.result}"
   topic  = google_pubsub_topic.internal.id
@@ -223,7 +228,16 @@ resource "google_storage_notification" "notification" {
   payload_format = "JSON_API_V1"
   topic          = google_pubsub_topic.internal.id
   event_types    = var.gcs_event_types
-  depends_on     = [google_pubsub_topic_iam_binding.binding]
+
+  // We depend on the IAM binding granting the GCS service account pubsub.publisher
+  // on the topic. GCP IAM is eventually consistent, and the GCS notification API
+  // validates this permission at creation time, so we also depend on the trampoline
+  // service to provide natural delay for IAM propagation (and to ensure the
+  // processing pipeline is ready before we enable event delivery).
+  depends_on = [
+    google_pubsub_topic_iam_binding.binding,
+    module.this,
+  ]
 }
 
 // Authorize the trampoline service account to publish events.
