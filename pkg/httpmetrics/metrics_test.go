@@ -6,12 +6,14 @@ SPDX-License-Identifier: Apache-2.0
 package httpmetrics
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"go.opentelemetry.io/otel"
 )
 
 func TestServerMetrics(t *testing.T) {
@@ -85,4 +87,45 @@ func TestBucketize(t *testing.T) {
 			t.Errorf("bucketize(%q) = %q, want %q", c.host, got, c.bucket)
 		}
 	}
+}
+
+func Test_SetupMetrics(t *testing.T) {
+	ctx := context.Background()
+
+	cleanup := SetupMetrics(ctx)
+	if cleanup == nil {
+		t.Fatal("SetupMetrics() returned nil cleanup function")
+	}
+
+	provider := otel.GetMeterProvider()
+	if provider == nil {
+		t.Fatal("global meter provider was not set")
+	}
+
+	meter := provider.Meter("test-meter")
+	if meter == nil {
+		t.Fatal("failed to create meter from provider")
+	}
+
+	counter, err := meter.Int64Counter("test_counter")
+	if err != nil {
+		t.Fatalf("failed to create counter: %v", err)
+	}
+	if counter == nil {
+		t.Fatal("counter is nil")
+	}
+
+	cleanup()
+}
+
+func Test_SetupMetricsCleanup(t *testing.T) {
+	ctx := context.Background()
+
+	cleanup := SetupMetrics(ctx)
+	if cleanup == nil {
+		t.Fatal("SetupMetrics() returned nil cleanup function")
+	}
+
+	cleanup()
+	cleanup()
 }
