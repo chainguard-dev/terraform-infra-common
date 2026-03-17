@@ -48,7 +48,11 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 // ServeMetrics serves the metrics endpoint if the METRICS_PORT env var is set.
 func ServeMetrics() {
 	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/metrics", promhttp.HandlerFor(
+		prometheus.DefaultGatherer,
+		promhttp.HandlerOpts{
+			ErrorHandling: promhttp.ContinueOnError, // IMPORTANT: This returns partial metrics + logs error
+		}))
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", env.MetricsPort),
 		Handler:           mux,
