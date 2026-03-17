@@ -30,8 +30,10 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	prometheusexporter "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/api/option"
@@ -44,6 +46,30 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 	KnativeServiceName  string `env:"K_SERVICE, default=unknown"`
 	KnativeRevisionName string `env:"K_REVISION, default=unknown"`
 }{})
+
+// SetupMetrics setups a prometheus exporter for otel metrics
+//
+// Expected usage:
+//
+//	defer metrics.SetupMetrics(ctx)()
+func SetupMetrics(ctx context.Context) func() {
+	// OTel → Prometheus exporter (no GCP SDK needed)
+	exporter, err := prometheusexporter.New()
+	if err != nil {
+		clog.FatalContextf(ctx, "prometheusexporter.New() = %v", err)
+	}
+
+	provider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithReader(exporter),
+	)
+	otel.SetMeterProvider(provider)
+
+	return func() {
+		if err := provider.Shutdown(context.Background()); err != nil {
+			clog.ErrorContext(ctx, "Error shutting down meter provider", "error", err)
+		}
+	}
+}
 
 // ServeMetrics serves the metrics endpoint if the METRICS_PORT env var is set.
 func ServeMetrics() {
