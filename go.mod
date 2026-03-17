@@ -9,7 +9,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/profiler v0.4.3
 	cloud.google.com/go/pubsub/v2 v2.3.0
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.30.0
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.31.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.17.0
 	github.com/chainguard-dev/clog v1.8.0
@@ -24,7 +24,7 @@ require (
 	github.com/sethvargo/go-envconfig v1.3.0
 	github.com/shirou/gopsutil/v4 v4.25.11
 	github.com/snabb/httpreaderat v1.0.1
-	go.opentelemetry.io/contrib/detectors/gcp v1.40.0
+	go.opentelemetry.io/contrib/detectors/gcp v1.42.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.40.0
@@ -57,7 +57,7 @@ require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.31.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.54.0 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.54.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
