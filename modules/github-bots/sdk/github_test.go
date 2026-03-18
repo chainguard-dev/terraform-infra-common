@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v84/github"
 )
 
 func TestGitHubClientConfiguration(t *testing.T) {

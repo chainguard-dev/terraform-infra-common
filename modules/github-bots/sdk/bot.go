@@ -17,7 +17,7 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v84/github"
 	"github.com/sethvargo/go-envconfig"
 )
 

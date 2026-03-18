@@ -30,7 +30,7 @@ import (
 	"chainguard.dev/sdk/octosts"
 	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v84/github"
 	"golang.org/x/oauth2"
 )
 
