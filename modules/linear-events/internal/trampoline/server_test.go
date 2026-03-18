@@ -44,6 +44,10 @@ func newTestPayload(action, entityType string, ts int64) string {
 	return fmt.Sprintf(`{"action":%q,"type":%q,"organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"createdAt":"2025-01-01T00:00:00.000Z","url":"https://linear.app/team/issue/ENG-1","data":{"id":"issue-789","title":"Test issue","identifier":"ENG-1","number":1,"priority":2,"state":{"id":"state-1","name":"In Progress","type":"started"},"team":{"id":"team-1","key":"ENG","name":"Engineering"}}}`, action, entityType, ts)
 }
 
+func newCommentPayload(action string, ts int64) string {
+	return fmt.Sprintf(`{"action":%q,"type":"Comment","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"data":{"id":"comment-001","body":"A comment","issueId":"issue-789","userId":"user-1"}}`, action, ts)
+}
+
 func TestServeHTTP_validRequest(t *testing.T) {
 	now := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	clock := clockwork.NewFakeClockAt(now)
@@ -89,6 +93,16 @@ func TestServeHTTP_validRequest(t *testing.T) {
 	webhookID, _ := event.Extensions()["webhookid"].(string)
 	if webhookID != "wh-456" {
 		t.Errorf("webhookid = %s, want wh-456", webhookID)
+	}
+
+	// Verify issue-specific extensions.
+	issueURL, _ := event.Extensions()["issueid"].(string)
+	if issueURL != "issue-789" {
+		t.Errorf("issueid = %s, want issue-789", issueURL)
+	}
+	team, _ := event.Extensions()["team"].(string)
+	if team != "ENG" {
+		t.Errorf("team = %s, want ENG", team)
 	}
 
 	// Verify event data envelope.
@@ -271,6 +285,85 @@ func TestServeHTTP_differentEventTypes(t *testing.T) {
 				t.Errorf("type = %s, want %s", got, tc.wantType)
 			}
 		})
+	}
+}
+
+func TestServeHTTP_commentExtensions(t *testing.T) {
+	now := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	clock := clockwork.NewFakeClockAt(now)
+	client := &fakeClient{}
+
+	s := NewServer(client, [][]byte{[]byte(testSecret)})
+	s.clock = clock
+
+	body := newCommentPayload("create", now.UnixMilli())
+	sig := sign(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	req.Header.Set("Linear-Signature", sig)
+	req.Header.Set("Linear-Event", "Comment")
+	req.Header.Set("Linear-Delivery", "delivery-comment-1")
+
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
+	}
+	if len(client.events) != 1 {
+		t.Fatalf("len(client.events) = %d, want 1", len(client.events))
+	}
+
+	event := client.events[0]
+	if got, want := event.Type(), "dev.chainguard.linear.comment"; got != want {
+		t.Errorf("type = %s, want %s", got, want)
+	}
+
+	// Comment events should set issueid to the parent issue ID.
+	issueURL, _ := event.Extensions()["issueid"].(string)
+	if issueURL != "issue-789" {
+		t.Errorf("issueid = %s, want issue-789", issueURL)
+	}
+
+	// Comment events should NOT set the team extension.
+	if _, ok := event.Extensions()["team"]; ok {
+		t.Errorf("comment event should not have team extension")
+	}
+}
+
+func TestServeHTTP_nonIssueEventExtensions(t *testing.T) {
+	now := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	clock := clockwork.NewFakeClockAt(now)
+	client := &fakeClient{}
+
+	s := NewServer(client, [][]byte{[]byte(testSecret)})
+	s.clock = clock
+
+	// Project events should NOT set issueid or team extensions.
+	body := newTestPayload("create", "Project", now.UnixMilli())
+	sig := sign(body)
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	req.Header.Set("Linear-Signature", sig)
+	req.Header.Set("Linear-Event", "Project")
+	req.Header.Set("Linear-Delivery", "delivery-project-1")
+
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
+	}
+	if len(client.events) != 1 {
+		t.Fatalf("len(client.events) = %d, want 1", len(client.events))
+	}
+
+	event := client.events[0]
+	if _, ok := event.Extensions()["issueid"]; ok {
+		t.Errorf("project event should not have issueid extension")
+	}
+	if _, ok := event.Extensions()["team"]; ok {
+		t.Errorf("project event should not have team extension")
 	}
 }
 

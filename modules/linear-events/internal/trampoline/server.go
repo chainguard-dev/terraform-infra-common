@@ -116,6 +116,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		event.SetExtension("webhookid", payload.WebhookID)
 	}
 
+	// Set entity-specific extensions based on event type for downstream
+	// filtering and workqueue key extraction.
+	switch strings.ToLower(eventType) {
+	case "issue":
+		// Use the immutable UUID as the workqueue key rather than the
+		// Linear app URL, which can change if the team slug or workspace
+		// is renamed.
+		if payload.Data.ID != "" {
+			event.SetExtension("issueid", payload.Data.ID)
+		}
+		if payload.Data.Team.Key != "" {
+			event.SetExtension("team", payload.Data.Team.Key)
+		}
+	case "comment":
+		if payload.Data.IssueID != "" {
+			event.SetExtension("issueid", payload.Data.IssueID)
+		}
+	}
+
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
 		When: s.clock.Now(),
 		Headers: &eventHeaders{
@@ -149,6 +168,20 @@ type webhookPayload struct {
 	OrganizationID   string `json:"organizationId"`
 	WebhookID        string `json:"webhookId"`
 	WebhookTimestamp int64  `json:"webhookTimestamp"`
+
+	Data webhookData `json:"data"`
+}
+
+// webhookData captures entity-specific fields from the webhook payload
+// used to set CloudEvent extensions for downstream filtering and routing.
+type webhookData struct {
+	ID      string      `json:"id"`
+	IssueID string      `json:"issueId"` // set on Comment events
+	Team    webhookTeam `json:"team"`
+}
+
+type webhookTeam struct {
+	Key string `json:"key"`
 }
 
 type eventData struct {
