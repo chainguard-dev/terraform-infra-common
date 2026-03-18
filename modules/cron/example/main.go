@@ -11,4 +11,4 @@ import (
 	"time"
 )
 
-func main() { log.Println("hello the time is now", time.Now(), os.Getenv("EXAMPLE_ENV")) }
+func main() { log.Println("hello the time is now", time.Now(), os.Getenv("EXAMPLE_ENV")) } //nolint:gosec // G706: example app logging operational data

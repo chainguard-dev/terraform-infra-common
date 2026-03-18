@@ -64,7 +64,7 @@ func NewBuilder(name, headSHA string) *Builder {
 // If the output exceeds the maximum length, it will be truncated and a message will be appended.
 func (b *Builder) Writef(format string, args ...any) {
 	if b.md.Len() <= maxCheckOutputLength {
-		b.md.WriteString(fmt.Sprintf(format, args...))
+		fmt.Fprintf(&b.md, format, args...)
 		b.md.WriteRune('\n')
 	}
 

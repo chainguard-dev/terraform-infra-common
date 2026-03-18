@@ -39,14 +39,14 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Starting prober on port %s", port)
-	log.Printf("Target URL: %s", targetURL)
+	log.Printf("Starting prober on port %s", port) //nolint:gosec // G706: example app logging operational data
+	log.Printf("Target URL: %s", targetURL)        //nolint:gosec // G706: example app logging operational data
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Verify authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != expectedAuth {
-			log.Printf("Unauthorized request from %s", r.RemoteAddr)
+			log.Printf("Unauthorized request from %s", r.RemoteAddr) //nolint:gosec // G706: example app logging operational data
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -121,7 +121,7 @@ func checkHTTP(url string) error {
 		Timeout: 10 * time.Second,
 	}
 
-	resp, err := client.Get(url)
+	resp, err := client.Get(url) //nolint:gosec // G704: URL from internal config
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
