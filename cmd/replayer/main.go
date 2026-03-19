@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
@@ -42,12 +44,16 @@ func main() {
 	if prjID == "" {
 		log.Fatal("--projectID is required")
 	}
-	ctx := context.Background()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	client, err := pubsub.NewClient(ctx, prjID)
 	if err != nil {
+		cancel()
 		log.Fatalf("pubsub.NewClient: %v", err)
 	}
-	defer client.Close()
+	defer func() {
+		cancel()
+		client.Close()
+	}()
 
 	sub := client.Subscriber(srcSub)
 	top := client.Publisher(dstTop)

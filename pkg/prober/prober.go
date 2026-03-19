@@ -8,10 +8,11 @@ package prober
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/chainguard-dev/clog"
 )
 
 // Interface is implemented by Chainguard probers to encapsulate their
@@ -38,17 +39,17 @@ func Go(_ context.Context, i Interface) {
 	}
 	authz := os.Getenv("AUTHORIZATION")
 	if authz == "" {
-		log.Fatal("Expected AUTHORIZATION environment variable to be configured.")
+		clog.Fatalf("Expected AUTHORIZATION environment variable to be configured.")
 	}
 
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if auth := r.Header.Get("Authorization"); auth != authz {
-			log.Print("ERROR: request was not authorized")
+			clog.ErrorContext(r.Context(), "request was not authorized")
 			http.Error(w, "not authorized", http.StatusUnauthorized)
 			return
 		}
 		if err := i.Probe(r.Context()); err != nil {
-			log.Printf("ERROR: %v", err)
+			clog.ErrorContextf(r.Context(), "probe error: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -59,5 +60,5 @@ func Go(_ context.Context, i Interface) {
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
-	log.Fatal(srv.ListenAndServe())
+	clog.Fatalf("listen and serve: %v", srv.ListenAndServe())
 }

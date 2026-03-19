@@ -7,10 +7,10 @@ package pubsub
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
+	"github.com/chainguard-dev/clog"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/types"
 )
@@ -29,7 +29,7 @@ func FromCloudEvent(_ context.Context, event cloudevents.Event) *pubsub.Message 
 	for k, v := range event.Extensions() {
 		sv, err := types.ToString(v)
 		if err != nil {
-			log.Printf("encountered non-string extension %q: %v", k, err)
+			clog.Warnf("encountered non-string extension %q: %v", k, err)
 			continue
 		}
 		attributes["ce-"+k] = sv

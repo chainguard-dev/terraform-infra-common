@@ -67,15 +67,15 @@ func main() {
 		version = "1.0.0"
 	}
 
-	log.Printf("Starting server on port %s", port)
-	log.Printf("Region: %s", region)
-	log.Printf("Environment: %s", environment)
-	log.Printf("Log Level: %s", logLevel)
-	log.Printf("Version: %s", version)
+	log.Printf("Starting server on port %s", port) //nolint:gosec // G706: example app logging operational data
+	log.Printf("Region: %s", region)               //nolint:gosec // G706: example app logging operational data
+	log.Printf("Environment: %s", environment)     //nolint:gosec // G706: example app logging operational data
+	log.Printf("Log Level: %s", logLevel)          //nolint:gosec // G706: example app logging operational data
+	log.Printf("Version: %s", version)             //nolint:gosec // G706: example app logging operational data
 
 	// Root handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+		log.Printf("%s %s from %s", r.Method, r.URL.Path, r.RemoteAddr) //nolint:gosec // G706: example app logging operational data
 
 		response := Response{
 			Message:     "Hello from AWS App Runner! 🚀",
@@ -231,7 +231,7 @@ func main() {
 
 	// Start the server with proper timeouts
 	addr := ":" + port
-	log.Printf("Server listening on %s", addr)
+	log.Printf("Server listening on %s", addr) //nolint:gosec // G706: example app logging operational data
 	log.Printf("Endpoints: / /health /ready /info /ui")
 
 	server := &http.Server{
