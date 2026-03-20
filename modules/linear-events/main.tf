@@ -18,7 +18,12 @@ module "webhook-secret" {
   project_id = var.project_id
   name       = "${var.name}-webhook-secret"
 
-  service-account  = google_service_account.service.email
+  service-accounts = compact([
+    google_service_account.service.email,
+    # Allow the provisioning account to access the secret
+    # values because we're creating a placeholder
+    var.provisioner,
+  ])
   authorized-adder = var.secret_version_adder
 
   create_placeholder_version = var.create_placeholder_version
