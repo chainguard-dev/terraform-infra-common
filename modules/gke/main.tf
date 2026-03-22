@@ -109,6 +109,14 @@ resource "google_container_cluster" "this" {
         minimum       = var.cluster_autoscaling_memory_limits.minimum
         maximum       = var.cluster_autoscaling_memory_limits.maximum
       }
+      dynamic "resource_limits" {
+        for_each = var.cluster_autoscaling_gpu_limits
+        content {
+          resource_type = resource_limits.value.resource_type
+          minimum       = resource_limits.value.minimum
+          maximum       = resource_limits.value.maximum
+        }
+      }
       dynamic "auto_provisioning_defaults" {
         for_each = var.cluster_autoscaling_provisioning_defaults == null ? [] : ["placeholder"]
 
@@ -267,6 +275,21 @@ resource "google_container_node_pool" "pools" {
       for_each = each.value.ephemeral_storage_local_ssd_count > 0 ? [1] : []
       content {
         local_ssd_count = each.value.ephemeral_storage_local_ssd_count
+      }
+    }
+
+    dynamic "guest_accelerator" {
+      for_each = each.value.guest_accelerator != null ? each.value.guest_accelerator : []
+      content {
+        type  = guest_accelerator.value.type
+        count = guest_accelerator.value.count
+
+        dynamic "gpu_driver_installation_config" {
+          for_each = guest_accelerator.value.gpu_driver_installation_config
+          content {
+            gpu_driver_version = gpu_driver_installation_config.value.gpu_driver_version
+          }
+        }
       }
     }
 
