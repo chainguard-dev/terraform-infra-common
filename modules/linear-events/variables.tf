@@ -74,6 +74,12 @@ variable "product" {
   default     = "unknown"
 }
 
+variable "provisioner" {
+  description = "The member-style identity of the account provisioning resources in this environment (e.g. serviceAccount:…). When set, it is granted access to the webhook secret so placeholder versions can be created."
+  type        = string
+  default     = ""
+}
+
 variable "create_placeholder_version" {
   type        = bool
   description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."

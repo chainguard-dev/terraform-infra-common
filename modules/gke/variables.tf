@@ -62,6 +62,13 @@ variable "pools" {
       create_pod_range     = optional(bool, true)
       pod_ipv4_cidr_block  = optional(string, null)
     }), null)
+    guest_accelerator = optional(list(object({
+      type  = string
+      count = number
+      gpu_driver_installation_config = optional(list(object({
+        gpu_driver_version = string
+      })), [])
+    })), [])
   }))
 }
 
@@ -180,4 +187,14 @@ variable "default_compute_class_enabled" {
   default     = false
   type        = bool
   description = "Specifies whether default compute class behavior is enabled. If enabled, cluster autoscaler will use Compute Class with name default for all the workloads, if not overridden."
+}
+
+variable "cluster_autoscaling_gpu_limits" {
+  description = "GPU resource limits for cluster autoscaling NAP. Each entry specifies a GPU resource type and its min/max limits."
+  type = list(object({
+    resource_type = string
+    minimum       = number
+    maximum       = number
+  }))
+  default = []
 }
