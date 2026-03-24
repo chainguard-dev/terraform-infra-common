@@ -244,6 +244,18 @@ variable "team" {
   type        = string
 }
 
+variable "command" {
+  description = "Override the container entrypoint command."
+  type        = list(string)
+  default     = []
+}
+
+variable "args" {
+  description = "Override the container args (CMD)."
+  type        = list(string)
+  default     = []
+}
+
 variable "product" {
   description = "Product label to apply to the service."
   type        = string

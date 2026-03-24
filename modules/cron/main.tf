@@ -144,7 +144,9 @@ resource "google_cloud_run_v2_job" "job" {
         }
       }
       containers {
-        image = local.ref
+        image   = local.ref
+        command = length(var.command) > 0 ? var.command : null
+        args    = length(var.args) > 0 ? var.args : null
 
         resources {
           limits = {

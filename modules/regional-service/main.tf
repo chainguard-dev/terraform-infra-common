@@ -91,8 +91,9 @@ resource "google_cloud_run_v2_service" "this" {
     // Cloud Run terraform provider where omitting the port{} block does not
     // remove the port from the service.
     containers {
-      image = local.main_container.image
-      args  = local.main_container.args
+      image   = local.main_container.image
+      command = length(local.main_container.command) > 0 ? local.main_container.command : null
+      args    = local.main_container.args
 
       dynamic "ports" {
         for_each = local.main_container.ports
