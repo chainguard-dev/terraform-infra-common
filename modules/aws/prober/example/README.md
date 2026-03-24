@@ -376,8 +376,8 @@ terraform destroy
 | Name | Version |
 |------|---------|
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.0 |
-| <a name="requirement_cosign"></a> [cosign](#requirement\_cosign) | 0.0.20 |
-| <a name="requirement_ko"></a> [ko](#requirement\_ko) | 0.0.19 |
+| <a name="requirement_cosign"></a> [cosign](#requirement\_cosign) | ~> 0.0.20 |
+| <a name="requirement_ko"></a> [ko](#requirement\_ko) | ~> 0.0.19 |
 
 ## Providers
 

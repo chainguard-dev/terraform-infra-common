@@ -9,11 +9,11 @@ terraform {
     }
     ko = {
       source  = "ko-build/ko"
-      version = "0.0.19"
+      version = "~> 0.0.19"
     }
     cosign = {
       source  = "chainguard-dev/cosign"
-      version = "0.0.20"
+      version = "~> 0.0.20"
     }
   }
 }
