@@ -51,8 +51,9 @@ variable "deletion_protection" {
 variable "containers" {
   description = "The containers to run in the service.  Each container will be run in each region."
   type = map(object({
-    image = string
-    args  = optional(list(string), [])
+    image   = string
+    command = optional(list(string), [])
+    args    = optional(list(string), [])
     ports = optional(list(object({
       name           = optional(string, "http1")
       container_port = number

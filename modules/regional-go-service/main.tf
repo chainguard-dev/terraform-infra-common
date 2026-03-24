@@ -35,6 +35,7 @@ module "this" {
   containers = {
     for name, container in var.containers : name => {
       image             = cosign_sign.this[name].signed_ref
+      command           = container.command
       args              = container.args
       ports             = container.ports
       resources         = container.resources
