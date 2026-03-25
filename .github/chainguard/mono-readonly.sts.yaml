@@ -4,7 +4,7 @@
 issuer: https://token.actions.githubusercontent.com
 subject_pattern: repo:chainguard-dev/mono:pull_request
 claim_pattern:
-  workflow_ref: chainguard-dev/mono/.github/workflows/stage-open-source.yaml@.*
+  workflow_ref: chainguard-dev/mono/.github/workflows/open-source-stage.yaml@.*
 
 permissions:
   contents: read
