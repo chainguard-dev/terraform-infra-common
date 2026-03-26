@@ -56,11 +56,39 @@ var (
 	seenHostMap = sync.Map{}
 )
 
-var buckets = map[string]string{}
-var bucketSuffixes = map[string]string{}
+// bucketConfig holds the host-to-label mappings used by bucketize().
+// Written once at startup via SetBuckets/SetBucketSuffixes, read on
+// every HTTP round trip. Using atomic.Pointer avoids data races without
+// adding mutex overhead on the hot path.
+type bucketConfig struct {
+	exact    map[string]string
+	suffixes map[string]string
+}
 
-func SetBuckets(b map[string]string)         { buckets = b }
-func SetBucketSuffixes(bs map[string]string) { bucketSuffixes = bs }
+var activeBucketConfig atomic.Pointer[bucketConfig]
+
+func init() {
+	activeBucketConfig.Store(&bucketConfig{
+		exact:    map[string]string{},
+		suffixes: map[string]string{},
+	})
+}
+
+// SetBuckets configures exact host-to-label mappings. Must be called
+// before the first HTTP request for the mappings to take effect.
+func SetBuckets(b map[string]string) {
+	cfg := *activeBucketConfig.Load()
+	cfg.exact = b
+	activeBucketConfig.Store(&cfg)
+}
+
+// SetBucketSuffixes configures suffix-based host-to-label mappings.
+// Must be called before the first HTTP request for the mappings to take effect.
+func SetBucketSuffixes(bs map[string]string) {
+	cfg := *activeBucketConfig.Load()
+	cfg.suffixes = bs
+	activeBucketConfig.Store(&cfg)
+}
 
 // Transport is an http.RoundTripper that records metrics for each request.
 var Transport = WrapTransport(http.DefaultTransport)
@@ -218,7 +246,8 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 		return "unbucketized"
 	}
 
-	if len(buckets) == 0 && len(bucketSuffixes) == 0 {
+	cfg := activeBucketConfig.Load()
+	if len(cfg.exact) == 0 && len(cfg.suffixes) == 0 {
 		setupWarning.Do(func() {
 			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
 		})
@@ -226,11 +255,11 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 	}
 
 	// Check the exact matches first.
-	if b, ok := buckets[host]; ok {
+	if b, ok := cfg.exact[host]; ok {
 		return b
 	}
 	// Then check the suffixes.
-	for k, v := range bucketSuffixes {
+	for k, v := range cfg.suffixes {
 		if strings.HasSuffix(host, "."+k) {
 			return v
 		}
