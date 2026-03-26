@@ -118,19 +118,20 @@ func ExtractInnerTransport(rt http.RoundTripper) http.RoundTripper {
 }
 
 func mapErrorToLabel(err error) string {
-	if strings.Contains(err.Error(), "no route to host") {
-		return "no-route-to_host"
+	msg := err.Error()
+	if strings.Contains(msg, "no route to host") {
+		return "no-route-to-host"
 	}
-	if strings.Contains(err.Error(), "i/o timeout") {
+	if strings.Contains(msg, "i/o timeout") {
 		return "io-timeout"
 	}
-	if strings.Contains(err.Error(), "TLS handshake timeout") {
+	if strings.Contains(msg, "TLS handshake timeout") {
 		return "tls-handshake-timeout"
 	}
-	if strings.Contains(err.Error(), "TLS handshake error") {
+	if strings.Contains(msg, "TLS handshake error") {
 		return "tls-handshake-error"
 	}
-	if strings.Contains(err.Error(), "unexpected EOF") {
+	if strings.Contains(msg, "unexpected EOF") {
 		return "unexpected-eof"
 	}
 	return "unknown-error"
@@ -378,7 +379,7 @@ func instrumentDockerHubRateLimit(next http.RoundTripper) promhttp.RoundTripperF
 				if val == "" {
 					return 0
 				}
-				val, _, ok := strings.Cut(";", val)
+				val, _, ok := strings.Cut(val, ";")
 				if !ok {
 					return 0
 				}
