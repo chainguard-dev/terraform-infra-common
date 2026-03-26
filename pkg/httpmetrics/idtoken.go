@@ -7,6 +7,8 @@ package httpmetrics
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"google.golang.org/api/idtoken"
@@ -25,9 +27,19 @@ import (
 // We can't just use the option.WithHTTPClient and call upstream idtoken.NewClient()
 // because that code always reads from the http.DefaultTransport anyway.
 func newIDTokenClient(ctx context.Context, audience string, opts ...idtoken.ClientOption) (*http.Client, error) {
-	// unwrap the transport from the metrics transport
+	// Unwrap the transport from any wrapping layers (MetricsTransport,
+	// userAgentTransport, etc.) to get the underlying *http.Transport.
 	innerTransport := ExtractInnerTransport(http.DefaultTransport)
-	httpTransport := innerTransport.(*http.Transport).Clone()
+	base, ok := innerTransport.(*http.Transport)
+	if !ok {
+		// If unwrapping doesn't reach an *http.Transport (e.g., a wrapper
+		// that doesn't implement Unwrap), fall back to a fresh transport
+		// with sensible defaults rather than panicking.
+		slog.Warn("ExtractInnerTransport did not reach *http.Transport, using default",
+			"actual_type", fmt.Sprintf("%T", innerTransport))
+		base = &http.Transport{}
+	}
+	httpTransport := base.Clone()
 
 	// Everything else after this point is based on
 	// https://github.com/googleapis/google-api-go-client/blob/v0.178.0/idtoken/idtoken.go#L46

@@ -228,6 +228,29 @@ func TestMapErrorToLabel(t *testing.T) {
 	}
 }
 
+// unwrappableTransport implements TransportUnwrapper so
+// ExtractInnerTransport can see through it.
+type unwrappableTransport struct {
+	inner http.RoundTripper
+}
+
+func (t *unwrappableTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	return t.inner.RoundTrip(r)
+}
+
+func (t *unwrappableTransport) Unwrap() http.RoundTripper {
+	return t.inner
+}
+
+// opaqueTestTransport wraps a RoundTripper without implementing Unwrap.
+type opaqueTestTransport struct {
+	inner http.RoundTripper
+}
+
+func (t *opaqueTestTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	return t.inner.RoundTrip(r)
+}
+
 func TestExtractInnerTransport(t *testing.T) {
 	t.Run("not wrapped", func(t *testing.T) {
 		tr := &http.Transport{}
@@ -241,6 +264,45 @@ func TestExtractInnerTransport(t *testing.T) {
 		var tr = WrapTransport(inner)
 		if got := ExtractInnerTransport(tr); got != inner {
 			t.Errorf("want %v, got %v", inner, got)
+		}
+	})
+
+	t.Run("MetricsTransport wrapping unwrappable transport", func(t *testing.T) {
+		base := &http.Transport{}
+		wrapped := WrapTransport(&unwrappableTransport{inner: base})
+		got := ExtractInnerTransport(wrapped)
+		if got != base {
+			t.Errorf("want base *http.Transport, got %T", got)
+		}
+	})
+
+	t.Run("MetricsTransport wrapping opaque transport", func(t *testing.T) {
+		opaque := &opaqueTestTransport{inner: &http.Transport{}}
+		wrapped := WrapTransport(opaque)
+		got := ExtractInnerTransport(wrapped)
+		if got != opaque {
+			t.Errorf("want opaque transport, got %T", got)
+		}
+	})
+
+	t.Run("nil transport", func(t *testing.T) {
+		got := ExtractInnerTransport(nil)
+		if got != nil {
+			t.Errorf("want nil, got %T", got)
+		}
+	})
+
+	t.Run("deeply nested wrapping", func(t *testing.T) {
+		base := &http.Transport{}
+		// 3 unwrappable layers + MetricsTransport on top.
+		var rt http.RoundTripper = base
+		for range 3 {
+			rt = &unwrappableTransport{inner: rt}
+		}
+		rt = WrapTransport(rt)
+		got := ExtractInnerTransport(rt)
+		if got != base {
+			t.Errorf("want base *http.Transport through 4 layers, got %T", got)
 		}
 	})
 }

@@ -110,9 +110,28 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 	}
 }
 
+// TransportUnwrapper is implemented by RoundTripper wrappers that can expose
+// their underlying transport. This follows the same convention as errors.Unwrap.
+type TransportUnwrapper interface {
+	Unwrap() http.RoundTripper
+}
+
+// maxUnwrapDepth guards against infinite loops from buggy Unwrap implementations.
+const maxUnwrapDepth = 10
+
+// ExtractInnerTransport recursively unwraps layers of RoundTripper wrapping
+// (MetricsTransport and any TransportUnwrapper) to find the base transport.
+// Stops after maxUnwrapDepth iterations to prevent infinite loops.
 func ExtractInnerTransport(rt http.RoundTripper) http.RoundTripper {
-	if mt, ok := rt.(*MetricsTransport); ok {
-		return mt.inner
+	for range maxUnwrapDepth {
+		switch t := rt.(type) {
+		case *MetricsTransport:
+			rt = t.inner
+		case TransportUnwrapper:
+			rt = t.Unwrap()
+		default:
+			return rt
+		}
 	}
 	return rt
 }
