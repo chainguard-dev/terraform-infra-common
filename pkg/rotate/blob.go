@@ -57,100 +57,15 @@ func (u *uploader) Run(ctx context.Context) error {
 	done := false
 
 	for {
-		// This must be Background since we need to be able to upload even
-		// after receiving SIGTERM.
-		bgCtx := context.Background()
-		bucket, err := blob.OpenBucket(bgCtx, u.bucket)
+		processed, err := u.flush(ctx)
 		if err != nil {
 			return err
-		}
-		defer bucket.Close()
-
-		fileName := strconv.FormatInt(time.Now().UnixNano(), 10)
-
-		fileMap := make(map[string][]string)
-		processed := 0
-
-		if err := filepath.WalkDir(u.source, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			// Skip non-regular files.
-			if !d.Type().IsRegular() {
-				return nil
-			}
-			relPath, err := filepath.Rel(u.source, path)
-			if err != nil {
-				return err
-			}
-			dir, base := filepath.Split(relPath)
-			if _, ok := fileMap[dir]; !ok {
-				fileMap[dir] = []string{base}
-			} else {
-				fileMap[dir] = append(fileMap[dir], base)
-			}
-
-			return nil
-		}); err != nil {
-			return err
-		}
-		for k, v := range fileMap {
-			clog.InfoContextf(ctx, "Found %d files in dir %s to process", len(v), k)
-		}
-
-		for dir, files := range fileMap {
-			// Retry up to 3 times.
-			// The entire upload is a single operation. Writes to the writer can be async and only
-			// the Close() call will block until all writes are done and surface any errors. Thus
-			// the entire block is potentially retried.
-			for i := 0; i < MaxUploadAttempt; i++ {
-				// Setup the GCS object with the filename to write to
-				writer, err := bucket.NewWriter(bgCtx, filepath.Join(dir, fileName), nil)
-				if err != nil {
-					return err
-				}
-
-				for _, f := range files {
-					if err := u.BufferWriteToBucket(writer, filepath.Join(u.source, dir, f)); err != nil {
-						return fmt.Errorf("failed to upload file to blobstore: %s, %w", filepath.Join(dir, fileName), err)
-					}
-				}
-
-				if err := writer.Close(); err != nil {
-					if i == MaxUploadAttempt-1 {
-						// last attempt, no more retry
-						return fmt.Errorf("failed to close blob file: %s %w", fileName, err)
-					}
-					clog.WarnContextf(ctx, "retrying closing blob file: %s %v", fileName, err)
-					// wait before retrying
-					time.Sleep(RetryBackoffDuration)
-					continue
-				}
-
-				// Only delete files after a successful upload.
-				var deleteErr error
-				for _, f := range files {
-					path := filepath.Join(u.source, dir, f)
-					if err = os.Remove(path); err != nil {
-						// log the error, but continue to upload the rest of the files
-						clog.WarnContextf(ctx, "failed to delete file: %s %v", path, err)
-						deleteErr = fmt.Errorf("failed to delete file: %s %w", path, err)
-						continue
-					}
-					processed++
-				}
-				if deleteErr != nil {
-					return deleteErr
-				}
-
-				// Successfully uploaded and deleted files, break out of the retry loop.
-				break
-			}
 		}
 
 		if processed > 0 {
 			clog.InfoContextf(ctx, "Processed %d files to blobstore", processed)
 		}
+
 		if done {
 			clog.InfoContextf(ctx, "Exiting flush Run loop")
 			return nil
@@ -162,6 +77,106 @@ func (u *uploader) Run(ctx context.Context) error {
 			done = true
 		}
 	}
+}
+
+// flush performs a single upload cycle: opens the bucket, walks the source
+// directory, uploads files, and deletes them on success. The bucket handle
+// is closed via defer so all exit paths are covered.
+func (u *uploader) flush(ctx context.Context) (int, error) {
+	// This must be Background since we need to be able to upload even
+	// after receiving SIGTERM.
+	bgCtx := context.Background()
+	bucket, err := blob.OpenBucket(bgCtx, u.bucket)
+	if err != nil {
+		return 0, err
+	}
+	defer bucket.Close()
+
+	fileName := strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	fileMap := make(map[string][]string)
+	processed := 0
+
+	if err := filepath.WalkDir(u.source, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		// Skip non-regular files.
+		if !d.Type().IsRegular() {
+			return nil
+		}
+		relPath, err := filepath.Rel(u.source, path)
+		if err != nil {
+			return err
+		}
+		dir, base := filepath.Split(relPath)
+		if _, ok := fileMap[dir]; !ok {
+			fileMap[dir] = []string{base}
+		} else {
+			fileMap[dir] = append(fileMap[dir], base)
+		}
+
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+	for k, v := range fileMap {
+		clog.InfoContextf(ctx, "Found %d files in dir %s to process", len(v), k)
+	}
+
+	for dir, files := range fileMap {
+		// Retry up to 3 times.
+		// The entire upload is a single operation. Writes to the writer can be async and only
+		// the Close() call will block until all writes are done and surface any errors. Thus
+		// the entire block is potentially retried.
+		for i := 0; i < MaxUploadAttempt; i++ {
+			// Setup the GCS object with the filename to write to
+			writer, err := bucket.NewWriter(bgCtx, filepath.Join(dir, fileName), nil)
+			if err != nil {
+				return 0, err
+			}
+
+			for _, f := range files {
+				if err := u.BufferWriteToBucket(writer, filepath.Join(u.source, dir, f)); err != nil {
+					// Close the writer to avoid leaking the blob handle.
+					_ = writer.Close()
+					return 0, fmt.Errorf("failed to upload file to blobstore: %s, %w", filepath.Join(dir, fileName), err)
+				}
+			}
+
+			if err := writer.Close(); err != nil {
+				if i == MaxUploadAttempt-1 {
+					// last attempt, no more retry
+					return 0, fmt.Errorf("failed to close blob file %s: %w", fileName, err)
+				}
+				clog.WarnContextf(ctx, "retrying closing blob file: %s %v", fileName, err)
+				// wait before retrying
+				time.Sleep(RetryBackoffDuration)
+				continue
+			}
+
+			// Only delete files after a successful upload.
+			var deleteErr error
+			for _, f := range files {
+				path := filepath.Join(u.source, dir, f)
+				if err = os.Remove(path); err != nil {
+					// log the error, but continue to upload the rest of the files
+					clog.WarnContextf(ctx, "failed to delete file: %s %v", path, err)
+					deleteErr = fmt.Errorf("failed to delete file: %s %w", path, err)
+					continue
+				}
+				processed++
+			}
+			if deleteErr != nil {
+				return 0, deleteErr
+			}
+
+			// Successfully uploaded and deleted files, break out of the retry loop.
+			break
+		}
+	}
+
+	return processed, nil
 }
 
 func Upload(ctx context.Context, fr io.Reader, bucket, fileName string) error {
@@ -177,11 +192,13 @@ func Upload(ctx context.Context, fr io.Reader, bucket, fileName string) error {
 	}
 	n, err := writer.ReadFrom(fr)
 	if err != nil {
+		// Close the writer to avoid leaking the blob handle.
+		_ = writer.Close()
 		return err
 	}
-	fmt.Printf("Wrote %d bytes\n", n)
+	clog.InfoContextf(ctx, "Wrote %d bytes to %s", n, fileName)
 	if err := writer.Close(); err != nil {
-		return fmt.Errorf("failed to close blob file %w", err)
+		return fmt.Errorf("failed to close blob file: %w", err)
 	}
 	return nil
 }
@@ -193,9 +210,8 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 	}
 
 	defer func() {
-		ferr := f.Close()
-		if ferr != nil {
-			err = fmt.Errorf("failed to close source file: %s %w", src, err)
+		if ferr := f.Close(); ferr != nil {
+			err = fmt.Errorf("failed to close source file %s: %w", src, ferr)
 		}
 	}()
 
@@ -215,8 +231,7 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 		}
 	}
 	if s.Err() != nil {
-		// log the error and use alerting to investigates errors
-		clog.Errorf("bufio scan error: %v", s.Err())
+		return fmt.Errorf("bufio scan error: %w", s.Err())
 	}
 
 	return nil
