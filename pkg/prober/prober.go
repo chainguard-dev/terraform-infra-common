@@ -7,6 +7,7 @@ package prober
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"net/http"
 	"os"
@@ -42,22 +43,24 @@ func Go(_ context.Context, i Interface) {
 		clog.Fatalf("Expected AUTHORIZATION environment variable to be configured.")
 	}
 
-	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if auth := r.Header.Get("Authorization"); auth != authz {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if auth := r.Header.Get("Authorization"); subtle.ConstantTimeCompare([]byte(auth), []byte(authz)) != 1 {
 			clog.ErrorContext(r.Context(), "request was not authorized")
 			http.Error(w, "not authorized", http.StatusUnauthorized)
 			return
 		}
 		if err := i.Probe(r.Context()); err != nil {
 			clog.ErrorContextf(r.Context(), "probe error: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-	}))
+	})
 
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
+		Handler:           mux,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	clog.Fatalf("listen and serve: %v", srv.ListenAndServe())
