@@ -3,7 +3,7 @@ module github.com/chainguard-dev/terraform-infra-common
 go 1.25.7
 
 require (
-	chainguard.dev/go-grpc-kit v0.17.16
+	chainguard.dev/go-grpc-kit v0.17.17
 	chainguard.dev/sdk v0.1.50
 	cloud.google.com/go/bigquery v1.73.1
 	cloud.google.com/go/compute/metadata v0.9.0
@@ -36,7 +36,7 @@ require (
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/time v0.15.0
-	google.golang.org/api v0.271.0
+	google.golang.org/api v0.272.0
 )
 
 require (
