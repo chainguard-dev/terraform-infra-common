@@ -314,9 +314,15 @@ resource "google_cloud_scheduler_job" "cron" {
   project = var.project_id
   paused  = var.paused
 
-  name     = module.cron_name.result
-  schedule = var.schedule
-  region   = var.region
+  name             = module.cron_name.result
+  schedule         = var.schedule
+  region           = var.region
+  time_zone        = var.time_zone != "" ? var.time_zone : null
+  attempt_deadline = var.attempt_deadline
+
+  retry_config {
+    retry_count = 0
+  }
 
   http_target {
     http_method = "POST"

@@ -16,6 +16,18 @@ variable "schedule" {
   description = "The cron schedule on which to run the job."
 }
 
+variable "time_zone" {
+  description = "IANA time zone for the cron schedule (e.g., America/New_York). Defaults to UTC."
+  type        = string
+  default     = ""
+}
+
+variable "attempt_deadline" {
+  description = "Time limit for Cloud Scheduler to wait for a job response before considering the attempt failed."
+  type        = string
+  default     = "180s"
+}
+
 variable "base_image" {
   type        = string
   default     = "cgr.dev/chainguard/static:latest-glibc@sha256:11ec91f0372630a2ca3764cea6325bebb0189a514084463cbb3724e5bb350d14"
