@@ -22,3 +22,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Testing**: Write unit tests with descriptive function names (Test_functionName_scenario)
 - **Environment**: Process environment variables with envconfig
 - **Project Structure**: Go code in /cmd and /pkg, Terraform modules in /modules
+
+## Module Catalog
+
+Before creating new modules or writing Terraform that provisions Cloud Run services, event routing, networking, databases, or observability, consult [MODULES.md](./MODULES.md) for existing modules. Prefer composing existing modules over writing raw GCP resources.
+
+## Related Catalogs
+
+- [terraform/MODULES.md](../../terraform/MODULES.md) — AWS, GCP, Kubernetes, and Chainguard private infrastructure modules
+- [public/terraform-infra-reconcilers/MODULES.md](../terraform-infra-reconcilers/MODULES.md) — Workqueue-based reconciliation systems (DriftlessAF)
