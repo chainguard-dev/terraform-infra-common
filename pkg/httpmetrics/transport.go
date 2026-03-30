@@ -56,11 +56,39 @@ var (
 	seenHostMap = sync.Map{}
 )
 
-var buckets = map[string]string{}
-var bucketSuffixes = map[string]string{}
+// bucketConfig holds the host-to-label mappings used by bucketize().
+// Written once at startup via SetBuckets/SetBucketSuffixes, read on
+// every HTTP round trip. Using atomic.Pointer avoids data races without
+// adding mutex overhead on the hot path.
+type bucketConfig struct {
+	exact    map[string]string
+	suffixes map[string]string
+}
 
-func SetBuckets(b map[string]string)         { buckets = b }
-func SetBucketSuffixes(bs map[string]string) { bucketSuffixes = bs }
+var activeBucketConfig atomic.Pointer[bucketConfig]
+
+func init() {
+	activeBucketConfig.Store(&bucketConfig{
+		exact:    map[string]string{},
+		suffixes: map[string]string{},
+	})
+}
+
+// SetBuckets configures exact host-to-label mappings. Must be called
+// before the first HTTP request for the mappings to take effect.
+func SetBuckets(b map[string]string) {
+	cfg := *activeBucketConfig.Load()
+	cfg.exact = b
+	activeBucketConfig.Store(&cfg)
+}
+
+// SetBucketSuffixes configures suffix-based host-to-label mappings.
+// Must be called before the first HTTP request for the mappings to take effect.
+func SetBucketSuffixes(bs map[string]string) {
+	cfg := *activeBucketConfig.Load()
+	cfg.suffixes = bs
+	activeBucketConfig.Store(&cfg)
+}
 
 // Transport is an http.RoundTripper that records metrics for each request.
 var Transport = WrapTransport(http.DefaultTransport)
@@ -110,27 +138,47 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 	}
 }
 
+// TransportUnwrapper is implemented by RoundTripper wrappers that can expose
+// their underlying transport. This follows the same convention as errors.Unwrap.
+type TransportUnwrapper interface {
+	Unwrap() http.RoundTripper
+}
+
+// maxUnwrapDepth guards against infinite loops from buggy Unwrap implementations.
+const maxUnwrapDepth = 10
+
+// ExtractInnerTransport recursively unwraps layers of RoundTripper wrapping
+// (MetricsTransport and any TransportUnwrapper) to find the base transport.
+// Stops after maxUnwrapDepth iterations to prevent infinite loops.
 func ExtractInnerTransport(rt http.RoundTripper) http.RoundTripper {
-	if mt, ok := rt.(*MetricsTransport); ok {
-		return mt.inner
+	for range maxUnwrapDepth {
+		switch t := rt.(type) {
+		case *MetricsTransport:
+			rt = t.inner
+		case TransportUnwrapper:
+			rt = t.Unwrap()
+		default:
+			return rt
+		}
 	}
 	return rt
 }
 
 func mapErrorToLabel(err error) string {
-	if strings.Contains(err.Error(), "no route to host") {
-		return "no-route-to_host"
+	msg := err.Error()
+	if strings.Contains(msg, "no route to host") {
+		return "no-route-to-host"
 	}
-	if strings.Contains(err.Error(), "i/o timeout") {
+	if strings.Contains(msg, "i/o timeout") {
 		return "io-timeout"
 	}
-	if strings.Contains(err.Error(), "TLS handshake timeout") {
+	if strings.Contains(msg, "TLS handshake timeout") {
 		return "tls-handshake-timeout"
 	}
-	if strings.Contains(err.Error(), "TLS handshake error") {
+	if strings.Contains(msg, "TLS handshake error") {
 		return "tls-handshake-error"
 	}
-	if strings.Contains(err.Error(), "unexpected EOF") {
+	if strings.Contains(msg, "unexpected EOF") {
 		return "unexpected-eof"
 	}
 	return "unknown-error"
@@ -198,7 +246,8 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 		return "unbucketized"
 	}
 
-	if len(buckets) == 0 && len(bucketSuffixes) == 0 {
+	cfg := activeBucketConfig.Load()
+	if len(cfg.exact) == 0 && len(cfg.suffixes) == 0 {
 		setupWarning.Do(func() {
 			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
 		})
@@ -206,11 +255,11 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 	}
 
 	// Check the exact matches first.
-	if b, ok := buckets[host]; ok {
+	if b, ok := cfg.exact[host]; ok {
 		return b
 	}
 	// Then check the suffixes.
-	for k, v := range bucketSuffixes {
+	for k, v := range cfg.suffixes {
 		if strings.HasSuffix(host, "."+k) {
 			return v
 		}
@@ -378,7 +427,7 @@ func instrumentDockerHubRateLimit(next http.RoundTripper) promhttp.RoundTripperF
 				if val == "" {
 					return 0
 				}
-				val, _, ok := strings.Cut(";", val)
+				val, _, ok := strings.Cut(val, ";")
 				if !ok {
 					return 0
 				}

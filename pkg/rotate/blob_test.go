@@ -11,8 +11,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -22,7 +24,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -46,22 +47,41 @@ var (
 	}
 )
 
+// waitForBlobs polls the bucket until the expected number of blobs appear
+// or the timeout expires. Returns the blob contents map.
+func waitForBlobs(ctx context.Context, t *testing.T, bucket *blob.Bucket, wantCount int, timeout time.Duration) map[string]string {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		blobs, err := getFiles(ctx, bucket)
+		if err != nil {
+			t.Fatalf("Failed to read files from blobstore: %v", err)
+		}
+		if len(blobs) >= wantCount {
+			return blobs
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for %d blobs, got %d", wantCount, len(blobs))
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+}
+
 func TestBlobUploader(t *testing.T) {
 	dir := t.TempDir()
 	blobDir := t.TempDir()
 
-	cancelCtx, cancel := context.WithCancel(context.Background())
+	cancelCtx, cancel := context.WithCancel(t.Context())
 	bucketName := "file://" + blobDir
 	bucket, err := blob.OpenBucket(cancelCtx, bucketName)
 	if err != nil {
 		t.Fatalf("Failed to create a bucket: %v", err)
 	}
-	defer os.RemoveAll(dir) // clean up
 
 	uploader := NewUploader(dir, bucketName, 1*time.Minute)
 
 	// Create a few files there to be uploaded
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		var filename string
 		if i%2 == 0 {
 			filename = fmt.Sprintf("%s/unit/test/%d", dir, i)
@@ -94,16 +114,13 @@ func TestBlobUploader(t *testing.T) {
 	// Start the uploader
 	go uploader.Run(cancelCtx)
 
-	// Give a little time for uploads, then make sure we have all the files
-	// there.
-	time.Sleep(3 * time.Second)
-	blobsBefore, err := getFiles(cancelCtx, bucket)
-	if err != nil {
-		t.Errorf("Failed to read files from blobstore: %v", err)
-	}
+	// Poll until the expected blobs appear rather than using a fixed sleep.
+	blobsBefore := waitForBlobs(cancelCtx, t, bucket, len(wantBeforeCombineBlobs), 10*time.Second)
 	less := func(a, b string) bool { return a < b }
-	if !cmp.Equal(maps.Values(blobsBefore), wantBeforeCombineBlobs, cmpopts.SortSlices(less)) {
-		t.Errorf("Did not get expected blobs '%s'\n%v\n%v", cmp.Diff(wantBeforeCombineBlobs, maps.Values(blobsBefore), cmpopts.SortSlices(less)), wantBeforeCombineBlobs, maps.Values(blobsBefore))
+	got := slices.Sorted(maps.Values(blobsBefore))
+	want := slices.Sorted(slices.Values(wantBeforeCombineBlobs))
+	if !slices.Equal(got, want) {
+		t.Errorf("blobs mismatch: %s", cmp.Diff(wantBeforeCombineBlobs, slices.Collect(maps.Values(blobsBefore)), cmpopts.SortSlices(less)))
 	}
 
 	// Then write one more file and trigger cancel, so this too should be now
@@ -114,39 +131,35 @@ func TestBlobUploader(t *testing.T) {
 		t.Errorf("Failed to write: %v", err)
 	}
 
-	// Now one more check, make sure that the file does not get
-	// immediately uploaded. So check that the files have not been
-	// uploaded. Then trigger shutdown and ensure the file then gets uploaded
-	// as 'not per schedule', but aggressive flush during shutdown.
+	// Verify the file does not get immediately uploaded (still on the flush interval).
 	blobsAfter, err := getFiles(cancelCtx, bucket)
 	if err != nil {
 		t.Errorf("Failed to read files from blobstore: %v", err)
 	}
-	if !cmp.Equal(maps.Values(blobsAfter), wantBeforeCombineBlobs, cmpopts.SortSlices(less)) {
-		t.Errorf("Did not get expected blobs '%s'\n%v\n%v", cmp.Diff(wantBeforeCombineBlobs, maps.Values(blobsAfter), cmpopts.SortSlices(less)), wantBeforeCombineBlobs, maps.Values(blobsAfter))
+	gotAfter := slices.Sorted(maps.Values(blobsAfter))
+	if !slices.Equal(gotAfter, want) {
+		t.Errorf("blobs should not have changed yet: %s", cmp.Diff(wantBeforeCombineBlobs, slices.Collect(maps.Values(blobsAfter)), cmpopts.SortSlices(less)))
 	}
 
+	// Trigger shutdown — the uploader should flush one more time.
 	cancel()
-	time.Sleep(3 * time.Second)
-	blobsAfter, err = getFiles(cancelCtx, bucket)
-	if err != nil {
-		t.Errorf("Failed to read files from blobstore: %v", err)
-	}
-	if !cmp.Equal(maps.Values(blobsAfter), wantAfterCombineBlobs, cmpopts.SortSlices(less)) {
-		t.Errorf("Did not get expected blobs '%s'\n%v\n%v", cmp.Diff(wantAfterCombineBlobs, maps.Values(blobsAfter), cmpopts.SortSlices(less)), wantAfterCombineBlobs, maps.Values(blobsAfter))
+	blobsFinal := waitForBlobs(context.Background(), t, bucket, len(wantAfterCombineBlobs), 10*time.Second)
+	gotFinal := slices.Sorted(maps.Values(blobsFinal))
+	wantFinal := slices.Sorted(slices.Values(wantAfterCombineBlobs))
+	if !slices.Equal(gotFinal, wantFinal) {
+		t.Errorf("blobs after cancel mismatch: %s", cmp.Diff(wantAfterCombineBlobs, slices.Collect(maps.Values(blobsFinal)), cmpopts.SortSlices(less)))
 	}
 }
 
 func TestBlobUploaderNoop(t *testing.T) {
 	dir := t.TempDir()
-	defer os.RemoveAll(dir) // clean up
 	blobDir := t.TempDir()
 
 	bucketName := "file://" + blobDir
 
 	uploader := NewUploader(dir, bucketName, 1*time.Minute)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*80)
+	ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond*80)
 	defer cancel()
 	uploader.Run(ctx)
 }
@@ -154,7 +167,7 @@ func TestBlobUploaderNoop(t *testing.T) {
 func TestBlobUpload(t *testing.T) {
 	blobDir := t.TempDir()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	bucketName := "file://" + blobDir
 	bucket, err := blob.OpenBucket(ctx, bucketName)
 	if err != nil {
@@ -162,7 +175,7 @@ func TestBlobUpload(t *testing.T) {
 	}
 
 	// Upload the files
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		var filename string
 		if i%2 == 0 {
 			filename = fmt.Sprintf("unit/test/%d", i)
@@ -206,7 +219,7 @@ func getFiles(ctx context.Context, bucket *blob.Bucket) (map[string]string, erro
 }
 
 func TestBufferWriteToBucket(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	testFilename := filepath.Join("testdata", "long_event_line.json")
 	longEventLine, err := os.ReadFile(testFilename)
 	if err != nil {

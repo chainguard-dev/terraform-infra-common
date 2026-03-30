@@ -9,8 +9,8 @@ Dashboard section for monitoring AI agent metrics including evaluation results a
 - **Agent evaluation failure rate**: Ratio of failed evaluations to total evaluations
 - **Agent evaluation grade (P99)**: 99th percentile of evaluation grades
 
-### Repository-Level Metrics
-These metrics track agent behavior at the repository level, enabling cost tracking and performance analysis. Metrics use only bounded labels to prevent cardinality explosion. Per-PR details are available via trace exemplars in Cloud Trace.
+### Repository-Level Metrics (Custom)
+These metrics track agent behavior at the repository level, enabling cost tracking and performance analysis. Metrics use only bounded labels to prevent cardinality explosion. Per-PR details are available via trace exemplars in Cloud Trace. Custom metrics (`genai_token_*`) are kept for backward compatibility.
 
 - **Token usage by repository**: Total tokens consumed grouped by repository
 - **Tokens by model per repository**: Token usage broken down by model for each repository
@@ -19,6 +19,13 @@ These metrics track agent behavior at the repository level, enabling cost tracki
 - **Tokens per agent turn**: Token consumption across multiple agent turns (useful for iterative agents)
 - **Tokens by reconciler type**: Token usage comparing PR-based vs path-based reconcilers
 
+### GenAI Semantic Convention Metrics
+These metrics follow the [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/) using a unified `gen_ai.client.token.usage` counter with a `gen_ai.token.type` dimension (`input`/`output`). This makes traces and metrics compatible with GenAI observability platforms out of the box.
+
+- **GenAI semconv: token usage by repository**: Unified token counter grouped by repository and token type (input/output)
+- **GenAI semconv: tokens by model**: Unified token counter grouped by model and token type
+- **GenAI semconv: input vs output tokens**: Aggregate input vs output token comparison
+
 ## Metrics Used
 
 ### Agent Evaluations
@@ -26,9 +33,12 @@ These metrics track agent behavior at the repository level, enabling cost tracki
 - `prometheus.googleapis.com/agent_evaluation_failures_total/counter`
 - `prometheus.googleapis.com/agent_evaluation_grade/gauge`
 
-### Token & Tool Metrics
+### Token & Tool Metrics (Custom — kept for backward compatibility)
 - `prometheus.googleapis.com/genai_token_prompt_total/counter` (with labels: `reconciler_type`, `repository`, `model`, `turn`)
 - `prometheus.googleapis.com/genai_tool_calls_total/counter` (with labels: `reconciler_type`, `repository`, `tool`, `model`)
+
+### Token Metrics ([GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/))
+- `prometheus.googleapis.com/gen_ai_client_token_usage_total/counter` (with labels: `gen_ai_request_model`, `gen_ai_token_type`, `reconciler_type`, `repository`)
 
 #### Label Definitions
 
@@ -85,6 +95,9 @@ No providers.
 | <a name="module_evaluation_failure_rate"></a> [evaluation\_failure\_rate](#module\_evaluation\_failure\_rate) | ../../widgets/xy-ratio | n/a |
 | <a name="module_evaluation_grade_p99"></a> [evaluation\_grade\_p99](#module\_evaluation\_grade\_p99) | ../../widgets/xy | n/a |
 | <a name="module_evaluation_volume"></a> [evaluation\_volume](#module\_evaluation\_volume) | ../../widgets/xy | n/a |
+| <a name="module_semconv_tokens_by_model"></a> [semconv\_tokens\_by\_model](#module\_semconv\_tokens\_by\_model) | ../../widgets/xy-promql | n/a |
+| <a name="module_semconv_tokens_by_repo"></a> [semconv\_tokens\_by\_repo](#module\_semconv\_tokens\_by\_repo) | ../../widgets/xy-promql | n/a |
+| <a name="module_semconv_tokens_input_vs_output"></a> [semconv\_tokens\_input\_vs\_output](#module\_semconv\_tokens\_input\_vs\_output) | ../../widgets/xy-promql | n/a |
 | <a name="module_tokens_by_model_repo"></a> [tokens\_by\_model\_repo](#module\_tokens\_by\_model\_repo) | ../../widgets/xy | n/a |
 | <a name="module_tokens_by_reconciler_type"></a> [tokens\_by\_reconciler\_type](#module\_tokens\_by\_reconciler\_type) | ../../widgets/xy | n/a |
 | <a name="module_tokens_by_repo"></a> [tokens\_by\_repo](#module\_tokens\_by\_repo) | ../../widgets/xy | n/a |

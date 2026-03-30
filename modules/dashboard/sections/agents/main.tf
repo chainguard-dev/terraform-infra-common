@@ -67,6 +67,12 @@ module "evaluation_grade_p99" {
 # ===== Repository-Level Token Metrics =====
 # Note: These widgets use only bounded labels (repository, model, tool, turn, reconciler_type)
 # to prevent cardinality explosion. Per-PR details are available via trace exemplars.
+#
+# Custom metrics (genai_token_prompt_total, genai_token_completion_total) are kept for
+# backward compatibility. The gen_ai_client_token_usage histogram follows the
+# OpenTelemetry GenAI semantic conventions (gen_ai.client.token.usage with gen_ai.token.type
+# dimension) for compatibility with GenAI observability platforms.
+# See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/
 
 module "tokens_by_repo" {
   source = "../../widgets/xy"
@@ -162,6 +168,31 @@ module "tokens_by_reconciler_type" {
   plot_type      = "STACKED_AREA"
 }
 
+# ===== GenAI Semantic Convention Metrics (gen_ai.client.token.usage) =====
+# These widgets use the OpenTelemetry GenAI semconv token usage histogram
+# with gen_ai.token.type dimension (input/output).
+
+module "semconv_tokens_by_repo" {
+  source       = "../../widgets/xy-promql"
+  title        = "GenAI semconv: token usage by repository"
+  promql_query = "sum by (repository, gen_ai_token_type) (increase(gen_ai_client_token_usage_sum[10m]))"
+  plot_type    = "STACKED_AREA"
+}
+
+module "semconv_tokens_by_model" {
+  source       = "../../widgets/xy-promql"
+  title        = "GenAI semconv: tokens by model"
+  promql_query = "sum by (gen_ai_request_model, gen_ai_token_type) (increase(gen_ai_client_token_usage_sum[10m]))"
+  plot_type    = "STACKED_AREA"
+}
+
+module "semconv_tokens_input_vs_output" {
+  source       = "../../widgets/xy-promql"
+  title        = "GenAI semconv: input vs output tokens"
+  promql_query = "sum by (gen_ai_token_type) (increase(gen_ai_client_token_usage_sum[10m]))"
+  plot_type    = "STACKED_BAR"
+}
+
 locals {
   columns = 3
   unit    = module.width.size / local.columns
@@ -236,6 +267,29 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.tokens_by_reconciler_type.widget,
+    },
+
+    # Row 4: GenAI semantic convention metrics (gen_ai.client.token.usage)
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.semconv_tokens_by_repo.widget,
+    },
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.semconv_tokens_by_model.widget,
+    },
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.semconv_tokens_input_vs_output.widget,
     },
   ]
 }

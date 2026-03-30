@@ -230,7 +230,7 @@ func extractCloudRunCaller() func(context.Context, string) (string, bool) {
 	}
 }
 
-// Handler wraps a given http handler func in standard metrics handlers.
+// HandlerFunc wraps a given http handler func in standard metrics handlers.
 func HandlerFunc(name string, f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return Handler(name, http.HandlerFunc(f)).ServeHTTP
 }

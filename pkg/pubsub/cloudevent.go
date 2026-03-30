@@ -15,7 +15,22 @@ import (
 	"github.com/cloudevents/sdk-go/v2/types"
 )
 
-func FromCloudEvent(_ context.Context, event cloudevents.Event) *pubsub.Message {
+// standardCEAttributes is the set of attribute keys populated from standard
+// CloudEvent fields. Extensions with these names are skipped to prevent
+// accidental overwrites.
+var standardCEAttributes = map[string]struct{}{
+	"ce-id":          {},
+	"ce-specversion": {},
+	"ce-type":        {},
+	"ce-source":      {},
+	"ce-subject":     {},
+	"ce-time":        {},
+	"content-type":   {},
+}
+
+// FromCloudEvent converts a CloudEvent into a Pub/Sub message with standard
+// CE attributes mapped to message attributes and the event data as the body.
+func FromCloudEvent(ctx context.Context, event cloudevents.Event) *pubsub.Message {
 	attributes := map[string]string{
 		"ce-id":          event.ID(),
 		"ce-specversion": event.SpecVersion(),
@@ -27,12 +42,17 @@ func FromCloudEvent(_ context.Context, event cloudevents.Event) *pubsub.Message 
 	}
 
 	for k, v := range event.Extensions() {
-		sv, err := types.ToString(v)
-		if err != nil {
-			clog.Warnf("encountered non-string extension %q: %v", k, err)
+		key := "ce-" + k
+		if _, reserved := standardCEAttributes[key]; reserved {
+			clog.WarnContextf(ctx, "skipping extension %q: conflicts with standard CE attribute", k)
 			continue
 		}
-		attributes["ce-"+k] = sv
+		sv, err := types.ToString(v)
+		if err != nil {
+			clog.WarnContextf(ctx, "skipping non-string extension %q: %v", k, err)
+			continue
+		}
+		attributes[key] = sv
 	}
 
 	return &pubsub.Message{

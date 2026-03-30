@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package httpmetrics
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -15,9 +14,8 @@ import (
 
 func TestNewIDTokenClient(t *testing.T) {
 	aud := "https://example.com"
-	ctx := context.Background()
 	t.Run("with regular transport", func(t *testing.T) {
-		_, err := NewIDTokenClient(ctx, aud, option.WithAuthCredentialsFile(option.ExternalAccount, "testdata/creds.json"))
+		_, err := NewIDTokenClient(t.Context(), aud, option.WithAuthCredentialsFile(option.ExternalAccount, "testdata/creds.json"))
 		if err != nil {
 			t.Fatalf("NewIDTokenClient() = %v", err)
 		}
@@ -28,7 +26,36 @@ func TestNewIDTokenClient(t *testing.T) {
 		defer func() {
 			http.DefaultTransport = prev
 		}()
-		_, err := NewIDTokenClient(ctx, aud, option.WithAuthCredentialsFile(option.ExternalAccount, "testdata/creds.json"))
+		_, err := NewIDTokenClient(t.Context(), aud, option.WithAuthCredentialsFile(option.ExternalAccount, "testdata/creds.json"))
+		if err != nil {
+			t.Fatalf("NewIDTokenClient() = %v", err)
+		}
+	})
+	// Reproduces the prober panic: MetricsTransport wrapping a custom
+	// RoundTripper that wraps the real *http.Transport.
+	t.Run("with unwrappable transport inside metrics transport", func(t *testing.T) {
+		prev := http.DefaultTransport
+		http.DefaultTransport = WrapTransport(&unwrappableTransport{
+			inner: http.DefaultTransport,
+		})
+		defer func() {
+			http.DefaultTransport = prev
+		}()
+		_, err := NewIDTokenClient(t.Context(), aud, option.WithAuthCredentialsFile(option.ExternalAccount, "testdata/creds.json"))
+		if err != nil {
+			t.Fatalf("NewIDTokenClient() = %v", err)
+		}
+	})
+	// Verifies fallback when the wrapper doesn't implement Unwrap.
+	t.Run("with opaque transport inside metrics transport", func(t *testing.T) {
+		prev := http.DefaultTransport
+		http.DefaultTransport = WrapTransport(&opaqueTestTransport{
+			inner: http.DefaultTransport,
+		})
+		defer func() {
+			http.DefaultTransport = prev
+		}()
+		_, err := NewIDTokenClient(t.Context(), aud, option.WithAuthCredentialsFile(option.ExternalAccount, "testdata/creds.json"))
 		if err != nil {
 			t.Fatalf("NewIDTokenClient() = %v", err)
 		}

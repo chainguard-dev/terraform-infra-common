@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package pubsub
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -105,11 +104,37 @@ func TestFromCloudEvent(t *testing.T) {
 			},
 			Data: []byte("{}"),
 		},
+	}, {
+		name: "extension with reserved name does not overwrite standard attribute",
+		in: func() cloudevents.Event {
+			event := cloudevents.NewEvent()
+			event.SetID("real-id")
+			event.SetSource("source")
+			event.SetType("type")
+			event.SetSubject("subject")
+			event.SetTime(now)
+			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			// "id" maps to "ce-id" which is a standard attribute.
+			event.SetExtension("id", "evil-id")
+			return event
+		}(),
+		out: &pubsub.Message{
+			Attributes: map[string]string{
+				"ce-id":          "real-id", // must NOT be overwritten by the extension
+				"ce-source":      "source",
+				"ce-specversion": "1.0",
+				"ce-type":        "type",
+				"ce-subject":     "subject",
+				"ce-time":        "1973-11-29T21:33:09Z",
+				"content-type":   "application/json",
+			},
+			Data: []byte("{}"),
+		},
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			out := FromCloudEvent(context.Background(), test.in)
+			out := FromCloudEvent(t.Context(), test.in)
 			if diff := cmp.Diff(out, test.out, cmpopts.IgnoreUnexported(pubsub.Message{})); diff != "" {
 				t.Errorf("(-got, +want): %s", diff)
 			}

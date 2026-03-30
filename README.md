@@ -5,6 +5,10 @@
 A repository containing a collection of common infrastructure modules for
 encapsulating common Cloud Run and GCP patterns.
 
+## Modules
+
+See [MODULES.md](./MODULES.md) for a summary of all available modules.
+
 ## Usage
 
 To use components in this library, you must provide the `project` in a
