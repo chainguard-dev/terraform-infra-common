@@ -6,12 +6,17 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/chainguard-dev/clog"
+	"github.com/sethvargo/go-envconfig"
 )
 
 type Response struct {
@@ -32,29 +37,24 @@ type HealthResponse struct {
 
 var startTime = time.Now()
 
+var env = envconfig.MustProcess(context.Background(), &struct {
+	Port        string `env:"PORT,default=8080"`
+	Region      string `env:"AWS_REGION,default=unknown"`
+	Environment string `env:"ENVIRONMENT,default=development"`
+	LogLevel    string `env:"LOG_LEVEL,default=info"`
+	Version     string `env:"VERSION,default=1.0.0"`
+}{})
+
 func main() {
-	// Get configuration from environment variables
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
-	region := os.Getenv("AWS_REGION")
-	if region == "" {
-		region = os.Getenv("AWS_DEFAULT_REGION")
-	}
-	if region == "" {
-		region = "unknown"
-	}
-
-	environment := os.Getenv("ENVIRONMENT")
-	if environment == "" {
-		environment = "development"
-	}
-
-	logLevel := os.Getenv("LOG_LEVEL")
-	if logLevel == "" {
-		logLevel = "info"
+	// Fall back to AWS_DEFAULT_REGION if AWS_REGION is not set
+	region := env.Region
+	if region == "unknown" {
+		if r := os.Getenv("AWS_DEFAULT_REGION"); r != "" {
+			region = r
+		}
 	}
 
 	hostname, err := os.Hostname()
@@ -62,28 +62,23 @@ func main() {
 		hostname = "unknown"
 	}
 
-	version := os.Getenv("VERSION")
-	if version == "" {
-		version = "1.0.0"
-	}
-
-	log.Printf("Starting server on port %s", port) //nolint:gosec // G706: example app logging operational data
-	log.Printf("Region: %s", region)               //nolint:gosec // G706: example app logging operational data
-	log.Printf("Environment: %s", environment)     //nolint:gosec // G706: example app logging operational data
-	log.Printf("Log Level: %s", logLevel)          //nolint:gosec // G706: example app logging operational data
-	log.Printf("Version: %s", version)             //nolint:gosec // G706: example app logging operational data
+	clog.InfoContextf(ctx, "Starting server on port %s", env.Port)
+	clog.InfoContextf(ctx, "Region: %s", region)
+	clog.InfoContextf(ctx, "Environment: %s", env.Environment)
+	clog.InfoContextf(ctx, "Log Level: %s", env.LogLevel)
+	clog.InfoContextf(ctx, "Version: %s", env.Version)
 
 	// Root handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s from %s", r.Method, r.URL.Path, r.RemoteAddr) //nolint:gosec // G706: example app logging operational data
+		clog.InfoContextf(r.Context(), "%s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
 
 		response := Response{
 			Message:     "Hello from AWS App Runner! 🚀",
 			Region:      region,
-			Environment: environment,
+			Environment: env.Environment,
 			Hostname:    hostname,
 			Timestamp:   time.Now(),
-			Version:     version,
+			Version:     env.Version,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -109,7 +104,7 @@ func main() {
 
 	// Readiness check endpoint
 	http.HandleFunc("/ready", func(w http.ResponseWriter, _ *http.Request) {
-		// Add any readiness checks here (database, external services, etc.)
+		// Add any readiness checks here (database, external services, etc.
 		// For now, we're always ready
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -122,9 +117,9 @@ func main() {
 	// Info endpoint with all environment details
 	http.HandleFunc("/info", func(w http.ResponseWriter, _ *http.Request) {
 		info := map[string]interface{}{
-			"version":     version,
+			"version":     env.Version,
 			"region":      region,
-			"environment": environment,
+			"environment": env.Environment,
 			"hostname":    hostname,
 			"uptime":      time.Since(startTime).Round(time.Second).String(),
 			"go_version":  os.Getenv("GO_VERSION"),
@@ -222,7 +217,7 @@ func main() {
     </div>
 </body>
 </html>
-`, region, environment, hostname, version, time.Since(startTime).Round(time.Second), time.Now().Format(time.RFC3339))
+`, region, env.Environment, hostname, env.Version, time.Since(startTime).Round(time.Second), time.Now().Format(time.RFC3339))
 
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
@@ -230,9 +225,9 @@ func main() {
 	})
 
 	// Start the server with proper timeouts
-	addr := ":" + port
-	log.Printf("Server listening on %s", addr) //nolint:gosec // G706: example app logging operational data
-	log.Printf("Endpoints: / /health /ready /info /ui")
+	addr := ":" + env.Port
+	clog.InfoContextf(ctx, "Server listening on %s", addr)
+	clog.InfoContextf(ctx, "Endpoints: / /health /ready /info /ui")
 
 	server := &http.Server{
 		Addr:              addr,
@@ -243,6 +238,6 @@ func main() {
 	}
 
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		clog.FatalContextf(ctx, "Server failed to start: %v", err)
 	}
 }
