@@ -6,12 +6,17 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/chainguard-dev/clog"
+	"github.com/sethvargo/go-envconfig"
 )
 
 type ProbeResponse struct {
@@ -21,32 +26,24 @@ type ProbeResponse struct {
 	Message   string            `json:"message"`
 }
 
+var env = envconfig.MustProcess(context.Background(), &struct {
+	Authorization string `env:"AUTHORIZATION,required"`
+	TargetURL     string `env:"TARGET_URL,default=https://httpbin.org/status/200"`
+	Port          string `env:"PORT,default=8080"`
+}{})
+
 func main() {
-	// Get the shared authorization secret from environment
-	expectedAuth := os.Getenv("AUTHORIZATION")
-	if expectedAuth == "" {
-		log.Fatal("AUTHORIZATION environment variable not set")
-	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
-	// Get configuration from environment
-	targetURL := os.Getenv("TARGET_URL")
-	if targetURL == "" {
-		targetURL = "https://httpbin.org/status/200" // Default to a test endpoint
-	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	log.Printf("Starting prober on port %s", port) //nolint:gosec // G706: example app logging operational data
-	log.Printf("Target URL: %s", targetURL)        //nolint:gosec // G706: example app logging operational data
+	clog.InfoContextf(ctx, "Starting prober on port %s", env.Port) //nolint:gosec // G706: example app logging operational data
+	clog.InfoContextf(ctx, "Target URL: %s", env.TargetURL)        //nolint:gosec // G706: example app logging operational data
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Verify authorization header
 		authHeader := r.Header.Get("Authorization")
-		if authHeader != expectedAuth {
-			log.Printf("Unauthorized request from %s", r.RemoteAddr) //nolint:gosec // G706: example app logging operational data
+		if authHeader != env.Authorization {
+			clog.InfoContextf(r.Context(), "Unauthorized request from %s", r.RemoteAddr) //nolint:gosec // G706: example app logging operational data
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -56,10 +53,10 @@ func main() {
 		allHealthy := true
 
 		// Check 1: Target URL is reachable
-		if err := checkHTTP(targetURL); err != nil {
+		if err := checkHTTP(env.TargetURL); err != nil {
 			checks["target_url"] = fmt.Sprintf("FAILED: %v", err)
 			allHealthy = false
-			log.Printf("Target URL check failed: %v", err)
+			clog.InfoContextf(r.Context(), "Target URL check failed: %v", err)
 		} else {
 			checks["target_url"] = "OK"
 		}
@@ -82,18 +79,18 @@ func main() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
-				log.Printf("Failed to encode response: %v", err)
+				clog.InfoContextf(r.Context(), "Failed to encode response: %v", err)
 			}
-			log.Println("Health check PASSED")
+			clog.InfoContextf(r.Context(), "Health check PASSED")
 		} else {
 			response.Status = "unhealthy"
 			response.Message = "One or more checks failed"
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
-				log.Printf("Failed to encode response: %v", err)
+				clog.InfoContextf(r.Context(), "Failed to encode response: %v", err)
 			}
-			log.Println("Health check FAILED")
+			clog.InfoContextf(r.Context(), "Health check FAILED")
 		}
 	})
 
@@ -105,14 +102,16 @@ func main() {
 
 	// Create server with timeouts for security
 	server := &http.Server{
-		Addr:         ":" + port,
+		Addr:         ":" + env.Port,
 		Handler:      nil,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Fatal(server.ListenAndServe())
+	if err := server.ListenAndServe(); err != nil {
+		clog.FatalContextf(ctx, "Server failed: %v", err)
+	}
 }
 
 // checkHTTP performs an HTTP GET request to verify the target is reachable

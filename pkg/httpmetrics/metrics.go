@@ -243,17 +243,7 @@ func HandlerFunc(name string, f func(http.ResponseWriter, *http.Request)) http.H
 //
 //	defer metrics.SetupTracer(ctx)()
 func SetupTracer(ctx context.Context) func() {
-	traceEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-	projectID, _ := metadata.ProjectIDWithContext(ctx)
-	var options []trace.TracerProviderOption
-	if traceEndpoint == "" && projectID != "" {
-		// No trace endpoint provided and we are on GCP.
-		options = tracerOptionsGCP(ctx)
-	} else {
-		// We are either on KinD or GKE.
-		options = tracerOptions(ctx)
-	}
-	tp := trace.NewTracerProvider(options...)
+	tp := trace.NewTracerProvider(tracerOptions(ctx)...)
 	otel.SetTracerProvider(tp)
 
 	prp := propagation.NewCompositeTextMapPropagator(
@@ -269,67 +259,84 @@ func SetupTracer(ctx context.Context) func() {
 	}
 }
 
-func tracerOptionsGCP(ctx context.Context) []trace.TracerProviderOption {
-	// Else, we upload directly to Cloud Trace.
-	traceExporter, err := texporter.New(
-		// Avoid infinite recursion in trace uploads
-		//   https://github.com/open-telemetry/opentelemetry-go/issues/1928
-		texporter.WithTraceClientOptions([]option.ClientOption{option.WithTelemetryDisabled()}),
-	)
-	if err != nil {
-		clog.FatalContextf(ctx, "tracerOptionsGCP(); texporter.New() = %v", err)
-	}
-	resOpts := []resource.Option{
-		// Use the GCP resource detector to detect information about the GCP platform
-		resource.WithDetectors(gcp.NewDetector()),
-		// Keep the default detectors
-		resource.WithTelemetrySDK(),
-	}
-	if env.KnativeServiceName != "unknown" {
-		resOpts = append(resOpts, resource.WithAttributes(
-			attribute.String("service.name", env.KnativeServiceName),
-		))
-	}
-	res, err := resource.New(ctx, resOpts...)
-	if err != nil {
-		clog.FatalContextf(ctx, "tracerOptionsGCP(); resource.New() = %v", err)
-	}
-	bsp := trace.NewBatchSpanProcessor(traceExporter)
-	// Default to 10%
-	samplingRate := 0.1
-	// If OTEL_TRACE_SAMPLING_RATE is set, use that value.
-	if v := os.Getenv("OTEL_TRACE_SAMPLING_RATE"); v != "" {
-		if rate, err := strconv.ParseFloat(v, 64); err == nil {
-			samplingRate = rate
-		}
-	}
-	return []trace.TracerProviderOption{
-		trace.WithResource(res),
-		trace.WithSpanProcessor(bsp),
-		trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRate))),
-	}
-}
-
+// tracerOptions builds TracerProvider options by independently checking which
+// exporters are enabled. Exporters are not mutually exclusive:
+//
+//   - Google Cloud Trace: enabled when running on GCP and OTEL_DISABLE_GCP_TRACE is unset.
+//   - OTLP HTTP: enabled when OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is set (e.g. Braintrust).
+//
+// Setting both env vars enables fan-out to both backends simultaneously.
 func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
-	traceExporter, err := otlptracehttp.New(ctx)
-	if err != nil {
-		clog.FatalContextf(ctx, "traceOptions() = %v", err)
-	}
-	bsp := trace.NewBatchSpanProcessor(traceExporter)
-	res := resource.Default()
-	if env.KnativeServiceName != "unknown" {
-		svcRes, err := resource.New(ctx,
-			resource.WithAttributes(attribute.String("service.name", env.KnativeServiceName)),
-		)
-		if err == nil {
-			res, _ = resource.Merge(res, svcRes)
+	projectID, _ := metadata.ProjectIDWithContext(ctx)
+	disableGCP := os.Getenv("OTEL_DISABLE_GCP_TRACE") != ""
+	otlpEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+
+	onGCP := projectID != "" && !disableGCP
+	withOTLP := otlpEndpoint != ""
+
+	// Build resource — use GCP detector when on GCP, otherwise use defaults.
+	var res *resource.Resource
+	if onGCP {
+		resOpts := []resource.Option{
+			resource.WithDetectors(gcp.NewDetector()),
+			resource.WithTelemetrySDK(),
+		}
+		if env.KnativeServiceName != "unknown" {
+			resOpts = append(resOpts, resource.WithAttributes(
+				attribute.String("service.name", env.KnativeServiceName),
+			))
+		}
+		var err error
+		res, err = resource.New(ctx, resOpts...)
+		if err != nil {
+			clog.FatalContextf(ctx, "tracerOptions(); resource.New() = %v", err)
+		}
+	} else {
+		res = resource.Default()
+		if env.KnativeServiceName != "unknown" {
+			svcRes, err := resource.New(ctx,
+				resource.WithAttributes(attribute.String("service.name", env.KnativeServiceName)),
+			)
+			if err == nil {
+				res, _ = resource.Merge(res, svcRes)
+			}
 		}
 	}
 
-	return []trace.TracerProviderOption{
+	opts := []trace.TracerProviderOption{
 		trace.WithResource(res),
-		trace.WithSpanProcessor(bsp),
 	}
+
+	if onGCP {
+		gcpExporter, err := texporter.New(
+			// Avoid infinite recursion in trace uploads
+			//   https://github.com/open-telemetry/opentelemetry-go/issues/1928
+			texporter.WithTraceClientOptions([]option.ClientOption{option.WithTelemetryDisabled()}),
+		)
+		if err != nil {
+			clog.FatalContextf(ctx, "tracerOptions(); texporter.New() = %v", err)
+		}
+		opts = append(opts, trace.WithSpanProcessor(trace.NewBatchSpanProcessor(gcpExporter)))
+
+		// Default to 10% on GCP; configurable via OTEL_TRACE_SAMPLING_RATE.
+		samplingRate := 0.1
+		if v := os.Getenv("OTEL_TRACE_SAMPLING_RATE"); v != "" {
+			if rate, err := strconv.ParseFloat(v, 64); err == nil {
+				samplingRate = rate
+			}
+		}
+		opts = append(opts, trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRate))))
+	}
+
+	if withOTLP {
+		otlpExporter, err := otlptracehttp.New(ctx)
+		if err != nil {
+			clog.FatalContextf(ctx, "tracerOptions(); otlptracehttp.New() = %v", err)
+		}
+		opts = append(opts, trace.WithSpanProcessor(trace.NewBatchSpanProcessor(otlpExporter)))
+	}
+
+	return opts
 }
 
 type delegator struct {

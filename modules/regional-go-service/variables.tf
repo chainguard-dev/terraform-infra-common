@@ -247,7 +247,12 @@ variable "otel_resources" {
     cpu_idle          = optional(bool)
     startup_cpu_boost = optional(bool)
   })
-  default     = null
+  default = {
+    limits = {
+      cpu    = "1000m"
+      memory = "1Gi"
+    }
+  }
   description = "The resource clause for otel sidecar container."
 }
 

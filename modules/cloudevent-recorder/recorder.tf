@@ -72,6 +72,12 @@ module "this" {
         name  = "BUCKET"
         value = { for k, v in google_storage_bucket.recorder : k => v.url }
       }]
+      resources = {
+        limits = {
+          cpu    = "1000m"
+          memory = "512Mi"
+        }
+      }
       volume_mounts = [{
         name       = "logs"
         mount_path = "/logs"

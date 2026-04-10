@@ -6,8 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 package httpmetrics
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"maps"
 	"net/http"
 	"strconv"
@@ -311,6 +313,21 @@ var (
 		},
 		[]string{"resource", "organization"},
 	)
+	mGitHubRateLimitErrors = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "github_rate_limit_errors_total",
+			Help: "GitHub API requests rejected due to rate limiting (403/429 with rate limit headers)",
+		},
+		[]string{"resource", "organization", "service_name", "code", "rate_limit_type"},
+	)
+	mGitHubRetryAfterSeconds = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "github_retry_after_seconds",
+			Help:    "Retry-After values from GitHub rate limit responses",
+			Buckets: []float64{1, 5, 15, 30, 60, 120, 300, 900, 1800, 3600},
+		},
+		[]string{"organization", "service_name", "rate_limit_type"},
+	)
 )
 
 // extractOrgFromGitHubURL extracts the organization from a GitHub API URL path.
@@ -384,6 +401,69 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			if reset > 0 {
 				timeToReset := time.Until(time.Unix(int64(reset), 0)).Minutes()
 				mGitHubRateLimitTimeToReset.With(labels).Set(timeToReset)
+			}
+
+			// Compute timeToReset only when the header is present.
+			var timeToReset float64
+			if reset > 0 {
+				timeToReset = time.Until(time.Unix(int64(reset), 0)).Minutes()
+			}
+
+			// Proactive warning when approaching rate limit exhaustion (<10% remaining).
+			// Only log at round-number boundaries to avoid flooding on every request.
+			if limit > 0 && remaining > 0 && remaining/limit < 0.1 {
+				rem := int64(remaining)
+				if rem%1000 == 0 || (rem < 1000 && rem%100 == 0) {
+					clog.WarnContextf(r.Context(), "GitHub rate limit <10%%: org=%s, resource=%s, remaining=%.0f/%.0f, reset_in=%.1fm",
+						organization, resource, remaining, limit, timeToReset)
+				}
+			}
+
+			// Detect rate limit errors (403/429).
+			// Only classify as rate-limit if rate limit headers are actually present,
+			// otherwise a permission 403 would be miscounted.
+			hasRateLimitHeaders := resp.Header.Get("X-RateLimit-Remaining") != ""
+			if (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests) && hasRateLimitHeaders {
+				rateLimitType := "unknown"
+				if remaining == 0 {
+					rateLimitType = "primary"
+				} else if resp.Body != nil {
+					// Check for secondary rate limit by inspecting the response body
+					// for documentation_url containing abuse or secondary rate limit references.
+					// Re-populate the body afterward so downstream code can still read it,
+					// matching the pattern used by go-github's CheckResponse.
+					data, readErr := io.ReadAll(resp.Body)
+					resp.Body.Close()
+					if readErr == nil {
+						body := string(data)
+						if strings.Contains(body, "#abuse-rate-limits") || strings.Contains(body, "secondary-rate-limits") {
+							rateLimitType = "secondary"
+						}
+					}
+					resp.Body = io.NopCloser(bytes.NewBuffer(data))
+				}
+
+				mGitHubRateLimitErrors.With(prometheus.Labels{
+					"resource":        resource,
+					"organization":    organization,
+					"service_name":    env.KnativeServiceName,
+					"code":            strconv.Itoa(resp.StatusCode),
+					"rate_limit_type": rateLimitType,
+				}).Inc()
+
+				// Parse Retry-After header when present.
+				if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+					if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
+						mGitHubRetryAfterSeconds.With(prometheus.Labels{
+							"organization":    organization,
+							"service_name":    env.KnativeServiceName,
+							"rate_limit_type": rateLimitType,
+						}).Observe(float64(seconds))
+					}
+				}
+
+				clog.WarnContextf(r.Context(), "GitHub rate limit hit: %s %s (org=%s, resource=%s, type=%s, remaining=%.0f, reset_in=%.1fm)",
+					r.Method, r.URL.Path, organization, resource, rateLimitType, remaining, timeToReset)
 			}
 		}
 		return resp, err
