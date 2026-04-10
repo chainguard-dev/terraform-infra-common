@@ -326,8 +326,10 @@ locals {
   fatal_filter = <<EOF
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 textPayload:"fatal error: "
+-textPayload:"caught signal: terminated"
 ${local.squad_log_filter}
 EOF
+  # Exclude "caught signal: terminated" from watcher.go - this is expected behavior during graceful shutdown
 }
 
 resource "google_monitoring_alert_policy" "fatal" {
