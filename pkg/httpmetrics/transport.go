@@ -32,6 +32,30 @@ const (
 	OriginalTraceHeader   string = "original-traceparent"
 )
 
+// contextKey is an unexported type for context keys in this package, preventing
+// collisions with keys defined in other packages.
+type contextKey string
+
+const (
+	githubAppIDKey          contextKey = "github_app_id"
+	githubInstallationIDKey contextKey = "github_installation_id"
+)
+
+// WithGitHubAppID returns a copy of ctx with the GitHub App ID attached.
+// The transport reads this value to label rate limit metrics with the app
+// that made the request, enabling per-app visibility into quota consumption.
+func WithGitHubAppID(ctx context.Context, appID int64) context.Context {
+	return context.WithValue(ctx, githubAppIDKey, strconv.FormatInt(appID, 10))
+}
+
+// WithGitHubInstallationID returns a copy of ctx with the GitHub installation
+// ID attached. The transport reads this value to label rate limit metrics with
+// the installation that made the request. GitHub enforces rate limits per
+// installation, so this label identifies which (app, org) pair is consuming quota.
+func WithGitHubInstallationID(ctx context.Context, installationID int64) context.Context {
+	return context.WithValue(ctx, githubInstallationIDKey, strconv.FormatInt(installationID, 10))
+}
+
 var (
 	mReqCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
@@ -283,42 +307,42 @@ var (
 			Name: "github_rate_limit_remaining",
 			Help: "The number of requests remaining in the current rate limit window",
 		},
-		[]string{"resource", "organization"},
+		[]string{"resource", "organization", "app_id", "installation_id"},
 	)
 	mGitHubRateLimit = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit",
 			Help: "The number of requests allowed during the rate limit window",
 		},
-		[]string{"resource", "organization"},
+		[]string{"resource", "organization", "app_id", "installation_id"},
 	)
 	mGitHubRateLimitReset = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_reset",
 			Help: "The timestamp at which the current rate limit window resets",
 		},
-		[]string{"resource", "organization"},
+		[]string{"resource", "organization", "app_id", "installation_id"},
 	)
 	mGitHubRateLimitUsed = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_used",
 			Help: "The fraction of the rate limit window used",
 		},
-		[]string{"resource", "organization"},
+		[]string{"resource", "organization", "app_id", "installation_id"},
 	)
 	mGitHubRateLimitTimeToReset = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_time_to_reset",
 			Help: "The number of minutes until the current rate limit window resets",
 		},
-		[]string{"resource", "organization"},
+		[]string{"resource", "organization", "app_id", "installation_id"},
 	)
 	mGitHubRateLimitErrors = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "github_rate_limit_errors_total",
 			Help: "GitHub API requests rejected due to rate limiting (403/429 with rate limit headers)",
 		},
-		[]string{"resource", "organization", "service_name", "code", "rate_limit_type"},
+		[]string{"resource", "organization", "app_id", "installation_id", "service_name", "code", "rate_limit_type"},
 	)
 	mGitHubRetryAfterSeconds = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -326,7 +350,7 @@ var (
 			Help:    "Retry-After values from GitHub rate limit responses",
 			Buckets: []float64{1, 5, 15, 30, 60, 120, 300, 900, 1800, 3600},
 		},
-		[]string{"organization", "service_name", "rate_limit_type"},
+		[]string{"organization", "app_id", "installation_id", "service_name", "rate_limit_type"},
 	)
 )
 
@@ -368,6 +392,13 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			// Extract organization from the request URL
 			organization := extractOrgFromGitHubURL(r.URL.Path)
 
+			// Read caller-supplied app/installation IDs from the request context.
+			// These are set by callers via WithGitHubAppID and WithGitHubInstallationID.
+			// Empty string when not set — callers that do not set these values produce
+			// time series with app_id="" and installation_id="".
+			appID, _ := r.Context().Value(githubAppIDKey).(string)
+			installationID, _ := r.Context().Value(githubInstallationIDKey).(string)
+
 			val := func(key string) float64 {
 				val := resp.Header.Get(key)
 				if val == "" {
@@ -380,8 +411,10 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				return float64(i)
 			}
 			labels := prometheus.Labels{
-				"resource":     resource,
-				"organization": organization,
+				"resource":        resource,
+				"organization":    organization,
+				"app_id":          appID,
+				"installation_id": installationID,
 			}
 
 			remaining := val("X-RateLimit-Remaining")
@@ -446,6 +479,8 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				mGitHubRateLimitErrors.With(prometheus.Labels{
 					"resource":        resource,
 					"organization":    organization,
+					"app_id":          appID,
+					"installation_id": installationID,
 					"service_name":    env.KnativeServiceName,
 					"code":            strconv.Itoa(resp.StatusCode),
 					"rate_limit_type": rateLimitType,
@@ -456,6 +491,8 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 					if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
 						mGitHubRetryAfterSeconds.With(prometheus.Labels{
 							"organization":    organization,
+							"app_id":          appID,
+							"installation_id": installationID,
 							"service_name":    env.KnativeServiceName,
 							"rate_limit_type": rateLimitType,
 						}).Observe(float64(seconds))

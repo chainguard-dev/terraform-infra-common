@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package httpmetrics
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -120,6 +121,87 @@ func TestTransport_SkipBucketize(t *testing.T) {
 		"path":          "",
 	})); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
+	}
+}
+
+func TestGitHubRateLimitContextLabels(t *testing.T) {
+	// Verify that WithGitHubAppID / WithGitHubInstallationID values are
+	// propagated to the rate limit gauge labels.
+	stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"X-Ratelimit-Resource":  []string{"core"},
+				"X-Ratelimit-Remaining": []string{"4500"},
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Reset":     []string{"9999999999"},
+			},
+			Body: http.NoBody,
+		}, nil
+	})
+
+	transport := instrumentGitHubRateLimits(stub)
+
+	ctx := context.Background()
+	ctx = WithGitHubAppID(ctx, 42)
+	ctx = WithGitHubInstallationID(ctx, 1234)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/org/repo/contents/file", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := transport.RoundTrip(req); err != nil {
+		t.Fatal(err)
+	}
+
+	labels := prometheus.Labels{
+		"resource":        "core",
+		"organization":    "org",
+		"app_id":          "42",
+		"installation_id": "1234",
+	}
+	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels)); got != 4500 {
+		t.Errorf("github_rate_limit_remaining: got %v, want 4500", got)
+	}
+	if got := testutil.ToFloat64(mGitHubRateLimit.With(labels)); got != 5000 {
+		t.Errorf("github_rate_limit: got %v, want 5000", got)
+	}
+}
+
+func TestGitHubRateLimitContextLabels_NoContext(t *testing.T) {
+	// Callers that do not set context values get empty-string labels — verifies
+	// backward compatibility with existing consumers of the transport.
+	stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"X-Ratelimit-Resource":  []string{"core"},
+				"X-Ratelimit-Remaining": []string{"3000"},
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Reset":     []string{"9999999999"},
+			},
+			Body: http.NoBody,
+		}, nil
+	})
+
+	transport := instrumentGitHubRateLimits(stub)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://api.github.com/repos/org2/repo/contents/file", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := transport.RoundTrip(req); err != nil {
+		t.Fatal(err)
+	}
+
+	labels := prometheus.Labels{
+		"resource":        "core",
+		"organization":    "org2",
+		"app_id":          "",
+		"installation_id": "",
+	}
+	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels)); got != 3000 {
+		t.Errorf("github_rate_limit_remaining: got %v, want 3000", got)
 	}
 }
 
