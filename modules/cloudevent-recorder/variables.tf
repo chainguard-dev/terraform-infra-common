@@ -54,6 +54,13 @@ variable "types" {
     notification_channels = optional(list(string), [])
     partition_field       = optional(string)
     clustering            = optional(list(string), null)
+    // Per-type override for the BigQuery table's deletion_protection
+    // terraform attribute. When null (the default), the module-wide
+    // var.deletion_protection applies. Intended for tables whose shapes
+    // aren't fully defined yet — event types that may still be renamed,
+    // re-partitioned, or removed — so iterating on the schema doesn't
+    // require the schema-deletion playbook dance.
+    deletion_protection = optional(bool, null)
   }))
 }
 

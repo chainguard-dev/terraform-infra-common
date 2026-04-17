@@ -33,7 +33,7 @@ resource "google_bigquery_table" "types" {
 
   clustering = each.value.clustering
 
-  deletion_protection = var.deletion_protection
+  deletion_protection = each.value.deletion_protection != null ? each.value.deletion_protection : var.deletion_protection
 }
 
 // Create an identity that will be used to run the BQ DTS job,
