@@ -170,6 +170,7 @@ type WorkflowRun struct {
 	Event        bigquery.NullString    `json:"event,omitempty" bigquery:"event"`
 	Status       bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
 	RunStartedAt bigquery.NullTimestamp `json:"run_started_at,omitempty" bigquery:"run_started_at"`
+	CompletedAt  bigquery.NullTimestamp `json:"completed_at,omitempty" bigquery:"completed_at"`
 
 	// success, failure, cancelled, etc.
 	Conclusion bigquery.NullString `json:"conclusion,omitempty" bigquery:"conclusion"`
