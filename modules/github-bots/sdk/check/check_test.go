@@ -76,7 +76,7 @@ func TestWritef(t *testing.T) {
 	b := NewBuilder("name", "headSHA")
 
 	// append 1 KB 100 times
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		b.Writef("%s", strings.Repeat("a", 1024)) //nolint:govet
 
 		// The output should never exceed maxCheckOutputLength, even internally.

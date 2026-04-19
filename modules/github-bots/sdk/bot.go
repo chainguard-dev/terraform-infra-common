@@ -9,7 +9,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime/debug"
+	"strconv"
 
 	"github.com/chainguard-dev/clog"
 	_ "github.com/chainguard-dev/clog/gcp/init" // enable GCP logging
@@ -18,7 +20,6 @@ import (
 	mce "github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/cloudevents"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/go-github/v84/github"
-	"github.com/sethvargo/go-envconfig"
 )
 
 // Define a type for keys used in context to prevent key collisions.
@@ -65,11 +66,35 @@ func (b *Bot) RegisterHandler(handler EventHandlerFunc) {
 	b.Handlers[etype] = handler
 }
 
-var env = envconfig.MustProcess(context.Background(), &struct {
-	Port int `env:"PORT, default=8080"`
-}{})
+// ServeOption configures the Serve function.
+type ServeOption func(*serveConfig)
 
-func Serve(b Bot) {
+type serveConfig struct {
+	port int
+}
+
+// WithPort sets the port for the bot's HTTP server.
+// If not provided, the PORT environment variable is used, defaulting to 8080.
+func WithPort(port int) ServeOption {
+	return func(c *serveConfig) {
+		c.port = port
+	}
+}
+
+func Serve(b Bot, opts ...ServeOption) {
+	cfg := &serveConfig{}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+	if cfg.port == 0 {
+		cfg.port = 8080
+		if p := os.Getenv("PORT"); p != "" {
+			if n, err := strconv.Atoi(p); err == nil {
+				cfg.port = n
+			}
+		}
+	}
+
 	ctx := context.Background()
 
 	log := clog.FromContext(ctx)
@@ -83,13 +108,13 @@ func Serve(b Bot) {
 	})
 
 	c, err := mce.NewClientHTTP(b.Name,
-		cloudevents.WithPort(env.Port),
+		cloudevents.WithPort(cfg.port),
 	)
 	if err != nil {
 		clog.Fatalf("failed to create event client, %v", err)
 	}
 
-	log.Infof("starting bot %s receiver on port %d", b.Name, env.Port)
+	log.Infof("starting bot %s receiver on port %d", b.Name, cfg.port)
 	if err := c.StartReceiver(ctx, func(ctx context.Context, event cloudevents.Event) error {
 		clog.FromContext(ctx).With("event", event).Debugf("received event")
 
