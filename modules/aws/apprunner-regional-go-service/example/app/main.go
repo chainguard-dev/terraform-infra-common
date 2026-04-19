@@ -88,12 +88,10 @@ func main() {
 
 	// Health check endpoint
 	http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		uptime := time.Since(startTime).Round(time.Second)
-
 		response := HealthResponse{
 			Status: "healthy",
 			Region: region,
-			Uptime: uptime.String(),
+			Uptime: time.Since(startTime).Round(time.Second).String(),
 			Time:   time.Now(),
 		}
 
@@ -229,15 +227,13 @@ func main() {
 	clog.InfoContextf(ctx, "Server listening on %s", addr)
 	clog.InfoContextf(ctx, "Endpoints: / /health /ready /info /ui")
 
-	server := &http.Server{
+	if err := (&http.Server{
 		Addr:              addr,
 		ReadHeaderTimeout: 30 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
-	}
-
-	if err := server.ListenAndServe(); err != nil {
+	}).ListenAndServe(); err != nil {
 		clog.FatalContextf(ctx, "Server failed to start: %v", err)
 	}
 }
