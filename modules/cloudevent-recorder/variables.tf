@@ -181,9 +181,3 @@ variable "local_disk_mount" {
   type        = bool
   default     = false
 }
-
-variable "autoclass_bucket" {
-  description = "Enable autoclass for storage bucket"
-  type        = bool
-  default     = false
-}
