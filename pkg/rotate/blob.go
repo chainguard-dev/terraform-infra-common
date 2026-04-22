@@ -129,7 +129,7 @@ func (u *uploader) flush(ctx context.Context) (int, error) {
 		// The entire upload is a single operation. Writes to the writer can be async and only
 		// the Close() call will block until all writes are done and surface any errors. Thus
 		// the entire block is potentially retried.
-		for i := 0; i < MaxUploadAttempt; i++ {
+		for i := range MaxUploadAttempt {
 			// Setup the GCS object with the filename to write to
 			writer, err := bucket.NewWriter(bgCtx, filepath.Join(dir, fileName), nil)
 			if err != nil {

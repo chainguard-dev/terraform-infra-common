@@ -321,7 +321,7 @@ func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, bo
 	content = fmt.Sprintf("<!-- bot:%s -->\n\n%s", botName, content)
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
-	}); err != nil || resp.StatusCode != 201 {
+	}); err != nil || resp.StatusCode != http.StatusCreated {
 		return validateResponse(ctx, err, resp, "creating comment")
 	}
 	return nil
