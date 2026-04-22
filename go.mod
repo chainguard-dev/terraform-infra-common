@@ -8,13 +8,13 @@ require (
 	cloud.google.com/go/bigquery v1.73.1
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/profiler v0.4.3
-	cloud.google.com/go/pubsub/v2 v2.3.0
+	cloud.google.com/go/pubsub/v2 v2.5.1
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.31.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.18.0
 	github.com/chainguard-dev/clog v1.8.0
 	github.com/cloudevents/sdk-go/v2 v2.16.2
-	github.com/coreos/go-oidc/v3 v3.17.0
+	github.com/coreos/go-oidc/v3 v3.18.0
 	github.com/go-git/go-git/v5 v5.18.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v84 v84.0.0
@@ -131,12 +131,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
-	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260209163413-e7419c687ee4 // indirect
-	golang.org/x/text v0.35.0 // indirect
-	golang.org/x/tools v0.42.0 // indirect
+	golang.org/x/telemetry v0.0.0-20260311193753-579e4da9a98c // indirect
+	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/tools v0.43.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20260217215200-42d3e9bedb6d // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
