@@ -7,9 +7,12 @@ package httpmetrics
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -259,84 +262,253 @@ func SetupTracer(ctx context.Context) func() {
 	}
 }
 
-// tracerOptions builds TracerProvider options by independently checking which
-// exporters are enabled. Exporters are not mutually exclusive:
+// tracerOptions builds TracerProvider options driven by OTEL_TRACES_EXPORTER,
+// a comma-separated list per the OTel spec. Supported entries:
 //
-//   - Google Cloud Trace: enabled when running on GCP and OTEL_DISABLE_GCP_TRACE is unset.
-//   - OTLP HTTP: enabled when OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is set (e.g. Braintrust).
+//   - "gcp"         — Google Cloud Trace (requires a reachable GCP metadata server).
+//   - "otlp"        — OTLP HTTP, configured by the standard OTEL_EXPORTER_OTLP_*
+//     variables (OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, _HEADERS, …).
+//   - "otlp/<name>" — named OTLP HTTP, configured by OTEL_EXPORTER_OTLP_TRACES_<UPPER>_ENDPOINT
+//     and optional OTEL_EXPORTER_OTLP_TRACES_<UPPER>_HEADERS (W3C Baggage format:
+//     "key1=value1,key2=value2"). Enables fan-out to multiple OTLP backends
+//     (e.g. "otlp/braintrust,otlp/langfuse") when one pair of standard
+//     OTEL_EXPORTER_OTLP_TRACES_* vars isn't enough.
+//   - "none"        — no exporter.
 //
-// Setting both env vars enables fan-out to both backends simultaneously.
+// When unset, defaults to "gcp" on GCP and "none" elsewhere. Listing several
+// enables fan-out (e.g. "gcp,otlp/braintrust,otlp/langfuse").
+//
+// Sampling is applied per exporter, not globally: OTEL_TRACE_SAMPLING_RATE
+// (default 0.1) gates the GCP exporter; OTLP exporters receive every recorded
+// span so evaluation backends get complete traces.
 func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
-	projectID, _ := metadata.ProjectIDWithContext(ctx)
-	disableGCP := os.Getenv("OTEL_DISABLE_GCP_TRACE") != ""
-	otlpEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-
-	onGCP := projectID != "" && !disableGCP
-	withOTLP := otlpEndpoint != ""
-
-	// Build resource — use GCP detector when on GCP, otherwise use defaults.
-	var res *resource.Resource
-	if onGCP {
-		resOpts := []resource.Option{
-			resource.WithDetectors(gcp.NewDetector()),
-			resource.WithTelemetrySDK(),
-		}
-		if env.KnativeServiceName != "unknown" {
-			resOpts = append(resOpts, resource.WithAttributes(
-				attribute.String("service.name", env.KnativeServiceName),
-			))
-		}
-		var err error
-		res, err = resource.New(ctx, resOpts...)
-		if err != nil {
-			clog.FatalContextf(ctx, "tracerOptions(); resource.New() = %v", err)
-		}
-	} else {
-		res = resource.Default()
-		if env.KnativeServiceName != "unknown" {
-			svcRes, err := resource.New(ctx,
-				resource.WithAttributes(attribute.String("service.name", env.KnativeServiceName)),
-			)
-			if err == nil {
-				res, _ = resource.Merge(res, svcRes)
-			}
-		}
-	}
+	// Bound the metadata probe so non-GCP startup isn't delayed by the
+	// metadata client's default retry window (~15s).
+	probeCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	projectID, _ := metadata.ProjectIDWithContext(probeCtx)
+	onGCP := projectID != ""
 
 	opts := []trace.TracerProviderOption{
-		trace.WithResource(res),
+		trace.WithResource(buildResource(ctx, onGCP)),
+		// Record everything at the provider; per-exporter processors apply
+		// their own sampling. ParentBased preserves upstream "not sampled"
+		// decisions so we don't fabricate spans for traces the caller dropped.
+		trace.WithSampler(trace.ParentBased(trace.AlwaysSample())),
 	}
-
-	if onGCP {
-		gcpExporter, err := texporter.New(
-			// Avoid infinite recursion in trace uploads
-			//   https://github.com/open-telemetry/opentelemetry-go/issues/1928
-			texporter.WithTraceClientOptions([]option.ClientOption{option.WithTelemetryDisabled()}),
-		)
-		if err != nil {
-			clog.FatalContextf(ctx, "tracerOptions(); texporter.New() = %v", err)
-		}
-		opts = append(opts, trace.WithSpanProcessor(trace.NewBatchSpanProcessor(gcpExporter)))
-
-		// Default to 10% on GCP; configurable via OTEL_TRACE_SAMPLING_RATE.
-		samplingRate := 0.1
-		if v := os.Getenv("OTEL_TRACE_SAMPLING_RATE"); v != "" {
-			if rate, err := strconv.ParseFloat(v, 64); err == nil {
-				samplingRate = rate
+	for _, entry := range selectExporters(onGCP) {
+		kind, name := parseExporterEntry(entry)
+		switch kind {
+		case "gcp":
+			opts = append(opts, trace.WithSpanProcessor(newGCPProcessor(ctx)))
+		case "otlp":
+			sp, ok := newOTLPProcessor(ctx, name)
+			if ok {
+				opts = append(opts, trace.WithSpanProcessor(sp))
 			}
+		case "none":
+		default:
+			clog.WarnContextf(ctx, "tracerOptions(): unknown OTEL_TRACES_EXPORTER entry %q", entry)
 		}
-		opts = append(opts, trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRate))))
 	}
-
-	if withOTLP {
-		otlpExporter, err := otlptracehttp.New(ctx)
-		if err != nil {
-			clog.FatalContextf(ctx, "tracerOptions(); otlptracehttp.New() = %v", err)
-		}
-		opts = append(opts, trace.WithSpanProcessor(trace.NewBatchSpanProcessor(otlpExporter)))
-	}
-
 	return opts
+}
+
+// parseExporterEntry splits "otlp/braintrust" into ("otlp", "braintrust") and
+// "gcp" into ("gcp", ""). Names outside [A-Za-z0-9_-] are rejected by returning
+// a kind of "" so the caller logs and skips.
+func parseExporterEntry(entry string) (kind, name string) {
+	if k, n, ok := strings.Cut(entry, "/"); ok {
+		if !exporterNameRe.MatchString(n) {
+			return "", ""
+		}
+		return k, n
+	}
+	return entry, ""
+}
+
+var exporterNameRe = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+// selectExporters parses OTEL_TRACES_EXPORTER. When unset, defaults to "gcp"
+// on GCP and an empty list otherwise.
+func selectExporters(onGCP bool) []string {
+	v := os.Getenv("OTEL_TRACES_EXPORTER")
+	if v == "" {
+		if onGCP {
+			return []string{"gcp"}
+		}
+		return nil
+	}
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, s := range parts {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// buildResource constructs the OTel Resource. The GCP detector is used only
+// when on GCP; OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME are honoured
+// everywhere via resource.WithFromEnv.
+func buildResource(ctx context.Context, onGCP bool) *resource.Resource {
+	resOpts := []resource.Option{
+		resource.WithTelemetrySDK(),
+		resource.WithFromEnv(),
+	}
+	if onGCP {
+		resOpts = append(resOpts, resource.WithDetectors(gcp.NewDetector()))
+	}
+	if env.KnativeServiceName != "unknown" {
+		resOpts = append(resOpts, resource.WithAttributes(
+			attribute.String("service.name", env.KnativeServiceName),
+		))
+	}
+	res, err := resource.New(ctx, resOpts...)
+	if err != nil {
+		clog.FatalContextf(ctx, "tracerOptions(); resource.New() = %v", err)
+	}
+	return res
+}
+
+func newGCPProcessor(ctx context.Context) trace.SpanProcessor {
+	exporter, err := texporter.New(
+		// Avoid infinite recursion in trace uploads
+		//   https://github.com/open-telemetry/opentelemetry-go/issues/1928
+		texporter.WithTraceClientOptions([]option.ClientOption{option.WithTelemetryDisabled()}),
+	)
+	if err != nil {
+		clog.FatalContextf(ctx, "tracerOptions(); texporter.New() = %v", err)
+	}
+	return newSamplingProcessor(trace.NewBatchSpanProcessor(exporter), gcpSamplingRate())
+}
+
+// newOTLPProcessor builds a BatchSpanProcessor around an OTLP/HTTP exporter.
+// When name == "", the exporter reads the standard OTEL_EXPORTER_OTLP_TRACES_*
+// and OTEL_EXPORTER_OTLP_* env vars. When name is non-empty, endpoint and
+// headers come from OTEL_EXPORTER_OTLP_TRACES_<UPPER(name)>_ENDPOINT and
+// _HEADERS; a missing endpoint logs a warning and the exporter is skipped,
+// since the bare SDK default (localhost:4318) would silently spam the loopback
+// and mask a misconfiguration.
+func newOTLPProcessor(ctx context.Context, name string) (trace.SpanProcessor, bool) {
+	opts, ok := otlpOptionsForName(ctx, name)
+	if !ok {
+		return nil, false
+	}
+	exporter, err := otlptracehttp.New(ctx, opts...)
+	if err != nil {
+		clog.FatalContextf(ctx, "tracerOptions(); otlptracehttp.New(%q) = %v", name, err)
+	}
+	return trace.NewBatchSpanProcessor(exporter), true
+}
+
+func otlpOptionsForName(ctx context.Context, name string) ([]otlptracehttp.Option, bool) {
+	if name == "" {
+		return nil, true
+	}
+	upper := strings.ToUpper(name)
+	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_" + upper + "_ENDPOINT")
+	if endpoint == "" {
+		clog.WarnContextf(ctx, "tracerOptions(): skipping otlp/%s — OTEL_EXPORTER_OTLP_TRACES_%s_ENDPOINT unset", name, upper)
+		return nil, false
+	}
+	opts := []otlptracehttp.Option{otlptracehttp.WithEndpointURL(endpoint)}
+	if raw := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_" + upper + "_HEADERS"); raw != "" {
+		headers, err := parseOTLPHeaders(raw)
+		if err != nil {
+			clog.WarnContextf(ctx, "tracerOptions(): ignoring OTEL_EXPORTER_OTLP_TRACES_%s_HEADERS: %v", upper, err)
+		} else if len(headers) > 0 {
+			opts = append(opts, otlptracehttp.WithHeaders(headers))
+		}
+	}
+	return opts, true
+}
+
+// parseOTLPHeaders parses the W3C Baggage-style header string used by
+// OTEL_EXPORTER_OTLP_*_HEADERS: comma-separated key=value pairs, with values
+// URL-encoded per RFC 3986. Matches the SDK's built-in parser for the standard
+// env var so named entries behave the same way.
+func parseOTLPHeaders(s string) (map[string]string, error) {
+	parts := strings.Split(s, ",")
+	out := make(map[string]string, len(parts))
+	for _, pair := range parts {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		eq := strings.IndexByte(pair, '=')
+		if eq <= 0 {
+			return nil, fmt.Errorf("malformed header %q (expected key=value)", pair)
+		}
+		key := strings.TrimSpace(pair[:eq])
+		val, err := url.QueryUnescape(strings.TrimSpace(pair[eq+1:]))
+		if err != nil {
+			return nil, fmt.Errorf("malformed value for %q: %w", key, err)
+		}
+		out[key] = val
+	}
+	return out, nil
+}
+
+func gcpSamplingRate() float64 {
+	if v := os.Getenv("OTEL_TRACE_SAMPLING_RATE"); v != "" {
+		if rate, err := strconv.ParseFloat(v, 64); err == nil {
+			return rate
+		}
+	}
+	return 0.1
+}
+
+// samplingSpanProcessor applies a per-exporter trace-ID ratio filter before
+// handing spans to the wrapped processor. The decision is TraceID-deterministic,
+// so every span in a trace is kept or dropped together — no orphan roots.
+//
+// Remote-sampled parents are not special-cased: a bypass that only fires on the
+// first local span would keep that root while the ratio check later dropped its
+// local descendants, producing exactly the orphan-subtree outcome this comment
+// used to claim to prevent.
+type samplingSpanProcessor struct {
+	inner     trace.SpanProcessor
+	threshold uint64
+}
+
+var _ trace.SpanProcessor = (*samplingSpanProcessor)(nil)
+
+func newSamplingProcessor(inner trace.SpanProcessor, rate float64) trace.SpanProcessor {
+	if rate >= 1.0 {
+		return inner
+	}
+	if rate <= 0 {
+		return &samplingSpanProcessor{inner: inner, threshold: 0}
+	}
+	return &samplingSpanProcessor{
+		inner:     inner,
+		threshold: uint64(rate * (1 << 63)),
+	}
+}
+
+func (s *samplingSpanProcessor) OnStart(ctx context.Context, span trace.ReadWriteSpan) {
+	s.inner.OnStart(ctx, span)
+}
+
+func (s *samplingSpanProcessor) OnEnd(span trace.ReadOnlySpan) {
+	if s.threshold == 0 {
+		return
+	}
+	tid := span.SpanContext().TraceID()
+	x := binary.BigEndian.Uint64(tid[8:16]) >> 1
+	if x < s.threshold {
+		s.inner.OnEnd(span)
+	}
+}
+
+func (s *samplingSpanProcessor) Shutdown(ctx context.Context) error {
+	return s.inner.Shutdown(ctx)
+}
+
+func (s *samplingSpanProcessor) ForceFlush(ctx context.Context) error {
+	return s.inner.ForceFlush(ctx)
 }
 
 type delegator struct {
