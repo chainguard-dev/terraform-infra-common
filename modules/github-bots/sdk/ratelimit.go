@@ -118,8 +118,6 @@ func (w *SecondaryRateLimitWaiter) RoundTrip(req *http.Request) (*http.Response,
 // processLimit processes a response and returns a secondaryLimit if the response is a secondary limit
 // https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#exceeding-the-rate-limit
 func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.Response) bool {
-	log := clog.FromContext(ctx)
-
 	if resp.StatusCode != http.StatusForbidden &&
 		resp.StatusCode != http.StatusTooManyRequests {
 		return false
@@ -135,7 +133,7 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 	if v := resp.Header.Get(HeaderRetryAfter); v != "" {
 		seconds, err := strconv.Atoi(v)
 		if err != nil {
-			log.Warnf("failed to parse retry-after header: %v", err)
+			clog.WarnContextf(ctx, "failed to parse retry-after header: %v", err)
 			secondaryRateLimitHeaderErrors.WithLabelValues("Retry-After").Inc()
 		} else {
 			retryAfter = time.Duration(seconds) * time.Second
@@ -146,7 +144,7 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 	if v := resp.Header.Get(HeaderXRateLimitRemaining); v != "" {
 		r, err := strconv.Atoi(v)
 		if err != nil {
-			log.Warnf("failed to parse x-ratelimit-remaining header: %v", err)
+			clog.WarnContextf(ctx, "failed to parse x-ratelimit-remaining header: %v", err)
 			secondaryRateLimitHeaderErrors.WithLabelValues("X-Ratelimit-Remaining").Inc()
 		} else {
 			remaining = r
@@ -157,7 +155,7 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 	if v := resp.Header.Get(HeaderXRateLimitReset); v != "" {
 		seconds, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			log.Warnf("failed to parse x-ratelimit-reset header: %v", err)
+			clog.WarnContextf(ctx, "failed to parse x-ratelimit-reset header: %v", err)
 			secondaryRateLimitHeaderErrors.WithLabelValues("X-Ratelimit-Reset").Inc()
 		} else {
 			reset = time.Unix(seconds, 0)
