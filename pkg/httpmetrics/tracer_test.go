@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -161,6 +162,51 @@ func TestSamplingSpanProcessor_TraceIsAllOrNothing(t *testing.T) {
 	}
 	if kept == 0 || dropped == 0 {
 		t.Fatalf("degenerate outcome kept=%d dropped=%d — rate=%.2f should mix both over %d traces", kept, dropped, rate, n)
+	}
+}
+
+func TestLLMSpanFilter_ForwardsOnlyGenAISpans(t *testing.T) {
+	// The filter must drop infra spans (no gen_ai.* attributes) and forward
+	// LLM spans (any gen_ai.* attribute) so evaluation backends like
+	// Braintrust don't fill up with noise.
+	inner := &countingProcessor{}
+	tp := trace.NewTracerProvider(
+		trace.WithSampler(trace.AlwaysSample()),
+		trace.WithSpanProcessor(&llmSpanFilterProcessor{inner: inner}),
+	)
+	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+
+	tr := tp.Tracer("test")
+
+	// Span 1: no attributes at all — drop.
+	_, s1 := tr.Start(t.Context(), "no-attrs")
+	s1.End()
+
+	// Span 2: infra attribute (http.method) — drop.
+	_, s2 := tr.Start(t.Context(), "http-span")
+	s2.SetAttributes(attribute.String("http.method", "GET"))
+	s2.End()
+
+	// Span 3: gen_ai.request.model — keep.
+	_, s3 := tr.Start(t.Context(), "llm-request")
+	s3.SetAttributes(attribute.String("gen_ai.request.model", "gemini-2.5-flash"))
+	s3.End()
+
+	// Span 4: gen_ai.usage.input_tokens — keep.
+	_, s4 := tr.Start(t.Context(), "llm-usage")
+	s4.SetAttributes(attribute.Int("gen_ai.usage.input_tokens", 123))
+	s4.End()
+
+	// Span 5: mixed attrs where at least one is gen_ai.* — keep.
+	_, s5 := tr.Start(t.Context(), "llm-mixed")
+	s5.SetAttributes(
+		attribute.String("http.method", "POST"),
+		attribute.String("gen_ai.response.model", "gemini-2.5-flash"),
+	)
+	s5.End()
+
+	if got, want := inner.count.Load(), int64(3); got != want {
+		t.Errorf("inner processor received %d spans; want %d (only gen_ai.* spans should forward)", got, want)
 	}
 }
 
