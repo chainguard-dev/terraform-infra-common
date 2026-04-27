@@ -124,6 +124,7 @@ module "redis_auth_secret" {
   name       = "${var.name}-auth"
 
   authorized-adder      = var.secret_version_adder
+  authorized-adders     = var.secret_version_adders
   notification-channels = var.notification_channels
 
   # Additional viewer/editor service accounts will need to access the

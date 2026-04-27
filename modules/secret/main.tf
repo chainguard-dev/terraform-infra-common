@@ -28,8 +28,11 @@ locals {
   accessors = [for sa in concat([var.service-account], var.service-accounts) : "serviceAccount:${sa}" if sa != "" && !strcontains(sa, ":")]
   # extract the email component if there is a `:` in the entry, and choose the last entry by reversing the list
   accessor_emails = [for sa in concat([var.service-account], var.service-accounts) : reverse(split(":", sa))[0] if sa != ""]
-  # Extract the email portion of the authorized adder member
-  authorized_adder_email = strcontains(var.authorized-adder, ":") ? split(":", var.authorized-adder)[1] : var.authorized-adder
+
+  # Combine authorized-adder (singular) with authorized-adders (plural)
+  all_authorized_adders = concat([var.authorized-adder], var.authorized-adders)
+  # Extract email portions from all authorized adders
+  authorized_adder_emails = [for adder in local.all_authorized_adders : strcontains(adder, ":") ? split(":", adder)[1] : adder]
 
   default_labels = {
     basename(abspath(path.module)) = var.name
@@ -54,12 +57,12 @@ resource "google_secret_manager_secret_iam_binding" "authorize-service-access" {
   members   = local.accessors
 }
 
-// Authorize the specified identity to add new secret values.
+// Authorize the specified identities to add new secret values.
 resource "google_secret_manager_secret_iam_binding" "authorize-version-adder" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.this.secret_id
   role      = "roles/secretmanager.secretVersionAdder"
-  members   = [var.authorized-adder]
+  members   = local.all_authorized_adders
 }
 
 // Get a project number for this project ID.
@@ -98,9 +101,9 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
         protoPayload.authenticationInfo.principalEmail=~"${join("|", local.accessor_emails)}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(AccessSecretVersion|GetSecretVersion)"
       )
-      -- Ignore the identity that is authorized to manipulate secret versions.
+      -- Ignore the identities that are authorized to manipulate secret versions.
       -(
-        protoPayload.authenticationInfo.principalEmail="${local.authorized_adder_email}"
+        protoPayload.authenticationInfo.principalEmail=~"${join("|", local.authorized_adder_emails)}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(DestroySecretVersion|AddSecretVersion|EnableSecretVersion)"
       )
       -- Ignore benign secret actions.

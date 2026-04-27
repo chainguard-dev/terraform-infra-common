@@ -207,6 +207,12 @@ variable "secret_version_adder" {
   description = "The user allowed to populate new redis auth secret versions."
 }
 
+variable "secret_version_adders" {
+  type        = list(string)
+  description = "Additional users allowed to populate new redis auth secret versions (e.g., Terraform service accounts)."
+  default     = []
+}
+
 variable "product" {
   description = "Product label to apply to the service."
   type        = string
