@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -133,6 +134,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if payload.Data.IssueID != "" {
 			event.SetExtension("issueid", payload.Data.IssueID)
 		}
+		// Linear comment webhooks don't include team info directly.
+		// Extract the team key from the issue identifier in the URL
+		// (e.g., "https://linear.app/chainguard/issue/DEV-747/..." → "DEV").
+		if team := teamKeyFromURL(payload.URL); team != "" {
+			event.SetExtension("team", team)
+		}
 	}
 
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
@@ -168,6 +175,7 @@ type webhookPayload struct {
 	OrganizationID   string `json:"organizationId"`
 	WebhookID        string `json:"webhookId"`
 	WebhookTimestamp int64  `json:"webhookTimestamp"`
+	URL              string `json:"url"`
 
 	Data webhookData `json:"data"`
 }
@@ -194,6 +202,26 @@ type eventHeaders struct {
 	DeliveryID string `json:"delivery_id,omitempty"`
 	Event      string `json:"event,omitempty"`
 	WebhookID  string `json:"webhook_id,omitempty"`
+}
+
+// Linear team keys are short uppercase identifiers — Linear enforces a
+// minimum of 2 characters and team keys are always uppercase letters. The
+// upper bound is generous (Linear in practice uses 2-5) but capping the
+// quantifier prevents pathological backtracking on adversarial input.
+// Bound the number length similarly and require a delimiter after the
+// digits so `/issue/ABC-12extra` doesn't silently match the wrong
+// identifier.
+var issueIdentifierPattern = regexp.MustCompile(`/issue/([A-Z]{2,10})-\d{1,10}([/#?]|$)`)
+
+// teamKeyFromURL extracts the team key from a Linear issue URL embedded in
+// a webhook payload. Returns empty string when no team can be determined;
+// callers treat that as "skip the extension".
+func teamKeyFromURL(rawURL string) string {
+	m := issueIdentifierPattern.FindStringSubmatch(rawURL)
+	if len(m) < 2 {
+		return ""
+	}
+	return m[1]
 }
 
 // validateSignature checks the HMAC-SHA256 signature of the raw body against
