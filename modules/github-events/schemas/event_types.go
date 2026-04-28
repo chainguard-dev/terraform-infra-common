@@ -177,6 +177,13 @@ type WorkflowRun struct {
 	CreatedAt    bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
 	UpdatedAt    bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
 	RunStartedAt bigquery.NullTimestamp `json:"run_started_at,omitempty" bigquery:"run_started_at"`
+	// CompletedAt is retained as a noop field. GitHub does not populate it on
+	// workflow_run payloads (see struct comment above), so it is always NULL.
+	// Removing it would change the BQ schema and trigger table recreation,
+	// which is blocked by deletion_protection on the recorder. Use
+	// updated_at on action="completed" events, or workflow_job.completed_at,
+	// for the run's terminal-state timestamp.
+	CompletedAt bigquery.NullTimestamp `json:"completed_at,omitempty" bigquery:"completed_at"`
 
 	// success, failure, cancelled, etc.
 	Conclusion bigquery.NullString `json:"conclusion,omitempty" bigquery:"conclusion"`

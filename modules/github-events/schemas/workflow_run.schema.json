@@ -116,6 +116,10 @@
       "type": "TIMESTAMP"
      },
      {
+      "name": "completed_at",
+      "type": "TIMESTAMP"
+     },
+     {
       "name": "conclusion",
       "type": "STRING"
      }
