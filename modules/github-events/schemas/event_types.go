@@ -160,6 +160,11 @@ type Workflow struct {
 }
 
 // https://pkg.go.dev/github.com/google/go-github/v60/github#WorkflowRun
+//
+// Note: GitHub does not include `completed_at` on the workflow_run object in
+// webhook payloads. For action="completed" events, `updated_at` is the moment
+// the run reached terminal state. For accurate per-job/per-step duration metrics
+// use the workflow_job event instead.
 type WorkflowRun struct {
 	ID           bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
 	RunNumber    bigquery.NullInt64     `json:"run_number,omitempty" bigquery:"run_number"`
@@ -169,8 +174,9 @@ type WorkflowRun struct {
 	Name         bigquery.NullString    `json:"name,omitempty" bigquery:"name"`
 	Event        bigquery.NullString    `json:"event,omitempty" bigquery:"event"`
 	Status       bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
+	CreatedAt    bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	UpdatedAt    bigquery.NullTimestamp `json:"updated_at,omitempty" bigquery:"updated_at"`
 	RunStartedAt bigquery.NullTimestamp `json:"run_started_at,omitempty" bigquery:"run_started_at"`
-	CompletedAt  bigquery.NullTimestamp `json:"completed_at,omitempty" bigquery:"completed_at"`
 
 	// success, failure, cancelled, etc.
 	Conclusion bigquery.NullString `json:"conclusion,omitempty" bigquery:"conclusion"`
@@ -183,6 +189,50 @@ type WorkflowRunEvent struct {
 	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
 	Workflow     Workflow            `json:"workflow,omitempty" bigquery:"workflow"`
 	WorkflowRun  WorkflowRun         `json:"workflow_run,omitempty" bigquery:"workflow_run"`
+	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
+	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
+	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
+	Installation *Installation       `json:"installation,omitempty" bigquery:"installation"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#TaskStep
+type WorkflowJobStep struct {
+	Name        bigquery.NullString    `json:"name,omitempty" bigquery:"name"`
+	Status      bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
+	Conclusion  bigquery.NullString    `json:"conclusion,omitempty" bigquery:"conclusion"`
+	Number      bigquery.NullInt64     `json:"number,omitempty" bigquery:"number"`
+	StartedAt   bigquery.NullTimestamp `json:"started_at,omitempty" bigquery:"started_at"`
+	CompletedAt bigquery.NullTimestamp `json:"completed_at,omitempty" bigquery:"completed_at"`
+}
+
+// https://pkg.go.dev/github.com/google/go-github/v60/github#WorkflowJob
+type WorkflowJob struct {
+	ID              bigquery.NullInt64     `json:"id,omitempty" bigquery:"id"`
+	RunID           bigquery.NullInt64     `json:"run_id,omitempty" bigquery:"run_id"`
+	RunAttempt      bigquery.NullInt64     `json:"run_attempt,omitempty" bigquery:"run_attempt"`
+	WorkflowName    bigquery.NullString    `json:"workflow_name,omitempty" bigquery:"workflow_name"`
+	HeadBranch      bigquery.NullString    `json:"head_branch,omitempty" bigquery:"head_branch"`
+	HeadSHA         bigquery.NullString    `json:"head_sha,omitempty" bigquery:"head_sha"`
+	Name            bigquery.NullString    `json:"name,omitempty" bigquery:"name"`
+	Status          bigquery.NullString    `json:"status,omitempty" bigquery:"status"`
+	Conclusion      bigquery.NullString    `json:"conclusion,omitempty" bigquery:"conclusion"`
+	CreatedAt       bigquery.NullTimestamp `json:"created_at,omitempty" bigquery:"created_at"`
+	StartedAt       bigquery.NullTimestamp `json:"started_at,omitempty" bigquery:"started_at"`
+	CompletedAt     bigquery.NullTimestamp `json:"completed_at,omitempty" bigquery:"completed_at"`
+	RunnerID        bigquery.NullInt64     `json:"runner_id,omitempty" bigquery:"runner_id"`
+	RunnerName      bigquery.NullString    `json:"runner_name,omitempty" bigquery:"runner_name"`
+	RunnerGroupID   bigquery.NullInt64     `json:"runner_group_id,omitempty" bigquery:"runner_group_id"`
+	RunnerGroupName bigquery.NullString    `json:"runner_group_name,omitempty" bigquery:"runner_group_name"`
+	Labels          []string               `json:"labels,omitempty" bigquery:"labels"`
+	Steps           []WorkflowJobStep      `json:"steps,omitempty" bigquery:"steps"`
+}
+
+// https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_job
+// subset of https://pkg.go.dev/github.com/google/go-github/v60/github#WorkflowJobEvent
+type WorkflowJobEvent struct {
+	// queued, in_progress, completed, waiting
+	Action       bigquery.NullString `json:"action,omitempty" bigquery:"action"`
+	WorkflowJob  WorkflowJob         `json:"workflow_job,omitempty" bigquery:"workflow_job"`
 	Organization Organization        `json:"organization,omitempty" bigquery:"organization"`
 	Repository   Repository          `json:"repository,omitempty" bigquery:"repository"`
 	Sender       User                `json:"sender,omitempty" bigquery:"sender"`
