@@ -326,6 +326,13 @@ resource "google_cloud_run_v2_service" "this" {
             size_limit = empty_dir.value.size_limit
           }
         }
+
+        dynamic "cloud_sql_instance" {
+          for_each = volumes.value.cloud_sql_instance != null ? { "" : volumes.value.cloud_sql_instance } : {}
+          content {
+            instances = cloud_sql_instance.value.instances
+          }
+        }
       }
     }
 

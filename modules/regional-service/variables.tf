@@ -176,6 +176,9 @@ variable "volumes" {
         path    = string
       }))
     }))
+    cloud_sql_instance = optional(object({
+      instances = list(string)
+    }))
   }))
   default = []
 }
