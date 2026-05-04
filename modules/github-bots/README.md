@@ -116,6 +116,7 @@ No requirements.
 | <a name="input_extra_filter_prefix"></a> [extra\_filter\_prefix](#input\_extra\_filter\_prefix) | Optional additional prefixes for filtering events. | `map(string)` | `{}` | no |
 | <a name="input_github-event"></a> [github-event](#input\_github-event) | The GitHub event type to subscribe to. | `string` | n/a | yes |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the service. | `map(string)` | `{}` | no |
+| <a name="input_launch_stage"></a> [launch\_stage](#input\_launch\_stage) | The launch stage of the Cloud Run service (e.g. BETA to leverage features like disk volumes). | `string` | `"GA"` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name of the bot. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |

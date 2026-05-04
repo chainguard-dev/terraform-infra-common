@@ -85,6 +85,8 @@ module "this" {
 
   enable_profiler = var.enable_profiler
 
+  launch_stage = var.launch_stage
+
   notification_channels = var.notification_channels
 }
 

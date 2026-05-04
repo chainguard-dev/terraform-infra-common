@@ -26,6 +26,8 @@ module "service" {
 
   deletion_protection = var.deletion_protection
 
+  launch_stage = var.launch_stage
+
   notification_channels = var.notification_channels
 }
 
