@@ -46,42 +46,16 @@
       "type": "INTEGER"
      },
      {
-      "name": "name",
-      "type": "STRING"
-     },
-     {
-      "name": "path",
-      "type": "STRING"
-     },
-     {
-      "name": "state",
-      "type": "STRING"
-     },
-     {
-      "name": "created_at",
-      "type": "TIMESTAMP"
-     },
-     {
-      "name": "updated_at",
-      "type": "TIMESTAMP"
-     }
-    ],
-    "name": "workflow",
-    "type": "RECORD"
-   },
-   {
-    "fields": [
-     {
-      "name": "id",
-      "type": "INTEGER"
-     },
-     {
-      "name": "run_number",
+      "name": "run_id",
       "type": "INTEGER"
      },
      {
       "name": "run_attempt",
       "type": "INTEGER"
+     },
+     {
+      "name": "workflow_name",
+      "type": "STRING"
      },
      {
       "name": "head_branch",
@@ -96,11 +70,11 @@
       "type": "STRING"
      },
      {
-      "name": "event",
+      "name": "status",
       "type": "STRING"
      },
      {
-      "name": "status",
+      "name": "conclusion",
       "type": "STRING"
      },
      {
@@ -108,11 +82,7 @@
       "type": "TIMESTAMP"
      },
      {
-      "name": "updated_at",
-      "type": "TIMESTAMP"
-     },
-     {
-      "name": "run_started_at",
+      "name": "started_at",
       "type": "TIMESTAMP"
      },
      {
@@ -120,11 +90,59 @@
       "type": "TIMESTAMP"
      },
      {
-      "name": "conclusion",
+      "name": "runner_id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "runner_name",
       "type": "STRING"
+     },
+     {
+      "name": "runner_group_id",
+      "type": "INTEGER"
+     },
+     {
+      "name": "runner_group_name",
+      "type": "STRING"
+     },
+     {
+      "mode": "REPEATED",
+      "name": "labels",
+      "type": "STRING"
+     },
+     {
+      "fields": [
+       {
+        "name": "name",
+        "type": "STRING"
+       },
+       {
+        "name": "status",
+        "type": "STRING"
+       },
+       {
+        "name": "conclusion",
+        "type": "STRING"
+       },
+       {
+        "name": "number",
+        "type": "INTEGER"
+       },
+       {
+        "name": "started_at",
+        "type": "TIMESTAMP"
+       },
+       {
+        "name": "completed_at",
+        "type": "TIMESTAMP"
+       }
+      ],
+      "mode": "REPEATED",
+      "name": "steps",
+      "type": "RECORD"
      }
     ],
-    "name": "workflow_run",
+    "name": "workflow_job",
     "type": "RECORD"
    },
    {

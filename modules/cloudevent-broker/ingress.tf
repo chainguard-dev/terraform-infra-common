@@ -11,17 +11,22 @@ resource "google_service_account" "this" {
   description  = "A dedicated identity for the ${var.name} broker ingress to operate as."
 }
 
-// Authorize the ingress identity to publish events to each of
-// the regional broker topics.
-// NOTE: we use binding vs. member because we do not expect anything
-// to publish to this topic other than the ingress service.
+// Authorize the ingress identity (and any extra_publishers) to publish
+// events to each of the regional broker topics.
+// NOTE: we use binding vs. member so this list is authoritative — any
+// additional publishers must be declared here via extra_publishers rather
+// than through separate google_pubsub_topic_iam_member resources, which
+// would be wiped on every apply.
 resource "google_pubsub_topic_iam_binding" "ingress-publishes-events" {
   for_each = var.regions
 
   project = var.project_id
   topic   = google_pubsub_topic.this[each.key].name
   role    = "roles/pubsub.publisher"
-  members = ["serviceAccount:${google_service_account.this.email}"]
+  members = concat(
+    ["serviceAccount:${google_service_account.this.email}"],
+    [for sa in var.extra_publishers : "serviceAccount:${sa}"],
+  )
 }
 
 module "this" {

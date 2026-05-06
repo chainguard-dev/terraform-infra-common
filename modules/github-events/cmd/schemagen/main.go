@@ -23,6 +23,7 @@ func main() {
 
 	mustGenerate("pull_request.schema.json", schemas.Wrapper[schemas.PullRequestEvent]{})
 	mustGenerate("workflow_run.schema.json", schemas.Wrapper[schemas.WorkflowRunEvent]{})
+	mustGenerate("workflow_job.schema.json", schemas.Wrapper[schemas.WorkflowJobEvent]{})
 	mustGenerate("issue_comment.schema.json", schemas.Wrapper[schemas.IssueCommentEvent]{})
 	mustGenerate("issues.schema.json", schemas.Wrapper[schemas.IssueEvent]{})
 	mustGenerate("push.schema.json", schemas.Wrapper[schemas.PushEvent]{})

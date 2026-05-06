@@ -18,7 +18,7 @@ func TestCheckRun(t *testing.T) {
 	b.Status = StatusInProgress
 	b.Writef("test %d", 123)
 
-	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
+	if diff := cmp.Diff(&github.CreateCheckRunOptions{
 		Name:    "name",
 		HeadSHA: "headSHA",
 		Status:  github.Ptr("in_progress"),
@@ -27,10 +27,10 @@ func TestCheckRun(t *testing.T) {
 			Summary: github.Ptr("name"),
 			Text:    github.Ptr("test 123\n"),
 		},
-	}); diff != "" {
+	}, b.CheckRunCreate()); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
-	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
+	if diff := cmp.Diff(&github.UpdateCheckRunOptions{
 		Name:   "name",
 		Status: github.Ptr("in_progress"),
 		Output: &github.CheckRunOutput{
@@ -38,14 +38,14 @@ func TestCheckRun(t *testing.T) {
 			Summary: github.Ptr("name"),
 			Text:    github.Ptr("test 123\n"),
 		},
-	}); diff != "" {
+	}, b.CheckRunUpdate()); diff != "" {
 		t.Errorf("CheckRunUpdate() mismatch (-want +got):\n%s", diff)
 	}
 
 	b.Summary = "summary"
 	b.Conclusion = ConclusionSuccess
 	b.Writef("test %t", true)
-	if diff := cmp.Diff(b.CheckRunCreate(), &github.CreateCheckRunOptions{
+	if diff := cmp.Diff(&github.CreateCheckRunOptions{
 		Name:       "name",
 		HeadSHA:    "headSHA",
 		Status:     github.Ptr("completed"),
@@ -55,10 +55,10 @@ func TestCheckRun(t *testing.T) {
 			Summary: github.Ptr("summary"),
 			Text:    github.Ptr("test 123\ntest true\n"),
 		},
-	}); diff != "" {
+	}, b.CheckRunCreate()); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
-	if diff := cmp.Diff(b.CheckRunUpdate(), &github.UpdateCheckRunOptions{
+	if diff := cmp.Diff(&github.UpdateCheckRunOptions{
 		Name:       "name",
 		Status:     github.Ptr("completed"),
 		Conclusion: github.Ptr("success"),
@@ -67,7 +67,7 @@ func TestCheckRun(t *testing.T) {
 			Summary: github.Ptr("summary"),
 			Text:    github.Ptr("test 123\ntest true\n"),
 		},
-	}); diff != "" {
+	}, b.CheckRunUpdate()); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
 }

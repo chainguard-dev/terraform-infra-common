@@ -65,6 +65,27 @@ EOD
   default     = []
 }
 
+variable "filter_not" {
+  description = <<EOD
+A Knative Trigger-style negative-equality filter over the cloud event
+attributes. Each entry generates a `NOT attributes.ce-<key>="<value>"`
+clause, AND-composed with the other filter elements.
+
+Use a list (not a map) so the same key can appear multiple times — e.g.
+to skip events from several authors:
+
+  filter_not = [
+    { key = "authorid", value = "user-uuid-1" },
+    { key = "authorid", value = "user-uuid-2" },
+  ]
+EOD
+  type = list(object({
+    key   = string
+    value = string
+  }))
+  default = []
+}
+
 variable "filter_not_has_attributes" {
   description = <<EOD
 A Knative Trigger-style filter over the cloud event attribute prefixes.

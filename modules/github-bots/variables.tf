@@ -25,7 +25,7 @@ variable "containers" {
   description = "The containers to run in the service.  Each container will be run in each region."
   type = map(object({
     source = object({
-      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:11ec91f0372630a2ca3764cea6325bebb0189a514084463cbb3724e5bb350d14")
+      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:2fdfacc8d61164aa9e20909dceec7cc28b9feb66580e8e1a65b9f2443c53b61b")
       working_dir = string
       importpath  = string
     })
@@ -147,4 +147,10 @@ variable "product" {
   description = "Product label to apply to the service."
   type        = string
   default     = "unknown"
+}
+
+variable "launch_stage" {
+  description = "The launch stage of the Cloud Run service (e.g. BETA to leverage features like disk volumes)."
+  type        = string
+  default     = "GA"
 }

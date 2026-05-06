@@ -177,13 +177,11 @@ type GitHubClient struct {
 func (c GitHubClient) Client() *github.Client { return c.inner }
 
 func (c GitHubClient) Close(ctx context.Context) error {
-	log := clog.FromContext(ctx)
-
 	// TODO: We shouldn't get a token here if it's the first time, just to revoke it.
 	tok, err := c.ts.Token()
 	if err != nil {
 		// Callers might just `defer c.Close()` so we log the error here too
-		log.Warnf("failed to get token for revocation: %v", err)
+		clog.WarnContextf(ctx, "failed to get token for revocation: %v", err)
 		return fmt.Errorf("getting token for revocation: %w", err)
 	}
 
@@ -321,7 +319,7 @@ func (c GitHubClient) AddComment(ctx context.Context, pr *github.PullRequest, bo
 	content = fmt.Sprintf("<!-- bot:%s -->\n\n%s", botName, content)
 	if _, resp, err := c.inner.Issues.CreateComment(ctx, *pr.Base.Repo.Owner.Login, *pr.Base.Repo.Name, *pr.Number, &github.IssueComment{
 		Body: &content,
-	}); err != nil || resp.StatusCode != 201 {
+	}); err != nil || resp.StatusCode != http.StatusCreated {
 		return validateResponse(ctx, err, resp, "creating comment")
 	}
 	return nil

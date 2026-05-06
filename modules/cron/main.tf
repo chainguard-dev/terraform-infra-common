@@ -81,9 +81,10 @@ resource "google_cloud_run_v2_job" "job" {
   provider = google-beta
   project  = var.project_id
 
-  name     = "${var.name}-cron"
-  location = var.region
-  labels   = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
+  name         = "${var.name}-cron"
+  location     = var.region
+  labels       = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
+  launch_stage = var.launch_stage
 
   deletion_protection = var.deletion_protection
 
@@ -230,7 +231,6 @@ resource "google_cloud_run_v2_job" "job" {
 
   lifecycle {
     ignore_changes = [
-      launch_stage,
       # GCP manages job container names automatically
       template[0].template[0].containers[0].name,
       template[0].template[0].containers[1].name,

@@ -176,6 +176,9 @@ variable "volumes" {
         path    = string
       }))
     }))
+    cloud_sql_instance = optional(object({
+      instances = list(string)
+    }))
   }))
   default = []
 }
@@ -266,4 +269,10 @@ variable "slo" {
     monitor_gclb = optional(bool, false)
   })
   default = {}
+}
+
+variable "launch_stage" {
+  description = "The launch stage of the Cloud Run service (e.g. BETA to leverage features like disk volumes)."
+  type        = string
+  default     = "GA"
 }

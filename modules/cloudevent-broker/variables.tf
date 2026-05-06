@@ -74,3 +74,9 @@ variable "cpu_idle" {
   type        = map(bool)
   default     = {}
 }
+
+variable "extra_publishers" {
+  description = "Additional service account emails (without 'serviceAccount:' prefix) to grant roles/pubsub.publisher on each regional broker topic. Listed alongside the ingress SA in the authoritative IAM binding."
+  type        = list(string)
+  default     = []
+}

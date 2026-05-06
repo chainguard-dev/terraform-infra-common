@@ -45,7 +45,10 @@ func newTestPayload(action, entityType string, ts int64) string {
 }
 
 func newCommentPayload(action string, ts int64) string {
-	return fmt.Sprintf(`{"action":%q,"type":"Comment","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"data":{"id":"comment-001","body":"A comment","issueId":"issue-789","userId":"user-1"}}`, action, ts)
+	// Mirrors the Linear webhook shape (see schemas/comment.schema.json):
+	// top-level `actor` { id, name, type } is the comment author; data.userId
+	// duplicates the actor id but carries no name.
+	return fmt.Sprintf(`{"action":%q,"type":"Comment","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"url":"https://linear.app/chainguard/issue/ENG-1/test-issue#comment-001","actor":{"id":"user-1","name":"Auto Bot","type":"user"},"data":{"id":"comment-001","body":"A comment","issueId":"issue-789","userId":"user-1"}}`, action, ts)
 }
 
 func TestServeHTTP_validRequest(t *testing.T) {
@@ -325,9 +328,23 @@ func TestServeHTTP_commentExtensions(t *testing.T) {
 		t.Errorf("issueid = %s, want issue-789", issueURL)
 	}
 
-	// Comment events should NOT set the team extension.
-	if _, ok := event.Extensions()["team"]; ok {
-		t.Errorf("comment event should not have team extension")
+	// Comment events should set the team extension extracted from the URL.
+	team, _ := event.Extensions()["team"].(string)
+	if team != "ENG" {
+		t.Errorf("team = %s, want ENG", team)
+	}
+
+	// Comment events should set authorid (Linear user UUID) so downstream
+	// subscribers can use cloudevent-trigger's filter_not to skip comments
+	// from automation bots, self-loops, etc. authorname is the
+	// human-readable companion for log/debug contexts.
+	authorID, _ := event.Extensions()["authorid"].(string)
+	if authorID != "user-1" {
+		t.Errorf("authorid = %q, want %q", authorID, "user-1")
+	}
+	authorName, _ := event.Extensions()["authorname"].(string)
+	if authorName != "Auto Bot" {
+		t.Errorf("authorname = %q, want %q", authorName, "Auto Bot")
 	}
 }
 
@@ -364,6 +381,44 @@ func TestServeHTTP_nonIssueEventExtensions(t *testing.T) {
 	}
 	if _, ok := event.Extensions()["team"]; ok {
 		t.Errorf("project event should not have team extension")
+	}
+	// authorid/authorname are Comment-only — Project events must not set them
+	// even if a payload happens to include a top-level actor record. Guards
+	// against accidentally widening the scope to non-Comment events.
+	if _, ok := event.Extensions()["authorid"]; ok {
+		t.Errorf("project event should not have authorid extension")
+	}
+	if _, ok := event.Extensions()["authorname"]; ok {
+		t.Errorf("project event should not have authorname extension")
+	}
+}
+
+func TestTeamKeyFromURL(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{"issue URL", "https://linear.app/chainguard/issue/DEV-747/some-title", "DEV"},
+		{"comment URL", "https://linear.app/chainguard/issue/ENG-1/test#comment-abc", "ENG"},
+		{"long team key", "https://linear.app/chainguard/issue/LIBRQ-182/title", "LIBRQ"},
+		{"query suffix", "https://linear.app/chainguard/issue/DEV-1?foo=bar", "DEV"},
+		{"first match wins", "https://linear.app/x/issue/AAA-1/issue/BBB-2", "AAA"},
+		{"no match", "https://linear.app/chainguard/project/foo", ""},
+		{"empty string", "", ""},
+		// Lowercase keys are rejected — Linear team keys are uppercase.
+		{"lowercase rejected", "https://linear.app/chainguard/issue/dev-1/title", ""},
+		// Bound the team key to reject pathological inputs.
+		{"team key too long", "https://linear.app/chainguard/issue/AAAAAAAAAAA-1/title", ""},
+		// Trailing junk must not silently match a different identifier.
+		{"trailing junk on number", "https://linear.app/chainguard/issue/ABC-12extra", ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := teamKeyFromURL(tc.url); got != tc.want {
+				t.Errorf("teamKeyFromURL(%q) = %q, want %q", tc.url, got, tc.want)
+			}
+		})
 	}
 }
 

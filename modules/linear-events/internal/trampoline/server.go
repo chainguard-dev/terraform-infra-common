@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -133,6 +134,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if payload.Data.IssueID != "" {
 			event.SetExtension("issueid", payload.Data.IssueID)
 		}
+		// Linear comment webhooks don't include team info directly.
+		// Extract the team key from the issue identifier in the URL
+		// (e.g., "https://linear.app/chainguard/issue/DEV-747/..." → "DEV").
+		if team := teamKeyFromURL(payload.URL); team != "" {
+			event.SetExtension("team", team)
+		}
+		// Author identity, sourced from the top-level Actor record on
+		// the webhook payload (Linear's documented shape — see
+		// schemas/comment.schema.json). authorid is the stable Linear
+		// user UUID and is the right key for downstream "skip this
+		// commenter" filters (cloudevent-trigger's filter_not).
+		// authorname is included as a human-readable companion for
+		// log/debugging contexts; it can drift if a user renames
+		// themselves and is NOT a reliable filter key.
+		if payload.Actor.ID != "" {
+			event.SetExtension("authorid", payload.Actor.ID)
+		}
+		if payload.Actor.Name != "" {
+			event.SetExtension("authorname", payload.Actor.Name)
+		}
 	}
 
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
@@ -168,6 +189,15 @@ type webhookPayload struct {
 	OrganizationID   string `json:"organizationId"`
 	WebhookID        string `json:"webhookId"`
 	WebhookTimestamp int64  `json:"webhookTimestamp"`
+	URL              string `json:"url"`
+
+	// Actor is the top-level identity that triggered the webhook —
+	// Linear's documented field for "who did this" on user-driven
+	// events. For Comment events this is the comment author; we copy
+	// id+name into the authorid/authorname CloudEvent extensions so
+	// downstream subscribers can filter (e.g. cloudevent-trigger's
+	// filter_not for skipping self-loops or automation bots).
+	Actor webhookActor `json:"actor"`
 
 	Data webhookData `json:"data"`
 }
@@ -184,6 +214,12 @@ type webhookTeam struct {
 	Key string `json:"key"`
 }
 
+// webhookActor mirrors Linear's top-level actor record (id, name, type).
+type webhookActor struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type eventData struct {
 	When    time.Time       `json:"when"`
 	Headers *eventHeaders   `json:"headers,omitempty"`
@@ -194,6 +230,26 @@ type eventHeaders struct {
 	DeliveryID string `json:"delivery_id,omitempty"`
 	Event      string `json:"event,omitempty"`
 	WebhookID  string `json:"webhook_id,omitempty"`
+}
+
+// Linear team keys are short uppercase identifiers — Linear enforces a
+// minimum of 2 characters and team keys are always uppercase letters. The
+// upper bound is generous (Linear in practice uses 2-5) but capping the
+// quantifier prevents pathological backtracking on adversarial input.
+// Bound the number length similarly and require a delimiter after the
+// digits so `/issue/ABC-12extra` doesn't silently match the wrong
+// identifier.
+var issueIdentifierPattern = regexp.MustCompile(`/issue/([A-Z]{2,10})-\d{1,10}([/#?]|$)`)
+
+// teamKeyFromURL extracts the team key from a Linear issue URL embedded in
+// a webhook payload. Returns empty string when no team can be determined;
+// callers treat that as "skip the extension".
+func teamKeyFromURL(rawURL string) string {
+	m := issueIdentifierPattern.FindStringSubmatch(rawURL)
+	if len(m) < 2 {
+		return ""
+	}
+	return m[1]
 }
 
 // validateSignature checks the HMAC-SHA256 signature of the raw body against

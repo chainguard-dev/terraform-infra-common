@@ -62,6 +62,7 @@ module "this" {
 
   request_timeout_seconds = var.request_timeout_seconds
   execution_environment   = var.execution_environment
+  launch_stage            = var.launch_stage
 
   slo = var.slo
 

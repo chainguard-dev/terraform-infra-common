@@ -57,12 +57,13 @@ check "exactly_one_main_container" {
 resource "google_cloud_run_v2_service" "this" {
   for_each = var.regions
 
-  provider = google-beta # For empty_dir
-  project  = var.project_id
-  name     = var.name
-  location = each.key
-  labels   = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
-  ingress  = var.ingress
+  provider     = google-beta # For empty_dir
+  project      = var.project_id
+  name         = var.name
+  location     = each.key
+  labels       = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
+  ingress      = var.ingress
+  launch_stage = var.launch_stage
 
   deletion_protection = var.deletion_protection
 
@@ -326,6 +327,13 @@ resource "google_cloud_run_v2_service" "this" {
             size_limit = empty_dir.value.size_limit
           }
         }
+
+        dynamic "cloud_sql_instance" {
+          for_each = volumes.value.cloud_sql_instance != null ? { "" : volumes.value.cloud_sql_instance } : {}
+          content {
+            instances = cloud_sql_instance.value.instances
+          }
+        }
       }
     }
 
@@ -357,7 +365,6 @@ resource "google_cloud_run_v2_service" "this" {
 
   lifecycle {
     ignore_changes = [
-      launch_stage,
       # GCP manages container names automatically
       # Supporting up to 5 total containers (main + sidecars + otel)
       template[0].containers[0].name,

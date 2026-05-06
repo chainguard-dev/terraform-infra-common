@@ -135,8 +135,8 @@ func TestFromCloudEvent(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			out := FromCloudEvent(t.Context(), test.in)
-			if diff := cmp.Diff(out, test.out, cmpopts.IgnoreUnexported(pubsub.Message{})); diff != "" {
-				t.Errorf("(-got, +want): %s", diff)
+			if diff := cmp.Diff(test.out, out, cmpopts.IgnoreUnexported(pubsub.Message{})); diff != "" {
+				t.Errorf("(-want, +got): %s", diff)
 			}
 		})
 	}

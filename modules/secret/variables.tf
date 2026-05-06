@@ -12,6 +12,12 @@ variable "authorized-adder" {
   type        = string
 }
 
+variable "authorized-adders" {
+  description = "List of additional identities authorized to add new secret values (e.g. [\"serviceAccount:sa@project.iam.gserviceaccount.com\"]). Use this when multiple identities need version adder permissions."
+  type        = list(string)
+  default     = []
+}
+
 variable "service-account" {
   description = "(Deprecated: Use service-accounts instead) The email of the service account that will access the secret."
   type        = string
