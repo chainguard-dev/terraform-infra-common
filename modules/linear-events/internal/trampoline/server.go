@@ -140,6 +140,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if team := teamKeyFromURL(payload.URL); team != "" {
 			event.SetExtension("team", team)
 		}
+		// Author identity, sourced from the top-level Actor record on
+		// the webhook payload (Linear's documented shape — see
+		// schemas/comment.schema.json). authorid is the stable Linear
+		// user UUID and is the right key for downstream "skip this
+		// commenter" filters (cloudevent-trigger's filter_not).
+		// authorname is included as a human-readable companion for
+		// log/debugging contexts; it can drift if a user renames
+		// themselves and is NOT a reliable filter key.
+		if payload.Actor.ID != "" {
+			event.SetExtension("authorid", payload.Actor.ID)
+		}
+		if payload.Actor.Name != "" {
+			event.SetExtension("authorname", payload.Actor.Name)
+		}
 	}
 
 	if err := event.SetData(cloudevents.ApplicationJSON, eventData{
@@ -177,6 +191,14 @@ type webhookPayload struct {
 	WebhookTimestamp int64  `json:"webhookTimestamp"`
 	URL              string `json:"url"`
 
+	// Actor is the top-level identity that triggered the webhook —
+	// Linear's documented field for "who did this" on user-driven
+	// events. For Comment events this is the comment author; we copy
+	// id+name into the authorid/authorname CloudEvent extensions so
+	// downstream subscribers can filter (e.g. cloudevent-trigger's
+	// filter_not for skipping self-loops or automation bots).
+	Actor webhookActor `json:"actor"`
+
 	Data webhookData `json:"data"`
 }
 
@@ -190,6 +212,12 @@ type webhookData struct {
 
 type webhookTeam struct {
 	Key string `json:"key"`
+}
+
+// webhookActor mirrors Linear's top-level actor record (id, name, type).
+type webhookActor struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type eventData struct {

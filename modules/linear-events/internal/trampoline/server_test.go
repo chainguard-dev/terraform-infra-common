@@ -45,7 +45,10 @@ func newTestPayload(action, entityType string, ts int64) string {
 }
 
 func newCommentPayload(action string, ts int64) string {
-	return fmt.Sprintf(`{"action":%q,"type":"Comment","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"url":"https://linear.app/chainguard/issue/ENG-1/test-issue#comment-001","data":{"id":"comment-001","body":"A comment","issueId":"issue-789","userId":"user-1"}}`, action, ts)
+	// Mirrors the Linear webhook shape (see schemas/comment.schema.json):
+	// top-level `actor` { id, name, type } is the comment author; data.userId
+	// duplicates the actor id but carries no name.
+	return fmt.Sprintf(`{"action":%q,"type":"Comment","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"url":"https://linear.app/chainguard/issue/ENG-1/test-issue#comment-001","actor":{"id":"user-1","name":"Auto Bot","type":"user"},"data":{"id":"comment-001","body":"A comment","issueId":"issue-789","userId":"user-1"}}`, action, ts)
 }
 
 func TestServeHTTP_validRequest(t *testing.T) {
@@ -330,6 +333,19 @@ func TestServeHTTP_commentExtensions(t *testing.T) {
 	if team != "ENG" {
 		t.Errorf("team = %s, want ENG", team)
 	}
+
+	// Comment events should set authorid (Linear user UUID) so downstream
+	// subscribers can use cloudevent-trigger's filter_not to skip comments
+	// from automation bots, self-loops, etc. authorname is the
+	// human-readable companion for log/debug contexts.
+	authorID, _ := event.Extensions()["authorid"].(string)
+	if authorID != "user-1" {
+		t.Errorf("authorid = %q, want %q", authorID, "user-1")
+	}
+	authorName, _ := event.Extensions()["authorname"].(string)
+	if authorName != "Auto Bot" {
+		t.Errorf("authorname = %q, want %q", authorName, "Auto Bot")
+	}
 }
 
 func TestServeHTTP_nonIssueEventExtensions(t *testing.T) {
@@ -365,6 +381,15 @@ func TestServeHTTP_nonIssueEventExtensions(t *testing.T) {
 	}
 	if _, ok := event.Extensions()["team"]; ok {
 		t.Errorf("project event should not have team extension")
+	}
+	// authorid/authorname are Comment-only — Project events must not set them
+	// even if a payload happens to include a top-level actor record. Guards
+	// against accidentally widening the scope to non-Comment events.
+	if _, ok := event.Extensions()["authorid"]; ok {
+		t.Errorf("project event should not have authorid extension")
+	}
+	if _, ok := event.Extensions()["authorname"]; ok {
+		t.Errorf("project event should not have authorname extension")
 	}
 }
 

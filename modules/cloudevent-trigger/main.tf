@@ -59,6 +59,10 @@ locals {
     [for key, value in var.filter_prefix : "hasPrefix(attributes.ce-${key}, \"${value}\")"],
     [for key in var.filter_has_attributes : "attributes:ce-${key}"],
     [for key in var.filter_not_has_attributes : "NOT attributes:ce-${key}"],
+    // filter_not is a list (not a map) so the same key can appear multiple
+    // times — useful for "skip these N authors" or similar exclusions
+    // that share an attribute key.
+    [for f in var.filter_not : "NOT attributes.ce-${f.key}=\"${f.value}\""],
   )
 
   default_labels = {
