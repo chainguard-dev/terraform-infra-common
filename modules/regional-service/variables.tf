@@ -276,3 +276,20 @@ variable "launch_stage" {
   type        = string
   default     = "GA"
 }
+
+variable "require_authenticated_invocations" {
+  description = <<EOD
+When true, do not grant `roles/run.invoker` to `allUsers` even when ingress
+allows non-internal traffic. Use this for services that are publicly reachable
+but should be gated by Cloud Run IAM (e.g. an admin dashboard accessed via
+`gcloud run services proxy` and restricted to an engineering group). The
+caller is responsible for granting `roles/run.invoker` to the appropriate
+principals.
+
+Default `false` preserves the existing behavior, where non-internal ingress
+implies a load balancer handles authentication and the service is publicly
+invokable.
+EOD
+  type        = bool
+  default     = false
+}

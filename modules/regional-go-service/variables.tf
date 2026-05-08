@@ -283,3 +283,9 @@ variable "launch_stage" {
   type        = string
   default     = "GA"
 }
+
+variable "require_authenticated_invocations" {
+  description = "Forwarded to regional-service. When true, do not grant `roles/run.invoker` to `allUsers`. See regional-service for details."
+  type        = bool
+  default     = false
+}
