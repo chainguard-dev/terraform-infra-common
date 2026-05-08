@@ -241,10 +241,11 @@ resource "google_container_node_pool" "pools" {
   for_each = var.pools
   provider = google-beta
 
-  name     = each.key
-  cluster  = google_container_cluster.this.name
-  project  = var.project
-  location = google_container_cluster.this.location
+  name           = each.key
+  cluster        = google_container_cluster.this.name
+  project        = var.project
+  location       = google_container_cluster.this.location
+  node_locations = each.value.node_locations != null ? each.value.node_locations : var.zones
 
   dynamic "network_config" {
     for_each = each.value.network_config != null ? [1] : []

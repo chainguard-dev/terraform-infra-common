@@ -46,6 +46,7 @@ variable "pools" {
     disk_type                         = optional(string, "pd-balanced")
     disk_size                         = optional(number, 100)
     ephemeral_storage_local_ssd_count = optional(number, 0)
+    node_locations                    = optional(list(string), null)
     spot                              = optional(bool, false)
     gvisor                            = optional(bool, false)
     enable_nested_virtualization      = optional(bool, null)
