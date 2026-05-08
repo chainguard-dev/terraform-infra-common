@@ -291,6 +291,160 @@ func TestServeHTTP_differentEventTypes(t *testing.T) {
 	}
 }
 
+// TestServeHTTP_issueUpdatedFieldExtensions verifies that an issue.update
+// payload's updatedFrom keys map to the per-field "updated<field>=true"
+// CloudEvent extensions downstream subscriptions filter on. A bot that only
+// cares about description/state updates declares filter maps for those
+// extensions and lets assignee/label/priority-only updates fall on the
+// floor at the broker, instead of paying a workqueue dispatch and reconcile
+// pass per uninteresting webhook.
+func TestServeHTTP_issueUpdatedFieldExtensions(t *testing.T) {
+	now := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	clock := clockwork.NewFakeClockAt(now)
+
+	tests := []struct {
+		name           string
+		updatedFrom    string // raw JSON object body for updatedFrom
+		wantExtensions map[string]bool
+		wantAbsent     []string // extensions that must NOT be present
+	}{
+		{
+			name:        "description-only update",
+			updatedFrom: `{"description":"old body"}`,
+			wantExtensions: map[string]bool{
+				"updateddescription": true,
+			},
+			wantAbsent: []string{"updatedstate", "updatedassignee", "updatedlabels"},
+		},
+		{
+			name:        "state-only update (status change)",
+			updatedFrom: `{"stateId":"old-state-uuid"}`,
+			wantExtensions: map[string]bool{
+				"updatedstate": true,
+			},
+			wantAbsent: []string{"updateddescription", "updatedassignee"},
+		},
+		{
+			name:        "assignee-only update (must NOT trigger description/state)",
+			updatedFrom: `{"assigneeId":null}`,
+			wantExtensions: map[string]bool{
+				"updatedassignee": true,
+			},
+			wantAbsent: []string{"updateddescription", "updatedstate", "updatedtitle"},
+		},
+		{
+			name:        "multi-field update (description + state)",
+			updatedFrom: `{"description":"old","stateId":"old-state","assigneeId":null}`,
+			wantExtensions: map[string]bool{
+				"updateddescription": true,
+				"updatedstate":       true,
+				"updatedassignee":    true,
+			},
+		},
+		{
+			name:        "unknown field (parentName) does not produce an extension",
+			updatedFrom: `{"parentName":"old name"}`,
+			wantAbsent:  []string{"updatedparentname", "updateddescription"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeClient{}
+			s := NewServer(client, [][]byte{[]byte(testSecret)})
+			s.clock = clock
+
+			body := fmt.Sprintf(
+				`{"action":"update","type":"Issue","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"createdAt":"2025-01-01T00:00:00.000Z","url":"https://linear.app/team/issue/ENG-1","data":{"id":"issue-789","title":"Test issue","identifier":"ENG-1","number":1,"team":{"id":"team-1","key":"ENG","name":"Engineering"}},"updatedFrom":%s}`,
+				now.UnixMilli(),
+				tc.updatedFrom,
+			)
+			sig := sign(body)
+
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+			req.Header.Set("Linear-Signature", sig)
+			req.Header.Set("Linear-Event", "Issue")
+			req.Header.Set("Linear-Delivery", "delivery-update")
+
+			w := httptest.NewRecorder()
+			s.ServeHTTP(w, req)
+			if w.Code != http.StatusOK {
+				t.Fatalf("w.Code = %d, want %d: %s", w.Code, http.StatusOK, w.Body.String())
+			}
+			if len(client.events) != 1 {
+				t.Fatalf("len(client.events) = %d, want 1", len(client.events))
+			}
+
+			ext := client.events[0].Extensions()
+			for k, want := range tc.wantExtensions {
+				got, _ := ext[k].(bool)
+				if got != want {
+					t.Errorf("extension %q: got = %v, want = %v", k, got, want)
+				}
+			}
+			for _, k := range tc.wantAbsent {
+				if _, present := ext[k]; present {
+					t.Errorf("extension %q: present = true, want = false (assignee-only updates must not trigger description/state filters)", k)
+				}
+			}
+		})
+	}
+}
+
+// TestServeHTTP_issueNonUpdateActionsNoUpdatedExtensions locks in that
+// create and remove actions do NOT emit the updated<field> extensions —
+// those are scoped to update events. The payloads include a stray
+// updatedFrom as defence-in-depth: even if Linear sends one on a
+// non-update event, the trampoline must ignore it so consumers can rely
+// on filtering by action= alone. Covering both actions explicitly guards
+// against a future refactor flipping the gate to e.g. action != "create"
+// and silently regressing the remove path.
+func TestServeHTTP_issueNonUpdateActionsNoUpdatedExtensions(t *testing.T) {
+	now := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	clock := clockwork.NewFakeClockAt(now)
+
+	tests := []struct {
+		name     string
+		action   string
+		delivery string
+	}{
+		{name: "create", action: "create", delivery: "delivery-create"},
+		{name: "remove", action: "remove", delivery: "delivery-remove"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeClient{}
+			s := NewServer(client, [][]byte{[]byte(testSecret)})
+			s.clock = clock
+
+			body := fmt.Sprintf(
+				`{"action":"%s","type":"Issue","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"createdAt":"2025-01-01T00:00:00.000Z","url":"https://linear.app/team/issue/ENG-1","data":{"id":"issue-789","team":{"key":"ENG"}},"updatedFrom":{"description":"shouldnt-leak"}}`,
+				tc.action,
+				now.UnixMilli(),
+			)
+			sig := sign(body)
+
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+			req.Header.Set("Linear-Signature", sig)
+			req.Header.Set("Linear-Event", "Issue")
+			req.Header.Set("Linear-Delivery", tc.delivery)
+
+			w := httptest.NewRecorder()
+			s.ServeHTTP(w, req)
+			if w.Code != http.StatusOK {
+				t.Fatalf("w.Code = %d, want %d", w.Code, http.StatusOK)
+			}
+			if len(client.events) != 1 {
+				t.Fatalf("len(client.events) = %d, want 1", len(client.events))
+			}
+			if _, present := client.events[0].Extensions()["updateddescription"]; present {
+				t.Errorf("updateddescription must not be set on action=%s events", tc.action)
+			}
+		})
+	}
+}
+
 func TestServeHTTP_commentExtensions(t *testing.T) {
 	now := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	clock := clockwork.NewFakeClockAt(now)
