@@ -383,9 +383,11 @@ data "google_project" "project" { project_id = var.project_id }
 data "google_client_openid_userinfo" "me" {}
 
 // When the service is behind a load balancer, then it is publicly exposed and responsible
-// for handling its own authentication.
+// for handling its own authentication. Callers that want a publicly-reachable service
+// gated by Cloud Run IAM (e.g. accessed via `gcloud run services proxy`) can opt out
+// by setting `require_authenticated_invocations = true`.
 resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthenticated" {
-  for_each = var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" ? var.regions : {}
+  for_each = (var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" && !var.require_authenticated_invocations) ? var.regions : {}
 
   // Ensure that the service exists before attempting to expose things publicly.
   depends_on = [google_cloud_run_v2_service.this]

@@ -64,6 +64,8 @@ module "this" {
   execution_environment   = var.execution_environment
   launch_stage            = var.launch_stage
 
+  require_authenticated_invocations = var.require_authenticated_invocations
+
   slo = var.slo
 
   notification_channels = var.notification_channels
