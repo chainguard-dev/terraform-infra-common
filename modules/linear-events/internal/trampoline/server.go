@@ -130,6 +130,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if payload.Data.Team.Key != "" {
 			event.SetExtension("team", payload.Data.Team.Key)
 		}
+		// Per-field extensions for issue.update events. Linear includes
+		// the OLD values of changed fields under updatedFrom; the keys
+		// tell us WHICH fields changed. Setting a "updated<field>=true"
+		// extension per known field lets each consumer's subscription
+		// filter on the change-set without inspecting the full payload.
+		// Bots that only care about description/state changes drop
+		// assignee-only updates here, instead of paying a workqueue
+		// dispatch + GraphQL fetch + reconcile pass per uninteresting
+		// webhook. Fields not enumerated below are not exposed as
+		// extensions — add them when a downstream consumer needs to
+		// filter on them.
+		if payload.Action == "update" {
+			for k := range payload.UpdatedFrom {
+				if ext, ok := updatedFieldExtensions[k]; ok {
+					// bool to match the github-events trampoline's
+					// "merged" extension (server.go:215). Pub/Sub
+					// attribute filtering serialises both forms to the
+					// string "true", so this is consistency-only.
+					event.SetExtension(ext, true)
+				}
+			}
+		}
 	case "comment":
 		if payload.Data.IssueID != "" {
 			event.SetExtension("issueid", payload.Data.IssueID)
@@ -200,6 +222,31 @@ type webhookPayload struct {
 	Actor webhookActor `json:"actor"`
 
 	Data webhookData `json:"data"`
+
+	// UpdatedFrom is set by Linear on action="update" payloads. The keys are
+	// the names of fields that changed; the values are the OLD values prior
+	// to the update. We only consume the key set (to drive per-field
+	// CloudEvent extensions) — values are kept as RawMessage so unknown
+	// shapes don't fail decoding.
+	UpdatedFrom map[string]json.RawMessage `json:"updatedFrom"`
+}
+
+// updatedFieldExtensions maps Linear webhook payload field names (as they
+// appear under updatedFrom) to the CloudEvent extension name that downstream
+// subscriptions filter on. Only fields enumerated here are exposed; add a
+// row when a consumer needs to filter on a new field. Extension names are
+// lowercase (CloudEvents requires lowercase alphanumeric for extension
+// attribute names).
+var updatedFieldExtensions = map[string]string{
+	"description": "updateddescription",
+	"stateId":     "updatedstate",
+	"title":       "updatedtitle",
+	"assigneeId":  "updatedassignee",
+	"labelIds":    "updatedlabels",
+	"priority":    "updatedpriority",
+	"parentId":    "updatedparent",
+	"cycleId":     "updatedcycle",
+	"projectId":   "updatedproject",
 }
 
 // webhookData captures entity-specific fields from the webhook payload
