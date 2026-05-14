@@ -5,7 +5,7 @@ go 1.25.7
 require (
 	chainguard.dev/go-grpc-kit v0.17.17
 	chainguard.dev/sdk v0.1.50
-	cloud.google.com/go/bigquery v1.76.0
+	cloud.google.com/go/bigquery v1.77.0
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/profiler v0.6.0
 	cloud.google.com/go/pubsub/v2 v2.6.0
@@ -22,7 +22,7 @@ require (
 	github.com/mileusna/useragent v1.3.5
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sethvargo/go-envconfig v1.3.0
-	github.com/shirou/gopsutil/v4 v4.26.3
+	github.com/shirou/gopsutil/v4 v4.26.4
 	github.com/snabb/httpreaderat v1.0.3
 	go.opentelemetry.io/contrib/detectors/gcp v1.42.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
