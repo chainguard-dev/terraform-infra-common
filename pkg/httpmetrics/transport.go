@@ -100,6 +100,30 @@ func init() {
 	})
 }
 
+// defaultBuckets maps well-known hosts to bucket labels even when the caller
+// has not called SetBuckets. This is what lets OSS-derived services bundled
+// into this package (e.g. octo-sts, which never calls SetBuckets) emit
+// recognisable host labels — without it, every GitHub call would bucket as
+// "other" and be invisible to dashboards filtering on `host=~"GH API|..."`.
+//
+// Labels deliberately match those in api-internal/pkg/metrics so dashboards
+// see a single time series per host across the fleet.
+var defaultBuckets = map[string]string{ //nolint:gosec // G101: constant name describes metric bucket, not a hardcoded secret
+	"api.github.com":                       "GH API",
+	"github.com":                           "GitHub",
+	"ghcr.io":                              "GHCR",
+	"pkg-containers.githubusercontent.com": "GHCR blob",
+	"token.actions.githubusercontent.com":  "GitHub Actions Token",
+}
+
+// defaultBucketSuffixes maps well-known host suffixes to bucket labels for the
+// same reason as defaultBuckets. Cloud Run services almost always talk to
+// *.googleapis.com (Secret Manager, KMS, Firestore, GCS, etc.); without this,
+// that traffic bucketed as "other" too.
+var defaultBucketSuffixes = map[string]string{
+	"googleapis.com": "Google API",
+}
+
 // SetBuckets configures exact host-to-label mappings. Must be called
 // before the first HTTP request for the mappings to take effect.
 func SetBuckets(b map[string]string) {
@@ -273,29 +297,39 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 	}
 
 	cfg := activeBucketConfig.Load()
-	if len(cfg.exact) == 0 && len(cfg.suffixes) == 0 {
-		setupWarning.Do(func() {
-			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
-		})
-		return "other"
-	}
 
-	// Check the exact matches first.
+	// Caller-configured exact matches take precedence over package defaults so
+	// services can override default labels if they want.
 	if b, ok := cfg.exact[host]; ok {
 		return b
 	}
-	// Then check the suffixes.
+	// Then caller-configured suffix matches.
 	for k, v := range cfg.suffixes {
 		if strings.HasSuffix(host, "."+k) {
 			return v
 		}
 	}
+	// Fall back to package defaults for well-known hosts. See defaultBuckets.
+	if b, ok := defaultBuckets[host]; ok {
+		return b
+	}
+	for k, v := range defaultBucketSuffixes {
+		if strings.HasSuffix(host, "."+k) {
+			return v
+		}
+	}
 
-	// Only log every 10th request to avoid flooding the logs.
-	v, _ := seenHostMap.LoadOrStore(host, &atomic.Int64{})
-	vInt := v.(*atomic.Int64)
-	if seen := vInt.Add(1); (seen-1)%10 == 0 {
-		clog.WarnContext(ctx, `bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seen)
+	if len(cfg.exact) == 0 && len(cfg.suffixes) == 0 {
+		setupWarning.Do(func() {
+			clog.WarnContext(ctx, "no buckets configured, use httpmetrics.SetBuckets or SetBucketSuffixes")
+		})
+	} else {
+		// Only log every 10th request to avoid flooding the logs.
+		v, _ := seenHostMap.LoadOrStore(host, &atomic.Int64{})
+		vInt := v.(*atomic.Int64)
+		if seen := vInt.Add(1); (seen-1)%10 == 0 {
+			clog.WarnContext(ctx, `bucketing host as "other", use httpmetrics.SetBucket{Suffixe}s`, "host", host, "seen", seen)
+		}
 	}
 
 	return "other"

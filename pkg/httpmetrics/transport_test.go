@@ -289,6 +289,72 @@ func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return f(r)
 }
 
+func TestBucketize_DefaultBuckets(t *testing.T) {
+	// Defaults exist so OSS-derived services bundled into this package (e.g.
+	// octo-sts, which never calls SetBuckets) emit recognisable host labels.
+	// Without these, every GitHub call buckets as "other" and is invisible to
+	// the fleet GitHub-QPS dashboard's `host=~"GH API|..."` filter.
+
+	// Snapshot and restore the global bucket config so tests don't leak state.
+	prev := activeBucketConfig.Load()
+	defer activeBucketConfig.Store(prev)
+
+	t.Run("empty config falls back to defaults", func(t *testing.T) {
+		activeBucketConfig.Store(&bucketConfig{
+			exact:    map[string]string{},
+			suffixes: map[string]string{},
+		})
+
+		for _, tt := range []struct {
+			host string
+			want string
+		}{
+			{"api.github.com", "GH API"},
+			{"github.com", "GitHub"},
+			{"ghcr.io", "GHCR"},
+			{"pkg-containers.githubusercontent.com", "GHCR blob"},
+			{"token.actions.githubusercontent.com", "GitHub Actions Token"},
+			// *.googleapis.com — covered by default suffix, used by every
+			// Cloud Run service talking to Secret Manager, KMS, GCS, etc.
+			{"secretmanager.googleapis.com", "Google API"},
+			{"storage.googleapis.com", "Google API"},
+			{"some-unknown-host.example.com", "other"},
+		} {
+			t.Run(tt.host, func(t *testing.T) {
+				if got := bucketize(t.Context(), tt.host, false); got != tt.want {
+					t.Errorf("bucketize(%q): got %q, want %q", tt.host, got, tt.want)
+				}
+			})
+		}
+	})
+
+	t.Run("caller config wins over defaults", func(t *testing.T) {
+		// Service-supplied labels must take precedence so a service that
+		// wants a more specific label (or a different one for whatever reason)
+		// is not overridden by package defaults.
+		activeBucketConfig.Store(&bucketConfig{
+			exact:    map[string]string{"api.github.com": "custom-label"},
+			suffixes: map[string]string{},
+		})
+		if got := bucketize(t.Context(), "api.github.com", false); got != "custom-label" {
+			t.Errorf("caller-configured exact match should win: got %q, want %q", got, "custom-label")
+		}
+	})
+
+	t.Run("defaults still apply when caller config is non-empty", func(t *testing.T) {
+		// A caller configuring some hosts (but not GitHub) should still get
+		// GitHub defaults — protects against future regressions where a
+		// service's canonical bucket map drops a GitHub entry.
+		activeBucketConfig.Store(&bucketConfig{
+			exact:    map[string]string{"example.com": "Example"},
+			suffixes: map[string]string{},
+		})
+		if got := bucketize(t.Context(), "api.github.com", false); got != "GH API" {
+			t.Errorf("default should apply when caller config doesn't cover host: got %q, want %q", got, "GH API")
+		}
+	})
+}
+
 func TestMapErrorToLabel(t *testing.T) {
 	for _, tt := range []struct {
 		err  string

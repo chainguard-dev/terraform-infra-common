@@ -149,6 +149,29 @@ func Test_bucketizeGitHubPath(t *testing.T) {
 		path:   "/repos/octocat/hello-world/pulls/42/update-branch",
 		bucket: "/repos/{org}/{repo}/pulls/{number}/update-branch",
 	}, {
+		// GitHub App installation endpoints — used heavily by octo-sts on
+		// every STS token mint, previously bucketed as unknown_gh_path.
+		path:   "/app/installations/12345",
+		bucket: "/app/installations/{installation_id}",
+	}, {
+		path:   "/app/installations/12345/access_tokens",
+		bucket: "/app/installations/{installation_id}/access_tokens",
+	}, {
+		path:   "/orgs/chainguard-dev/installation",
+		bucket: "/orgs/{org}/installation",
+	}, {
+		path:   "/repos/octocat/hello-world/installation",
+		bucket: "/repos/{org}/{repo}/installation",
+	}, {
+		// Compare-commits — used by octo-sts-webhook on every push delivery
+		// and the only sensible way to measure that traffic.
+		path:   "/repos/octocat/hello-world/compare/main...feature",
+		bucket: "/repos/{org}/{repo}/compare/{base}...{head}",
+	}, {
+		// Branch names containing slashes — GitHub doesn't require encoding.
+		path:   "/repos/octocat/hello-world/compare/release/1.0...feature/foo",
+		bucket: "/repos/{org}/{repo}/compare/{base}...{head}",
+	}, {
 		path:   "/some/unknown/path",
 		bucket: "unknown_gh_path",
 	}}

@@ -17,6 +17,14 @@ type pathPattern struct {
 // Default GitHub API endpoint patterns.
 // Based on GitHub REST API documentation: https://docs.github.com/en/rest
 var githubAPIPatterns = []pathPattern{{
+	// https://docs.github.com/en/rest/apps/apps#create-an-installation-access-token-for-an-app
+	pattern: regexp.MustCompile(`^/app/installations/\d+/access_tokens$`),
+	bucket:  "/app/installations/{installation_id}/access_tokens",
+}, {
+	// https://docs.github.com/en/rest/apps/apps#get-an-installation-for-the-authenticated-app
+	pattern: regexp.MustCompile(`^/app/installations/\d+$`),
+	bucket:  "/app/installations/{installation_id}",
+}, {
 	// https://docs.github.com/en/rest/repos/repos#get-a-repository
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+$`),
 	bucket:  "/repos/{org}/{repo}",
@@ -60,6 +68,10 @@ var githubAPIPatterns = []pathPattern{{
 	// https://docs.github.com/en/rest/commits/commits#list-commits
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits$`),
 	bucket:  "/repos/{org}/{repo}/commits",
+}, {
+	// https://docs.github.com/en/rest/commits/commits#compare-two-commits
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/compare/.+$`),
+	bucket:  "/repos/{org}/{repo}/compare/{base}...{head}",
 }, {
 	// https://docs.github.com/en/rest/commits/commits#get-a-commit
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/commits/[^/]+$`),
@@ -164,6 +176,14 @@ var githubAPIPatterns = []pathPattern{{
 	// https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request-branch
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/pulls/\d+/update-branch$`),
 	bucket:  "/repos/{org}/{repo}/pulls/{number}/update-branch",
+}, {
+	// https://docs.github.com/en/rest/apps/apps#get-an-organization-installation-for-the-authenticated-app
+	pattern: regexp.MustCompile(`^/orgs/[^/]+/installation$`),
+	bucket:  "/orgs/{org}/installation",
+}, {
+	// https://docs.github.com/en/rest/apps/apps#get-a-repository-installation-for-the-authenticated-app
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/installation$`),
+	bucket:  "/repos/{org}/{repo}/installation",
 }, {
 	// https://docs.github.com/en/rest/orgs/orgs#get-an-organization
 	pattern: regexp.MustCompile(`^/orgs/[^/]+$`),
