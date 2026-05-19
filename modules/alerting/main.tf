@@ -1294,7 +1294,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         filter     = <<EOT
           resource.type = "prometheus_target"
           metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
-          metric.labels.service_name = "${conditions.key}"
+          metric.labels.service_name = monitoring.regex.full_match("${conditions.key}")
           metric.labels.method != "${conditions.value.method}"
           metric.labels.code != monitoring.regex.full_match("[23]..")
           ${local.squad_metric_filter}
@@ -1332,7 +1332,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         filter     = <<EOT
           resource.type = "prometheus_target"
           metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
-          metric.labels.service_name = "${conditions.key}"
+          metric.labels.service_name = monitoring.regex.full_match("${conditions.key}")
           metric.labels.method = "${conditions.value.method}"
           metric.labels.code != monitoring.regex.full_match("[23]..")
           metric.labels.code != "${conditions.value.code}"
