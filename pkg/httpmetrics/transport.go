@@ -413,8 +413,22 @@ func extractOrgFromGitHubURL(path string) string {
 // See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28
 func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
+		start := time.Now()
 		resp, err := next.RoundTrip(r)
 		if err != nil {
+			if r.URL.Host == "api.github.com" {
+				clog.InfoContext(r.Context(), "github_api_call",
+					"method", r.Method,
+					"path_raw", r.URL.Path,
+					"path_bucket", bucketizeGitHubPath(r.URL.Path),
+					"error_label", mapErrorToLabel(err),
+					"duration_ms", time.Since(start).Milliseconds(),
+					"org", extractOrgFromGitHubURL(r.URL.Path),
+					"ce_type", r.Header.Get(CeTypeHeader),
+					"service_name", env.KnativeServiceName,
+					"revision_name", env.KnativeRevisionName,
+				)
+			}
 			return resp, err
 		}
 		if r.URL.Host == "api.github.com" {
@@ -536,6 +550,31 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				clog.WarnContextf(r.Context(), "GitHub rate limit hit: %s %s (org=%s, resource=%s, type=%s, remaining=%.0f, reset_in=%.1fm)",
 					r.Method, r.URL.Path, organization, resource, rateLimitType, remaining, timeToReset)
 			}
+
+			// Emit one structured access log per GitHub API request so consumption
+			// is queryable in Cloud Logging alongside the metrics emitted above.
+			logAttrs := []any{
+				"method", r.Method,
+				"path_raw", r.URL.Path,
+				"path_bucket", bucketizeGitHubPath(r.URL.Path),
+				"status_code", resp.StatusCode,
+				"duration_ms", time.Since(start).Milliseconds(),
+				"org", organization,
+				"app_id", appID,
+				"installation_id", installationID,
+				"rate_limit_resource", resource,
+				"rate_limit_remaining", int64(remaining),
+				"rate_limit_limit", int64(limit),
+				"ce_type", r.Header.Get(CeTypeHeader),
+				"service_name", env.KnativeServiceName,
+				"revision_name", env.KnativeRevisionName,
+			}
+			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
+					logAttrs = append(logAttrs, "retry_after_seconds", int64(seconds))
+				}
+			}
+			clog.InfoContext(r.Context(), "github_api_call", logAttrs...)
 		}
 		return resp, err
 	}
