@@ -190,6 +190,12 @@ variable "default_compute_class_enabled" {
   description = "Specifies whether default compute class behavior is enabled. If enabled, cluster autoscaler will use Compute Class with name default for all the workloads, if not overridden."
 }
 
+variable "disable_horizontal_pod_autoscaling" {
+  description = "Whether to disable the HPA addon on this cluster. When true, the metrics-server is not deployed and HPA resources will not function."
+  type        = bool
+  default     = null
+}
+
 variable "cluster_autoscaling_gpu_limits" {
   description = "GPU resource limits for cluster autoscaling NAP. Each entry specifies a GPU resource type and its min/max limits."
   type = list(object({

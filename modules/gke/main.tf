@@ -190,6 +190,12 @@ resource "google_container_cluster" "this" {
     gcs_fuse_csi_driver_config {
       enabled = true
     }
+    dynamic "horizontal_pod_autoscaling" {
+      for_each = var.disable_horizontal_pod_autoscaling != null ? ["placeholder"] : []
+      content {
+        disabled = var.disable_horizontal_pod_autoscaling
+      }
+    }
   }
 
   monitoring_config {
