@@ -9,15 +9,45 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 
+	"github.com/chainguard-dev/clog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"golang.org/x/sync/errgroup"
 )
+
+// recordingHandler captures slog records for assertion in tests.
+type recordingHandler struct {
+	mu      sync.Mutex
+	records []slog.Record
+}
+
+func (h *recordingHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
+
+func (h *recordingHandler) Handle(_ context.Context, r slog.Record) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.records = append(h.records, r.Clone())
+	return nil
+}
+
+func (h *recordingHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
+func (h *recordingHandler) WithGroup(_ string) slog.Handler      { return h }
+
+// recordAttrs returns the record's attributes as a map for easy assertion.
+func recordAttrs(r slog.Record) map[string]any {
+	m := make(map[string]any)
+	r.Attrs(func(a slog.Attr) bool {
+		m[a.Key] = a.Value.Any()
+		return true
+	})
+	return m
+}
 
 func TestTransport(t *testing.T) {
 	var mux sync.Mutex
@@ -202,6 +232,155 @@ func TestGitHubRateLimitContextLabels_NoContext(t *testing.T) {
 	}
 	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels)); got != 3000 {
 		t.Errorf("github_rate_limit_remaining: got %v, want 3000", got)
+	}
+}
+
+// TestGitHubRateLimit_EmitsAccessLog verifies the per-request structured
+// "github_api_call" record exists for queryability in Cloud Logging.
+func TestGitHubRateLimit_EmitsAccessLog(t *testing.T) {
+	stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"X-Ratelimit-Resource":  []string{"core"},
+				"X-Ratelimit-Remaining": []string{"4500"},
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Reset":     []string{"9999999999"},
+			},
+			Body: http.NoBody,
+		}, nil
+	})
+
+	rec := &recordingHandler{}
+	ctx := clog.WithLogger(t.Context(), clog.New(rec))
+	ctx = WithGitHubAppID(ctx, 42)
+	ctx = WithGitHubInstallationID(ctx, 1234)
+
+	transport := instrumentGitHubRateLimits(stub)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/org/repo/contents/file.yaml", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set(CeTypeHeader, "ce-type-x")
+	if _, err := transport.RoundTrip(req); err != nil {
+		t.Fatal(err)
+	}
+
+	var got *slog.Record
+	for i := range rec.records {
+		if rec.records[i].Message == "github_api_call" {
+			got = &rec.records[i]
+			break
+		}
+	}
+	if got == nil {
+		t.Fatalf("no github_api_call log record emitted; got %d records", len(rec.records))
+	}
+
+	attrs := recordAttrs(*got)
+	want := map[string]any{
+		"method":               "GET",
+		"path_raw":             "/repos/org/repo/contents/file.yaml",
+		"path_bucket":          "/repos/{org}/{repo}/contents/{path}",
+		"status_code":          int64(200),
+		"org":                  "org",
+		"app_id":               "42",
+		"installation_id":      "1234",
+		"rate_limit_resource":  "core",
+		"rate_limit_remaining": int64(4500),
+		"rate_limit_limit":     int64(5000),
+		"ce_type":              "ce-type-x",
+	}
+	for k, v := range want {
+		if attrs[k] != v {
+			t.Errorf("attr %s: got %v (%T), want %v (%T)", k, attrs[k], attrs[k], v, v)
+		}
+	}
+	if d, ok := attrs["duration_ms"].(int64); !ok || d < 0 {
+		t.Errorf("duration_ms missing or negative: %v (%T)", attrs["duration_ms"], attrs["duration_ms"])
+	}
+	if _, present := attrs["retry_after_seconds"]; present {
+		t.Errorf("retry_after_seconds should be absent on 200 response, got %v", attrs["retry_after_seconds"])
+	}
+}
+
+// TestGitHubRateLimit_NoLogForNonGitHubHost locks in that the access log
+// fires only for api.github.com. Broadening to other hosts is a deliberate
+// later step — this guards against accidental cross-host emission.
+func TestGitHubRateLimit_NoLogForNonGitHubHost(t *testing.T) {
+	stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       http.NoBody,
+		}, nil
+	})
+
+	rec := &recordingHandler{}
+	ctx := clog.WithLogger(t.Context(), clog.New(rec))
+
+	transport := instrumentGitHubRateLimits(stub)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.gitlab.com/projects/foo/bar", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := transport.RoundTrip(req); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, r := range rec.records {
+		if r.Message == "github_api_call" {
+			t.Errorf("github_api_call emitted for non-GitHub host: %+v", recordAttrs(r))
+		}
+	}
+}
+
+// TestGitHubRateLimit_LogIncludesRetryAfter covers the 403/Retry-After path
+// — the data point most useful when investigating throttling incidents.
+func TestGitHubRateLimit_LogIncludesRetryAfter(t *testing.T) {
+	stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusForbidden,
+			Header: http.Header{
+				"X-Ratelimit-Resource":  []string{"core"},
+				"X-Ratelimit-Remaining": []string{"0"},
+				"X-Ratelimit-Limit":     []string{"5000"},
+				"X-Ratelimit-Reset":     []string{"9999999999"},
+				"Retry-After":           []string{"60"},
+			},
+			Body: http.NoBody,
+		}, nil
+	})
+
+	rec := &recordingHandler{}
+	ctx := clog.WithLogger(t.Context(), clog.New(rec))
+
+	transport := instrumentGitHubRateLimits(stub)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/org/repo", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := transport.RoundTrip(req); err != nil {
+		t.Fatal(err)
+	}
+
+	var got *slog.Record
+	for i := range rec.records {
+		if rec.records[i].Message == "github_api_call" {
+			got = &rec.records[i]
+			break
+		}
+	}
+	if got == nil {
+		t.Fatal("expected github_api_call record")
+	}
+	attrs := recordAttrs(*got)
+	if attrs["status_code"] != int64(403) {
+		t.Errorf("status_code: got %v, want 403", attrs["status_code"])
+	}
+	if attrs["retry_after_seconds"] != int64(60) {
+		t.Errorf("retry_after_seconds: got %v, want 60", attrs["retry_after_seconds"])
 	}
 }
 
