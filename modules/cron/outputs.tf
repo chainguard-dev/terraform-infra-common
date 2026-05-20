@@ -1,7 +1,7 @@
 output "name" {
-  value = google_cloud_run_v2_job.job.name
+  value = module.impl.job_name
 }
 
 output "id" {
-  value = google_cloud_run_v2_job.job.id
+  value = module.impl.job_ids[var.region]
 }
