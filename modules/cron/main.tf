@@ -109,10 +109,6 @@ moved {
   to   = module.impl.google_cloud_run_v2_job.this["us-central1"]
 }
 moved {
-  from = google_cloud_run_v2_job_iam_binding.authorize-calls
-  to   = module.impl.google_cloud_run_v2_job_iam_binding.authorize-calls["us-central1"]
-}
-moved {
   from = google_cloud_scheduler_job.cron
   to   = module.impl.google_cloud_scheduler_job.this["us-central1"]
 }
