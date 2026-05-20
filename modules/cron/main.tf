@@ -85,11 +85,6 @@ module "impl" {
 resource "null_resource" "exec" {
   count = var.exec ? 1 : 0
 
-  // Re-run whenever the job definition changes.
-  triggers = {
-    job_etag = module.impl.job_etag[var.region]
-  }
-
   provisioner "local-exec" {
     command = join(" ", [
       "gcloud",
@@ -102,6 +97,11 @@ resource "null_resource" "exec" {
       "--wait"
     ])
   }
+
+  # lifecycle {
+  #   // Re-run whenever the job definition changes.
+  #   replace_triggered_by = [module.impl.google_cloud_run_v2_job.this[var.region]]
+  # }
 }
 
 moved {
