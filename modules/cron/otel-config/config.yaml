@@ -1,4 +1,4 @@
-# Copyright 2025 Chainguard, Inc.
+# Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
 receivers:
@@ -30,8 +30,8 @@ processors:
         key: team
         value: "REPLACE_ME_TEAM"
       - action: insert
-        key: service_name
-        value: "REPLACE_ME_SERVICE"
+        key: job_name
+        value: "REPLACE_ME_JOB"
 
   batch:
     # batch metrics before sending to reduce API usage

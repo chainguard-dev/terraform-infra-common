@@ -28,16 +28,6 @@ locals {
     for key, value in var.containers : key => value if length(value.ports) > 0
   }
 
-  extra_metrics_ports = toset(flatten([
-    for c in values(var.containers) : [
-      for e in c.env : e.value
-      if e.name == "METRICS_PORT"
-    ]
-  ]))
-  metrics_targets = join(", ", [
-    for t in distinct(concat(["localhost:2112"], [for p in local.extra_metrics_ports : "localhost:${p}"])) : "\"${t}\""
-  ])
-
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
@@ -294,11 +284,10 @@ resource "google_cloud_run_v2_service" "this" {
         args = ["--config=env:OTEL_CONFIG"]
         env {
           name = "OTEL_CONFIG"
-          value = replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
+          value = replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
             "REPLACE_ME_TEAM", var.team),
             "REPLACE_ME_PROJECT_ID", var.project_id),
-            "REPLACE_ME_NAME", var.name),
-          "REPLACE_ME_TARGETS", local.metrics_targets)
+          "REPLACE_ME_SERVICE", var.name)
         }
 
         dynamic "resources" {
