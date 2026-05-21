@@ -167,8 +167,8 @@ func TestSamplingSpanProcessor_TraceIsAllOrNothing(t *testing.T) {
 
 func TestLLMSpanFilter_ForwardsOnlyGenAISpans(t *testing.T) {
 	// The filter must drop infra spans (no gen_ai.* attributes) and forward
-	// LLM spans (any gen_ai.* attribute) so evaluation backends like
-	// Braintrust don't fill up with noise.
+	// LLM spans (any gen_ai.* attribute) so eval-grade backends don't fill
+	// up with noise.
 	inner := &countingProcessor{}
 	tp := trace.NewTracerProvider(
 		trace.WithSampler(trace.AlwaysSample()),
@@ -235,26 +235,26 @@ func TestTracerOptions_Matrix(t *testing.T) {
 		{
 			name: "otlp named single",
 			env: map[string]string{
-				"OTEL_TRACES_EXPORTER":                          "otlp/braintrust",
-				"OTEL_EXPORTER_OTLP_TRACES_BRAINTRUST_ENDPOINT": "https://bt.example/v1/traces",
+				"OTEL_TRACES_EXPORTER":                       "otlp/primary",
+				"OTEL_EXPORTER_OTLP_TRACES_PRIMARY_ENDPOINT": "https://primary.example/v1/traces",
 			},
 			wantProcessors: 1,
 		},
 		{
 			name: "otlp named fan-out to two backends",
 			env: map[string]string{
-				"OTEL_TRACES_EXPORTER":                          "otlp/braintrust,otlp/langfuse",
-				"OTEL_EXPORTER_OTLP_TRACES_BRAINTRUST_ENDPOINT": "https://bt.example/v1/traces",
-				"OTEL_EXPORTER_OTLP_TRACES_LANGFUSE_ENDPOINT":   "https://lf.example/v1/traces",
+				"OTEL_TRACES_EXPORTER":                         "otlp/primary,otlp/secondary",
+				"OTEL_EXPORTER_OTLP_TRACES_PRIMARY_ENDPOINT":   "https://primary.example/v1/traces",
+				"OTEL_EXPORTER_OTLP_TRACES_SECONDARY_ENDPOINT": "https://secondary.example/v1/traces",
 			},
 			wantProcessors: 2,
 		},
 		{
 			name: "otlp named missing endpoint is skipped, not fatal",
 			env: map[string]string{
-				"OTEL_TRACES_EXPORTER":                          "otlp/braintrust,otlp/langfuse",
-				"OTEL_EXPORTER_OTLP_TRACES_BRAINTRUST_ENDPOINT": "https://bt.example/v1/traces",
-				// LANGFUSE endpoint deliberately unset.
+				"OTEL_TRACES_EXPORTER":                       "otlp/primary,otlp/secondary",
+				"OTEL_EXPORTER_OTLP_TRACES_PRIMARY_ENDPOINT": "https://primary.example/v1/traces",
+				// SECONDARY endpoint deliberately unset.
 			},
 			wantProcessors: 1,
 		},
@@ -287,8 +287,8 @@ func TestParseExporterEntry(t *testing.T) {
 		{"gcp", "gcp", ""},
 		{"otlp", "otlp", ""},
 		{"none", "none", ""},
-		{"otlp/braintrust", "otlp", "braintrust"},
-		{"otlp/lang-fuse_1", "otlp", "lang-fuse_1"},
+		{"otlp/primary", "otlp", "primary"},
+		{"otlp/snake-case_1", "otlp", "snake-case_1"},
 		{"otlp/", "", ""},           // empty name → invalid
 		{"otlp/../etc", "", ""},     // path traversal → invalid
 		{"otlp/with space", "", ""}, // spaces → invalid
