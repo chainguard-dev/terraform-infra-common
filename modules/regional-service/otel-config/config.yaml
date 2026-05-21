@@ -1,4 +1,4 @@
-# Copyright 2025 Chainguard, Inc.
+# Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
 receivers:
@@ -8,10 +8,14 @@ receivers:
       - job_name: "localhost"
         scrape_interval: 10s
         static_configs:
-        # TODO: make this configurable
-        - targets: ["localhost:2112"]
+        - targets: [REPLACE_ME_TARGETS]
         # Do not relabel job and instance labels if existed.
         honor_labels: true
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: 'localhost:(\d+)'
+            target_label: container_port
+            replacement: '$1'
         metric_relabel_configs:
           - source_labels: [ __name__ ]
             regex: '^prometheus_.*'
@@ -31,7 +35,7 @@ processors:
         value: "REPLACE_ME_TEAM"
       - action: insert
         key: service_name
-        value: "REPLACE_ME_SERVICE"
+        value: "REPLACE_ME_NAME"
 
   batch:
     # batch metrics before sending to reduce API usage

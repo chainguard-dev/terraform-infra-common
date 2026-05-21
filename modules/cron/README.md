@@ -169,41 +169,22 @@ No requirements.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
-| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
-| <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 | <a name="provider_null"></a> [null](#provider\_null) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cron_name"></a> [cron\_name](#module\_cron\_name) | ../limited-concat | n/a |
-| <a name="module_delivery_name"></a> [delivery\_name](#module\_delivery\_name) | ../limited-concat | n/a |
+| <a name="module_impl"></a> [impl](#module\_impl) | ../regional-go-cron | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
-| [google-beta_google_cloud_run_v2_job.job](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_job) | resource |
-| [google_cloud_run_v2_job_iam_binding.authorize-calls](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job_iam_binding) | resource |
-| [google_cloud_scheduler_job.cron](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
-| [google_monitoring_alert_policy.success](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
-| [google_project_iam_member.authorize-list](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
-| [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
-| [google_project_iam_member.profiler-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
-| [google_project_iam_member.trace-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.cloud_run_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_project_service.cloudscheduler](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
-| [google_service_account.delivery](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
-| [ko_build.image](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
 | [null_resource.exec](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [null_resource.validate_success_alert_horizon](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [google_client_config.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_config) | data source |
-| [google_client_openid_userinfo.me](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_openid_userinfo) | data source |
-| [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -235,7 +216,6 @@ No requirements.
 | <a name="input_region"></a> [region](#input\_region) | The region to run the job. | `string` | `"us-east4"` | no |
 | <a name="input_repository"></a> [repository](#input\_repository) | Container repository to publish images to. | `string` | `""` | no |
 | <a name="input_schedule"></a> [schedule](#input\_schedule) | The cron schedule on which to run the job. | `any` | n/a | yes |
-| <a name="input_scheduled_env_overrides"></a> [scheduled\_env\_overrides](#input\_scheduled\_env\_overrides) | List of env object overrides. | <pre>list(object({<br/>    name  = string<br/>    value = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_secret_env"></a> [secret\_env](#input\_secret\_env) | A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret\_key=secret\_name) | `map` | `{}` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as, and to invoke the job as. | `string` | n/a | yes |
 | <a name="input_success_alert_alignment_period_seconds"></a> [success\_alert\_alignment\_period\_seconds](#input\_success\_alert\_alignment\_period\_seconds) | Alignment period for successful completion alert. 0 (default) to not create alert. | `number` | `0` | no |

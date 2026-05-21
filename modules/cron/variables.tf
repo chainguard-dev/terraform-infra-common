@@ -218,15 +218,6 @@ variable "otel_collector_image" {
   description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub."
 }
 
-variable "scheduled_env_overrides" {
-  type = list(object({
-    name  = string
-    value = string
-  }))
-  default     = []
-  description = "List of env object overrides."
-}
-
 variable "deletion_protection" {
   type        = bool
   description = "Whether to enable delete protection for the service."
