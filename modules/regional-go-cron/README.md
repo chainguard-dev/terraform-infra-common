@@ -67,6 +67,7 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_image_refs"></a> [image\_refs](#output\_image\_refs) | The signed image reference for each container, keyed by container name. Computed by ko/cosign before the Cloud Run Job is updated, so stable during apply. |
 | <a name="output_job_etag"></a> [job\_etag](#output\_job\_etag) | The etag of the Cloud Run Job in each region, changes whenever the job definition changes. |
 | <a name="output_job_ids"></a> [job\_ids](#output\_job\_ids) | The ID of the Cloud Run Job in each region. |
 | <a name="output_job_name"></a> [job\_name](#output\_job\_name) | The name of the Cloud Run Job created in each region. |

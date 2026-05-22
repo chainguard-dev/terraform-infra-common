@@ -98,10 +98,13 @@ resource "null_resource" "exec" {
     ])
   }
 
-  # lifecycle {
-  #   // Re-run whenever the job definition changes.
-  #   replace_triggered_by = [module.impl.google_cloud_run_v2_job.this[var.region]]
-  # }
+  triggers = {
+    // Re-run the exec provisioner whenever the container images change.
+    // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
+    // so these values are stable at apply time (unlike job_etag or job_generation,
+    // which are server-side computed values that change mid-apply).
+    image_refs = join(",", values(module.impl.image_refs))
+  }
 }
 
 moved {
