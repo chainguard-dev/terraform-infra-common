@@ -16,7 +16,7 @@ output "job_ids" {
   value       = { for k, v in google_cloud_run_v2_job.this : k => v.id }
 }
 
-output "job_generations" {
-  description = "The generation of the Cloud Run Job in each region, increments whenever the job definition changes."
-  value       = { for k, v in google_cloud_run_v2_job.this : k => v.generation }
+output "image_refs" {
+  description = "The signed image reference for each container, keyed by container name. Computed by ko/cosign before the Cloud Run Job is updated, so stable during apply."
+  value       = { for k, v in cosign_sign.this : k => v.signed_ref }
 }

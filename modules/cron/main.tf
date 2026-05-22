@@ -83,9 +83,7 @@ module "impl" {
 // Call cloud run api to execute job once.
 // https://cloud.google.com/run/docs/execute/jobs#command-line
 resource "null_resource" "exec" {
-  // Use for_each over a region map (instead of count) so that each.key holds
-  // the region string without triggering google provider bugs.
-  for_each = var.exec ? { (var.region) = var.region } : {}
+  count = var.exec ? 1 : 0
 
   provisioner "local-exec" {
     command = join(" ", [
@@ -95,15 +93,17 @@ resource "null_resource" "exec" {
       "jobs",
       "execute",
       module.impl.job_name,
-      "--region=${each.key}",
+      "--region=${var.region}",
       "--wait"
     ])
   }
 
   triggers = {
-    // Re-run the exec provisioner whenever the Cloud Run job definition changes.
-    // job_generation increments whenever the job is updated or replaced.
-    job_generation = module.impl.job_generations[each.key]
+    // Re-run the exec provisioner whenever the container images change.
+    // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
+    // so these values are stable at apply time (unlike job_etag or job_generation,
+    // which are server-side computed values that change mid-apply).
+    image_refs = join(",", values(module.impl.image_refs))
   }
 }
 
