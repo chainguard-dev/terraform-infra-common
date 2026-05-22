@@ -271,12 +271,12 @@ func SetupTracer(ctx context.Context) func() {
 //   - "otlp/<name>" — named OTLP HTTP, configured by OTEL_EXPORTER_OTLP_TRACES_<UPPER>_ENDPOINT
 //     and optional OTEL_EXPORTER_OTLP_TRACES_<UPPER>_HEADERS (W3C Baggage format:
 //     "key1=value1,key2=value2"). Enables fan-out to multiple OTLP backends
-//     (e.g. "otlp/braintrust,otlp/langfuse") when one pair of standard
+//     (e.g. "otlp/primary,otlp/secondary") when one pair of standard
 //     OTEL_EXPORTER_OTLP_TRACES_* vars isn't enough.
 //   - "none"        — no exporter.
 //
 // When unset, defaults to "gcp" on GCP and "none" elsewhere. Listing several
-// enables fan-out (e.g. "gcp,otlp/braintrust,otlp/langfuse").
+// enables fan-out (e.g. "gcp,otlp/primary,otlp/secondary").
 //
 // Filtering is applied per exporter, not globally: OTEL_TRACE_SAMPLING_RATE
 // (default 0.1) gates the GCP exporter via TraceID-deterministic ratio
@@ -316,7 +316,7 @@ func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
 	return opts
 }
 
-// parseExporterEntry splits "otlp/braintrust" into ("otlp", "braintrust") and
+// parseExporterEntry splits "otlp/primary" into ("otlp", "primary") and
 // "gcp" into ("gcp", ""). Names outside [A-Za-z0-9_-] are rejected by returning
 // a kind of "" so the caller logs and skips.
 func parseExporterEntry(entry string) (kind, name string) {
@@ -389,8 +389,8 @@ func newGCPProcessor(ctx context.Context) trace.SpanProcessor {
 // newOTLPProcessor builds a BatchSpanProcessor around an OTLP/HTTP exporter,
 // wrapped with llmSpanFilterProcessor so only spans carrying at least one
 // gen_ai.* attribute (OTel semantic conventions for generative-AI) reach the
-// backend. This keeps evaluation backends like Braintrust focused on LLM
-// traces instead of infra noise (OIDC, GitHub API, workqueue spans, …).
+// backend. This keeps eval-grade backends focused on LLM traces instead of
+// infra noise (OIDC, GitHub API, workqueue spans, …).
 //
 // When name == "", the exporter reads the standard OTEL_EXPORTER_OTLP_TRACES_*
 // and OTEL_EXPORTER_OTLP_* env vars. When name is non-empty, endpoint and
@@ -520,9 +520,9 @@ func (s *samplingSpanProcessor) ForceFlush(ctx context.Context) error {
 
 // llmSpanFilterProcessor forwards only spans carrying at least one attribute
 // under the gen_ai.* namespace (OTel semantic conventions for generative-AI)
-// to the wrapped processor. It is used on the OTLP path so evaluation backends
-// like Braintrust see LLM traces without infra noise (OIDC token exchanges,
-// GitHub API calls, workqueue dispatches, …).
+// to the wrapped processor. It is used on the OTLP path so eval-grade
+// backends see LLM traces without infra noise (OIDC token exchanges, GitHub
+// API calls, workqueue dispatches, …).
 //
 // The predicate is attribute-prefix-based rather than span-name- or
 // tracer-name-based because gen_ai.* is the OTel standard namespace for LLM
