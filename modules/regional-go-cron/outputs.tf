@@ -15,8 +15,3 @@ output "job_ids" {
   description = "The ID of the Cloud Run Job in each region."
   value       = { for k, v in google_cloud_run_v2_job.this : k => v.id }
 }
-
-output "job_generations" {
-  description = "The generation of the Cloud Run Job in each region, increments whenever the job definition changes."
-  value       = { for k, v in google_cloud_run_v2_job.this : k => v.generation }
-}

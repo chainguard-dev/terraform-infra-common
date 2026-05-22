@@ -68,7 +68,6 @@ No requirements.
 | Name | Description |
 |------|-------------|
 | <a name="output_job_etag"></a> [job\_etag](#output\_job\_etag) | The etag of the Cloud Run Job in each region, changes whenever the job definition changes. |
-| <a name="output_job_generations"></a> [job\_generations](#output\_job\_generations) | The generation of the Cloud Run Job in each region, increments whenever the job definition changes. |
 | <a name="output_job_ids"></a> [job\_ids](#output\_job\_ids) | The ID of the Cloud Run Job in each region. |
 | <a name="output_job_name"></a> [job\_name](#output\_job\_name) | The name of the Cloud Run Job created in each region. |
 <!-- END_TF_DOCS -->
