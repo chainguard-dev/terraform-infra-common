@@ -29,7 +29,6 @@ import (
 
 	"chainguard.dev/sdk/octosts"
 	"github.com/chainguard-dev/clog"
-	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics"
 	"github.com/google/go-github/v84/github"
 	"golang.org/x/oauth2"
 )
@@ -47,9 +46,8 @@ func NewGitHubClient(ctx context.Context, org, repo, policyName string, opts ...
 	})
 
 	httpClient := oauth2.NewClient(ctx, ts)
-	httpClient.Transport = httpmetrics.WrapTransport(httpClient.Transport)
 	client := GitHubClient{
-		inner:   github.NewClient(httpClient),
+		inner:   NewClient(httpClient.Transport),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -89,7 +87,7 @@ func NewInstallationClient(ctx context.Context, org, repo string, tr *ghinstalla
 		transport: tr,
 	})
 	client := GitHubClient{
-		inner:   github.NewClient(&http.Client{Transport: httpmetrics.WrapTransport(tr)}),
+		inner:   NewClient(tr),
 		ts:      ts,
 		bufSize: 1024 * 1024, // 1MB buffer for requests
 		org:     org,
@@ -112,7 +110,7 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 	defer cancel()
 
 	clog.DebugContextf(ctx, "getting octosts token for %s/%s - %s", ts.org, ts.repo, ts.policyName)
-	tok, err := octosts.Token(ctx, ts.policyName, ts.org, ts.repo)
+	tok, err := OctoTokenFunc(ctx, ts.policyName, ts.org, ts.repo)
 	if err != nil {
 		return nil, err
 	}
