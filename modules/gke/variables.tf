@@ -2,6 +2,12 @@ variable "name" {
   type = string
 }
 
+variable "service_account_suffix" {
+  type        = string
+  default     = "-gke-default"
+  description = "Suffix appended to var.name to form the node service account ID. Defaults to -gke-default. Override when multiple clusters share a project to avoid service account name collisions."
+}
+
 variable "project" {
   type = string
 }
@@ -33,10 +39,6 @@ variable "subnetwork" {
   type        = string
 }
 
-variable "master_ipv4_cidr_block" {
-  description = "If specified, will use this CIDR block for the master's IP address"
-  type        = string
-}
 
 variable "pools" {
   type = map(object({

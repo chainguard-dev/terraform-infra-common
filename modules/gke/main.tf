@@ -8,7 +8,7 @@ terraform {
 
 # The default service account applied to all cluster node pools
 resource "google_service_account" "cluster_default" {
-  account_id   = "${var.name}-gke-default"
+  account_id   = "${var.name}${var.service_account_suffix}"
   display_name = "${var.name} GKE Default"
   project      = var.project
 }
