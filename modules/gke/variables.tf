@@ -4,8 +4,8 @@ variable "name" {
 
 variable "service_account_suffix" {
   type        = string
-  default     = "-gke-default"
-  description = "Suffix appended to var.name to form the node service account ID. Defaults to -gke-default. Override when multiple clusters share a project to avoid service account name collisions."
+  default     = null
+  description = "Suffix appended to var.name to form the node service account ID. When null (the default), uses the region as the suffix (e.g. \"-us-central1\") so clusters sharing a project (e.g. the same name across regions) don't collide on this project-global resource. Set explicitly to pin a specific service account ID."
 }
 
 variable "project" {

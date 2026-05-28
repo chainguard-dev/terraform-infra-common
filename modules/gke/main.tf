@@ -8,7 +8,7 @@ terraform {
 
 # The default service account applied to all cluster node pools
 resource "google_service_account" "cluster_default" {
-  account_id   = "${var.name}${var.service_account_suffix}"
+  account_id   = "${var.name}${local.service_account_suffix}"
   display_name = "${var.name} GKE Default"
   project      = var.project
 }
@@ -40,6 +40,11 @@ resource "google_service_account_iam_member" "terraform_gke_impersonation" {
 }
 
 locals {
+  // Default the node service account suffix to the region so clusters sharing
+  // a project (e.g. the same name across regions) don't collide on this
+  // project-global resource. Callers can override via var.service_account_suffix.
+  service_account_suffix = var.service_account_suffix != null ? var.service_account_suffix : "-${var.region}"
+
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
