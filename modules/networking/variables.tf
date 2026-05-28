@@ -45,7 +45,7 @@ variable "product" {
 }
 
 variable "hosted_zone_logging_enabled" {
-  description = "Whether or not to enable DNS Hosted Zone Cloud Logging"
+  description = "Whether to enable Cloud DNS query logging on this network. Implemented via a DNS Server Policy attached to the VPC (the only mechanism that works for private managed zones)."
   type        = bool
-  default     = true
+  default     = false
 }

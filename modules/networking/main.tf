@@ -1,4 +1,5 @@
 // Create a global network in which to place our resources.
+// checkov:skip=CKV2_GCP_18: firewalls are owned by consumers of this network (e.g. the gke module), not this base module.
 resource "google_compute_network" "this" {
   name                            = var.name
   auto_create_subnetworks         = false
@@ -39,10 +40,13 @@ resource "google_compute_subnetwork" "regional" {
   }
 }
 
-// Create DNS policy for allow logging.
+// Cloud DNS query logging for private zones is configured via a DNS Server
+// Policy attached to the network, not via cloud_logging_config on the zone
+// (which GCP rejects on private zones). See
+// https://cloud.google.com/dns/docs/monitoring#enabling_and_disabling_logging_for_private_managed_zones
 resource "google_dns_policy" "dns_logging_policy" {
   name           = "dns-logging-policy"
-  enable_logging = true
+  enable_logging = var.hosted_zone_logging_enabled
   networks {
     network_url = google_compute_network.this.id
   }
