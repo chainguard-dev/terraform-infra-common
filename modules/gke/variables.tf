@@ -207,3 +207,9 @@ variable "cluster_autoscaling_gpu_limits" {
   }))
   default = []
 }
+
+variable "enable_fqdn_network_policy" {
+  description = "Enable FQDN-based network policies on Dataplane V2 clusters. When true, the FQDNNetworkPolicy CRD (networking.gke.io/v1alpha1) becomes available for restricting pod egress to specific domains."
+  type        = bool
+  default     = false
+}

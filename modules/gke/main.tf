@@ -82,6 +82,8 @@ resource "google_container_cluster" "this" {
   # Use Dataplane V2 (eBPF based networking)
   datapath_provider = "ADVANCED_DATAPATH"
 
+  enable_fqdn_network_policy = var.enable_fqdn_network_policy
+
   networking_mode = "VPC_NATIVE"
   // Keeping this empty means GKE handles the secondary pod/service CIDR creation
   ip_allocation_policy {}
