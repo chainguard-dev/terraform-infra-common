@@ -195,6 +195,9 @@ resource "google_container_cluster" "this" {
     gcs_fuse_csi_driver_config {
       enabled = true
     }
+    dns_cache_config {
+      enabled = false
+    }
     dynamic "horizontal_pod_autoscaling" {
       for_each = var.disable_horizontal_pod_autoscaling != null ? ["placeholder"] : []
       content {
