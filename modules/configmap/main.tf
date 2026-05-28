@@ -20,7 +20,21 @@ resource "google_secret_manager_secret" "this" {
   secret_id = var.name
   labels    = local.merged_labels
   replication {
-    auto {}
+    dynamic "auto" {
+      for_each = var.replication_locations == null ? ["auto"] : []
+      content {}
+    }
+    dynamic "user_managed" {
+      for_each = var.replication_locations != null ? ["user_managed"] : []
+      content {
+        dynamic "replicas" {
+          for_each = var.replication_locations
+          content {
+            location = replicas.value
+          }
+        }
+      }
+    }
   }
 }
 

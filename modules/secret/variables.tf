@@ -54,7 +54,11 @@ variable "labels" {
   default     = {}
 }
 
-
+variable "replication_locations" {
+  description = "List of GCP regions for user_managed replication. When null (default), uses automatic replication."
+  type        = list(string)
+  default     = null
+}
 
 variable "team" {
   description = "Team label to apply to resources (replaces deprecated 'squad')."
