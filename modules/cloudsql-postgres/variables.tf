@@ -200,6 +200,22 @@ variable "authorized_client_service_accounts" {
   default     = []
 }
 
+# Encryption
+
+variable "encryption_key_name" {
+  description = <<EOT
+    Optional fully-qualified Cloud KMS key resource name used to encrypt the
+    instance (and any read replicas) with a customer-managed encryption key
+    (CMEK). When null (default), Cloud SQL uses Google-managed encryption.
+    Format: projects/<proj>/locations/<region>/keyRings/<ring>/cryptoKeys/<key>.
+    The Cloud SQL service agent for the instance's project must hold
+    roles/cloudkms.cryptoKeyEncrypterDecrypter on the key before the instance
+    can be created. Replicas in other regions require a key in their own region.
+  EOT
+  type        = string
+  default     = null
+}
+
 # Lifecycle & Protection
 
 variable "deletion_protection" {

@@ -35,6 +35,9 @@ resource "google_sql_database_instance" "this" {
   database_version    = var.database_version
   deletion_protection = var.deletion_protection
 
+  # Optional CMEK. When null Cloud SQL uses Google-managed encryption.
+  encryption_key_name = var.encryption_key_name
+
   settings {
     tier                  = var.tier
     availability_type     = var.enable_high_availability ? "REGIONAL" : "ZONAL"
@@ -125,6 +128,10 @@ resource "google_sql_database_instance" "replicas" {
   database_version     = var.database_version
   master_instance_name = google_sql_database_instance.this.name
   deletion_protection  = var.replicas_deletion_protection
+
+  # Optional CMEK. Replicas in a different region require a separate key in
+  # that region; callers are responsible for supplying a region-matched key.
+  encryption_key_name = var.encryption_key_name
 
   replica_configuration {
     failover_target = false
