@@ -375,7 +375,9 @@ resource "google_compute_firewall" "master_webhook" {
   project = local.network_project
   network = var.network
 
-  name        = "${var.name}-master-webhook"
+  # Firewall rules are global, so include the region to keep the name unique
+  # when multiple clusters share a project (e.g. same name across regions).
+  name        = "${var.name}-${var.region}-master-webhook"
   description = "Allow GKE master to hit non 443 ports for webhook/admission controllers"
   direction   = "INGRESS"
 
