@@ -8,7 +8,7 @@ terraform {
 
 # The default service account applied to all cluster node pools
 resource "google_service_account" "cluster_default" {
-  account_id   = "${var.name}-gke-default"
+  account_id   = "${var.name}${var.service_account_suffix}"
   display_name = "${var.name} GKE Default"
   project      = var.project
 }
@@ -44,6 +44,11 @@ locals {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
   }
+
+  // Extract the project that owns the VPC. When network is a full self_link
+  // (projects/{project}/global/networks/...) the project is at index [1];
+  // bare names imply the cluster's own project.
+  network_project = length(split("/", var.network)) > 1 ? split("/", var.network)[1] : var.project
 
   squad_label = {
     "squad" = var.team
@@ -362,7 +367,7 @@ resource "google_container_node_pool" "pools" {
 #
 # https://github.com/kubernetes/kubernetes/issues/79739
 resource "google_compute_firewall" "master_webhook" {
-  project = var.project
+  project = local.network_project
   network = var.network
 
   name        = "${var.name}-master-webhook"
