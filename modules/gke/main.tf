@@ -198,7 +198,7 @@ resource "google_container_cluster" "this" {
       enabled = true
     }
     dns_cache_config {
-      enabled = false
+      enabled = var.enable_dns_cache
     }
     dynamic "horizontal_pod_autoscaling" {
       for_each = var.disable_horizontal_pod_autoscaling != null ? ["placeholder"] : []
