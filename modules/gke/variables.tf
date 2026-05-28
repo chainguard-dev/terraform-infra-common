@@ -213,3 +213,9 @@ variable "enable_fqdn_network_policy" {
   type        = bool
   default     = false
 }
+
+variable "enable_dns_cache" {
+  description = "Enable the NodeLocal DNSCache addon. Reduces external DNS lookup latency and load on kube-dns by caching responses on each node."
+  type        = bool
+  default     = false
+}
