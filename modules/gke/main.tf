@@ -97,6 +97,20 @@ resource "google_container_cluster" "this" {
     workload_pool = "${var.project}.svc.id.goog"
   }
 
+  # Application-layer Secrets encryption. When a key is provided, GKE
+  # envelope-encrypts Kubernetes Secret objects with the customer-managed key
+  # before writing them to etcd. The GKE service agent must hold
+  # roles/cloudkms.cryptoKeyEncrypterDecrypter on the key. Destroying the key
+  # version while in use renders the cluster state DB undecryptable, so the key
+  # must outlive the cluster.
+  dynamic "database_encryption" {
+    for_each = var.database_encryption_key == null ? [] : ["placeholder"]
+    content {
+      state    = "ENCRYPTED"
+      key_name = var.database_encryption_key
+    }
+  }
+
   release_channel {
     # NOTE: Toggle to "RAPID" when we want to start playing with things like gcsfuse
     channel = var.release_channel

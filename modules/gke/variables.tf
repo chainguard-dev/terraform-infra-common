@@ -219,3 +219,9 @@ variable "enable_dns_cache" {
   type        = bool
   default     = false
 }
+
+variable "database_encryption_key" {
+  description = "Cloud KMS key resource ID for application-layer Secrets encryption (e.g. projects/P/locations/L/keyRings/R/cryptoKeys/K). When null (default), Secrets use Google-managed etcd encryption only. The GKE service agent must hold roles/cloudkms.cryptoKeyEncrypterDecrypter on the key, and the key must outlive the cluster."
+  type        = string
+  default     = null
+}
