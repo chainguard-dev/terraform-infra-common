@@ -15,7 +15,7 @@ spec:
         identities:
           - subjectRegExp: .+@chainguard.dev$
             issuer: https://accounts.google.com
-          - subject: https://github.com/chainguard-dev/mono/.github/workflows/open-source-stage.yaml@refs/heads/main
+          - subject: https://github.com/chainguard-dev/mono/.github/workflows/open-source-publish.yaml@refs/heads/main
             issuer: https://token.actions.githubusercontent.com
       ctlog:
         url: https://rekor.sigstore.dev
