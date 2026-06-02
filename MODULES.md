@@ -160,6 +160,12 @@ Same as serverless-gclb but with create-before-destroy lifecycle on the URL map 
 
 Use this instead of `serverless-gclb` when URL map updates cause downtime or conflicts during `terraform apply`.
 
+### [`private-service-connect`](./modules/private-service-connect/)
+
+Expose a regional internal Cloud Run service across VPCs or projects via Private Service Connect, with a producer submodule (internal ALB + service attachment) and a consumer submodule (PSC endpoint).
+
+Use this when a service in one VPC needs private, non-public connectivity to a Cloud Run service in another VPC or project.
+
 ### [`authorize-private-service`](./modules/authorize-private-service/)
 
 Grant a service account permission to invoke a private Cloud Run service and return the service URI.
