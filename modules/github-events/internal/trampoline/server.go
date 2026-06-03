@@ -36,32 +36,46 @@ type PayloadInfo struct {
 	Organization struct {
 		Login string `json:"login,omitempty"`
 	} `json:"organization,omitempty"`
-	PullRequest struct {
-		Number int  `json:"number,omitempty"`
-		Merged bool `json:"merged,omitempty"`
-	} `json:"pull_request,omitempty"`
-	Issue struct {
+	PullRequest pullRequestInfo `json:"pull_request,omitempty"`
+	Issue       struct {
 		Number          int       `json:"number,omitempty"`
 		PullRequestInfo *struct{} `json:"pull_request,omitempty"`
 	} `json:"issue,omitempty"`
 	CheckRun struct {
-		CheckSuite struct {
-			PullRequests []struct {
-				Number int `json:"number,omitempty"`
-			} `json:"pull_requests,omitempty"`
-		} `json:"check_suite,omitempty"`
+		CheckSuite checkSuiteInfo `json:"check_suite,omitempty"`
 	} `json:"check_run,omitempty"`
-	CheckSuite struct {
-		PullRequests []struct {
-			Number int `json:"number,omitempty"`
-		} `json:"pull_requests,omitempty"`
-	} `json:"check_suite,omitempty"`
-	Comment struct {
+	CheckSuite checkSuiteInfo `json:"check_suite,omitempty"`
+	Comment    struct {
 		ID int `json:"id,omitempty"`
 	} `json:"comment,omitempty"`
 	Review struct {
 		ID int `json:"id,omitempty"`
 	} `json:"review,omitempty"`
+}
+
+// pullRequestInfo holds the pull_request fields the extractors use. Named (not
+// anonymous) so it can be constructed in tests and grow fields without breaking
+// every literal.
+type pullRequestInfo struct {
+	Number int  `json:"number,omitempty"`
+	Merged bool `json:"merged,omitempty"`
+	Head   struct {
+		Ref string `json:"ref,omitempty"`
+	} `json:"head,omitempty"`
+}
+
+// prRef is a minimal pull-request reference as it appears in check_suite payloads.
+type prRef struct {
+	Number int `json:"number,omitempty"`
+	Head   struct {
+		Ref string `json:"ref,omitempty"`
+	} `json:"head,omitempty"`
+}
+
+// checkSuiteInfo holds the check_suite fields the extractors use. It appears
+// both at the top level (check_suite events) and nested under check_run.
+type checkSuiteInfo struct {
+	PullRequests []prRef `json:"pull_requests,omitempty"`
 }
 
 type Server struct {
@@ -210,6 +224,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		event.SetExtension("issueurl", issueURL)
 	}
 
+	// Add headbranch extension (the PR's head branch) for PR-related events, so
+	// consumers can filter by branch prefix — e.g. a reconciler subscribing only
+	// to PRs it opened, whose branches are named "<identity>/...".
+	if headBranch := extractHeadBranch(originalEventType, info); headBranch != "" {
+		event.SetExtension("headbranch", headBranch)
+	}
+
 	// Add merged extension for merged pull requests
 	if merged := isPullRequestMerged(originalEventType, info); merged {
 		event.SetExtension("merged", true)
@@ -315,6 +336,37 @@ func extractPullRequestURL(eventType string, info PayloadInfo) string {
 
 	if prNumber > 0 {
 		return fmt.Sprintf("https://github.com/%s/%s/pull/%d", owner, repo, prNumber)
+	}
+	return ""
+}
+
+// extractHeadBranch returns the head branch (source ref) of the PR associated
+// with a PR-related event, or "" if none. Automation that opens PRs commonly
+// names its branches "<identity>/...", so consumers can prefix-filter on this
+// attribute to receive only the PRs a given tool opened. For check events it
+// reads the associated PR's head ref — the same pull_requests[0] element
+// extractPullRequestURL reads for the PR number — rather than
+// check_suite.head_branch, which can be null for check suites not tied to a PR.
+//
+// Field sources in the GitHub webhook payloads:
+//   - pull_request[_review[_comment]]: pull_request.head.ref
+//     https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
+//   - check_run: check_run.check_suite.pull_requests[0].head.ref
+//     https://docs.github.com/en/webhooks/webhook-events-and-payloads#check_run
+//   - check_suite: check_suite.pull_requests[0].head.ref
+//     https://docs.github.com/en/webhooks/webhook-events-and-payloads#check_suite
+func extractHeadBranch(eventType string, info PayloadInfo) string {
+	switch eventType {
+	case "pull_request", "pull_request_review", "pull_request_review_comment":
+		return info.PullRequest.Head.Ref
+	case "check_run":
+		if len(info.CheckRun.CheckSuite.PullRequests) > 0 {
+			return info.CheckRun.CheckSuite.PullRequests[0].Head.Ref
+		}
+	case "check_suite":
+		if len(info.CheckSuite.PullRequests) > 0 {
+			return info.CheckSuite.PullRequests[0].Head.Ref
+		}
 	}
 	return ""
 }

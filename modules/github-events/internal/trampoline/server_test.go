@@ -213,10 +213,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		name:      "pull_request event with valid data",
 		eventType: "pull_request",
 		payload: PayloadInfo{
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Number: 123,
 			},
 			Repository: struct {
@@ -234,10 +231,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		name:      "not a pull_request event",
 		eventType: "push",
 		payload: PayloadInfo{
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Number: 123,
 			},
 			Repository: struct {
@@ -270,10 +264,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 		name:      "pull_request event with missing repo",
 		eventType: "pull_request",
 		payload: PayloadInfo{
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Number: 123,
 			},
 		},
@@ -303,10 +294,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 		name:      "pull_request event with valid data",
 		eventType: "pull_request",
 		payload: PayloadInfo{
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Number: 123,
 			},
 			Repository: struct {
@@ -373,10 +361,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 		name:      "pull_request event with missing repo",
 		eventType: "pull_request",
 		payload: PayloadInfo{
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Number: 123,
 			},
 		},
@@ -496,6 +481,60 @@ func TestPullRequestExtension(t *testing.T) {
 	_, exists = client.events[0].Extensions()["pullrequesturl"]
 	if exists {
 		t.Fatal("pullrequesturl extension should not be present for non-PR events")
+	}
+}
+
+func TestExtractHeadBranch(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		eventType string
+		payload   string
+		want      string
+	}{{
+		name:      "pull_request head ref",
+		eventType: "pull_request",
+		payload:   `{"pull_request":{"head":{"ref":"reconciler-a/path/foo"}}}`,
+		want:      "reconciler-a/path/foo",
+	}, {
+		name:      "pull_request_review head ref",
+		eventType: "pull_request_review",
+		payload:   `{"pull_request":{"head":{"ref":"reconciler-b/widget/bash"}}}`,
+		want:      "reconciler-b/widget/bash",
+	}, {
+		name:      "check_run PR head ref",
+		eventType: "check_run",
+		payload:   `{"check_run":{"check_suite":{"pull_requests":[{"head":{"ref":"reconciler-a/path/bar"}}]}}}`,
+		want:      "reconciler-a/path/bar",
+	}, {
+		name:      "check_suite PR head ref",
+		eventType: "check_suite",
+		payload:   `{"check_suite":{"pull_requests":[{"head":{"ref":"reconciler-a/path/baz"}}]}}`,
+		want:      "reconciler-a/path/baz",
+	}, {
+		name:      "check_suite not associated with a PR",
+		eventType: "check_suite",
+		payload:   `{"check_suite":{"pull_requests":[]}}`,
+		want:      "",
+	}, {
+		name:      "non-PR event ignored",
+		eventType: "push",
+		payload:   `{"ref":"refs/heads/main"}`,
+		want:      "",
+	}, {
+		name:      "pull_request without head",
+		eventType: "pull_request",
+		payload:   `{"pull_request":{"number":1}}`,
+		want:      "",
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			var info PayloadInfo
+			if err := json.Unmarshal([]byte(tc.payload), &info); err != nil {
+				t.Fatalf("unmarshal payload: %v", err)
+			}
+			if got := extractHeadBranch(tc.eventType, info); got != tc.want {
+				t.Errorf("extractHeadBranch() = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
 
@@ -876,10 +915,7 @@ func TestIsPullRequestMerged(t *testing.T) {
 		eventType: "pull_request",
 		payload: PayloadInfo{
 			Action: "closed",
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Merged: true,
 			},
 		},
@@ -889,10 +925,7 @@ func TestIsPullRequestMerged(t *testing.T) {
 		eventType: "pull_request",
 		payload: PayloadInfo{
 			Action: "closed",
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Merged: false,
 			},
 		},
@@ -902,10 +935,7 @@ func TestIsPullRequestMerged(t *testing.T) {
 		eventType: "pull_request",
 		payload: PayloadInfo{
 			Action: "opened",
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Merged: false,
 			},
 		},
@@ -915,10 +945,7 @@ func TestIsPullRequestMerged(t *testing.T) {
 		eventType: "push",
 		payload: PayloadInfo{
 			Action: "closed",
-			PullRequest: struct {
-				Number int  `json:"number,omitempty"`
-				Merged bool `json:"merged,omitempty"`
-			}{
+			PullRequest: pullRequestInfo{
 				Merged: true,
 			},
 		},
