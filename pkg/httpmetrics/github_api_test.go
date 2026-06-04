@@ -172,6 +172,18 @@ func Test_bucketizeGitHubPath(t *testing.T) {
 		path:   "/repos/octocat/hello-world/compare/release/1.0...feature/foo",
 		bucket: "/repos/{org}/{repo}/compare/{base}...{head}",
 	}, {
+		path:   "/graphql",
+		bucket: "/graphql",
+	}, {
+		path:   "/repos/octocat/hello-world/check-suites",
+		bucket: "/repos/{org}/{repo}/check-suites",
+	}, {
+		path:   "/repos/octocat/hello-world/check-suites/42",
+		bucket: "/repos/{org}/{repo}/check-suites/{id}",
+	}, {
+		path:   "/repos/octocat/hello-world/git/trees/abc123def",
+		bucket: "/repos/{org}/{repo}/git/trees/{sha}",
+	}, {
 		path:   "/some/unknown/path",
 		bucket: "unknown_gh_path",
 	}}

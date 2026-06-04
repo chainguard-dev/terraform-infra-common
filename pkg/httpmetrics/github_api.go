@@ -17,6 +17,10 @@ type pathPattern struct {
 // Default GitHub API endpoint patterns.
 // Based on GitHub REST API documentation: https://docs.github.com/en/rest
 var githubAPIPatterns = []pathPattern{{
+	// GraphQL API — single endpoint. https://docs.github.com/en/graphql
+	pattern: regexp.MustCompile(`^/graphql$`),
+	bucket:  "/graphql",
+}, {
 	// https://docs.github.com/en/rest/apps/apps#create-an-installation-access-token-for-an-app
 	pattern: regexp.MustCompile(`^/app/installations/\d+/access_tokens$`),
 	bucket:  "/app/installations/{installation_id}/access_tokens",
@@ -216,6 +220,18 @@ var githubAPIPatterns = []pathPattern{{
 	// https://docs.github.com/en/rest/repos/repos#list-repositories-for-a-user
 	pattern: regexp.MustCompile(`^/users/[^/]+/repos$`),
 	bucket:  "/users/{user}/repos",
+}, {
+	// https://docs.github.com/en/rest/checks/suites#create-a-check-suite
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-suites$`),
+	bucket:  "/repos/{org}/{repo}/check-suites",
+}, {
+	// https://docs.github.com/en/rest/checks/suites#get-a-check-suite
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/check-suites/\d+$`),
+	bucket:  "/repos/{org}/{repo}/check-suites/{id}",
+}, {
+	// https://docs.github.com/en/rest/git/trees#get-a-tree (often recursive=1)
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/trees/[^/]+$`),
+	bucket:  "/repos/{org}/{repo}/git/trees/{sha}",
 }}
 
 func bucketizeGitHubPath(path string) string {
