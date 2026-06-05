@@ -167,6 +167,16 @@ variable "security-policy" {
   default     = null
 }
 
+variable "post_quantum_key_exchange" {
+  description = "Controls negotiation of the X25519MLKEM768 post-quantum hybrid key exchange. One of DEFAULT, DEFERRED, or ENABLED."
+  type        = string
+  default     = "DEFAULT"
+  validation {
+    condition     = contains(["DEFAULT", "DEFERRED", "ENABLED"], var.post_quantum_key_exchange)
+    error_message = "post_quantum_key_exchange must be one of DEFAULT, DEFERRED, or ENABLED."
+  }
+}
+
 
 
 variable "team" {

@@ -39,4 +39,6 @@ module "gclb" {
   product = var.product
 
   security-policy = var.security-policy
+
+  post_quantum_key_exchange = var.post_quantum_key_exchange
 }

@@ -441,7 +441,7 @@ terraform destroy
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.100 |
 | <a name="requirement_cosign"></a> [cosign](#requirement\_cosign) | >= 0.0.20 |
 | <a name="requirement_ko"></a> [ko](#requirement\_ko) | ~> 0.0.19 |
 
@@ -449,7 +449,7 @@ terraform destroy
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100 |
 
 ## Modules
 
@@ -461,7 +461,7 @@ terraform destroy
 
 | Name | Type |
 |------|------|
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.0/docs/data-sources/caller_identity) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.100/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 

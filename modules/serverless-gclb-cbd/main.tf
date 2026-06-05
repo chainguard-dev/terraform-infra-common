@@ -2,11 +2,11 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 4.79"
+      version = ">= 7.34.0"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 4.79"
+      version = ">= 7.34.0"
     }
   }
 }
@@ -170,9 +170,10 @@ resource "google_compute_url_map" "public-service" {
 
 # SSL policy to control the features of SSL.
 resource "google_compute_ssl_policy" "ssl_policy" {
-  name            = "${var.name}-ssl-policy"
-  profile         = "MODERN"
-  min_tls_version = "TLS_1_2"
+  name                      = "${var.name}-ssl-policy"
+  profile                   = "MODERN"
+  min_tls_version           = "TLS_1_2"
+  post_quantum_key_exchange = var.post_quantum_key_exchange
 }
 
 // Create an HTTPS proxy for our URL map.
