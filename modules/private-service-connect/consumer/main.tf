@@ -46,5 +46,5 @@ resource "google_compute_forwarding_rule" "this" {
   subnetwork              = var.subnetwork
   ip_address              = local.endpoint_address
   target                  = var.service_attachment
-  allow_psc_global_access = false
+  allow_psc_global_access = var.allow_psc_global_access
 }

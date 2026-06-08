@@ -36,3 +36,9 @@ variable "address" {
   type        = string
   default     = ""
 }
+
+variable "allow_psc_global_access" {
+  description = "Allow clients in any region to reach this PSC endpoint. Leave false when every caller runs in the endpoint's region; set true when callers run in other regions (e.g. a multi-region Cloud Run service dialing this single-region endpoint), otherwise their connections are silently dropped at the PSC layer."
+  type        = bool
+  default     = false
+}
