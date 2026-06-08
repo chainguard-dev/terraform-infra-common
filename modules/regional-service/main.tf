@@ -75,6 +75,9 @@ resource "google_cloud_run_v2_service" "this" {
   ingress      = var.ingress
   launch_stage = var.launch_stage
 
+  // null (not []) when unset so existing callers see no diff.
+  custom_audiences = length(var.custom_audiences) > 0 ? var.custom_audiences : null
+
   deletion_protection = var.deletion_protection
 
   template {

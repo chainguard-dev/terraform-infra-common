@@ -26,6 +26,18 @@ EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 }
 
+variable "custom_audiences" {
+  type        = list(string)
+  description = <<EOD
+Optional list of custom audiences accepted by the Cloud Run service's ID-token
+validation, in addition to the service's default *.run.app URL. Required for
+services reached by a non-run.app hostname or IP (e.g. behind an internal HTTP
+ALB / Private Service Connect) where callers cannot use the run.app URL as the
+token audience. Empty leaves custom audiences unset.
+EOD
+  default     = []
+}
+
 variable "egress" {
   type        = string
   description = <<EOD
