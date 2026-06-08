@@ -65,6 +65,7 @@ resource "google_compute_forwarding_rule" "this" {
   subnetwork            = var.subnetwork
   target                = google_compute_region_target_http_proxy.this.id
   port_range            = "80"
+  allow_global_access   = var.allow_global_access
 
   labels = var.labels
 

@@ -60,6 +60,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_allow_global_access"></a> [allow\_global\_access](#input\_allow\_global\_access) | Allow clients in any region to reach the internal ALB forwarding rule. Required before a PSC consumer endpoint targeting this service attachment can set allow\_psc\_global\_access = true; without it the consumer apply fails with "the producer service does not support consumer global access". Leave false when all consumers are in the producer's region. | `bool` | `false` | no |
 | <a name="input_cloud_run_service_name"></a> [cloud\_run\_service\_name](#input\_cloud\_run\_service\_name) | Name of the existing regional internal Cloud Run service to front with the internal ALB. | `string` | n/a | yes |
 | <a name="input_connection_limit"></a> [connection\_limit](#input\_connection\_limit) | Per-consumer connection limit applied to each entry in consumer\_accept\_projects. | `number` | `10` | no |
 | <a name="input_consumer_accept_projects"></a> [consumer\_accept\_projects](#input\_consumer\_accept\_projects) | List of consumer project IDs or numbers explicitly accepted by the service attachment (ACCEPT\_MANUAL). | `list(string)` | n/a | yes |

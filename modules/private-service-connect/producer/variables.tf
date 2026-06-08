@@ -57,3 +57,9 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+variable "allow_global_access" {
+  description = "Allow clients in any region to reach the internal ALB forwarding rule. Required before a PSC consumer endpoint targeting this service attachment can set allow_psc_global_access = true; without it the consumer apply fails with \"the producer service does not support consumer global access\". Leave false when all consumers are in the producer's region."
+  type        = bool
+  default     = false
+}
