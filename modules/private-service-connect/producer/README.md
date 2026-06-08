@@ -30,6 +30,12 @@ Hand the `service_attachment_id` output to the `consumer` submodule (typically
 across Terraform states via a tfvar). See the parent module's
 [README](../README.md) for the producer -> consumer flow and the two-phase apply.
 
+Changing `allow_global_access` recreates the forwarding rule and, by dependency,
+the service attachment: GCP does not allow an in-place change to that field while
+the forwarding rule is referenced by a PSC service attachment. A live flip
+therefore briefly tears down the attachment, so connected PSC consumers
+disconnect and reconnect (ACCEPT_MANUAL re-accepts them once it is recreated).
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
