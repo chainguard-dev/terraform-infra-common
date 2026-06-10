@@ -45,7 +45,7 @@ resource "google_compute_subnetwork" "regional" {
 // (which GCP rejects on private zones). See
 // https://cloud.google.com/dns/docs/monitoring#enabling_and_disabling_logging_for_private_managed_zones
 resource "google_dns_policy" "dns_logging_policy" {
-  name           = "dns-logging-policy"
+  name           = var.name
   enable_logging = var.hosted_zone_logging_enabled
   networks {
     network_url = google_compute_network.this.id
