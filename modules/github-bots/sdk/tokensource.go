@@ -39,12 +39,14 @@ func (ts *repoTokenSource) Token() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Octo STS issues tokens valid for 60 minutes. Refresh at the 55-minute
-	// mark to leave a small safety margin.
+	// Octo STS issues tokens valid for 60 minutes. We refresh well before that
+	// at the 20-minute mark: re-exchanging more often means we pick up freshly
+	// issued tokens sooner, so a noisy neighbor sharing our quota can't keep us
+	// starved for the full hour until the quota resets.
 	return &oauth2.Token{
 		AccessToken: tok,
 		TokenType:   "Bearer",
-		Expiry:      time.Now().Add(55 * time.Minute),
+		Expiry:      time.Now().Add(20 * time.Minute),
 	}, nil
 }
 

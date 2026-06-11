@@ -49,8 +49,8 @@ func TestRepoTokenSource_Token_Success(t *testing.T) {
 	if token.TokenType != "Bearer" {
 		t.Errorf("TokenType: got = %q, want = %q", token.TokenType, "Bearer")
 	}
-	// Expiry should be ~55 minutes out, matching the documented refresh margin.
-	expectedExpiry := time.Now().Add(55 * time.Minute)
+	// Expiry should be ~20 minutes out, matching the documented refresh margin.
+	expectedExpiry := time.Now().Add(20 * time.Minute)
 	if token.Expiry.Before(expectedExpiry.Add(-1*time.Second)) || token.Expiry.After(expectedExpiry.Add(1*time.Second)) {
 		t.Errorf("Expiry: got = %v, want approximately = %v", token.Expiry, expectedExpiry)
 	}
