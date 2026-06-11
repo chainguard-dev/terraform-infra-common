@@ -67,6 +67,7 @@ variable "pools" {
     enable_secure_boot                = optional(bool, false)
     enable_integrity_monitoring       = optional(bool, true)
     labels                            = optional(map(string), {})
+    tags                              = optional(list(string), [])
     taints = optional(list(object({
       key    = string
       value  = string

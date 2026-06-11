@@ -357,6 +357,7 @@ resource "google_container_node_pool" "pools" {
 
     spot            = each.value.spot
     labels          = each.value.labels
+    tags            = each.value.tags
     resource_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
 
     dynamic "advanced_machine_features" {
