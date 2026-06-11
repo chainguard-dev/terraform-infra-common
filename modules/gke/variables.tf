@@ -39,6 +39,18 @@ variable "subnetwork" {
   type        = string
 }
 
+variable "cluster_secondary_range_name" {
+  description = "Name of an existing subnet secondary range to use for Pods. When null, GKE auto-allocates a pod range. Required on a Shared VPC, where secondary ranges are pre-created on the host subnet and referenced by name (GKE cannot create ranges on a subnet it does not own)."
+  type        = string
+  default     = null
+}
+
+variable "services_secondary_range_name" {
+  description = "Name of an existing subnet secondary range to use for Services. When null, GKE auto-allocates a service range. Required on a Shared VPC, where secondary ranges are pre-created on the host subnet and referenced by name."
+  type        = string
+  default     = null
+}
+
 
 variable "pools" {
   type = map(object({

@@ -90,8 +90,14 @@ resource "google_container_cluster" "this" {
   enable_fqdn_network_policy = var.enable_fqdn_network_policy
 
   networking_mode = "VPC_NATIVE"
-  // Keeping this empty means GKE handles the secondary pod/service CIDR creation
-  ip_allocation_policy {}
+  // When both names are null, GKE auto-allocates the secondary pod/service
+  // ranges. On a Shared VPC the ranges are pre-created on the host subnet and
+  // referenced by name, since GKE cannot create ranges on a subnet it does
+  // not own.
+  ip_allocation_policy {
+    cluster_secondary_range_name  = var.cluster_secondary_range_name
+    services_secondary_range_name = var.services_secondary_range_name
+  }
 
   workload_identity_config {
     workload_pool = "${var.project}.svc.id.goog"
