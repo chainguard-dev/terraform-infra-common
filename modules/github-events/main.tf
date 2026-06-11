@@ -131,39 +131,48 @@ output "public-urls" {
 output "recorder-schemas" {
   value = {
     "dev.chainguard.github.pull_request" : {
-      schema = file("${path.module}/schemas/pull_request.schema.json")
+      schema                = file("${path.module}/schemas/pull_request.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.workflow_run" : {
-      schema = file("${path.module}/schemas/workflow_run.schema.json")
+      schema                = file("${path.module}/schemas/workflow_run.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.workflow_job" : {
-      schema = file("${path.module}/schemas/workflow_job.schema.json")
+      schema                = file("${path.module}/schemas/workflow_job.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.issue_comment" : {
-      schema = file("${path.module}/schemas/issue_comment.schema.json")
+      schema                = file("${path.module}/schemas/issue_comment.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.issues" : {
       schema                = file("${path.module}/schemas/issues.schema.json")
       retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.push" : {
-      schema = file("${path.module}/schemas/push.schema.json")
+      schema                = file("${path.module}/schemas/push.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.check_run" : {
-      schema = file("${path.module}/schemas/check_run.schema.json")
+      schema                = file("${path.module}/schemas/check_run.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.check_suite" : {
-      schema = file("${path.module}/schemas/check_suite.schema.json")
+      schema                = file("${path.module}/schemas/check_suite.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.projects_v2_item" : {
       schema                = file("${path.module}/schemas/projects_v2_item.schema.json")
       retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.pull_request_review" : {
-      schema = file("${path.module}/schemas/pull_request_review.schema.json")
+      schema                = file("${path.module}/schemas/pull_request_review.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
     "dev.chainguard.github.pull_request_review_comment" : {
-      schema = file("${path.module}/schemas/pull_request_review_comment.schema.json")
+      schema                = file("${path.module}/schemas/pull_request_review_comment.schema.json")
+      retention_period_days = 548 # 18 months (365 * 1.5)
     }
   }
 }
