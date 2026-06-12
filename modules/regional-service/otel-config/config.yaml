@@ -7,6 +7,7 @@ receivers:
       scrape_configs:
       - job_name: "localhost"
         scrape_interval: 10s
+        # REPLACE_ME_NATIVE_HISTOGRAMS
         static_configs:
         - targets: [REPLACE_ME_TARGETS]
         # Do not relabel job and instance labels if existed.
