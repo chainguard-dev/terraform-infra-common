@@ -47,6 +47,19 @@ module "agents" {
   ]
 }
 
+// When var.sections.microvm is set to a namespace, surface two collapsible groups: the
+// control-plane metrics this service's microvm.Manager records (scoped by
+// service_name, like the other sections) and the agent-pod metrics scoped to
+// that namespace on the GKE cluster.
+module "microvm" {
+  count  = var.sections.microvm != null ? 1 : 0
+  source = "../sections/microvm"
+  filter = [
+    "metric.label.\"service_name\"=\"${var.service_name}\""
+  ]
+  namespace = var.sections.microvm
+}
+
 module "resources" {
   source                = "../sections/resources"
   title                 = "Resources"
@@ -79,6 +92,7 @@ module "layout" {
     var.sections.github ? [module.github.section] : [],
     var.sections.gorm ? [module.gorm.section] : [],
     var.sections.agents ? [module.agents.section] : [],
+    var.sections.microvm != null ? module.microvm[0].sections : [],
     [module.resources.section],
   )
 }

@@ -32,6 +32,11 @@ variable "sections" {
     github = optional(bool, false) // Include GitHub API section
     gorm   = optional(bool, false) // Include GORM section
     agents = optional(bool, false) // Include Agent metrics section
+    // microvm, unlike the others, is a namespace string rather than a bool:
+    // set it to the GKE namespace this service's microvm agent pods run in to
+    // add the control-plane (scoped by service_name) and agent-pod (scoped to
+    // that namespace) sections. Null omits them.
+    microvm = optional(string, null)
   })
   default = {
     http   = true
