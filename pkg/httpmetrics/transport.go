@@ -417,7 +417,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 		resp, err := next.RoundTrip(r)
 		if err != nil {
 			if r.URL.Host == "api.github.com" {
-				clog.InfoContext(r.Context(), "github_api_call",
+				clog.DebugContext(r.Context(), "github_api_call",
 					"method", r.Method,
 					"path_raw", r.URL.Path,
 					"path_bucket", bucketizeGitHubPath(r.URL.Path),
@@ -574,7 +574,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 					logAttrs = append(logAttrs, "retry_after_seconds", int64(seconds))
 				}
 			}
-			clog.InfoContext(r.Context(), "github_api_call", logAttrs...)
+			clog.DebugContext(r.Context(), "github_api_call", logAttrs...)
 		}
 		return resp, err
 	}
