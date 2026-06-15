@@ -119,6 +119,11 @@ output "public-urls" {
   } : {}
 }
 
+output "service-account" {
+  description = "Email of the trampoline's service account. Grant it secretAccessor on any external secrets passed via additional_webhook_secrets."
+  value       = google_service_account.service.email
+}
+
 // READ THIS BEFORE YOU EDIT!!!
 // These schemas are used to generate bigquery table names used by the recorder.
 // If you are adding a schema you're fine to proceed. If you are changing the
