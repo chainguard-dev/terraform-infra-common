@@ -196,4 +196,5 @@ No requirements.
 |------|-------------|
 | <a name="output_public-urls"></a> [public-urls](#output\_public-urls) | Map of region to public URL for the service, if service-ingress is INGRESS\_TRAFFIC\_ALL. |
 | <a name="output_recorder-schemas"></a> [recorder-schemas](#output\_recorder-schemas) | READ THIS BEFORE YOU EDIT!!! These schemas are used to generate bigquery table names used by the recorder. If you are adding a schema you're fine to proceed. If you are changing the name of a schema, or removing a schema, terraform will try to delete the old schema. The recorders have a parameter `deletion_protection` enabled by default so terraform will fail to delete the schema.  The proper process for deleting or modifying a schema is in this playbook https://github.com/chainguard-dev/terraform-infra-common/blob/main/modules/github-events/README.md#modifying-schema-names-for-recorder |
+| <a name="output_service-account"></a> [service-account](#output\_service-account) | Email of the trampoline's service account. Grant it secretAccessor on any external secrets passed via additional\_webhook\_secrets. |
 <!-- END_TF_DOCS -->
