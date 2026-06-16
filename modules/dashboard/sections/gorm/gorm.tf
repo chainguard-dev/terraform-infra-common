@@ -89,6 +89,37 @@ module "open_connections" {
   primary_reduce  = "REDUCE_SUM"
 }
 
+module "txn_retries" {
+  source = "../../widgets/xy"
+  title  = "Transaction retries by reason"
+  filter = concat(var.filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/chorm_transaction_retries_total/counter\"",
+  ])
+  group_by_fields = [
+    "metric.label.\"reason\"",
+  ]
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+}
+
+module "txn_retry_exhausted" {
+  source = "../../widgets/xy"
+  title  = "Transaction retry exhaustions by reason"
+  filter = concat(var.filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/chorm_transaction_retry_exhausted_total/counter\"",
+  ])
+  group_by_fields = [
+    "metric.label.\"reason\"",
+  ]
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+  # Exhaustion should always be 0 in a healthy system; a zero reference line
+  # lets operators distinguish "metric not yet emitted" from a real nonzero rate.
+  thresholds = [0]
+}
+
 locals {
   columns = 2
   unit    = module.width.size / local.columns
@@ -134,6 +165,18 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.open_connections.widget,
+      }, {
+      yPos   = local.unit * 3
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.txn_retries.widget,
+      }, {
+      yPos   = local.unit * 3
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.txn_retry_exhausted.widget,
     },
   ]
 }

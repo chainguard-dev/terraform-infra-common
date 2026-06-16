@@ -18,6 +18,8 @@ No providers.
 | <a name="module_request_errors"></a> [request\_errors](#module\_request\_errors) | ../../widgets/xy | n/a |
 | <a name="module_table_request_count"></a> [table\_request\_count](#module\_table\_request\_count) | ../../widgets/xy | n/a |
 | <a name="module_total_request_count"></a> [total\_request\_count](#module\_total\_request\_count) | ../../widgets/xy | n/a |
+| <a name="module_txn_retries"></a> [txn\_retries](#module\_txn\_retries) | ../../widgets/xy | n/a |
+| <a name="module_txn_retry_exhausted"></a> [txn\_retry\_exhausted](#module\_txn\_retry\_exhausted) | ../../widgets/xy | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../width | n/a |
 
 ## Resources
