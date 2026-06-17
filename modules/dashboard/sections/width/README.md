@@ -22,6 +22,6 @@ No inputs.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_size"></a> [size](#output\_size) | n/a |
 <!-- END_TF_DOCS -->

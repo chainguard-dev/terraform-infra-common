@@ -440,7 +440,7 @@ terraform destroy
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.100 |
 | <a name="requirement_cosign"></a> [cosign](#requirement\_cosign) | >= 0.0.20 |
 | <a name="requirement_ko"></a> [ko](#requirement\_ko) | ~> 0.0.19 |
@@ -448,32 +448,32 @@ terraform destroy
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_my_go_service"></a> [my\_go\_service](#module\_my\_go\_service) | ../ | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.100/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_observability_enabled"></a> [observability\_enabled](#input\_observability\_enabled) | Enable AWS X-Ray tracing for observability | `bool` | `true` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy the service | `string` | `"us-east-1"` | no |
 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_built_image"></a> [built\_image](#output\_built\_image) | Built and signed container image |
 | <a name="output_ecr_repository_url"></a> [ecr\_repository\_url](#output\_ecr\_repository\_url) | ECR repository URL |
 | <a name="output_region"></a> [region](#output\_region) | AWS region where the service is deployed |

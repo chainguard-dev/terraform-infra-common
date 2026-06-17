@@ -6,7 +6,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
@@ -15,13 +15,13 @@ No requirements.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_invoker_name"></a> [invoker\_name](#module\_invoker\_name) | ../limited-concat | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [cosign_sign.this](https://registry.terraform.io/providers/chainguard-dev/cosign/latest/docs/resources/sign) | resource |
 | [google-beta_google_cloud_run_v2_job.this](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_job) | resource |
 | [google_cloud_run_v2_job_iam_binding.authorize-calls](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job_iam_binding) | resource |
@@ -36,7 +36,7 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_containers"></a> [containers](#input\_containers) | The containers to run in each job task. Ports, probes, and cpu\_idle are accepted for type compatibility with regional-go-service but are not used in job tasks. | <pre>map(object({<br/>    source = object({<br/>      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:2fdfacc8d61164aa9e20909dceec7cc28b9feb66580e8e1a65b9f2443c53b61b")<br/>      working_dir = string<br/>      importpath  = string<br/>      env         = optional(list(string), [])<br/>    })<br/>    command = optional(list(string), [])<br/>    args    = optional(list(string), [])<br/>    ports = optional(list(object({<br/>      name           = optional(string, "h2c")<br/>      container_port = number<br/>    })), [])<br/>    resources = optional(object({<br/>      limits = optional(object({<br/>        cpu    = string<br/>        memory = string<br/>      }), null)<br/>      cpu_idle          = optional(bool)<br/>      startup_cpu_boost = optional(bool, true)<br/>    }), {})<br/>    env = optional(list(object({<br/>      name  = string<br/>      value = optional(string)<br/>      value_source = optional(object({<br/>        secret_key_ref = object({<br/>          secret  = string<br/>          version = string<br/>        })<br/>      }), null)<br/>    })), [])<br/>    regional-env = optional(list(object({<br/>      name  = string<br/>      value = map(string)<br/>    })), [])<br/>    regional-cpu-idle = optional(map(bool), {})<br/>    volume_mounts = optional(list(object({<br/>      name       = string<br/>      mount_path = string<br/>    })), [])<br/>    startup_probe  = optional(any)<br/>    liveness_probe = optional(any)<br/>  }))</pre> | `{}` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection on the Cloud Run Jobs. | `bool` | `true` | no |
 | <a name="input_egress"></a> [egress](#input\_egress) | Which type of egress traffic to route through the VPC. ALL\_TRAFFIC or PRIVATE\_RANGES\_ONLY. | `string` | `"ALL_TRAFFIC"` | no |
@@ -66,7 +66,7 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_image_refs"></a> [image\_refs](#output\_image\_refs) | The signed image reference for each container, keyed by container name. Computed by ko/cosign before the Cloud Run Job is updated, so stable during apply. |
 | <a name="output_job_etag"></a> [job\_etag](#output\_job\_etag) | The etag of the Cloud Run Job in each region, changes whenever the job definition changes. |
 | <a name="output_job_ids"></a> [job\_ids](#output\_job\_ids) | The ID of the Cloud Run Job in each region. |

@@ -6,7 +6,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -16,7 +16,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_logging_metric.cloud-run-failed-req](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_logging_metric.cloud-run-scaling-failure](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_logging_metric.cloudrun_timeout](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
@@ -48,7 +48,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_dlq_filter"></a> [dlq\_filter](#input\_dlq\_filter) | additional filter to apply to dlq alert policy | `string` | `""` | no |
 | <a name="input_enable_high_retry"></a> [enable\_high\_retry](#input\_enable\_high\_retry) | Whether to enable the workqueue high retry alert | `bool` | `false` | no |
 | <a name="input_enable_scaling_alerts"></a> [enable\_scaling\_alerts](#input\_enable\_scaling\_alerts) | Whether to enable scaling alerts.<br/>  When logs appear with<br/>    "The request was aborted because there was no available instance." or<br/>    "The request failed because either the HTTP response was malformed or connection to the instance had an error." | `bool` | `false` | no |

@@ -62,20 +62,20 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_slo"></a> [slo](#module\_slo) | ../slo | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google-beta_google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_service) | resource |
 | [google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
 | [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
@@ -87,7 +87,7 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_containers"></a> [containers](#input\_containers) | The containers to run in the service.  Each container will be run in each region. | <pre>map(object({<br/>    image   = string<br/>    command = optional(list(string), [])<br/>    args    = optional(list(string), [])<br/>    ports = optional(list(object({<br/>      name           = optional(string, "http1")<br/>      container_port = number<br/>    })), [])<br/>    resources = optional(<br/>      object(<br/>        {<br/>          limits = optional(object(<br/>            {<br/>              cpu    = string<br/>              memory = string<br/>            }<br/>          ), null)<br/>          cpu_idle          = optional(bool)<br/>          startup_cpu_boost = optional(bool, true)<br/>        }<br/>      ),<br/>      {}<br/>    )<br/>    env = optional(list(object({<br/>      name  = string<br/>      value = optional(string)<br/>      value_source = optional(object({<br/>        secret_key_ref = object({<br/>          secret  = string<br/>          version = string<br/>        })<br/>      }), null)<br/>    })), [])<br/>    regional-env = optional(list(object({<br/>      name  = string<br/>      value = map(string)<br/>    })), [])<br/>    regional-cpu-idle = optional(map(bool), {})<br/>    volume_mounts = optional(list(object({<br/>      name       = string<br/>      mount_path = string<br/>    })), [])<br/>    startup_probe = optional(object({<br/>      initial_delay_seconds = optional(number)<br/>      // GCP Terraform provider defaults differ from Cloud Run defaults.<br/>      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe<br/>      period_seconds    = optional(number, 240)<br/>      timeout_seconds   = optional(number, 240)<br/>      failure_threshold = optional(number, 1)<br/>      http_get = optional(object({<br/>        path = string<br/>        port = optional(number)<br/>      }), null)<br/>      tcp_socket = optional(object({<br/>        port = optional(number)<br/>      }), null)<br/>      grpc = optional(object({<br/>        service = optional(string)<br/>        port    = optional(number)<br/>      }), null)<br/>    }))<br/>    liveness_probe = optional(object({<br/>      initial_delay_seconds = optional(number)<br/>      // GCP Terraform provider defaults differ from Cloud Run defaults.<br/>      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe<br/>      period_seconds    = optional(number, 240)<br/>      timeout_seconds   = optional(number, 240)<br/>      failure_threshold = optional(number, 1)<br/>      http_get = optional(object({<br/>        path = string<br/>        port = optional(number)<br/>      }), null)<br/>      tcp_socket = optional(object({<br/>        port = optional(number)<br/>      }), null)<br/>      grpc = optional(object({<br/>        service = optional(string)<br/>        port    = optional(number)<br/>      }), null)<br/>    }))<br/>  }))</pre> | n/a | yes |
 | <a name="input_custom_audiences"></a> [custom\_audiences](#input\_custom\_audiences) | Optional list of custom audiences accepted by the Cloud Run service's ID-token<br/>validation, in addition to the service's default *.run.app URL. Required for<br/>services reached by a non-run.app hostname or IP (e.g. behind an internal HTTP<br/>ALB / Private Service Connect) where callers cannot use the run.app URL as the<br/>token audience. Empty leaves custom audiences unset. | `list(string)` | `[]` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
@@ -118,7 +118,7 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_locations"></a> [locations](#output\_locations) | n/a |
 | <a name="output_names"></a> [names](#output\_names) | n/a |
 | <a name="output_uris"></a> [uris](#output\_uris) | n/a |

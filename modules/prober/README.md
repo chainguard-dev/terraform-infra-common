@@ -71,21 +71,21 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_gclb"></a> [gclb](#module\_gclb) | ../serverless-gclb | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_monitoring_alert_policy.uptime_alert](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_uptime_check_config.global_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
 | [google_monitoring_uptime_check_config.regional_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
@@ -95,7 +95,7 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alert_description"></a> [alert\_description](#input\_alert\_description) | Alert documentation. Use this to link to playbooks or give additional context. | `string` | `"An uptime check has failed."` | no |
 | <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image to use for the prober. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the prober. | `string` | `"1000m"` | no |
@@ -133,7 +133,7 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_alert_id"></a> [alert\_id](#output\_alert\_id) | n/a |
 | <a name="output_uptime_check"></a> [uptime\_check](#output\_uptime\_check) | n/a |
 | <a name="output_uptime_check_name"></a> [uptime\_check\_name](#output\_uptime\_check\_name) | n/a |

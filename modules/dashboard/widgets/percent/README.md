@@ -10,7 +10,7 @@ No providers.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_plot"></a> [plot](#module\_plot) | ../xy-ratio | n/a |
 
 ## Resources
@@ -20,7 +20,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_align"></a> [align](#input\_align) | n/a | `string` | `"ALIGN_RATE"` | no |
 | <a name="input_alignment_period"></a> [alignment\_period](#input\_alignment\_period) | n/a | `string` | `"60s"` | no |
 | <a name="input_common_filter"></a> [common\_filter](#input\_common\_filter) | n/a | `list(string)` | n/a | yes |
@@ -35,6 +35,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_widget"></a> [widget](#output\_widget) | n/a |
 <!-- END_TF_DOCS -->

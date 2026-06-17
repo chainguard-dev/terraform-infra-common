@@ -331,7 +331,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 | <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
@@ -343,7 +343,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_apprunner_auto_scaling_configuration_version.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apprunner_auto_scaling_configuration_version) | resource |
 | [aws_apprunner_observability_configuration.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apprunner_observability_configuration) | resource |
 | [aws_apprunner_service.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apprunner_service) | resource |
@@ -360,7 +360,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_auto_deployments_enabled"></a> [auto\_deployments\_enabled](#input\_auto\_deployments\_enabled) | Enable automatic deployments when new image pushed to ECR | `bool` | `true` | no |
 | <a name="input_autoscaling"></a> [autoscaling](#input\_autoscaling) | Autoscaling configuration for the service | <pre>object({<br/>    min_instances   = optional(number, 1)<br/>    max_instances   = optional(number, 25)<br/>    max_concurrency = optional(number, 100) # Concurrent requests per instance<br/>  })</pre> | <pre>{<br/>  "max_concurrency": 100,<br/>  "max_instances": 25,<br/>  "min_instances": 1<br/>}</pre> | no |
 | <a name="input_container"></a> [container](#input\_container) | The container configuration for the service. App Runner supports one container per service. | <pre>object({<br/>    source = object({<br/>      base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:2fdfacc8d61164aa9e20909dceec7cc28b9feb66580e8e1a65b9f2443c53b61b")<br/>      working_dir = string<br/>      importpath  = string<br/>      repo        = optional(string) # Override the default ko repository for this container<br/>      env         = optional(list(string), [])<br/>    })<br/>    args = optional(list(string), [])<br/>    port = optional(number, 8080)<br/>    env = optional(list(object({<br/>      name  = string<br/>      value = optional(string)<br/>    })), [])<br/>    # App Runner secrets from Secrets Manager or SSM Parameter Store<br/>    secrets = optional(list(object({<br/>      name  = string<br/>      value = string # ARN of the secret<br/>    })), [])<br/>    health_check = optional(object({<br/>      protocol            = optional(string, "TCP") # TCP or HTTP<br/>      path                = optional(string, "/")   # For HTTP health checks<br/>      interval            = optional(number, 5)     # Seconds between health checks<br/>      timeout             = optional(number, 2)     # Seconds to wait for response<br/>      healthy_threshold   = optional(number, 1)     # Consecutive successes needed<br/>      unhealthy_threshold = optional(number, 5)     # Consecutive failures needed<br/>    }))<br/>  })</pre> | n/a | yes |
@@ -386,7 +386,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_autoscaling_config_arn"></a> [autoscaling\_config\_arn](#output\_autoscaling\_config\_arn) | Auto-scaling configuration ARN |
 | <a name="output_built_image"></a> [built\_image](#output\_built\_image) | Built and signed container image reference |
 | <a name="output_ecr_repository_arn"></a> [ecr\_repository\_arn](#output\_ecr\_repository\_arn) | ECR repository ARN (if created by module) |

@@ -10,7 +10,7 @@ No providers.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_api_calls"></a> [api\_calls](#module\_api\_calls) | ../../widgets/xy | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
 | <a name="module_time_to_reset"></a> [time\_to\_reset](#module\_time\_to\_reset) | ../../widgets/xy | n/a |
@@ -24,7 +24,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | n/a | yes |
 | <a name="input_title"></a> [title](#input\_title) | n/a | `string` | n/a | yes |
@@ -32,6 +32,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_section"></a> [section](#output\_section) | n/a |
 <!-- END_TF_DOCS -->

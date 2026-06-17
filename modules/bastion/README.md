@@ -117,7 +117,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -127,7 +127,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_firewall.iap_ssh](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_instance.bastion](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
 | [google_compute_router.nat_router](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router) | resource |
@@ -147,7 +147,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | GCE API deletion protection flag. When true, prevents instance deletion via the API. | `bool` | `true` | no |
 | <a name="input_dev_principals"></a> [dev\_principals](#input\_dev\_principals) | IAM principals (users, groups, or service accounts) granted OS Login & Cloud SQL access. | `list(string)` | n/a | yes |
 | <a name="input_enable_nat"></a> [enable\_nat](#input\_enable\_nat) | Whether to create a dedicated Cloud NAT router for outbound egress. Disable when VPC already has NAT. | `bool` | `true` | no |
@@ -168,7 +168,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_instance_name"></a> [instance\_name](#output\_instance\_name) | Name of the bastion compute instance |
 | <a name="output_internal_ip"></a> [internal\_ip](#output\_internal\_ip) | Internal IP address of the bastion VM |
 | <a name="output_nat_router_name"></a> [nat\_router\_name](#output\_nat\_router\_name) | Name of the Cloud NAT router (empty when enable\_nat = false) |

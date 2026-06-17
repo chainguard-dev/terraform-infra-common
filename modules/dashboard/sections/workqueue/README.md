@@ -53,7 +53,7 @@ No providers.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_attempts-at-completion"></a> [attempts-at-completion](#module\_attempts-at-completion) | ../../widgets/xy | n/a |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
 | <a name="module_dead-letter-queue"></a> [dead-letter-queue](#module\_dead-letter-queue) | ../../widgets/xy | n/a |
@@ -78,7 +78,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
 | <a name="input_concurrent_work"></a> [concurrent\_work](#input\_concurrent\_work) | n/a | `number` | n/a | yes |
 | <a name="input_dispatcher_name"></a> [dispatcher\_name](#input\_dispatcher\_name) | n/a | `string` | `""` | no |
@@ -92,6 +92,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_section"></a> [section](#output\_section) | n/a |
 <!-- END_TF_DOCS -->

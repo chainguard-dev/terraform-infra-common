@@ -80,7 +80,7 @@ No providers.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../ | n/a |
 | <a name="module_errgrp"></a> [errgrp](#module\_errgrp) | ../sections/errgrp | n/a |
 | <a name="module_github"></a> [github](#module\_github) | ../sections/github | n/a |
@@ -101,7 +101,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alerts"></a> [alerts](#input\_alerts) | A mapping from alerting policy names to the alert ids to add to the dashboard. | `map(string)` | `{}` | no |
 | <a name="input_enable_oom_policy"></a> [enable\_oom\_policy](#input\_enable\_oom\_policy) | Toggle for enabling/disabling OOM alert policy. | `bool` | `true` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to the dashboard. | `map` | `{}` | no |
@@ -115,6 +115,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_json"></a> [json](#output\_json) | n/a |
 <!-- END_TF_DOCS -->

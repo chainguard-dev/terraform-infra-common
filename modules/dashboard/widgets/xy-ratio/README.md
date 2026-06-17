@@ -18,7 +18,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alignment_period"></a> [alignment\_period](#input\_alignment\_period) | n/a | `string` | `"60s"` | no |
 | <a name="input_denominator_align"></a> [denominator\_align](#input\_denominator\_align) | n/a | `string` | `"ALIGN_RATE"` | no |
 | <a name="input_denominator_filter"></a> [denominator\_filter](#input\_denominator\_filter) | n/a | `list(string)` | n/a | yes |
@@ -36,6 +36,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_widget"></a> [widget](#output\_widget) | https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart |
 <!-- END_TF_DOCS -->

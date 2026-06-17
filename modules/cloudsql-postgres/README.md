@@ -45,7 +45,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -55,7 +55,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_project_iam_member.client_sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_sql_database_instance.replicas](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/sql_database_instance) | resource |
 | [google_sql_database_instance.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/sql_database_instance) | resource |
@@ -63,7 +63,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_authorized_client_service_accounts"></a> [authorized\_client\_service\_accounts](#input\_authorized\_client\_service\_accounts) | List of Google service account emails that require `roles/cloudsql.client`. | `list(string)` | `[]` | no |
 | <a name="input_backup_enabled"></a> [backup\_enabled](#input\_backup\_enabled) | Enable automated daily backups. | `bool` | `true` | no |
 | <a name="input_backup_start_time"></a> [backup\_start\_time](#input\_backup\_start\_time) | Start time for the backup window (UTC, HH:MM). | `string` | `"08:00"` | no |
@@ -98,7 +98,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_client_sa_bindings"></a> [client\_sa\_bindings](#output\_client\_sa\_bindings) | Map of service‑account email → IAM binding resource ID. |
 | <a name="output_instance_connection_name"></a> [instance\_connection\_name](#output\_instance\_connection\_name) | Fully‑qualified connection name of the primary instance (<project>:<region>:<instance>). |
 | <a name="output_instance_name"></a> [instance\_name](#output\_instance\_name) | Name of the primary Cloud SQL instance. |

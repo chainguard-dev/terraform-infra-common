@@ -56,7 +56,7 @@ No providers.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_control_plane"></a> [control\_plane](#module\_control\_plane) | ../collapsible | n/a |
 | <a name="module_cp_credentials"></a> [cp\_credentials](#module\_cp\_credentials) | ../../widgets/xy | n/a |
 | <a name="module_cp_endpoint"></a> [cp\_endpoint](#module\_cp\_endpoint) | ../../widgets/xy | n/a |
@@ -80,7 +80,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | Whether the two microvm groups start collapsed. | `bool` | `true` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | Monitoring filter scoping the control-plane metrics to this service (e.g. the service\_name metric-label filter). | `list(string)` | n/a | yes |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | The GKE namespace the service's microvm agent pods run in; the agent-pod group is scoped to it. | `string` | n/a | yes |
@@ -88,6 +88,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_sections"></a> [sections](#output\_sections) | n/a |
 <!-- END_TF_DOCS -->

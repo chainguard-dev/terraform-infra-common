@@ -37,7 +37,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -47,14 +47,14 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [google_service_account_iam_binding.allow-impersonation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account_iam_binding) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_audit_refspec"></a> [audit\_refspec](#input\_audit\_refspec) | The regular expression to use for auditing the refspec component when using '*' | `string` | `""` | no |
 | <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | The regular expression to use for auditing the workflow ref component when using '*' | `string` | `""` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the service account. | `string` | n/a | yes |
@@ -68,6 +68,6 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_email"></a> [email](#output\_email) | n/a |
 <!-- END_TF_DOCS -->

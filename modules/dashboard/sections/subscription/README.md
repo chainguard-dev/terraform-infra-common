@@ -6,13 +6,13 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_collapsible"></a> [collapsible](#module\_collapsible) | ../collapsible | n/a |
 | <a name="module_oldest-unacked"></a> [oldest-unacked](#module\_oldest-unacked) | ../../widgets/xy | n/a |
 | <a name="module_push-latency"></a> [push-latency](#module\_push-latency) | ../../widgets/latency | n/a |
@@ -23,13 +23,13 @@ No requirements.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_monitoring_alert_policy.pubsub_unacked_messages](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alert_threshold"></a> [alert\_threshold](#input\_alert\_threshold) | n/a | `number` | `50000` | no |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | n/a | `list(string)` | n/a | yes |
@@ -39,6 +39,6 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_section"></a> [section](#output\_section) | n/a |
 <!-- END_TF_DOCS -->

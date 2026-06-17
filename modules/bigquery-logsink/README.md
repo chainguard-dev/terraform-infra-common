@@ -81,7 +81,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -91,7 +91,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_bigquery_dataset.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset) | resource |
 | [google_bigquery_dataset_iam_member.sink_writers](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset_iam_member) | resource |
 | [google_logging_project_sink.sinks](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_project_sink) | resource |
@@ -100,7 +100,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alert_auto_close_days"></a> [alert\_auto\_close\_days](#input\_alert\_auto\_close\_days) | Days after which to auto-close resolved alerts | `number` | `1` | no |
 | <a name="input_alert_threshold_minutes"></a> [alert\_threshold\_minutes](#input\_alert\_threshold\_minutes) | Minutes without log ingestion before triggering alert | `number` | `1440` | no |
 | <a name="input_dataset_description"></a> [dataset\_description](#input\_dataset\_description) | Description of the BigQuery dataset | `string` | `""` | no |
@@ -120,7 +120,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_dataset_id"></a> [dataset\_id](#output\_dataset\_id) | The ID of the BigQuery dataset |
 | <a name="output_sink_names"></a> [sink\_names](#output\_sink\_names) | Map of sink keys to their log sink names |
 | <a name="output_sink_writer_identities"></a> [sink\_writer\_identities](#output\_sink\_writer\_identities) | Map of sink keys to their writer identity service accounts |

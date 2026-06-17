@@ -374,7 +374,7 @@ terraform destroy
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.100 |
 | <a name="requirement_cosign"></a> [cosign](#requirement\_cosign) | >= 0.0.20 |
 | <a name="requirement_ko"></a> [ko](#requirement\_ko) | ~> 0.0.19 |
@@ -382,19 +382,19 @@ terraform destroy
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_example_prober"></a> [example\_prober](#module\_example\_prober) | ../ | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_sns_topic.prober_alerts](https://registry.terraform.io/providers/hashicorp/aws/5.100/docs/resources/sns_topic) | resource |
 | [aws_sns_topic_subscription.prober_alerts_email](https://registry.terraform.io/providers/hashicorp/aws/5.100/docs/resources/sns_topic_subscription) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.100/docs/data-sources/caller_identity) | data source |
@@ -402,7 +402,7 @@ terraform destroy
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alert_email"></a> [alert\_email](#input\_alert\_email) | Email address to receive alerts (optional) | `string` | `"cpanato@chainguard.dev"` | no |
 | <a name="input_enable_alerts"></a> [enable\_alerts](#input\_enable\_alerts) | Enable CloudWatch alarms for the prober | `bool` | `true` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region to deploy the prober | `string` | `"us-east-1"` | no |
@@ -411,7 +411,7 @@ terraform destroy
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_alarm_arn"></a> [alarm\_arn](#output\_alarm\_arn) | CloudWatch alarm ARN (if alerts are enabled) |
 | <a name="output_authorization_secret"></a> [authorization\_secret](#output\_authorization\_secret) | The shared authorization secret (for testing only - keep secure!) |
 | <a name="output_canary_name"></a> [canary\_name](#output\_canary\_name) | CloudWatch Synthetics canary name |

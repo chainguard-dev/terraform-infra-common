@@ -35,7 +35,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
@@ -46,7 +46,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_network.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
 | [google_compute_route.egress-inet](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_route) | resource |
 | [google_compute_subnetwork.regional](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
@@ -60,7 +60,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_cidr"></a> [cidr](#input\_cidr) | n/a | `string` | `"10.0.0.0/8"` | no |
 | <a name="input_hosted_zone_logging_enabled"></a> [hosted\_zone\_logging\_enabled](#input\_hosted\_zone\_logging\_enabled) | Whether to enable Cloud DNS query logging on this network. Implemented via a DNS Server Policy attached to the VPC (the only mechanism that works for private managed zones). | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the networking resources. | `map(string)` | `{}` | no |
@@ -74,7 +74,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_network_id"></a> [network\_id](#output\_network\_id) | n/a |
 | <a name="output_regional-networks"></a> [regional-networks](#output\_regional-networks) | n/a |
 <!-- END_TF_DOCS -->

@@ -40,7 +40,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -50,14 +50,14 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_artifact_registry_repository.attestations](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
 | [google_artifact_registry_repository_iam_member.writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository_iam_member) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_cleanup_policy_older_than"></a> [cleanup\_policy\_older\_than](#input\_cleanup\_policy\_older\_than) | Duration after which untagged images are deleted (e.g. 86400s for 1 day). | `string` | `"86400s"` | no |
 | <a name="input_location"></a> [location](#input\_location) | The location (region) for the Artifact Registry repository. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name for the Artifact Registry repository. | `string` | n/a | yes |
@@ -67,7 +67,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_attestations_path"></a> [attestations\_path](#output\_attestations\_path) | The full path for storing attestations (for use with STATUSMANAGER\_REPOSITORY). |
 | <a name="output_registry_uri"></a> [registry\_uri](#output\_registry\_uri) | The registry URI of the Artifact Registry repository. |
 | <a name="output_repository_id"></a> [repository\_id](#output\_repository\_id) | The ID of the Artifact Registry repository. |

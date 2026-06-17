@@ -29,7 +29,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -39,14 +39,14 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_address.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_address) | resource |
 | [google_compute_forwarding_rule.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_forwarding_rule) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_address"></a> [address](#input\_address) | Optional pre-reserved internal IP address (self-link / id) for the PSC endpoint. If empty, the module reserves an internal IP from the subnetwork. | `string` | `""` | no |
 | <a name="input_allow_psc_global_access"></a> [allow\_psc\_global\_access](#input\_allow\_psc\_global\_access) | Allow clients in any region to reach this PSC endpoint. Leave false when every caller runs in the endpoint's region; set true when callers run in other regions (e.g. a multi-region Cloud Run service dialing this single-region endpoint), otherwise their connections are silently dropped at the PSC layer. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | Resource name prefix for the consumer-side resources. | `string` | n/a | yes |
@@ -59,7 +59,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_endpoint_ip"></a> [endpoint\_ip](#output\_endpoint\_ip) | Internal IP address assigned to the PSC endpoint. |
 | <a name="output_psc_connection_id"></a> [psc\_connection\_id](#output\_psc\_connection\_id) | The PSC connection id of the endpoint forwarding rule. |
 <!-- END_TF_DOCS -->

@@ -46,7 +46,7 @@ No resources.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_limit"></a> [limit](#input\_limit) | Maximum length of the resulting concatenation. | `number` | n/a | yes |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | First part of the result, will be shortened if length(prefix)+length(suffix) > limit. | `string` | n/a | yes |
 | <a name="input_suffix"></a> [suffix](#input\_suffix) | Second part of the result, included in whole. | `string` | n/a | yes |
@@ -54,6 +54,6 @@ No resources.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_result"></a> [result](#output\_result) | The concatenation of prefix and suffix, with limit applied. |
 <!-- END_TF_DOCS -->

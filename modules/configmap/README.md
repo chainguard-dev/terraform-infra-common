@@ -66,7 +66,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -76,7 +76,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_secret_manager_secret.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
 | [google_secret_manager_secret_version.data](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
@@ -86,7 +86,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_data"></a> [data](#input\_data) | The data to place in the secret. | `string` | n/a | yes |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the secret. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the secret. | `string` | n/a | yes |
@@ -100,7 +100,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_secret_id"></a> [secret\_id](#output\_secret\_id) | The ID of the secret. |
 | <a name="output_secret_version_id"></a> [secret\_version\_id](#output\_secret\_version\_id) | The ID of the secret version. |
 | <a name="output_version"></a> [version](#output\_version) | The secret version. |

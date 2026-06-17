@@ -6,7 +6,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 
@@ -17,7 +17,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google-beta_google_container_node_pool.pools](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_container_node_pool) | resource |
 | [google_compute_firewall.master_webhook](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_container_cluster.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster) | resource |
@@ -28,7 +28,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_advanced_datapath_observability_config"></a> [advanced\_datapath\_observability\_config](#input\_advanced\_datapath\_observability\_config) | Config for Advanced Datapath Monitoring. | <pre>object({<br/>    enable         = optional(bool, false)<br/>    enable_metrics = optional(bool, true)<br/>    enable_relay   = optional(bool, true)<br/>  })</pre> | `{}` | no |
 | <a name="input_cluster_autoscaling"></a> [cluster\_autoscaling](#input\_cluster\_autoscaling) | Enabling of node auto-provisioning | `bool` | `false` | no |
 | <a name="input_cluster_autoscaling_cpu_limits"></a> [cluster\_autoscaling\_cpu\_limits](#input\_cluster\_autoscaling\_cpu\_limits) | Cluster autoscaling cpu limits | <pre>object({<br/>    resource_type = optional(string, "cpu")<br/>    minimum       = optional(number, 4)<br/>    maximum       = optional(number, 10)<br/>  })</pre> | `{}` | no |
@@ -64,7 +64,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_cluster_ca_certificate"></a> [cluster\_ca\_certificate](#output\_cluster\_ca\_certificate) | n/a |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | n/a |
 | <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | n/a |
