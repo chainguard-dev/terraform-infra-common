@@ -80,3 +80,23 @@ variable "extra_publishers" {
   type        = list(string)
   default     = []
 }
+
+variable "ingress" {
+  description = "Which type of ingress traffic to accept for the broker ingress Cloud Run service. Defaults to INGRESS_TRAFFIC_INTERNAL_ONLY so existing consumers see no diff. Set to INGRESS_TRAFFIC_ALL only when the broker must be reachable from outside any VPC (e.g. a CI environment without VPC connectivity)."
+  type        = string
+  default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  validation {
+    condition = contains([
+      "INGRESS_TRAFFIC_ALL",
+      "INGRESS_TRAFFIC_INTERNAL_ONLY",
+      "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER",
+    ], var.ingress)
+    error_message = "ingress must be one of: INGRESS_TRAFFIC_ALL, INGRESS_TRAFFIC_INTERNAL_ONLY, INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER."
+  }
+}
+
+variable "require_authenticated_invocations" {
+  description = "When true, do not grant roles/run.invoker to allUsers on the broker ingress service, even when ingress is not INTERNAL_ONLY. Defaults to false to preserve existing behavior. Set to true alongside a non-internal ingress so the broker is reachable over the public internet but only invocable by callers explicitly granted run.invoker (e.g. a CI service account), rejecting unauthenticated requests."
+  type        = bool
+  default     = false
+}

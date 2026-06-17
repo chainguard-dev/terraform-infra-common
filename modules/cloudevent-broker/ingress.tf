@@ -36,8 +36,10 @@ module "this" {
   regions    = var.regions
   team       = var.team
 
-  deletion_protection = var.deletion_protection
-  service_account     = google_service_account.this.email
+  deletion_protection               = var.deletion_protection
+  ingress                           = var.ingress
+  require_authenticated_invocations = var.require_authenticated_invocations
+  service_account                   = google_service_account.this.email
   containers = {
     "ingress" = {
       source = {
