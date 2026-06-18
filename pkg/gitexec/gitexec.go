@@ -59,9 +59,12 @@ func Output(ctx context.Context, op string, cmd *exec.Cmd, opts ...Option) ([]by
 	return run(ctx, op, cmd, true, opts...)
 }
 
-// Observe wraps a non-exec git operation (e.g. a go-git call) and records the
-// same observation shape as Run. Use this to keep go-git callers in the same
-// metric/log namespace as exec callers.
+// Observe wraps a non-exec git operation and records the same observation
+// shape as Run. It is the low-level primitive shared by this package and the
+// gogit shim, which is the supported way to observe go-git calls — not a
+// consumer API. Application code should not call Observe directly: to observe a
+// go-git operation gogit does not yet cover, add the wrapper to package gogit
+// (see its docs) rather than hand-instrumenting at the call site.
 func Observe(ctx context.Context, op string, fn func() error, opts ...Option) error {
 	started := time.Now()
 	err := fn()

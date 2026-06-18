@@ -20,6 +20,17 @@ SPDX-License-Identifier: Apache-2.0
 //
 // # go-git form
 //
+// Prefer the gogit subpackage: it is a drop-in for the network-performing
+// subset of go-git, so callers keep writing ordinary go-git and clone, fetch,
+// and push are observed without per-call instrumentation.
+//
+//	repo, err := gogit.PlainCloneContext(ctx, dir, false, &git.CloneOptions{URL: repoURL})
+//	...
+//	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
+//
+// Observe is the low-level primitive gogit is built on. Reach for it directly
+// only to record a go-git operation the shim does not yet cover:
+//
 //	err := gitexec.Observe(ctx, "fetch", func() error {
 //		return repo.FetchContext(ctx, &git.FetchOptions{...})
 //	}, gitexec.WithRepoURL(repoURL))
