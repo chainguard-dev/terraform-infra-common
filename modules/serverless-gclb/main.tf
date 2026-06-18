@@ -162,7 +162,7 @@ resource "google_compute_ssl_policy" "ssl_policy" {
   name                      = "${var.name}-ssl-policy"
   profile                   = "MODERN"
   min_tls_version           = "TLS_1_2"
-  post_quantum_key_exchange = var.post_quantum_key_exchange
+  post_quantum_key_exchange = "ENABLED"
 }
 
 // Create an HTTPS proxy for our URL map.

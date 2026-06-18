@@ -89,13 +89,3 @@ variable "enable_ipv6" {
   description = "Enable dualstack ipv6+ipv4 support on the edge/public loadbalancer end point. When false (default), ipv4-only is deployed."
   default     = false
 }
-
-variable "post_quantum_key_exchange" {
-  description = "Controls negotiation of the X25519MLKEM768 post-quantum hybrid key exchange. One of DEFAULT, DEFERRED, or ENABLED."
-  type        = string
-  default     = "DEFAULT"
-  validation {
-    condition     = contains(["DEFAULT", "DEFERRED", "ENABLED"], var.post_quantum_key_exchange)
-    error_message = "post_quantum_key_exchange must be one of DEFAULT, DEFERRED, or ENABLED."
-  }
-}
