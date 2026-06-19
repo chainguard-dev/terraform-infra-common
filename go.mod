@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	chainguard.dev/go-grpc-kit v0.17.17
-	chainguard.dev/sdk v0.1.72
+	chainguard.dev/sdk v0.1.56
 	cloud.google.com/go/bigquery v1.77.0
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/profiler v0.6.0
@@ -15,6 +15,7 @@ require (
 	github.com/chainguard-dev/clog v1.8.0
 	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/coreos/go-oidc/v3 v3.18.0
+	github.com/go-git/go-billy/v5 v5.9.0
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v84 v84.0.0
@@ -76,7 +77,6 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-git/go-billy/v5 v5.9.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -144,3 +144,5 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace chainguard.dev/sdk => ../../public/sdk

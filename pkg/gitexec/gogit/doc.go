@@ -24,8 +24,9 @@ SPDX-License-Identifier: Apache-2.0
 //
 // # Coverage and its limits
 //
-// Observed entry points: PlainCloneContext, (*Repository).FetchContext,
-// (*Repository).PushContext, (*Remote).FetchContext, (*Remote).PushContext.
+// Observed entry points: PlainCloneContext, CloneContext,
+// (*Repository).FetchContext, (*Repository).PushContext,
+// (*Remote).FetchContext, (*Remote).PushContext.
 //
 // Coverage is deliberately partial: it spans the operations mono uses today,
 // not all of go-git. These also touch the network but are NOT yet shadowed
@@ -36,7 +37,7 @@ SPDX-License-Identifier: Apache-2.0
 //     method and compile cleanly — a silent bypass, not a build error.
 //   - (*Remote).List and ListContext (ls-remote).
 //   - (*Worktree).Pull and PullContext (Worktree is not wrapped at all).
-//   - the Clone, CloneContext, and PlainClone constructors.
+//   - the non-context Clone and PlainClone constructors.
 //
 // When you need one of these observed, ADD the matching wrapper to this
 // package — shadow the method on the wrapper type, or add the constructor,

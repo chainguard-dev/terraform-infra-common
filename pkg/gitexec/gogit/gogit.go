@@ -10,6 +10,7 @@ import (
 	"errors"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/gitexec"
+	billy "github.com/go-git/go-billy/v5"
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/storage"
@@ -64,6 +65,24 @@ func PlainCloneContext(ctx context.Context, path string, isBare bool, o *git.Clo
 	err := observe(ctx, "clone", url, opts, func() error {
 		var cloneErr error
 		repo, cloneErr = git.PlainCloneContext(ctx, path, isBare, o)
+		return cloneErr
+	})
+	return Wrap(repo), err
+}
+
+// CloneContext mirrors git.CloneContext and records one "clone" observation,
+// deriving repo_host and repo_path from o.URL. Use it in place of
+// git.CloneContext when cloning into a caller-provided storer — e.g. an
+// in-memory store — which is the case PlainCloneContext cannot serve.
+func CloneContext(ctx context.Context, s storage.Storer, worktree billy.Filesystem, o *git.CloneOptions, opts ...Option) (*Repository, error) {
+	var url string
+	if o != nil {
+		url = o.URL
+	}
+	var repo *git.Repository
+	err := observe(ctx, "clone", url, opts, func() error {
+		var cloneErr error
+		repo, cloneErr = git.CloneContext(ctx, s, worktree, o)
 		return cloneErr
 	})
 	return Wrap(repo), err

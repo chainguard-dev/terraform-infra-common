@@ -16,9 +16,11 @@ import (
 	"time"
 
 	"github.com/chainguard-dev/clog"
+	"github.com/go-git/go-billy/v5/memfs"
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,6 +95,25 @@ func TestPlainCloneContext_RecordsCloneAndPromotesLocalMethods(t *testing.T) {
 	dst := filepath.Join(t.TempDir(), "clone")
 
 	repo, err := PlainCloneContext(ctx, dst, false, &git.CloneOptions{URL: seedRemote(t)})
+	require.NoError(t, err)
+	require.NotNil(t, repo)
+
+	// Promoted from the embedded *git.Repository, no override needed.
+	_, err = repo.Head()
+	require.NoError(t, err)
+
+	line := opLine(t, buf, "clone")
+	assert.Contains(t, line, `"outcome":"success"`)
+}
+
+// CloneContext is the constructor for cloning into a caller-provided storer —
+// the in-memory case PlainCloneContext cannot serve. It must record one "clone"
+// observation and return a *Repository whose embedded local methods work, so a
+// custom-storer caller swaps only the constructor.
+func TestCloneContext_RecordsCloneIntoCustomStorer(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	repo, err := CloneContext(ctx, memory.NewStorage(), memfs.New(), &git.CloneOptions{URL: seedRemote(t)})
 	require.NoError(t, err)
 	require.NotNil(t, repo)
 
