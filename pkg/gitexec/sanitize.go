@@ -25,18 +25,39 @@ func stripUserinfo(raw string) string {
 	return u.String()
 }
 
-// sanitizeArgs returns a copy of args with any URL userinfo stripped.
-// We only inspect tokens that look like URLs; everything else passes through.
+// sanitizeArgs returns a copy of args safe to log: URL userinfo is stripped,
+// and the value half of any "git -c key=value" argument is masked. Git config
+// values are a routine carrier of credentials (e.g. http.<url>.extraHeader
+// holds an Authorization header), and argv is logged verbatim otherwise, so we
+// redact every config value structurally rather than pattern-matching for
+// secrets. Everything else passes through.
 func sanitizeArgs(args []string) []string {
 	out := make([]string, len(args))
+	prev := ""
 	for i, a := range args {
-		if looksLikeURL(a) {
+		switch {
+		case prev == "-c":
+			out[i] = redactConfigValue(a)
+		case looksLikeURL(a):
 			out[i] = stripUserinfo(a)
-			continue
+		default:
+			out[i] = a
 		}
-		out[i] = a
+		prev = a
 	}
 	return out
+}
+
+// redactConfigValue masks the value half of a "key=value" git config argument,
+// preserving the key so logs still show which setting was applied. A bare key
+// with no "=" carries no value (git reads it as "key=true"), so it is returned
+// unchanged.
+func redactConfigValue(s string) string {
+	key, _, ok := strings.Cut(s, "=")
+	if !ok {
+		return s
+	}
+	return key + "=<redacted>"
 }
 
 func looksLikeURL(s string) bool {

@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -112,4 +113,28 @@ func TestRun_PreservesCallerStderr(t *testing.T) {
 	_ = Run(ctx, "clone", cmd)
 	assert.True(t, strings.Contains(callerStderr.String(), "fatal") || callerStderr.Len() > 0,
 		"caller's stderr writer must still receive output, got %q", callerStderr.String())
+}
+
+// Callers that point Stdout and Stderr at one writer (the combined-output
+// idiom) must not provoke a data race. os/exec shares a single copier
+// goroutine only while those two fields stay the same writer, so the
+// tail-capture wrapping must keep them identical; if it splits them, exec runs
+// two goroutines that race writing the shared buffer. Run under -race this
+// fails on a regression, and the combined output must still reach the caller.
+func TestRun_CombinedOutputSharedWriterNoRace(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	// Write to both streams so the race detector sees concurrent writes if the
+	// dedup were broken; a single stream would not exercise both goroutines.
+	cmd := exec.CommandContext(ctx, "sh", "-c", "echo to-stdout; echo to-stderr 1>&2") //nolint:gosec // fixed test args
+	var combined bytes.Buffer
+	cmd.Stdout = &combined
+	cmd.Stderr = &combined
+
+	require.NoError(t, Run(ctx, "status", cmd))
+
+	got := combined.String()
+	assert.Contains(t, got, "to-stdout", "stdout must reach the shared writer")
+	assert.Contains(t, got, "to-stderr", "stderr must reach the shared writer")
+	assert.Contains(t, buf.String(), `"outcome":"success"`)
 }

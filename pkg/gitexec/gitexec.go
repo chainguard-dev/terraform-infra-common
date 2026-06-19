@@ -74,19 +74,38 @@ func Observe(ctx context.Context, op string, fn func() error, opts ...Option) er
 
 func run(ctx context.Context, op string, cmd *exec.Cmd, captureStdout bool, opts ...Option) ([]byte, error) {
 	stderrTail := newTailBuffer(stderrTailBytes)
-	if cmd.Stderr == nil {
-		cmd.Stderr = stderrTail
-	} else {
-		cmd.Stderr = io.MultiWriter(cmd.Stderr, stderrTail)
-	}
 
 	var stdoutBuf *bytes.Buffer
 	if captureStdout {
 		stdoutBuf = &bytes.Buffer{}
-		if cmd.Stdout == nil {
-			cmd.Stdout = stdoutBuf
+	}
+
+	switch {
+	case cmd.Stdout != nil && writersEqual(cmd.Stdout, cmd.Stderr):
+		// Combined-output idiom: the caller pointed Stdout and Stderr at one
+		// writer. os/exec shares a single pipe and copier goroutine only while
+		// those two fields are the same writer; wrapping stderr on its own would
+		// make them differ, so exec would spawn two goroutines that race writing
+		// the shared writer. Wrap once and assign the result to both fields so
+		// the identity — and exec's deduplication — is preserved.
+		writers := []io.Writer{cmd.Stdout, stderrTail}
+		if stdoutBuf != nil {
+			writers = append(writers, stdoutBuf)
+		}
+		mw := io.MultiWriter(writers...)
+		cmd.Stdout, cmd.Stderr = mw, mw
+	default:
+		if cmd.Stderr == nil {
+			cmd.Stderr = stderrTail
 		} else {
-			cmd.Stdout = io.MultiWriter(cmd.Stdout, stdoutBuf)
+			cmd.Stderr = io.MultiWriter(cmd.Stderr, stderrTail)
+		}
+		if captureStdout {
+			if cmd.Stdout == nil {
+				cmd.Stdout = stdoutBuf
+			} else {
+				cmd.Stdout = io.MultiWriter(cmd.Stdout, stdoutBuf)
+			}
 		}
 	}
 
@@ -140,6 +159,20 @@ func record(ctx context.Context, op string, args []string, started time.Time, ex
 		return
 	}
 	clog.InfoContext(ctx, "git_operation", fields...)
+}
+
+// writersEqual reports whether a and b are the same writer. It mirrors the
+// identity check os/exec uses to decide whether Stdout and Stderr can share one
+// descriptor. Comparing interface values whose dynamic type is not comparable
+// panics, so recover and report not-equal — the same fallback os/exec takes,
+// which only costs a second descriptor rather than risking a panic.
+func writersEqual(a, b io.Writer) (equal bool) {
+	defer func() {
+		if recover() != nil {
+			equal = false
+		}
+	}()
+	return a == b
 }
 
 // argsAfterProgram returns cmd.Args without the leading program name.

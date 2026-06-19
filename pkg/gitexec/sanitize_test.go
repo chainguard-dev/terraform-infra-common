@@ -45,6 +45,41 @@ func TestSanitizeArgs(t *testing.T) {
 	assert.Equal(t, "/tmp/dest", got[3])
 }
 
+// A "-c key=value" config value can carry a credential (an authenticated clone
+// passes the GitHub token as http.<url>.extraHeader). The value must never
+// reach the logs, but the key is safe and useful for debugging, so it stays.
+func TestSanitizeArgs_redactsConfigValue(t *testing.T) {
+	in := []string{
+		"-c", "http.https://github.com/.extraHeader=Authorization: Basic eC1hY2Nlc3MtdG9rZW46U0VDUkVU",
+		"clone", "--bare", "https://github.com/o/r.git", "/tmp/dest",
+	}
+	got := sanitizeArgs(in)
+	for _, a := range got {
+		assert.NotContains(t, a, "eC1hY2Nlc3MtdG9rZW46U0VDUkVU", "config value leaked through sanitizeArgs")
+		assert.NotContains(t, a, "Authorization", "config value leaked through sanitizeArgs")
+	}
+	assert.Equal(t, "http.https://github.com/.extraHeader=<redacted>", got[1])
+	assert.Equal(t, "clone", got[2])
+	assert.Equal(t, "https://github.com/o/r.git", got[4])
+}
+
+// A bare "-c key" with no value is git's shorthand for "key=true"; there is
+// nothing secret to mask, so the arg passes through untouched.
+func TestSanitizeArgs_bareConfigKeyUnchanged(t *testing.T) {
+	in := []string{"-c", "protocol.version", "fetch"}
+	got := sanitizeArgs(in)
+	assert.Equal(t, []string{"-c", "protocol.version", "fetch"}, got)
+}
+
+// Only the arg following "-c" is treated as a config pair. The uppercase
+// "-C <dir>" flag (a working directory) must keep its value intact so logs
+// still show where the command ran.
+func TestSanitizeArgs_uppercaseCNotTreatedAsConfig(t *testing.T) {
+	in := []string{"-C", "/work/repo=clone", "status"}
+	got := sanitizeArgs(in)
+	assert.Equal(t, "/work/repo=clone", got[1])
+}
+
 // repoFromArgs feeds the repo_host and repo_path log fields. We want clean
 // values that are easy to group by in log queries.
 func TestRepoFromArgs(t *testing.T) {
