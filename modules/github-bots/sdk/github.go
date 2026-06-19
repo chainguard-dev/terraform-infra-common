@@ -29,6 +29,7 @@ import (
 
 	"chainguard.dev/sdk/octosts"
 	"github.com/chainguard-dev/clog"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/gitexec/gogit"
 	"github.com/google/go-github/v84/github"
 	"golang.org/x/oauth2"
 )
@@ -617,7 +618,7 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string, opts *
 	// git clone <repo>
 	// git fetch origin <ref>:<ref>
 	// git checkout <ref>
-	r, err := git.PlainCloneContext(ctx, destDir, false, &git.CloneOptions{
+	r, err := gogit.PlainCloneContext(ctx, destDir, false, &git.CloneOptions{
 		URL:   repo,
 		Auth:  auth,
 		Depth: depth,
@@ -651,7 +652,7 @@ func (c GitHubClient) CloneRepo(ctx context.Context, ref, destDir string, opts *
 		log.With("status", status).Error("failed checkout")
 		return nil, fmt.Errorf("failed to checkout ref %s: %w", ref, err)
 	}
-	return r, nil
+	return r.Repository, nil
 }
 
 // GetRelease fetches the release by tag
