@@ -213,12 +213,15 @@ resource "google_cloud_run_v2_job" "this" {
         }
       }
 
-      vpc_access {
-        network_interfaces {
-          network    = each.value.network
-          subnetwork = each.value.subnet
+      dynamic "vpc_access" {
+        for_each = each.value.network != null ? [1] : []
+        content {
+          network_interfaces {
+            network    = each.value.network
+            subnetwork = each.value.subnet
+          }
+          egress = var.egress
         }
-        egress = var.egress
       }
     }
   }

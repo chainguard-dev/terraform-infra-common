@@ -12,8 +12,8 @@ variable "name" {
 variable "regions" {
   description = "A map from region names to a network and subnetwork. A job and scheduler will be created in each region."
   type = map(object({
-    network = string
-    subnet  = string
+    network = optional(string)
+    subnet  = optional(string)
   }))
 }
 

@@ -27,12 +27,12 @@ module "impl" {
   service_account = var.service_account
   team            = var.team
   product         = var.product
-  egress          = var.vpc_access.egress
+  egress          = var.vpc_access != null ? var.vpc_access.egress : null
 
-  regions = { (var.region) = {
+  regions = { (var.region) = var.vpc_access != null ? {
     network = var.vpc_access.network_interfaces[0].network
     subnet  = var.vpc_access.network_interfaces[0].subnetwork
-  } }
+  } : {} }
 
   regional-cronspec = { (var.region) = {
     schedule  = var.schedule
