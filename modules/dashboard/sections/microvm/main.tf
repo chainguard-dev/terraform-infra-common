@@ -119,6 +119,40 @@ module "cp_credentials" {
   primary_reduce  = "REDUCE_SUM"
 }
 
+module "cp_start_outcome" {
+  source = "../../widgets/xy"
+  title  = "VM start outcomes by result"
+  filter = concat(var.filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_start_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"backend\"", "metric.label.\"result\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+  plot_type       = "STACKED_AREA"
+}
+
+module "cp_stream_breaks" {
+  source = "../../widgets/xy"
+  title  = "Supervisor stream breaks by reason"
+  filter = concat(var.filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_supervisor_stream_breaks_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"reason\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "cp_instance_close" {
+  source = "../../widgets/xy"
+  title  = "Instance teardowns by result"
+  filter = concat(var.filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_instance_close_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"result\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
 # ===== Agent-pod group (scoped to var.namespace) =====
 
 module "pod_egress" {
@@ -185,6 +219,102 @@ module "pod_exits" {
   primary_reduce  = "REDUCE_SUM"
 }
 
+module "pod_relay_rejected" {
+  source = "../../widgets/xy"
+  title  = "Agent relay ops rejected (guest DoS)"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_agent_relay_rejected_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"op\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "pod_oob_refused" {
+  source = "../../widgets/xy"
+  title  = "OOB volume attach refused (security)"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_volume_oob_attach_refused_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"volume\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "pod_fs_denied" {
+  source = "../../widgets/xy"
+  title  = "FS requests denied by guard (security)"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_fs_denied_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"reason\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "pod_dns_saturated" {
+  source = "../../widgets/xy"
+  title  = "DNS forwarder saturation (guest DoS)"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_dns_forwarder_saturated_total/counter\"",
+  ])
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+}
+
+module "pod_dns_upstream" {
+  source = "../../widgets/xy"
+  title  = "DNS upstream failures by op"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_dns_upstream_failures_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"op\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "pod_fqdn_cache" {
+  source = "../../widgets/xy"
+  title  = "FQDN cache events"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_fqdn_cache_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"event\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "pod_endpoint_forward_failed" {
+  source = "../../widgets/xy"
+  title  = "Endpoint forward failures by reason"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_endpoint_forward_failed_total/counter\"",
+  ])
+  group_by_fields = ["metric.label.\"reason\""]
+  primary_align   = "ALIGN_RATE"
+  primary_reduce  = "REDUCE_SUM"
+}
+
+module "pod_tcp_dial_failures" {
+  source = "../../widgets/xy"
+  title  = "Allowed TCP dial failures (reachability)"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_tcp_dial_failures_total/counter\"",
+  ])
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+}
+
+module "pod_dns_withheld" {
+  source = "../../widgets/xy"
+  title  = "DNS answers withheld by policy (recon)"
+  filter = concat(local.pod_filter, [
+    "metric.type=\"prometheus.googleapis.com/microvm_dns_withheld_total/counter\"",
+  ])
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+}
+
 locals {
   control_plane_tiles = [
     { yPos = local.unit, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.cp_lifecycle.widget },
@@ -193,6 +323,9 @@ locals {
     { yPos = local.unit * 2, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.cp_fsops.widget },
     { yPos = local.unit * 2, xPos = local.col[1], height = local.unit, width = local.unit, widget = module.cp_endpoint.widget },
     { yPos = local.unit * 2, xPos = local.col[2], height = local.unit, width = local.unit, widget = module.cp_credentials.widget },
+    { yPos = local.unit * 3, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.cp_start_outcome.widget },
+    { yPos = local.unit * 3, xPos = local.col[1], height = local.unit, width = local.unit, widget = module.cp_stream_breaks.widget },
+    { yPos = local.unit * 3, xPos = local.col[2], height = local.unit, width = local.unit, widget = module.cp_instance_close.widget },
   ]
 
   pod_tiles = [
@@ -202,6 +335,15 @@ locals {
     { yPos = local.unit * 2, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.pod_cpu.widget },
     { yPos = local.unit * 2, xPos = local.col[1], height = local.unit, width = local.unit, widget = module.pod_memory.widget },
     { yPos = local.unit * 2, xPos = local.col[2], height = local.unit, width = local.unit, widget = module.pod_scratch.widget },
+    { yPos = local.unit * 3, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.pod_relay_rejected.widget },
+    { yPos = local.unit * 3, xPos = local.col[1], height = local.unit, width = local.unit, widget = module.pod_oob_refused.widget },
+    { yPos = local.unit * 3, xPos = local.col[2], height = local.unit, width = local.unit, widget = module.pod_fs_denied.widget },
+    { yPos = local.unit * 4, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.pod_dns_saturated.widget },
+    { yPos = local.unit * 4, xPos = local.col[1], height = local.unit, width = local.unit, widget = module.pod_dns_upstream.widget },
+    { yPos = local.unit * 4, xPos = local.col[2], height = local.unit, width = local.unit, widget = module.pod_fqdn_cache.widget },
+    { yPos = local.unit * 5, xPos = local.col[0], height = local.unit, width = local.unit, widget = module.pod_endpoint_forward_failed.widget },
+    { yPos = local.unit * 5, xPos = local.col[1], height = local.unit, width = local.unit, widget = module.pod_tcp_dial_failures.widget },
+    { yPos = local.unit * 5, xPos = local.col[2], height = local.unit, width = local.unit, widget = module.pod_dns_withheld.widget },
   ]
 }
 
