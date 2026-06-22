@@ -8,6 +8,7 @@ package httpmetrics
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -20,8 +21,6 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
-	"github.com/chainguard-dev/clog"
-	gcpclog "github.com/chainguard-dev/clog/gcp"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/mileusna/useragent"
 	"github.com/prometheus/client_golang/prometheus"
@@ -40,6 +39,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/api/option"
+
+	"github.com/chainguard-dev/clog"
+	gcpclog "github.com/chainguard-dev/clog/gcp"
 )
 
 var env = envconfig.MustProcess(context.Background(), &struct {
@@ -360,7 +362,14 @@ func buildResource(ctx context.Context, onGCP bool) *resource.Resource {
 		resource.WithFromEnv(),
 	}
 	if onGCP {
-		resOpts = append(resOpts, resource.WithDetectors(gcp.NewDetector()))
+		resOpts = append(resOpts,
+			resource.WithDetectors(gcp.NewDetector()),
+			// Cloud Batch sets CLOUD_RUN_JOB so NewDetector() takes the
+			// CloudRunJob path, which reads cloud.region from instance/region
+			// (a Cloud Run-only metadata endpoint). Fall back to deriving it
+			// from instance/zone, which is available on all GCE-backed runtimes.
+			resource.WithAttributes(zoneAttributes(ctx)...),
+		)
 	}
 	if env.KnativeServiceName != "unknown" {
 		resOpts = append(resOpts, resource.WithAttributes(
@@ -369,9 +378,35 @@ func buildResource(ctx context.Context, onGCP bool) *resource.Resource {
 	}
 	res, err := resource.New(ctx, resOpts...)
 	if err != nil {
-		clog.FatalContextf(ctx, "tracerOptions(); resource.New() = %v", err)
+		if !errors.Is(err, resource.ErrPartialResource) {
+			clog.FatalContextf(ctx, "tracerOptions(); resource.New() = %v", err)
+		}
+		clog.WarnContextf(ctx, "tracerOptions(); resource.New() partial resource (continuing): %v", err)
 	}
 	return res
+}
+
+// zoneAttributes sets zone attributes based on context
+func zoneAttributes(ctx context.Context) []attribute.KeyValue {
+	zone, err := metadata.ZoneWithContext(ctx)
+	if err != nil || zone == "" {
+		return nil
+	}
+	return parseZoneAttributes(zone)
+}
+
+// parseZoneAttributes derives cloud.availability_zone and cloud.region from a
+// GCP zone string (e.g. "us-central1-a" → region "us-central1"). Returns nil
+// if the zone doesn't match the expected three-segment format.
+func parseZoneAttributes(zone string) []attribute.KeyValue {
+	parts := strings.SplitN(zone, "-", 3)
+	if len(parts) != 3 {
+		return nil
+	}
+	return []attribute.KeyValue{
+		attribute.String("cloud.availability_zone", zone),
+		attribute.String("cloud.region", strings.Join(parts[:2], "-")),
+	}
 }
 
 func newGCPProcessor(ctx context.Context) trace.SpanProcessor {

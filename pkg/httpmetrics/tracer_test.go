@@ -16,6 +16,19 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 )
 
+// toKVStrings converts []attribute.KeyValue to []string ("key=value") for
+// cmp.Diff comparisons without needing to reach into unexported Value fields.
+func toKVStrings(attrs []attribute.KeyValue) []string {
+	if attrs == nil {
+		return nil
+	}
+	out := make([]string, 0, len(attrs))
+	for _, a := range attrs {
+		out = append(out, string(a.Key)+"="+a.Value.AsString())
+	}
+	return out
+}
+
 func TestSelectExporters(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -300,6 +313,68 @@ func TestParseExporterEntry(t *testing.T) {
 				t.Errorf("parseExporterEntry(%q) = (%q, %q), want (%q, %q)", tt.entry, k, n, tt.wantKind, tt.wantName)
 			}
 		})
+	}
+}
+
+func TestParseZoneAttributes(t *testing.T) {
+	tests := []struct {
+		name string
+		zone string
+		want []string // "key=value" pairs, nil means nil return
+	}{
+		{
+			name: "standard us zone",
+			zone: "us-central1-a",
+			want: []string{"cloud.availability_zone=us-central1-a", "cloud.region=us-central1"},
+		},
+		{
+			name: "european zone",
+			zone: "europe-west1-b",
+			want: []string{"cloud.availability_zone=europe-west1-b", "cloud.region=europe-west1"},
+		},
+		{
+			name: "us-east zone",
+			zone: "us-east1-d",
+			want: []string{"cloud.availability_zone=us-east1-d", "cloud.region=us-east1"},
+		},
+		{
+			name: "empty zone returns nil",
+			zone: "",
+			want: nil,
+		},
+		{
+			name: "one-segment zone returns nil",
+			zone: "invalid",
+			want: nil,
+		},
+		{
+			name: "two-segment zone returns nil",
+			zone: "us-central1",
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseZoneAttributes(tt.zone)
+			if diff := cmp.Diff(tt.want, toKVStrings(got)); diff != "" {
+				t.Errorf("parseZoneAttributes(%q) mismatch (-want, +got):\n%s", tt.zone, diff)
+			}
+		})
+	}
+}
+
+// TestBuildResource_PartialErrorIsNotFatal verifies that buildResource does not
+// call clog.FatalContextf when the GCP resource detector returns
+// ErrPartialResource. On Cloud Batch (GCE-backed), instance/region is
+// unavailable (Cloud Run-only metadata), so the detector always returns a
+// partial error — previously this caused a fatal crash; now it should warn and
+// continue.
+func TestBuildResource_PartialErrorIsNotFatal(t *testing.T) {
+	// In a non-GCP test environment the GCP detector fails → ErrPartialResource.
+	// The function must return a non-nil resource rather than calling os.Exit.
+	got := buildResource(t.Context(), true)
+	if got == nil {
+		t.Fatal("buildResource(ctx, onGCP=true) = nil, want non-nil resource")
 	}
 }
 
