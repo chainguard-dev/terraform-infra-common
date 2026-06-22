@@ -9,8 +9,6 @@ terraform {
 }
 
 locals {
-  repo = var.repository != "" ? var.repository : "gcr.io/${var.project_id}/${var.name}"
-
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
@@ -38,7 +36,6 @@ resource "ko_build" "this" {
   base_image  = each.value.source.base_image
   working_dir = each.value.source.working_dir
   importpath  = each.value.source.importpath
-  repo        = local.repo
   env         = each.value.source.env
 }
 

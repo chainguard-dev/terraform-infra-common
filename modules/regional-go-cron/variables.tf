@@ -9,12 +9,6 @@ variable "name" {
   type = string
 }
 
-variable "repository" {
-  type        = string
-  default     = ""
-  description = "Container repository to publish images to. If empty, defaults to gcr.io/{project_id}/{name}."
-}
-
 variable "regions" {
   description = "A map from region names to a network and subnetwork. A job and scheduler will be created in each region."
   type = map(object({

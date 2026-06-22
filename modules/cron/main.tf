@@ -24,7 +24,6 @@ module "impl" {
 
   project_id      = var.project_id
   name            = "${var.name}-cron"
-  repository      = var.repository
   service_account = var.service_account
   team            = var.team
   product         = var.product
