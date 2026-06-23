@@ -10,7 +10,7 @@ import (
 	"fmt"
 
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-bots/sdk"
-	"github.com/google/go-github/v84/github"
+	"github.com/google/go-github/v88/github"
 )
 
 func ExampleNewBot() {

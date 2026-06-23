@@ -9,13 +9,21 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
-	"github.com/google/go-github/v84/github"
+	"github.com/google/go-github/v88/github"
 )
 
 func TestGitHubClientConfiguration(t *testing.T) {
+	newClient := func(httpClient *http.Client) *github.Client {
+		t.Helper()
+		client, err := github.NewClient(github.WithHTTPClient(httpClient))
+		if err != nil {
+			t.Fatalf("creating client: %v", err)
+		}
+		return client
+	}
+
 	tests := []struct {
 		name string
 		opts []GitHubClientOption
@@ -41,7 +49,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 		{
 			name: "with custom HTTP client",
 			opts: []GitHubClientOption{
-				WithClient(github.NewClient(&http.Client{
+				WithClient(newClient(&http.Client{
 					Transport: &http.Transport{},
 				})),
 			},
@@ -67,16 +75,15 @@ func TestGitHubClientConfiguration(t *testing.T) {
 				}))
 				defer ts.Close()
 
-				// Parse the test server URL
-				baseURL, err := url.Parse(ts.URL + "/")
-				if err != nil {
-					t.Fatalf("failed to parse test server URL: %v", err)
-				}
-
 				// Create a client pointing to test server
 				httpClient := &http.Client{Transport: &http.Transport{}}
-				testClient := github.NewClient(httpClient)
-				testClient.BaseURL = baseURL
+				testClient, err := github.NewClient(
+					github.WithHTTPClient(httpClient),
+					github.WithEnterpriseURLs(ts.URL, ts.URL),
+				)
+				if err != nil {
+					t.Fatalf("creating client: %v", err)
+				}
 
 				customClient := NewGitHubClient(
 					context.Background(),
@@ -88,8 +95,9 @@ func TestGitHubClientConfiguration(t *testing.T) {
 				)
 
 				// Client should now be configured to use the test server
-				if got := customClient.Client().BaseURL.String(); got != baseURL.String() {
-					t.Errorf("baseURL = %v, want %v", got, baseURL)
+				wantBaseURL := ts.URL + "/api/v3/"
+				if got := customClient.Client().BaseURL(); got != wantBaseURL {
+					t.Errorf("baseURL = %v, want %v", got, wantBaseURL)
 				}
 			},
 		},
@@ -106,7 +114,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 			// and https://chainguard-dev.slack.com/archives/C05SJTTHE79/p1763040569561639
 			name: "WithSecondaryRateLimitWaiter modifies transport (xfail)",
 			opts: []GitHubClientOption{
-				WithClient(github.NewClient(&http.Client{
+				WithClient(newClient(&http.Client{
 					Transport: &http.Transport{},
 				})),
 				WithSecondaryRateLimitWaiter(),
