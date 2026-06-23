@@ -22,12 +22,6 @@ variable "base_image" {
   description = "The base image that will be used to build the container image."
 }
 
-variable "repository" {
-  type        = string
-  default     = ""
-  description = "Container repository to publish images to."
-}
-
 variable "service_account" {
   type        = string
   description = "The email address of the service account to run the service as, and to invoke the job as."
