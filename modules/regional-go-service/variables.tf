@@ -48,6 +48,17 @@ EOD
   default     = "ALL_TRAFFIC"
 }
 
+variable "regional-egress" {
+  type        = map(string)
+  description = <<EOD
+Forwarded to regional-service. Optional per-region override of var.egress,
+keyed by region name. Regions absent from the map fall back to var.egress. Use
+to route a single region's public egress through the VPC (e.g. for a stable
+Cloud NAT egress IP) without changing the others.
+EOD
+  default     = {}
+}
+
 variable "service_account" {
   type        = string
   description = "The service account as which to run the service."

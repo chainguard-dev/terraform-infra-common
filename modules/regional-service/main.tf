@@ -109,7 +109,7 @@ resource "google_cloud_run_v2_service" "this" {
         network    = each.value.network
         subnetwork = each.value.subnet
       }
-      egress = var.egress
+      egress = lookup(var.regional-egress, each.key, var.egress)
       // TODO(mattmoor): When direct VPC egress supports network tags
       // for NAT egress, then we should incorporate those here.
     }

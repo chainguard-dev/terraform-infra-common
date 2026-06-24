@@ -29,6 +29,8 @@ module "this" {
   ingress    = var.ingress
   egress     = var.egress
 
+  regional-egress = var.regional-egress
+
   custom_audiences = var.custom_audiences
 
   deletion_protection = var.deletion_protection
