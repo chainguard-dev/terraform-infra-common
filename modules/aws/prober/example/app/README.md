@@ -11,7 +11,7 @@ This is a simple Go application that demonstrates how to build a prober for use 
 
 ## Environment Variables
 
-- `AUTHORIZATION` (required): Shared secret for authorization (set automatically by the module)
+- `AUTHORIZATION` (required): Shared secret for authorization (set automatically by the module). The application fails to start if this variable is not set.
 - `TARGET_URL` (optional): URL to check (default: `https://httpbin.org/status/200`)
 - `PORT` (optional): Port to listen on (default: `8080`)
 
