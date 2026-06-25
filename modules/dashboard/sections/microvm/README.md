@@ -61,15 +61,27 @@ No providers.
 | <a name="module_cp_credentials"></a> [cp\_credentials](#module\_cp\_credentials) | ../../widgets/xy | n/a |
 | <a name="module_cp_endpoint"></a> [cp\_endpoint](#module\_cp\_endpoint) | ../../widgets/xy | n/a |
 | <a name="module_cp_fsops"></a> [cp\_fsops](#module\_cp\_fsops) | ../../widgets/xy | n/a |
+| <a name="module_cp_instance_close"></a> [cp\_instance\_close](#module\_cp\_instance\_close) | ../../widgets/xy | n/a |
 | <a name="module_cp_lifecycle"></a> [cp\_lifecycle](#module\_cp\_lifecycle) | ../../widgets/xy | n/a |
 | <a name="module_cp_start_latency"></a> [cp\_start\_latency](#module\_cp\_start\_latency) | ../../widgets/xy | n/a |
+| <a name="module_cp_start_outcome"></a> [cp\_start\_outcome](#module\_cp\_start\_outcome) | ../../widgets/xy | n/a |
+| <a name="module_cp_stream_breaks"></a> [cp\_stream\_breaks](#module\_cp\_stream\_breaks) | ../../widgets/xy | n/a |
 | <a name="module_cp_token_mints"></a> [cp\_token\_mints](#module\_cp\_token\_mints) | ../../widgets/xy | n/a |
 | <a name="module_pod_blocked"></a> [pod\_blocked](#module\_pod\_blocked) | ../../widgets/xy | n/a |
 | <a name="module_pod_cpu"></a> [pod\_cpu](#module\_pod\_cpu) | ../../widgets/xy | n/a |
+| <a name="module_pod_dns_saturated"></a> [pod\_dns\_saturated](#module\_pod\_dns\_saturated) | ../../widgets/xy | n/a |
+| <a name="module_pod_dns_upstream"></a> [pod\_dns\_upstream](#module\_pod\_dns\_upstream) | ../../widgets/xy | n/a |
+| <a name="module_pod_dns_withheld"></a> [pod\_dns\_withheld](#module\_pod\_dns\_withheld) | ../../widgets/xy | n/a |
 | <a name="module_pod_egress"></a> [pod\_egress](#module\_pod\_egress) | ../../widgets/xy | n/a |
+| <a name="module_pod_endpoint_forward_failed"></a> [pod\_endpoint\_forward\_failed](#module\_pod\_endpoint\_forward\_failed) | ../../widgets/xy | n/a |
 | <a name="module_pod_exits"></a> [pod\_exits](#module\_pod\_exits) | ../../widgets/xy | n/a |
+| <a name="module_pod_fqdn_cache"></a> [pod\_fqdn\_cache](#module\_pod\_fqdn\_cache) | ../../widgets/xy | n/a |
+| <a name="module_pod_fs_denied"></a> [pod\_fs\_denied](#module\_pod\_fs\_denied) | ../../widgets/xy | n/a |
 | <a name="module_pod_memory"></a> [pod\_memory](#module\_pod\_memory) | ../../widgets/xy | n/a |
+| <a name="module_pod_oob_refused"></a> [pod\_oob\_refused](#module\_pod\_oob\_refused) | ../../widgets/xy | n/a |
+| <a name="module_pod_relay_rejected"></a> [pod\_relay\_rejected](#module\_pod\_relay\_rejected) | ../../widgets/xy | n/a |
 | <a name="module_pod_scratch"></a> [pod\_scratch](#module\_pod\_scratch) | ../../widgets/xy | n/a |
+| <a name="module_pod_tcp_dial_failures"></a> [pod\_tcp\_dial\_failures](#module\_pod\_tcp\_dial\_failures) | ../../widgets/xy | n/a |
 | <a name="module_pods"></a> [pods](#module\_pods) | ../collapsible | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../width | n/a |
 
