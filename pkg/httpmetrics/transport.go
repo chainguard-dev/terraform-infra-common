@@ -263,7 +263,7 @@ func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.Roun
 		baseLabels := prometheus.Labels{
 			"method":        r.Method,
 			"host":          host,
-			"service_name":  env.KnativeServiceName,
+			"service_name":  serviceName,
 			"revision_name": env.KnativeRevisionName,
 			"ce_type":       r.Header.Get(CeTypeHeader),
 			"path":          path,
@@ -425,7 +425,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 					"duration_ms", time.Since(start).Milliseconds(),
 					"org", extractOrgFromGitHubURL(r.URL.Path),
 					"ce_type", r.Header.Get(CeTypeHeader),
-					"service_name", env.KnativeServiceName,
+					"service_name", serviceName,
 					"revision_name", env.KnativeRevisionName,
 				)
 			}
@@ -529,7 +529,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 					"organization":    organization,
 					"app_id":          appID,
 					"installation_id": installationID,
-					"service_name":    env.KnativeServiceName,
+					"service_name":    serviceName,
 					"code":            strconv.Itoa(resp.StatusCode),
 					"rate_limit_type": rateLimitType,
 				}).Inc()
@@ -541,7 +541,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 							"organization":    organization,
 							"app_id":          appID,
 							"installation_id": installationID,
-							"service_name":    env.KnativeServiceName,
+							"service_name":    serviceName,
 							"rate_limit_type": rateLimitType,
 						}).Observe(float64(seconds))
 					}
@@ -566,7 +566,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				"rate_limit_remaining", int64(remaining),
 				"rate_limit_limit", int64(limit),
 				"ce_type", r.Header.Get(CeTypeHeader),
-				"service_name", env.KnativeServiceName,
+				"service_name", serviceName,
 				"revision_name", env.KnativeRevisionName,
 			}
 			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {

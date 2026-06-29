@@ -48,9 +48,33 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 	MetricsPort int `env:"METRICS_PORT, default=2112"`
 
 	// https://cloud.google.com/run/docs/container-contract#services-env-vars
-	KnativeServiceName  string `env:"K_SERVICE, default=unknown"`
+	KnativeServiceName  string `env:"K_SERVICE"`
 	KnativeRevisionName string `env:"K_REVISION, default=unknown"`
+
+	// Cloud Run Jobs don't get K_SERVICE injected (only Services do); the job
+	// name comes through CLOUD_RUN_JOB instead.
+	// https://cloud.google.com/run/docs/container-contract#jobs-env-vars
+	CloudRunJobName string `env:"CLOUD_RUN_JOB"`
 }{})
+
+// serviceName is the value for the service_name metric label and the trace
+// service.name attribute, derived once at startup.
+var serviceName = resolveServiceName(env.KnativeServiceName, env.CloudRunJobName)
+
+// resolveServiceName falls back to the Cloud Run Job name when K_SERVICE is
+// unset, because Cloud Run Jobs don't set K_SERVICE the way Services do. This
+// keeps service_name meaningful for jobs instead of "unknown". We deliberately
+// don't fall back to CLOUD_RUN_EXECUTION for revision_name: executions are
+// per-invocation and would blow up label cardinality.
+func resolveServiceName(kService, cloudRunJob string) string {
+	if kService != "" {
+		return kService
+	}
+	if cloudRunJob != "" {
+		return cloudRunJob
+	}
+	return "unknown"
+}
 
 // SetupMetrics setups a prometheus exporter for otel metrics
 //
@@ -149,7 +173,7 @@ func Handler(name string, handler http.Handler) http.Handler {
 
 		labels := prometheus.Labels{
 			"handler":       name,
-			"service_name":  env.KnativeServiceName,
+			"service_name":  serviceName,
 			"revision_name": env.KnativeRevisionName,
 			"email":         "unknown",
 		}
@@ -371,9 +395,9 @@ func buildResource(ctx context.Context, onGCP bool) *resource.Resource {
 			resource.WithAttributes(zoneAttributes(ctx)...),
 		)
 	}
-	if env.KnativeServiceName != "unknown" {
+	if serviceName != "unknown" {
 		resOpts = append(resOpts, resource.WithAttributes(
-			attribute.String("service.name", env.KnativeServiceName),
+			attribute.String("service.name", serviceName),
 		))
 	}
 	res, err := resource.New(ctx, resOpts...)

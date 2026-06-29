@@ -41,6 +41,37 @@ func TestServerMetrics(t *testing.T) {
 	}
 }
 
+func TestResolveServiceName(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		kService    string
+		cloudRunJob string
+		want        string
+	}{{
+		name:     "service sets K_SERVICE",
+		kService: "my-service",
+		want:     "my-service",
+	}, {
+		name:        "job falls back to CLOUD_RUN_JOB",
+		cloudRunJob: "my-job",
+		want:        "my-job",
+	}, {
+		name:        "K_SERVICE wins over CLOUD_RUN_JOB",
+		kService:    "my-service",
+		cloudRunJob: "my-job",
+		want:        "my-service",
+	}, {
+		name: "neither set yields unknown",
+		want: "unknown",
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := resolveServiceName(tc.kService, tc.cloudRunJob); got != tc.want {
+				t.Errorf("resolveServiceName(%q, %q) = %q, want %q", tc.kService, tc.cloudRunJob, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestBucketize(t *testing.T) {
 	SetBuckets(map[string]string{
 		"api.github.com":                       "GH API",
