@@ -66,7 +66,11 @@ resource "google_redis_instance" "default" {
   transit_encryption_mode = var.transit_encryption_mode
 
   read_replicas_mode = var.read_replicas_mode
-  replica_count      = var.replica_count
+  # replica_count can only be set when read replicas are enabled. With read
+  # replicas disabled, GCP rejects any replica_count in an update
+  # (FAILED_PRECONDITION) and manages the value itself (0 on BASIC, 1 for the
+  # STANDARD_HA standby), so leave it null and let the API own it.
+  replica_count = var.read_replicas_mode == "READ_REPLICAS_ENABLED" ? var.replica_count : null
 
   # Alternative location for HA setup
   alternative_location_id = var.alternative_location_id != "" ? var.alternative_location_id : null
