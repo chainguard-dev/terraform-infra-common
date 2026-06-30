@@ -41,6 +41,12 @@ The section displays:
 - Time to completion by priority
 - Dead letter queue size (when max_retry > 0)
 
+All widgets group by `queue_name` in addition to `service_name`, so that
+multiple reconcilers (workqueues) running inside the same Cloud Run service —
+each registered with a distinct `gcs.WithName` — are plotted as separate series
+rather than commingled. Queues that don't set a name report the empty
+`queue_name` label, preserving the existing single-series appearance.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
