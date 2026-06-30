@@ -88,6 +88,20 @@ module "work-queued" {
   primary_reduce  = "REDUCE_MIN"
 }
 
+module "work-waiting" {
+  source = "../../widgets/xy"
+  title  = "Amount of work waiting (not-before)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_notbefore_keys/gauge\"",
+    local.dsp_filter,
+  ])
+  group_by_fields = ["metric.label.\"service_name\""]
+  plot_type       = "STACKED_AREA"
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_MAX"
+}
+
 module "work-added" {
   source = "../../widgets/xy"
   title  = "Amount of work added"
@@ -353,6 +367,13 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.time-until-eligible.widget,
+    },
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.work-waiting.widget,
     }
     ],
     var.max_retry > 0 ? [
