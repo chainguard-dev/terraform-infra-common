@@ -73,6 +73,23 @@ variable "memory_size_gb" {
   }
 }
 
+variable "notify_keyspace_events" {
+  description = "The notify-keyspace-events Redis config: which keyspace notifications the instance emits, e.g. \"Ex\" for expired-key events. Null leaves notifications off."
+  type        = string
+  default     = null
+}
+
+variable "maxmemory_policy" {
+  description = "The maxmemory-policy Redis config: how the instance evicts keys under memory pressure, e.g. \"noeviction\". Null uses the Memorystore default."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.maxmemory_policy == null || contains(["noeviction", "allkeys-lru", "allkeys-lfu", "allkeys-random", "volatile-lru", "volatile-lfu", "volatile-random", "volatile-ttl"], var.maxmemory_policy)
+    error_message = "maxmemory_policy must be null or a valid Redis eviction policy."
+  }
+}
+
 variable "replica_count" {
   description = "The number of replica nodes."
   type        = number

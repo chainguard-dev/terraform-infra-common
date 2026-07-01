@@ -38,6 +38,11 @@ locals {
   } : {}
 
   merged_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+
+  redis_configs = { for k, v in {
+    "notify-keyspace-events" = var.notify_keyspace_events
+    "maxmemory-policy"       = var.maxmemory_policy
+  } : k => v if v != null }
 }
 
 # Enable the Redis API
@@ -60,6 +65,8 @@ resource "google_redis_instance" "default" {
   memory_size_gb    = var.memory_size_gb
   redis_version     = var.redis_version
   reserved_ip_range = var.reserved_ip_range
+
+  redis_configs = length(local.redis_configs) > 0 ? local.redis_configs : null
 
   connect_mode            = var.connect_mode
   auth_enabled            = var.auth_enabled
