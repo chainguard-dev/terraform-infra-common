@@ -61,19 +61,20 @@ module "impl" {
     }
   }
 
-  volumes               = var.volumes
-  max_retries           = var.max_retries
-  timeout               = var.timeout
-  task_count            = var.task_count
-  parallelism           = var.parallelism
-  execution_environment = var.execution_environment
-  launch_stage          = var.launch_stage
-  deletion_protection   = var.deletion_protection
-  notification_channels = var.notification_channels
-  labels                = var.labels
-  enable_otel_sidecar   = var.enable_otel_sidecar
-  otel_collector_image  = var.otel_collector_image
-  invokers              = var.invokers
+  volumes                  = var.volumes
+  max_retries              = var.max_retries
+  timeout                  = var.timeout
+  task_count               = var.task_count
+  parallelism              = var.parallelism
+  execution_environment    = var.execution_environment
+  launch_stage             = var.launch_stage
+  deletion_protection      = var.deletion_protection
+  notification_channels    = var.notification_channels
+  labels                   = var.labels
+  enable_otel_sidecar      = var.enable_otel_sidecar
+  otel_collector_image     = var.otel_collector_image
+  scrape_native_histograms = var.scrape_native_histograms
+  invokers                 = var.invokers
 
   success_alert_alignment_period_seconds = var.success_alert_alignment_period_seconds
   success_alert_duration_seconds         = var.success_alert_duration_seconds

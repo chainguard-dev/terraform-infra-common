@@ -28,6 +28,21 @@ locals {
   metrics_targets = join(", ", [
     for t in distinct(concat(["localhost:2112"], [for p in local.extra_metrics_ports : "localhost:${p}"])) : "\"${t}\""
   ])
+
+  // The native histogram scrape keys need opentelemetry-collector-contrib
+  // v0.142.0 or later; older collectors reject unknown keys at startup. When
+  // scraping is disabled the rendered config omits the keys entirely, so those
+  // collectors still start.
+  // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/receiver/prometheusreceiver/README.md#prometheus-native-histograms
+  native_histograms_config = var.scrape_native_histograms ? join("\n", [
+    "        # Negotiate the Prometheus protobuf format with targets that",
+    "        # serve native histograms, which the text format cannot carry.",
+    "        scrape_native_histograms: true",
+    "        # Keep emitting classic _bucket series alongside native histograms",
+    "        # so existing dashboards and recording rules keep working.",
+    "        always_scrape_classic_histograms: true",
+    "",
+  ]) : ""
 }
 
 // Build each application container image from source, mirroring regional-go-service.
@@ -204,11 +219,12 @@ resource "google_cloud_run_v2_job" "this" {
           args  = ["--config=env:OTEL_CONFIG"]
           env {
             name = "OTEL_CONFIG"
-            value = replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
+            value = replace(replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
               "REPLACE_ME_TEAM", var.team),
               "REPLACE_ME_PROJECT_ID", var.project_id),
               "REPLACE_ME_NAME", var.name),
-            "REPLACE_ME_TARGETS", local.metrics_targets)
+              "REPLACE_ME_TARGETS", local.metrics_targets),
+            "        # REPLACE_ME_NATIVE_HISTOGRAMS\n", local.native_histograms_config)
           }
         }
       }

@@ -187,8 +187,15 @@ variable "enable_otel_sidecar" {
 }
 
 variable "otel_collector_image" {
-  type    = string
-  default = "chainguard/opentelemetry-collector-contrib:latest"
+  type        = string
+  default     = "chainguard/opentelemetry-collector-contrib:latest"
+  description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub. The bundled scrape config enables native histogram scraping by default, which needs opentelemetry-collector-contrib v0.142.0 or later; older collectors reject the config at startup."
+}
+
+variable "scrape_native_histograms" {
+  type        = bool
+  default     = true
+  description = "Scrape native (exponential) histograms from metrics targets. Requires opentelemetry-collector-contrib v0.142.0 or later. Set to false when pinning otel_collector_image to an older collector, which rejects the scrape keys at startup."
 }
 
 variable "otel_resources" {
