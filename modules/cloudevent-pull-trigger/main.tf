@@ -117,6 +117,8 @@ resource "google_pubsub_subscription" "this" {
 
   ack_deadline_seconds = var.ack_deadline_seconds
 
+  enable_message_ordering = var.enable_message_ordering
+
   filter = var.raw_filter == "" ? join(" AND ", local.filter-elements) : var.raw_filter
 
   expiration_policy {

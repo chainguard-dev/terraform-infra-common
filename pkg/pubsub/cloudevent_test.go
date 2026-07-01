@@ -105,6 +105,32 @@ func TestFromCloudEvent(t *testing.T) {
 			Data: []byte("{}"),
 		},
 	}, {
+		name: "partitionkey extension does not set OrderingKey",
+		in: func() cloudevents.Event {
+			event := cloudevents.NewEvent()
+			event.SetID("id")
+			event.SetSource("source")
+			event.SetType("type")
+			event.SetSubject("subject")
+			event.SetTime(now)
+			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetExtension("partitionkey", "operations/abc123")
+			return event
+		}(),
+		out: &pubsub.Message{
+			Attributes: map[string]string{
+				"ce-id":           "id",
+				"ce-source":       "source",
+				"ce-specversion":  "1.0",
+				"ce-type":         "type",
+				"ce-subject":      "subject",
+				"ce-time":         "1973-11-29T21:33:09Z",
+				"ce-partitionkey": "operations/abc123",
+				"content-type":    "application/json",
+			},
+			Data: []byte("{}"),
+		},
+	}, {
 		name: "extension with reserved name does not overwrite standard attribute",
 		in: func() cloudevents.Event {
 			event := cloudevents.NewEvent()
@@ -135,6 +161,75 @@ func TestFromCloudEvent(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			out := FromCloudEvent(t.Context(), test.in)
+			if diff := cmp.Diff(test.out, out, cmpopts.IgnoreUnexported(pubsub.Message{})); diff != "" {
+				t.Errorf("(-want, +got): %s", diff)
+			}
+		})
+	}
+}
+
+func TestFromCloudEventWithOrdering(t *testing.T) {
+	now := time.Unix(123456789, 0)
+	tests := []struct {
+		name string
+		in   cloudevents.Event
+		out  *pubsub.Message
+	}{{
+		name: "partitionkey extension sets OrderingKey",
+		in: func() cloudevents.Event {
+			event := cloudevents.NewEvent()
+			event.SetID("id")
+			event.SetSource("source")
+			event.SetType("type")
+			event.SetSubject("subject")
+			event.SetTime(now)
+			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetExtension("partitionkey", "operations/abc123")
+			return event
+		}(),
+		out: &pubsub.Message{
+			Attributes: map[string]string{
+				"ce-id":           "id",
+				"ce-source":       "source",
+				"ce-specversion":  "1.0",
+				"ce-type":         "type",
+				"ce-subject":      "subject",
+				"ce-time":         "1973-11-29T21:33:09Z",
+				"ce-partitionkey": "operations/abc123",
+				"content-type":    "application/json",
+			},
+			Data:        []byte("{}"),
+			OrderingKey: "operations/abc123",
+		},
+	}, {
+		name: "no partitionkey leaves OrderingKey empty",
+		in: func() cloudevents.Event {
+			event := cloudevents.NewEvent()
+			event.SetID("id")
+			event.SetSource("source")
+			event.SetType("type")
+			event.SetSubject("subject")
+			event.SetTime(now)
+			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			return event
+		}(),
+		out: &pubsub.Message{
+			Attributes: map[string]string{
+				"ce-id":          "id",
+				"ce-source":      "source",
+				"ce-specversion": "1.0",
+				"ce-type":        "type",
+				"ce-subject":     "subject",
+				"ce-time":        "1973-11-29T21:33:09Z",
+				"content-type":   "application/json",
+			},
+			Data: []byte("{}"),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			out := FromCloudEventWithOrdering(t.Context(), test.in)
 			if diff := cmp.Diff(test.out, out, cmpopts.IgnoreUnexported(pubsub.Message{})); diff != "" {
 				t.Errorf("(-want, +got): %s", diff)
 			}

@@ -37,13 +37,13 @@ const (
 	maxRetry   = 3
 )
 
-var env = envconfig.MustProcess(context.Background(), &struct {
-	Port  int    `env:"PORT, default=8080"`
-	Topic string `env:"PUBSUB_TOPIC, required"`
-}{})
-
 func main() {
 	profiler.SetupProfiler()
+
+	env := envconfig.MustProcess(context.Background(), &struct {
+		Port  int    `env:"PORT, default=8080"`
+		Topic string `env:"PUBSUB_TOPIC, required"`
+	}{})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -80,6 +80,10 @@ func main() {
 	}
 
 	topic := psc.Publisher(env.Topic)
+	// Required to publish any message carrying an OrderingKey. Keyless
+	// (unordered) messages are unaffected: the client publishes them in
+	// parallel and serialises only within a single ordering key.
+	topic.EnableMessageOrdering = true
 	defer topic.Stop()
 
 	if err := c.StartReceiver(cloudevents.ContextWithRetriesExponentialBackoff(ctx, retryDelay, maxRetry), func(ctx context.Context, event cloudevents.Event) error {
@@ -105,18 +109,32 @@ func main() {
 			clog.ErrorContextf(ctx, "email claim is not verified: %s", claims.Email)
 			return cloudevents.NewHTTPResult(http.StatusUnauthorized, "Unverified email claim")
 		}
-		msg := cgpubsub.FromCloudEvent(ctx, event)
-		// Turn the email of the Google Service Account that sent the cloud
-		// event into an "actor" extension on the cloud event.
-		msg.Attributes["ce-actor"] = claims.Email
-
-		res := topic.Publish(ctx, msg)
-		if _, err := res.Get(ctx); err != nil {
-			clog.ErrorContextf(ctx, "failed to forward event: %v\n%v", event, err)
-			return cloudevents.NewHTTPResult(http.StatusInternalServerError, err.Error())
-		}
-		return nil
+		return forward(ctx, topic, event, claims.Email)
 	}); err != nil {
 		clog.Fatalf("failed to start receiver, %v", err)
 	}
+}
+
+// forward publishes a verified CloudEvent to the broker topic, stamping the
+// authenticated sender's email as the ce-actor extension. The event's
+// partitionkey extension becomes the message ordering key.
+func forward(ctx context.Context, topic *pubsub.Publisher, event cloudevents.Event, actor string) error {
+	msg := cgpubsub.FromCloudEventWithOrdering(ctx, event)
+	msg.Attributes["ce-actor"] = actor
+
+	res := topic.Publish(ctx, msg)
+	if _, err := res.Get(ctx); err != nil {
+		// A failed publish pauses the ordering key in the client. Resume it
+		// so later messages for the key keep publishing. This favours
+		// liveness: the source's retry of the failed event can land after
+		// newer events for the key, so consumers must tolerate reordering
+		// around a publish failure.
+		if msg.OrderingKey != "" {
+			topic.ResumePublish(msg.OrderingKey)
+		}
+		clog.ErrorContextf(ctx, "failed to forward event: %v\n%v", event, err)
+		return cloudevents.NewHTTPResult(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }

@@ -28,9 +28,32 @@ var standardCEAttributes = map[string]struct{}{
 	"content-type":   {},
 }
 
-// FromCloudEvent converts a CloudEvent into a Pub/Sub message with standard
-// CE attributes mapped to message attributes and the event data as the body.
+// partitionKeyExtension is the CloudEvents Partitioning extension key.
+// See https://github.com/cloudevents/spec/blob/main/cloudevents/extensions/partitioning.md.
+const partitionKeyExtension = "partitionkey"
+
+// FromCloudEvent converts a CloudEvent into a Pub/Sub message. Standard
+// CloudEvent fields become message attributes and the event data becomes
+// the body. The message carries no OrderingKey; use
+// [FromCloudEventWithOrdering] to derive one from the event.
 func FromCloudEvent(ctx context.Context, event cloudevents.Event) *pubsub.Message {
+	return fromCloudEvent(ctx, event, false)
+}
+
+// FromCloudEventWithOrdering converts a CloudEvent into a Pub/Sub message
+// like [FromCloudEvent], and additionally sets the message OrderingKey from
+// the event's CloudEvents Partitioning extension (partitionkey), per the
+// CloudEvents Pub/Sub protocol binding.
+//
+// Publishing a message with an OrderingKey requires EnableMessageOrdering on
+// the publisher; without it, Publish rejects the message outright. An event
+// without a partitionkey produces a message with no OrderingKey, which
+// publishes fine either way.
+func FromCloudEventWithOrdering(ctx context.Context, event cloudevents.Event) *pubsub.Message {
+	return fromCloudEvent(ctx, event, true)
+}
+
+func fromCloudEvent(ctx context.Context, event cloudevents.Event, ordered bool) *pubsub.Message {
 	attributes := map[string]string{
 		"ce-id":          event.ID(),
 		"ce-specversion": event.SpecVersion(),
@@ -41,6 +64,7 @@ func FromCloudEvent(ctx context.Context, event cloudevents.Event) *pubsub.Messag
 		"content-type":   event.DataContentType(),
 	}
 
+	var orderingKey string
 	for k, v := range event.Extensions() {
 		key := "ce-" + k
 		if _, reserved := standardCEAttributes[key]; reserved {
@@ -53,10 +77,14 @@ func FromCloudEvent(ctx context.Context, event cloudevents.Event) *pubsub.Messag
 			continue
 		}
 		attributes[key] = sv
+		if ordered && k == partitionKeyExtension {
+			orderingKey = sv
+		}
 	}
 
 	return &pubsub.Message{
-		Attributes: attributes,
-		Data:       event.Data(),
+		Attributes:  attributes,
+		Data:        event.Data(),
+		OrderingKey: orderingKey,
 	}
 }

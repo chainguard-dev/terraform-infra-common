@@ -156,3 +156,15 @@ variable "enable_dlq_bucket" {
   type        = bool
   default     = false
 }
+
+variable "enable_message_ordering" {
+  description = <<EOD
+Whether to deliver messages that share an ordering key in the order they
+were published.
+
+Note: Pub/Sub does not allow this setting to change on an existing
+subscription, so flipping it replaces the subscription.
+EOD
+  type        = bool
+  default     = false
+}
