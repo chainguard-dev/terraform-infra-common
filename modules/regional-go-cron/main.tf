@@ -43,6 +43,23 @@ locals {
     "        always_scrape_classic_histograms: true",
     "",
   ]) : ""
+
+  // Cloud Run caps total CPU across all containers in a task at 8 vCPU
+  // (8000m). Normalize each application container's cpu limit to millicpu
+  // ("2" -> 2000, "1.5" -> 1500, "500m" -> 500) and add the otel sidecar's
+  // implicit 1000m (it runs with no explicit limit) so an over-allocation
+  // fails at plan time here instead of on a Cloud Run 400 at apply.
+  container_millicpu = [
+    for c in values(var.containers) : try(
+      endswith(c.resources.limits.cpu, "m")
+      ? tonumber(trimsuffix(c.resources.limits.cpu, "m"))
+      : tonumber(c.resources.limits.cpu) * 1000,
+      0
+    )
+    if try(c.resources.limits.cpu, null) != null
+  ]
+  otel_sidecar_millicpu = var.enable_otel_sidecar ? 1000 : 0
+  total_millicpu        = sum(concat([0], local.container_millicpu, [local.otel_sidecar_millicpu]))
 }
 
 // Build each application container image from source, mirroring regional-go-service.
@@ -249,6 +266,11 @@ resource "google_cloud_run_v2_job" "this" {
       template[0].template[0].containers[2].name,
       template[0].template[0].containers[3].name,
     ]
+
+    precondition {
+      condition     = local.total_millicpu <= 8000
+      error_message = "Cron ${var.name}: total CPU across all containers is ${local.total_millicpu}m, which exceeds the Cloud Run per-task limit of 8000m. The otel sidecar (enable_otel_sidecar=true) adds an implicit 1000m; lower the container cpu limit(s) to leave room for it."
+    }
   }
 }
 
