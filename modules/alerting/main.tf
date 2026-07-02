@@ -911,7 +911,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
       }
 
       comparison = "COMPARISON_GT"
-      duration   = "0s"
+      duration   = var.dlq_alert_duration
       filter     = <<EOT
         metric.type="pubsub.googleapis.com/topic/send_request_count"
         resource.type="pubsub_topic"
@@ -924,13 +924,12 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
         count = "1"
       }
 
-      // TODO: make configurable later
-      threshold_value = 1
+      threshold_value = var.dlq_alert_threshold
     }
 
-    display_name = "Dead-letter queue messages above 1"
+    display_name = "Dead-letter queue messages above ${var.dlq_alert_threshold}"
   }
-  display_name = "Dead-letter queue messages above 1"
+  display_name = "Dead-letter queue messages above ${var.dlq_alert_threshold}"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars

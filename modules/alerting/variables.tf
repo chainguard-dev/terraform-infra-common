@@ -98,6 +98,18 @@ variable "dlq_filter" {
   default     = ""
 }
 
+variable "dlq_alert_threshold" {
+  description = "Number of dead-letter queue messages above which the alert fires."
+  type        = number
+  default     = 1
+}
+
+variable "dlq_alert_duration" {
+  description = "How long the dead-letter queue message count must stay above the threshold before the alert fires (e.g. '0s', '600s')."
+  type        = string
+  default     = "0s"
+}
+
 variable "panic_filter" {
   description = "additional filter to apply to panic alert policy"
   type        = string

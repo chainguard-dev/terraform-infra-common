@@ -49,6 +49,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_dlq_alert_duration"></a> [dlq\_alert\_duration](#input\_dlq\_alert\_duration) | How long the dead-letter queue message count must stay above the threshold before the alert fires (e.g. '0s', '600s'). | `string` | `"0s"` | no |
+| <a name="input_dlq_alert_threshold"></a> [dlq\_alert\_threshold](#input\_dlq\_alert\_threshold) | Number of dead-letter queue messages above which the alert fires. | `number` | `1` | no |
 | <a name="input_dlq_filter"></a> [dlq\_filter](#input\_dlq\_filter) | additional filter to apply to dlq alert policy | `string` | `""` | no |
 | <a name="input_enable_high_retry"></a> [enable\_high\_retry](#input\_enable\_high\_retry) | Whether to enable the workqueue high retry alert | `bool` | `false` | no |
 | <a name="input_enable_scaling_alerts"></a> [enable\_scaling\_alerts](#input\_enable\_scaling\_alerts) | Whether to enable scaling alerts.<br/>  When logs appear with<br/>    "The request was aborted because there was no available instance." or<br/>    "The request failed because either the HTTP response was malformed or connection to the instance had an error." | `bool` | `false` | no |
