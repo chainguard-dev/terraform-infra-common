@@ -226,3 +226,9 @@ variable "success_alert_duration_seconds" {
     error_message = "Duration must be either 0 (to use alignment period value) or between 60 seconds and 23.5 hours (GCP maximum)."
   }
 }
+
+variable "success_alert_documentation" {
+  description = "Markdown documentation attached to the success-absence alert. Shown in the incident and notification (e.g. a runbook or a Logs Explorer link). Empty (default) attaches none."
+  type        = string
+  default     = ""
+}

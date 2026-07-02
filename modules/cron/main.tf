@@ -78,6 +78,7 @@ module "impl" {
 
   success_alert_alignment_period_seconds = var.success_alert_alignment_period_seconds
   success_alert_duration_seconds         = var.success_alert_duration_seconds
+  success_alert_documentation            = var.success_alert_documentation
 }
 
 

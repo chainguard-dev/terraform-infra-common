@@ -200,6 +200,12 @@ variable "success_alert_duration_seconds" {
   }
 }
 
+variable "success_alert_documentation" {
+  description = "Markdown documentation attached to the success-absence alert. Shown in the incident and notification (e.g. a runbook or a Logs Explorer link). Empty (default) attaches none."
+  type        = string
+  default     = ""
+}
+
 variable "enable_otel_sidecar" {
   description = "Enable otel sidecar for metrics"
   type        = bool

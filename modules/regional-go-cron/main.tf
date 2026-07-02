@@ -326,6 +326,14 @@ resource "google_monitoring_alert_policy" "success" {
 
   user_labels = local.merged_labels
 
+  dynamic "documentation" {
+    for_each = var.success_alert_documentation == "" ? [] : [var.success_alert_documentation]
+    content {
+      content   = documentation.value
+      mime_type = "text/markdown"
+    }
+  }
+
   conditions {
     display_name = "Cloud Run Job Success Execution: ${var.name} (${each.key})"
 
