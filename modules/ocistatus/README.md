@@ -2,8 +2,10 @@
 
 This module encapsulates the creation of a Google Artifact Registry repository
 for storing OCI statusmanager attestations. It provisions the repository with
-appropriate cleanup policies and grants write access to the specified service
-account.
+appropriate cleanup policies and grants the specified service account access
+to write and replace attestations. Replacing an attestation deletes the
+superseded referrer manifest, so the grant is `roles/artifactregistry.repoAdmin`
+(which includes delete) rather than `roles/artifactregistry.writer`.
 
 ```hcl
 module "layer_attestations" {
@@ -62,7 +64,7 @@ No modules.
 | <a name="input_location"></a> [location](#input\_location) | The location (region) for the Artifact Registry repository. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name for the Artifact Registry repository. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID where the repository will be created. | `string` | n/a | yes |
-| <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account member (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) to grant write access. | `string` | n/a | yes |
+| <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account member (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) to grant access to write and replace attestations. | `string` | n/a | yes |
 
 ## Outputs
 

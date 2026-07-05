@@ -19,7 +19,7 @@ variable "location" {
 }
 
 variable "service_account" {
-  description = "The service account member (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) to grant write access."
+  description = "The service account member (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) to grant access to write and replace attestations."
   type        = string
 }
 

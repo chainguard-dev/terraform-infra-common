@@ -23,11 +23,17 @@ resource "google_artifact_registry_repository" "attestations" {
   }
 }
 
-# Grant service account write access to the attestation repository
+# Grant the service account access to manage attestations in the repository.
+# The statusmanager resolves write conflicts by deleting superseded attestation
+# referrers before writing the replacement (referrer manifests are
+# content-addressed, so replacement is delete+write rather than an in-place
+# overwrite). That manifest DELETE requires
+# artifactregistry.repositories.deleteArtifacts, which is in repoAdmin but not
+# writer.
 resource "google_artifact_registry_repository_iam_member" "writer" {
   project    = google_artifact_registry_repository.attestations.project
   location   = google_artifact_registry_repository.attestations.location
   repository = google_artifact_registry_repository.attestations.name
-  role       = "roles/artifactregistry.writer"
+  role       = "roles/artifactregistry.repoAdmin"
   member     = var.service_account
 }
