@@ -324,7 +324,7 @@ resource "google_cloud_run_v2_service" "this" {
           for_each = var.otel_resources != null ? { "" : var.otel_resources } : {}
           content {
             limits            = resources.value.limits
-            cpu_idle          = resources.value.cpu_idle
+            cpu_idle          = coalesce(resources.value.cpu_idle, true)
             startup_cpu_boost = resources.value.startup_cpu_boost
           }
         }
