@@ -210,6 +210,12 @@ Create an Artifact Registry repository for OCI status attestations with automati
 
 Use this when a service publishes OCI status attestations and needs a dedicated repository.
 
+### [`gcsstatus`](./modules/gcsstatus/)
+
+Create a GCS bucket for reconciliation status JSON objects (the GCS-backed analog of `ocistatus`), with read/write IAM grants and an optional TTL lifecycle rule.
+
+Use this when a reconciler tracks state with the `gcsstatusmanager` and needs a bucket to store it in.
+
 ## AWS
 
 ### [`aws/apprunner-regional-go-service`](./modules/aws/apprunner-regional-go-service/)
