@@ -92,7 +92,11 @@ module "layout" {
     var.sections.github ? [module.github.section] : [],
     var.sections.gorm ? [module.gorm.section] : [],
     var.sections.agents ? [module.agents.section] : [],
-    var.sections.microvm != null ? module.microvm[0].sections : [],
+    // module.microvm is count 0 or 1; its `sections` output is already a list of
+    // sections. Un-nest exactly the count splat — not flatten() (which would
+    // recurse into each section's tile list) and not a `? :` conditional (whose
+    // heterogeneous 2-section true branch cannot type-unify with []).
+    concat([], module.microvm[*].sections...),
     [module.resources.section],
   )
 }
