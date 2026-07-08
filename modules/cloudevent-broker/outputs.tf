@@ -13,3 +13,13 @@ output "broker" {
     for region in keys(var.regions) : region => google_pubsub_topic.this[region].name
   }
 }
+
+output "dedicated" {
+  depends_on  = [google_pubsub_topic.dedicated]
+  description = "A map from each dedicated ce-type to a per-region map of its dedicated topic name. Empty unless dedicated_topics is set. Intended for use as the broker input of a cloudevent-trigger (or an equivalent consumer input) subscribing to a routed type."
+  value = {
+    for type in keys(var.dedicated_topics) : type => {
+      for region in keys(var.regions) : region => google_pubsub_topic.dedicated["${region}-${type}"].name
+    }
+  }
+}

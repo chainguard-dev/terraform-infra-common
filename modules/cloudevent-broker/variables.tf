@@ -75,6 +75,29 @@ variable "cpu_idle" {
   default     = {}
 }
 
+variable "dedicated_topics" {
+  description = "Map from CloudEvent ce-type to config for routing that type onto its own dedicated per-region topic instead of the shared broker firehose. Consumers of a dedicated type must subscribe to the dedicated topic (see the `dedicated` output) rather than the shared broker. Defaults to empty: every event goes to the shared topic, unchanged. Set route=false to create the topic and grants without yet routing to it (so consumers can create their dedicated-topic subscriptions before the type is routed there, making cutover lossless); flip to route=true once those subscriptions exist."
+  type = map(object({
+    route = optional(bool, true)
+    # Topic retention for seek/replay. Defaults to the shared topic's 600s;
+    # raise it for a high-volume dedicated stream where a longer incident
+    # replay window is worth the storage.
+    message_retention_duration = optional(string, "600s")
+  }))
+  default = {}
+
+  validation {
+    // Keys become part of a Pub/Sub topic ID ("<name>-<type with dots as
+    // dashes>-<region>"), so restrict them to characters that stay valid and
+    // bound the length well under the 255-char topic-ID limit.
+    condition = alltrue([
+      for type in keys(var.dedicated_topics) :
+      can(regex("^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$", type)) && length(type) <= 100
+    ])
+    error_message = "dedicated_topics keys must be <=100 chars and contain only letters, digits, '.', '-', '_' (starting and ending alphanumeric)."
+  }
+}
+
 variable "extra_publishers" {
   description = "Additional service account emails (without 'serviceAccount:' prefix) to grant roles/pubsub.publisher on each regional broker topic. Listed alongside the ingress SA in the authoritative IAM binding."
   type        = list(string)

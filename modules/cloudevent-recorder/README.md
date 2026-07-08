@@ -93,6 +93,7 @@ No requirements.
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
+| <a name="module_extra-triggers"></a> [extra-triggers](#module\_extra-triggers) | ../cloudevent-trigger | n/a |
 | <a name="module_recorder-dashboard"></a> [recorder-dashboard](#module\_recorder-dashboard) | ../dashboard/cloudevent-receiver | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 | <a name="module_triggers"></a> [triggers](#module\_triggers) | ../cloudevent-trigger | n/a |
@@ -136,7 +137,9 @@ No requirements.
 | <a name="input_cloud_storage_config_max_duration"></a> [cloud\_storage\_config\_max\_duration](#input\_cloud\_storage\_config\_max\_duration) | The maximum duration that can elapse before a new Cloud Storage file is created. Min 1 minute, max 10 minutes, default 5 minutes. | `number` | `300` | no |
 | <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | A map of region names to cpu\_idle settings. When true, CPU is throttled when no requests are being processed. | `map(bool)` | `{}` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable deletion protection on data resources. | `bool` | `true` | no |
+| <a name="input_drop_shared_types"></a> [drop\_shared\_types](#input\_drop\_shared\_types) | ce-types to NOT subscribe to on the shared `broker`. Use after a type has been routed to a dedicated topic (and recorded via extra\_brokers) to remove the now-idle shared-topic subscription, which otherwise keeps paying delivery fees on the residual firehose. Requires method = "trigger". | `set(string)` | `[]` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
+| <a name="input_extra_brokers"></a> [extra\_brokers](#input\_extra\_brokers) | Additional broker topics to also subscribe recorder triggers to, keyed by ce-type then region. Creates extra cloudevent-triggers (filtered to that type) on the given topics alongside the shared-broker triggers, so a type routed onto a dedicated topic keeps being recorded. Wire to the cloudevent-broker `dedicated` output. Requires method = "trigger". | `map(map(string))` | `{}` | no |
 | <a name="input_flush_interval"></a> [flush\_interval](#input\_flush\_interval) | Flush interval for logrotate, as a duration string. | `string` | `""` | no |
 | <a name="input_ignore_unknown_values"></a> [ignore\_unknown\_values](#input\_ignore\_unknown\_values) | Whether to ignore unknown values in the data, when transferring data to BigQuery. | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the BigQuery and storage resources. | `map(string)` | `{}` | no |

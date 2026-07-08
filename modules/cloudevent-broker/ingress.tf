@@ -29,6 +29,22 @@ resource "google_pubsub_topic_iam_binding" "ingress-publishes-events" {
   )
 }
 
+// Authorize the same publishers on each dedicated topic, so the ingress can
+// route events there. NOTE: direct extra_publishers bypass the ingress routing
+// entirely; only declare a type in dedicated_topics if no extra_publisher emits
+// it directly, or its events will keep landing on the shared topic.
+resource "google_pubsub_topic_iam_binding" "ingress-publishes-dedicated-events" {
+  for_each = local.dedicated-regional-types
+
+  project = var.project_id
+  topic   = google_pubsub_topic.dedicated[each.key].name
+  role    = "roles/pubsub.publisher"
+  members = concat(
+    ["serviceAccount:${google_service_account.this.email}"],
+    [for sa in var.extra_publishers : "serviceAccount:${sa}"],
+  )
+}
+
 module "this" {
   source     = "../regional-go-service"
   project_id = var.project_id
@@ -47,10 +63,22 @@ module "this" {
         importpath  = "./cmd/ingress"
       }
       ports = [{ container_port = 8080 }]
-      regional-env = [{
-        name  = "PUBSUB_TOPIC"
-        value = { for k, v in google_pubsub_topic.this : k => v.name }
-      }]
+      // Only inject EVENT_TYPE_TOPIC_OVERRIDES when at least one type is routed,
+      // so callers not using dedicated_topics see no revision diff.
+      regional-env = concat(
+        [{
+          name  = "PUBSUB_TOPIC"
+          value = { for k, v in google_pubsub_topic.this : k => v.name }
+        }],
+        length(local.routed-types) == 0 ? [] : [{
+          name = "EVENT_TYPE_TOPIC_OVERRIDES"
+          value = {
+            for region in keys(var.regions) : region => join(",", [
+              for type in keys(local.routed-types) : "${type}:${google_pubsub_topic.dedicated["${region}-${type}"].name}"
+            ])
+          }
+        }],
+      )
       resources = {
         limits = var.limits
       }

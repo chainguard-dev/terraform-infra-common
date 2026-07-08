@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,12 +38,61 @@ const (
 	maxRetry   = 3
 )
 
+// buildPublishers creates one publisher per distinct destination topic — the
+// default topic plus each override target — reusing a single publisher when
+// types share a topic or an override points back at the default. It returns the
+// default publisher, a per-type routing map (types absent from it fall back to
+// the default), and the full set of distinct publishers to Stop() on shutdown.
+// Every publisher enables message ordering, which is required to publish any
+// message carrying an OrderingKey; keyless messages are unaffected. It errors on
+// an empty override topic name rather than deferring the failure to publish time.
+func buildPublishers(client *pubsub.Client, defaultTopic string, overrides map[string]string) (def *pubsub.Publisher, byType map[string]*pubsub.Publisher, all []*pubsub.Publisher, err error) {
+	byTopic := make(map[string]*pubsub.Publisher, len(overrides)+1)
+	publisher := func(name string) *pubsub.Publisher {
+		if p, ok := byTopic[name]; ok {
+			return p
+		}
+		p := client.Publisher(name)
+		p.EnableMessageOrdering = true
+		byTopic[name] = p
+		return p
+	}
+	def = publisher(defaultTopic)
+	byType = make(map[string]*pubsub.Publisher, len(overrides))
+	for t, name := range overrides {
+		if name == "" {
+			return nil, nil, nil, fmt.Errorf("override for type %q has an empty topic name", t)
+		}
+		byType[t] = publisher(name)
+	}
+	all = make([]*pubsub.Publisher, 0, len(byTopic))
+	for _, p := range byTopic {
+		all = append(all, p)
+	}
+	return def, byType, all, nil
+}
+
+// publisherForType returns the publisher an event of the given type publishes
+// to: its dedicated override publisher when one is configured, otherwise the
+// default.
+func publisherForType(byType map[string]*pubsub.Publisher, def *pubsub.Publisher, eventType string) *pubsub.Publisher {
+	if p, ok := byType[eventType]; ok {
+		return p
+	}
+	return def
+}
+
 func main() {
 	profiler.SetupProfiler()
 
 	env := envconfig.MustProcess(context.Background(), &struct {
 		Port  int    `env:"PORT, default=8080"`
 		Topic string `env:"PUBSUB_TOPIC, required"`
+		// EventTypeTopicOverrides maps a CloudEvent type to the dedicated topic
+		// its events are published to instead of the default Topic, as
+		// "type:topic,type:topic". Absent (the default) sends every event to
+		// Topic.
+		EventTypeTopicOverrides map[string]string `env:"EVENT_TYPE_TOPIC_OVERRIDES"`
 	}{})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -79,12 +129,17 @@ func main() {
 		clog.Fatalf("failed to create pubsub client, %v", err)
 	}
 
-	topic := psc.Publisher(env.Topic)
-	// Required to publish any message carrying an OrderingKey. Keyless
-	// (unordered) messages are unaffected: the client publishes them in
-	// parallel and serialises only within a single ordering key.
-	topic.EnableMessageOrdering = true
-	defer topic.Stop()
+	defaultTopic, publisherByType, allPublishers, err := buildPublishers(psc, env.Topic, env.EventTypeTopicOverrides)
+	if err != nil {
+		clog.Fatalf("failed to build publishers, %v", err)
+	}
+	defer func() {
+		for _, p := range allPublishers {
+			p.Stop()
+		}
+	}()
+
+	clog.InfoContextf(ctx, "broker ingress routing: default topic %q, type overrides %v", env.Topic, env.EventTypeTopicOverrides)
 
 	if err := c.StartReceiver(cloudevents.ContextWithRetriesExponentialBackoff(ctx, retryDelay, maxRetry), func(ctx context.Context, event cloudevents.Event) error {
 		// We expect Chainguard webhooks to pass an Authorization header.
@@ -109,7 +164,9 @@ func main() {
 			clog.ErrorContextf(ctx, "email claim is not verified: %s", claims.Email)
 			return cloudevents.NewHTTPResult(http.StatusUnauthorized, "Unverified email claim")
 		}
-		return forward(ctx, topic, event, claims.Email)
+		// Route the event to its dedicated topic if one is configured for its
+		// type, otherwise to the default topic.
+		return forward(ctx, publisherForType(publisherByType, defaultTopic, event.Type()), event, claims.Email)
 	}); err != nil {
 		clog.Fatalf("failed to start receiver, %v", err)
 	}

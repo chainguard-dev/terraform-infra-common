@@ -23,6 +23,26 @@ locals {
     ]...)
   ]...)
 
+  // Shared-broker triggers, excluding types that have been moved to a dedicated
+  // topic (recorded instead via extra_brokers). Removing a dropped type's
+  // shared subscription stops it paying delivery fees on the residual firehose.
+  shared-regional-types = {
+    for k, v in local.regional-types : k => v if !contains(var.drop_shared_types, v.type)
+  }
+
+  // Additive triggers on dedicated topics, one per (type, region) in
+  // extra_brokers, each carrying the dedicated topic to subscribe to.
+  extra-regional-types = merge([
+    for type, regions in var.extra_brokers : {
+      for region, topic in regions :
+      "${region}-${type}" => {
+        region = region
+        type   = type
+        broker = topic
+      }
+    }
+  ]...)
+
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))

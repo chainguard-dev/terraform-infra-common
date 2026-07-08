@@ -39,6 +39,18 @@ variable "broker" {
   description = "A map from each of the input region names to the name of the Broker topic in that region."
 }
 
+variable "extra_brokers" {
+  description = "Additional broker topics to also subscribe recorder triggers to, keyed by ce-type then region. Creates extra cloudevent-triggers (filtered to that type) on the given topics alongside the shared-broker triggers, so a type routed onto a dedicated topic keeps being recorded. Wire to the cloudevent-broker `dedicated` output. Requires method = \"trigger\"."
+  type        = map(map(string))
+  default     = {}
+}
+
+variable "drop_shared_types" {
+  description = "ce-types to NOT subscribe to on the shared `broker`. Use after a type has been routed to a dedicated topic (and recorded via extra_brokers) to remove the now-idle shared-topic subscription, which otherwise keeps paying delivery fees on the residual firehose. Requires method = \"trigger\"."
+  type        = set(string)
+  default     = []
+}
+
 variable "notification_channels" {
   description = "List of notification channels to alert (for service-level issues)."
   type        = list(string)

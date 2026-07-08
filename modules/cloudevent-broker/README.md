@@ -101,7 +101,9 @@ No requirements.
 
 | Name | Type |
 | ---- | ---- |
+| [google_pubsub_topic.dedicated](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
+| [google_pubsub_topic_iam_binding.ingress-publishes-dedicated-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_pubsub_topic_iam_binding.ingress-publishes-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 
@@ -110,6 +112,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | Set to false for a region in order to use instance-based billing. Defaults to true. | `map(bool)` | `{}` | no |
+| <a name="input_dedicated_topics"></a> [dedicated\_topics](#input\_dedicated\_topics) | Map from CloudEvent ce-type to config for routing that type onto its own dedicated per-region topic instead of the shared broker firehose. Consumers of a dedicated type must subscribe to the dedicated topic (see the `dedicated` output) rather than the shared broker. Defaults to empty: every event goes to the shared topic, unchanged. Set route=false to create the topic and grants without yet routing to it (so consumers can create their dedicated-topic subscriptions before the type is routed there, making cutover lossless); flip to route=true once those subscriptions exist. | <pre>map(object({<br/>    route = optional(bool, true)<br/>    # Topic retention for seek/replay. Defaults to the shared topic's 600s;<br/>    # raise it for a high-volume dedicated stream where a longer incident<br/>    # replay window is worth the storage.<br/>    message_retention_duration = optional(string, "600s")<br/>  }))</pre> | `{}` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
 | <a name="input_extra_publishers"></a> [extra\_publishers](#input\_extra\_publishers) | Additional service account emails (without 'serviceAccount:' prefix) to grant roles/pubsub.publisher on each regional broker topic. Listed alongside the ingress SA in the authoritative IAM binding. | `list(string)` | `[]` | no |
@@ -130,5 +133,6 @@ No requirements.
 | Name | Description |
 | ---- | ----------- |
 | <a name="output_broker"></a> [broker](#output\_broker) | A map from each of the input region names to the name of the Broker topic in each region.  These broker names are intended for use with the cloudevent-trigger module's broker input. |
+| <a name="output_dedicated"></a> [dedicated](#output\_dedicated) | A map from each dedicated ce-type to a per-region map of its dedicated topic name. Empty unless dedicated\_topics is set. Intended for use as the broker input of a cloudevent-trigger (or an equivalent consumer input) subscribing to a routed type. |
 | <a name="output_ingress"></a> [ingress](#output\_ingress) | An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events. |
 <!-- END_TF_DOCS -->

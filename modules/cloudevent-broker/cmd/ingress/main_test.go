@@ -20,10 +20,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// newTestPublisher returns an ordering-enabled publisher backed by an
-// in-memory Pub/Sub server. The server starts with auto-responses off so the
-// test controls each publish outcome via AddPublishResponse.
-func newTestPublisher(t *testing.T) (*pstest.Server, *pubsub.Publisher) {
+// newTestClient returns a Pub/Sub client backed by an in-memory server.
+func newTestClient(t *testing.T) (*pstest.Server, *pubsub.Client) {
 	t.Helper()
 
 	srv := pstest.NewServer()
@@ -40,6 +38,17 @@ func newTestPublisher(t *testing.T) (*pstest.Server, *pubsub.Publisher) {
 		t.Fatalf("pubsub.NewClient: %v", err)
 	}
 	t.Cleanup(func() { client.Close() })
+
+	return srv, client
+}
+
+// newTestPublisher returns an ordering-enabled publisher backed by an
+// in-memory Pub/Sub server. The server starts with auto-responses off so the
+// test controls each publish outcome via AddPublishResponse.
+func newTestPublisher(t *testing.T) (*pstest.Server, *pubsub.Publisher) {
+	t.Helper()
+
+	srv, client := newTestClient(t)
 
 	const topicName = "projects/test-project/topics/events"
 	if _, err := client.TopicAdminClient.CreateTopic(t.Context(), &pubsubpb.Topic{Name: topicName}); err != nil {
@@ -92,6 +101,75 @@ func published(srv *pstest.Server) []forwarded {
 	}
 
 	return out
+}
+
+// buildPublishers dedupes publishers by topic (an override pointing at the
+// default reuses the default; two types sharing a topic share one publisher),
+// and rejects an empty override topic name.
+func TestBuildPublishers(t *testing.T) {
+	_, client := newTestClient(t)
+
+	t.Run("override equal to default reuses the default publisher", func(t *testing.T) {
+		def, byType, all, err := buildPublishers(client, "shared", map[string]string{"t.default": "shared"})
+		if err != nil {
+			t.Fatalf("buildPublishers: %v", err)
+		}
+		if byType["t.default"] != def {
+			t.Errorf("override pointing at the default topic: got a separate publisher, want the default")
+		}
+		if len(all) != 1 {
+			t.Errorf("distinct publishers: got %d, want 1", len(all))
+		}
+	})
+
+	t.Run("types sharing a topic share one publisher, distinct from default", func(t *testing.T) {
+		def, byType, all, err := buildPublishers(client, "shared", map[string]string{"t.a": "ded", "t.b": "ded"})
+		if err != nil {
+			t.Fatalf("buildPublishers: %v", err)
+		}
+		if byType["t.a"] != byType["t.b"] {
+			t.Errorf("types sharing a topic: got different publishers, want the same")
+		}
+		if byType["t.a"] == def {
+			t.Errorf("dedicated publisher: got the default publisher, want a distinct one")
+		}
+		if len(all) != 2 {
+			t.Errorf("distinct publishers (shared + ded): got %d, want 2", len(all))
+		}
+		// Every publisher must enable message ordering — the dedicated topics
+		// carry partitionkey-derived ordering keys, and publishing an ordered
+		// message without it fails at runtime.
+		for _, p := range all {
+			if !p.EnableMessageOrdering {
+				t.Errorf("publisher %p: EnableMessageOrdering = false, want true", p)
+			}
+		}
+	})
+
+	t.Run("empty override topic name errors", func(t *testing.T) {
+		if _, _, _, err := buildPublishers(client, "shared", map[string]string{"t.x": ""}); err == nil {
+			t.Errorf("empty override topic: got nil error, want error")
+		}
+	})
+}
+
+// publisherForType routes an event to its type's dedicated publisher when one is
+// configured and to the default publisher otherwise.
+func TestPublisherForType(t *testing.T) {
+	def := &pubsub.Publisher{}
+	dedicated := &pubsub.Publisher{}
+
+	byType := map[string]*pubsub.Publisher{"dev.chainguard.registry.pull.v1": dedicated}
+
+	if got := publisherForType(byType, def, "dev.chainguard.registry.pull.v1"); got != dedicated {
+		t.Errorf("routed type: got %p, want dedicated publisher %p", got, dedicated)
+	}
+	if got := publisherForType(byType, def, "dev.chainguard.registry.push.v1"); got != def {
+		t.Errorf("unrouted type: got %p, want default publisher %p", got, def)
+	}
+	if got := publisherForType(map[string]*pubsub.Publisher{}, def, "anything"); got != def {
+		t.Errorf("empty map: got %p, want default publisher %p", got, def)
+	}
 }
 
 // A publish failure pauses the message's ordering key in the client, so every
