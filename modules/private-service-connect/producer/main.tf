@@ -22,14 +22,17 @@ resource "google_compute_region_network_endpoint_group" "this" {
 }
 
 # Regional internal-managed backend service pointing at the serverless NEG.
-# Serverless NEG backends do not use health checks.
+# Serverless NEG backends do not use health checks, and GCP rejects a
+# configured timeout_sec for them ("Timeout sec is not supported for a backend
+# service with Serverless network endpoint groups") — the effective request
+# timeout on this path is the Cloud Run service's own request timeout, so tune
+# that (regional-go-service request_timeout_seconds) for long-running backends.
 resource "google_compute_region_backend_service" "this" {
   project               = var.project
   region                = var.region
   name                  = "${var.name}-backend"
   load_balancing_scheme = "INTERNAL_MANAGED"
   protocol              = "HTTP"
-  timeout_sec           = var.timeout_sec
 
   backend {
     group = google_compute_region_network_endpoint_group.this.id
