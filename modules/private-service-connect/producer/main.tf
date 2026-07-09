@@ -29,6 +29,7 @@ resource "google_compute_region_backend_service" "this" {
   name                  = "${var.name}-backend"
   load_balancing_scheme = "INTERNAL_MANAGED"
   protocol              = "HTTP"
+  timeout_sec           = var.timeout_sec
 
   backend {
     group = google_compute_region_network_endpoint_group.this.id

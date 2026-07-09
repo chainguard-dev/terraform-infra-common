@@ -78,6 +78,7 @@ No modules.
 | <a name="input_psc_nat_subnets"></a> [psc\_nat\_subnets](#input\_psc\_nat\_subnets) | List of self-links of caller-created PRIVATE\_SERVICE\_CONNECT NAT subnets used by the service attachment. The module does not create these subnets. | `list(string)` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region in which the Cloud Run service, internal ALB, and service attachment live. | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Self-link of the subnetwork in which the internal ALB VIP is allocated. | `string` | n/a | yes |
+| <a name="input_timeout_sec"></a> [timeout\_sec](#input\_timeout\_sec) | Request timeout (seconds) for the internal ALB's backend service. Null (the default) leaves GCP's 30s default. Raise it for backends whose requests legitimately run longer than 30s (e.g. synchronous privileged work before responding) — otherwise the ALB returns 504 while the backend finishes work nobody receives. | `number` | `null` | no |
 
 ## Outputs
 
