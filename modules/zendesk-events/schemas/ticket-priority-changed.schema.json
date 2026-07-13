@@ -1,0 +1,143 @@
+[
+ {
+  "name": "when",
+  "type": "TIMESTAMP"
+ },
+ {
+  "name": "headers",
+  "type": "RECORD",
+  "fields": [
+   {
+    "name": "event_id",
+    "type": "STRING"
+   },
+   {
+    "name": "event_type",
+    "type": "STRING"
+   },
+   {
+    "name": "signature_timestamp",
+    "type": "STRING"
+   }
+  ]
+ },
+ {
+  "name": "body",
+  "type": "RECORD",
+  "fields": [
+   {
+    "name": "account_id",
+    "type": "INTEGER"
+   },
+   {
+    "name": "id",
+    "type": "STRING"
+   },
+   {
+    "name": "subject",
+    "type": "STRING"
+   },
+   {
+    "name": "time",
+    "type": "STRING"
+   },
+   {
+    "name": "type",
+    "type": "STRING"
+   },
+   {
+    "name": "zendesk_event_version",
+    "type": "STRING"
+   },
+   {
+    "name": "detail",
+    "type": "RECORD",
+    "fields": [
+     {
+      "name": "id",
+      "type": "STRING"
+     },
+     {
+      "name": "external_id",
+      "type": "STRING"
+     },
+     {
+      "name": "subject",
+      "type": "STRING"
+     },
+     {
+      "name": "status",
+      "type": "STRING"
+     },
+     {
+      "name": "priority",
+      "type": "STRING"
+     },
+     {
+      "name": "type",
+      "type": "STRING"
+     },
+     {
+      "name": "is_public",
+      "type": "BOOLEAN"
+     },
+     {
+      "name": "tags",
+      "type": "STRING",
+      "mode": "REPEATED"
+     },
+     {
+      "name": "brand_id",
+      "type": "STRING"
+     },
+     {
+      "name": "form_id",
+      "type": "STRING"
+     },
+     {
+      "name": "group_id",
+      "type": "STRING"
+     },
+     {
+      "name": "organization_id",
+      "type": "STRING"
+     },
+     {
+      "name": "assignee_id",
+      "type": "STRING"
+     },
+     {
+      "name": "requester_id",
+      "type": "STRING"
+     },
+     {
+      "name": "submitter_id",
+      "type": "STRING"
+     },
+     {
+      "name": "created_at",
+      "type": "STRING"
+     },
+     {
+      "name": "updated_at",
+      "type": "STRING"
+     }
+    ]
+   },
+   {
+    "name": "event",
+    "type": "RECORD",
+    "fields": [
+     {
+      "name": "previous",
+      "type": "STRING"
+     },
+     {
+      "name": "current",
+      "type": "STRING"
+     }
+    ]
+   }
+  ]
+ }
+]
