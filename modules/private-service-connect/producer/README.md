@@ -70,6 +70,7 @@ No modules.
 | <a name="input_cloud_run_service_name"></a> [cloud\_run\_service\_name](#input\_cloud\_run\_service\_name) | Name of the existing regional internal Cloud Run service to front with the internal ALB. | `string` | n/a | yes |
 | <a name="input_connection_limit"></a> [connection\_limit](#input\_connection\_limit) | Per-consumer connection limit applied to each entry in consumer\_accept\_projects. | `number` | `10` | no |
 | <a name="input_consumer_accept_projects"></a> [consumer\_accept\_projects](#input\_consumer\_accept\_projects) | List of consumer project IDs or numbers explicitly accepted by the service attachment (ACCEPT\_MANUAL). | `list(string)` | n/a | yes |
+| <a name="input_enable_logging"></a> [enable\_logging](#input\_enable\_logging) | Enable access logging on the internal ALB backend service (L7 request logs -> Cloud Logging at full sampling; reaches the SIEM via the org all-load-balancer sink). Opt-in; default off so existing producers are unaffected. | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to resources that support them. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Resource name prefix for the producer-side resources. | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | Self-link of the VPC network hosting the internal ALB frontend. | `string` | n/a | yes |

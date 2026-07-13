@@ -63,3 +63,9 @@ variable "allow_global_access" {
   type        = bool
   default     = false
 }
+
+variable "enable_logging" {
+  description = "Enable access logging on the internal ALB backend service (L7 request logs -> Cloud Logging at full sampling; reaches the SIEM via the org all-load-balancer sink). Opt-in; default off so existing producers are unaffected."
+  type        = bool
+  default     = false
+}

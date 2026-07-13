@@ -37,6 +37,17 @@ resource "google_compute_region_backend_service" "this" {
   backend {
     group = google_compute_region_network_endpoint_group.this.id
   }
+
+  # Opt-in L7 access logging (var.enable_logging). Default off keeps existing
+  # producers unchanged; when on, request logs flow to Cloud Logging and reach
+  # the SIEM via the org all-load-balancer sink.
+  dynamic "log_config" {
+    for_each = var.enable_logging ? [1] : []
+    content {
+      enable      = true
+      sample_rate = 1.0
+    }
+  }
 }
 
 # Regional URL map routing all traffic to the backend service.
