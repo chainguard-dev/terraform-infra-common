@@ -195,6 +195,7 @@ No requirements.
 | <a name="input_command"></a> [command](#input\_command) | Override the container entrypoint command. | `list(string)` | `[]` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the job. | `string` | `"1000m"` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
+| <a name="input_enable_observability_iam"></a> [enable\_observability\_iam](#input\_enable\_observability\_iam) | Whether this module grants the service account the observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent) on the project. Set false when the caller manages these grants itself, e.g. a service account shared across multiple services, where per-service grants would create overlapping non-authoritative IAM members that revoke each other on destroy. | `bool` | `true` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Enable otel sidecar for metrics | `bool` | `true` | no |
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_exec"></a> [exec](#input\_exec) | Whether to execute job on modify. | `bool` | `false` | no |

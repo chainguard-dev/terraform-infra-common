@@ -27,7 +27,9 @@ module "impl" {
   service_account = var.service_account
   team            = var.team
   product         = var.product
-  egress          = var.vpc_access != null ? var.vpc_access.egress : null
+
+  enable_observability_iam = var.enable_observability_iam
+  egress                   = var.vpc_access != null ? var.vpc_access.egress : null
 
   regions = { (var.region) = var.vpc_access != null ? {
     network = var.vpc_access.network_interfaces[0].network

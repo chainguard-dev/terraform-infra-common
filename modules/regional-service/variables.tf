@@ -275,6 +275,12 @@ variable "observability_role" {
   }
 }
 
+variable "enable_observability_iam" {
+  type        = bool
+  default     = true
+  description = "Whether this module grants the service account the observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent) on the project. Set false when the caller manages these grants itself, e.g. a service account shared across multiple services, where per-service grants would create overlapping non-authoritative IAM members that revoke each other on destroy."
+}
+
 variable "otel_resources" {
   type = object({
     limits = optional(object(

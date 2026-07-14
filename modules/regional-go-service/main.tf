@@ -60,6 +60,8 @@ module "this" {
   regional-volumes = var.regional-volumes
   enable_profiler  = var.enable_profiler
 
+  enable_observability_iam = var.enable_observability_iam
+
   enable_otel_sidecar      = var.enable_otel_sidecar
   otel_collector_image     = var.otel_collector_image
   scrape_native_histograms = var.scrape_native_histograms

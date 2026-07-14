@@ -83,7 +83,7 @@ resource "cosign_sign" "this" {
 // IAM policy member entry instead of three, to keep projects with many
 // services under the policy's 1,500-member limit.
 resource "google_project_iam_member" "metrics-writer" {
-  count = var.observability_role == null ? 1 : 0
+  count = var.enable_observability_iam && var.observability_role == null ? 1 : 0
 
   project = var.project_id
   role    = "roles/monitoring.metricWriter"
@@ -91,7 +91,7 @@ resource "google_project_iam_member" "metrics-writer" {
 }
 
 resource "google_project_iam_member" "trace-writer" {
-  count = var.observability_role == null ? 1 : 0
+  count = var.enable_observability_iam && var.observability_role == null ? 1 : 0
 
   project = var.project_id
   role    = "roles/cloudtrace.agent"
@@ -99,7 +99,7 @@ resource "google_project_iam_member" "trace-writer" {
 }
 
 resource "google_project_iam_member" "profiler-writer" {
-  count = var.observability_role == null ? 1 : 0
+  count = var.enable_observability_iam && var.observability_role == null ? 1 : 0
 
   project = var.project_id
   role    = "roles/cloudprofiler.agent"
@@ -107,7 +107,7 @@ resource "google_project_iam_member" "profiler-writer" {
 }
 
 resource "google_project_iam_member" "observability" {
-  count = var.observability_role == null ? 0 : 1
+  count = var.enable_observability_iam && var.observability_role != null ? 1 : 0
 
   project = var.project_id
   role    = var.observability_role
