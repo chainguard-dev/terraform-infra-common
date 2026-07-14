@@ -139,8 +139,14 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   message_retention_duration = "86400s"
   labels                     = local.default_labels
 
+  // Never expire this subscription. Pub/Sub deletes subscriptions with no
+  // subscriber activity after the expiration TTL, and nothing pulls from
+  // this subscription in steady state, so any finite TTL means it silently
+  // disappears about a day after creation. Messages published to a topic
+  // with no subscriptions are dropped, so once that happens dead-lettered
+  // events are lost with no retention and no replay path.
   expiration_policy {
-    ttl = "86400s"
+    ttl = ""
   }
 
   enable_message_ordering = true
@@ -208,6 +214,48 @@ resource "google_pubsub_subscription" "this" {
     minimum_backoff = "${var.minimum_backoff}s"
     maximum_backoff = "${var.maximum_backoff}s"
   }
+}
+
+// Alert when events are dead-lettered from this trigger's subscription.
+// A dead-lettered event has exhausted max_delivery_attempts and will never
+// be redelivered, so without an alert this is a silent failure mode.
+resource "google_monitoring_alert_policy" "dead-letter" {
+  count = var.alert_on_dead_letter ? 1 : 0
+
+  // Close after 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  severity = "WARNING"
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_DELTA"
+      }
+
+      comparison = "COMPARISON_GT"
+      duration   = "0s"
+      filter     = "resource.type = \"pubsub_subscription\" AND metric.type = \"pubsub.googleapis.com/subscription/dead_letter_message_count\" AND resource.label.\"subscription_id\" = \"${google_pubsub_subscription.this.name}\""
+
+      trigger {
+        count = "1"
+      }
+
+      threshold_value = 0
+    }
+
+    display_name = "Dead-lettered events: ${var.name}"
+  }
+  display_name = "Dead-lettered events: ${var.name}"
+
+  enabled = "true"
+
+  notification_channels = var.notification_channels
 }
 
 // Grant the pubsub service account the ability to Acknowledge messages on this "this" subscription.

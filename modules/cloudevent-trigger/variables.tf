@@ -114,6 +114,12 @@ variable "max_delivery_attempts" {
   default     = 20
 }
 
+variable "alert_on_dead_letter" {
+  description = "Alert (via notification_channels) when events are dead-lettered. Dead-lettered events have exhausted their delivery attempts and will not be redelivered, so without this alert they are a silent failure mode."
+  type        = bool
+  default     = false
+}
+
 variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)

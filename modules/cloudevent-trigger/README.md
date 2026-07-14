@@ -100,6 +100,7 @@ No requirements.
 | Name | Type |
 | ---- | ---- |
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
+| [google_monitoring_alert_policy.dead-letter](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_pubsub_subscription.dead-letter-pull-sub](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription_iam_binding.allow-pubsub-to-ack](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription_iam_binding) | resource |
@@ -117,6 +118,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_ack_deadline_seconds"></a> [ack\_deadline\_seconds](#input\_ack\_deadline\_seconds) | The deadline for acking a message. | `number` | `300` | no |
+| <a name="input_alert_on_dead_letter"></a> [alert\_on\_dead\_letter](#input\_alert\_on\_dead\_letter) | Alert (via notification\_channels) when events are dead-lettered. Dead-lettered events have exhausted their delivery attempts and will not be redelivered, so without this alert they are a silent failure mode. | `bool` | `false` | no |
 | <a name="input_broker"></a> [broker](#input\_broker) | The name of the pubsub topic we are using as a broker. | `string` | n/a | yes |
 | <a name="input_enable_dlq_bucket"></a> [enable\_dlq\_bucket](#input\_enable\_dlq\_bucket) | Enable the messages to sink in the bucket for the dead letter. | `bool` | `false` | no |
 | <a name="input_enable_message_ordering"></a> [enable\_message\_ordering](#input\_enable\_message\_ordering) | Whether to deliver messages that share an ordering key in the order they<br/>were published.<br/><br/>Note: Pub/Sub does not allow this setting to change on an existing<br/>subscription, so flipping it replaces the subscription. | `bool` | `false` | no |
