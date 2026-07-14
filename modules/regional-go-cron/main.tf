@@ -77,22 +77,58 @@ resource "cosign_sign" "this" {
   conflict = "REPLACE"
 }
 
+// The service account gets the three built-in observability roles
+// individually, unless the caller passes observability_role: a single
+// combined role (see the observability-role module) that costs one project
+// IAM policy member entry instead of three, to keep projects with many
+// services under the policy's 1,500-member limit.
 resource "google_project_iam_member" "metrics-writer" {
+  count = var.observability_role == null ? 1 : 0
+
   project = var.project_id
   role    = "roles/monitoring.metricWriter"
   member  = "serviceAccount:${var.service_account}"
 }
 
 resource "google_project_iam_member" "trace-writer" {
+  count = var.observability_role == null ? 1 : 0
+
   project = var.project_id
   role    = "roles/cloudtrace.agent"
   member  = "serviceAccount:${var.service_account}"
 }
 
 resource "google_project_iam_member" "profiler-writer" {
+  count = var.observability_role == null ? 1 : 0
+
   project = var.project_id
   role    = "roles/cloudprofiler.agent"
   member  = "serviceAccount:${var.service_account}"
+}
+
+resource "google_project_iam_member" "observability" {
+  count = var.observability_role == null ? 0 : 1
+
+  project = var.project_id
+  role    = var.observability_role
+  member  = "serviceAccount:${var.service_account}"
+}
+
+// State-address migration for deployments created when the three grants
+// above had no count, so they see a rename rather than destroy/create.
+moved {
+  from = google_project_iam_member.metrics-writer
+  to   = google_project_iam_member.metrics-writer[0]
+}
+
+moved {
+  from = google_project_iam_member.trace-writer
+  to   = google_project_iam_member.trace-writer[0]
+}
+
+moved {
+  from = google_project_iam_member.profiler-writer
+  to   = google_project_iam_member.profiler-writer[0]
 }
 
 // Dedicated service account for Cloud Scheduler to invoke the jobs.

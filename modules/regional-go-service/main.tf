@@ -64,6 +64,7 @@ module "this" {
   otel_collector_image     = var.otel_collector_image
   scrape_native_histograms = var.scrape_native_histograms
   otel_resources           = var.otel_resources
+  observability_role       = var.observability_role
 
   request_timeout_seconds = var.request_timeout_seconds
   execution_environment   = var.execution_environment

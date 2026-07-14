@@ -264,6 +264,17 @@ variable "enable_profiler" {
   description = "Enable cloud profiler."
 }
 
+variable "observability_role" {
+  type        = string
+  default     = null
+  description = "Fully-qualified id of a single role (e.g. from the observability-role module) to grant the service account in place of the three built-in observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent). Collapsing to one role keeps large projects under the 1,500-member IAM policy limit."
+
+  validation {
+    condition     = var.observability_role == null || can(regex("^projects/[^/]+/roles/[^/]+$", var.observability_role))
+    error_message = "observability_role must be a fully-qualified project role id: projects/{project}/roles/{role_id}."
+  }
+}
+
 variable "otel_resources" {
   type = object({
     limits = optional(object(

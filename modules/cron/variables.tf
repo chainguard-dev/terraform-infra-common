@@ -224,6 +224,17 @@ variable "scrape_native_histograms" {
   description = "Scrape native (exponential) histograms from metrics targets. Requires opentelemetry-collector-contrib v0.142.0 or later. Set to false when pinning otel_collector_image to an older collector, which rejects the scrape keys at startup."
 }
 
+variable "observability_role" {
+  type        = string
+  default     = null
+  description = "Fully-qualified id of a single role (e.g. from the observability-role module) to grant the service account in place of the three built-in observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent). Collapsing to one role keeps large projects under the 1,500-member IAM policy limit."
+
+  validation {
+    condition     = var.observability_role == null || can(regex("^projects/[^/]+/roles/[^/]+$", var.observability_role))
+    error_message = "observability_role must be a fully-qualified project role id: projects/{project}/roles/{role_id}."
+  }
+}
+
 variable "deletion_protection" {
   type        = bool
   description = "Whether to enable delete protection for the service."

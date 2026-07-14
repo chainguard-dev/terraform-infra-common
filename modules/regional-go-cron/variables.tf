@@ -204,6 +204,17 @@ variable "otel_resources" {
   default     = {}
 }
 
+variable "observability_role" {
+  type        = string
+  default     = null
+  description = "Fully-qualified id of a single role (e.g. from the observability-role module) to grant the service account in place of the three built-in observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent). Collapsing to one role keeps large projects under the 1,500-member IAM policy limit."
+
+  validation {
+    condition     = var.observability_role == null || can(regex("^projects/[^/]+/roles/[^/]+$", var.observability_role))
+    error_message = "observability_role must be a fully-qualified project role id: projects/{project}/roles/{role_id}."
+  }
+}
+
 variable "success_alert_alignment_period_seconds" {
   description = "Alignment period for successful completion alert. 0 (default) to not create alert."
   type        = number

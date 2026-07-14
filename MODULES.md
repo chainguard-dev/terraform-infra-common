@@ -216,6 +216,12 @@ Create a GCS bucket for reconciliation status JSON objects (the GCS-backed analo
 
 Use this when a reconciler tracks state with the `gcsstatusmanager` and needs a bucket to store it in.
 
+### [`observability-role`](./modules/observability-role/)
+
+Create a per-project custom IAM role combining the permissions of the three built-in observability roles (metric writer, trace agent, profiler agent) that the service modules grant to every service account.
+
+Use this once per project, then pass its id to the service modules via `observability_role`, so each service costs one project IAM policy member entry instead of three — GCP hard-caps a policy at 1,500 entries.
+
 ## AWS
 
 ### [`aws/apprunner-regional-go-service`](./modules/aws/apprunner-regional-go-service/)
