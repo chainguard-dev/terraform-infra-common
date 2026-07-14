@@ -57,11 +57,12 @@ locals {
 }
 
 module "this" {
-  count      = local.use_custom_recorder ? 1 : 0
-  source     = "../regional-go-service"
-  project_id = var.project_id
-  name       = var.name
-  regions    = var.regions
+  count              = local.use_custom_recorder ? 1 : 0
+  source             = "../regional-go-service"
+  observability_role = var.observability_role
+  project_id         = var.project_id
+  name               = var.name
+  regions            = var.regions
 
   team                = var.team
   deletion_protection = var.deletion_protection

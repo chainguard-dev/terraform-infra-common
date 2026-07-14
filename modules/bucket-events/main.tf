@@ -72,9 +72,10 @@ resource "google_service_account_iam_binding" "allow-pubsub-to-mint-tokens" {
 }
 
 module "this" {
-  source     = "../regional-go-service"
-  project_id = var.project_id
-  name       = var.name
+  source             = "../regional-go-service"
+  observability_role = var.observability_role
+  project_id         = var.project_id
+  name               = var.name
   regions = {
     (local.region) : var.regions[local.region]
   }

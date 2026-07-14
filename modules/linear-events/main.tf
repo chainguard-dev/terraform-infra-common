@@ -34,10 +34,11 @@ module "webhook-secret" {
 }
 
 module "this" {
-  source     = "../regional-go-service"
-  project_id = var.project_id
-  name       = var.name
-  regions    = var.regions
+  source             = "../regional-go-service"
+  observability_role = var.observability_role
+  project_id         = var.project_id
+  name               = var.name
+  regions            = var.regions
 
   ingress = var.service-ingress
 

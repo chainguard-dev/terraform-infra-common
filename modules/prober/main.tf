@@ -18,7 +18,8 @@ locals {
 }
 
 module "this" {
-  source = "../regional-go-service"
+  source             = "../regional-go-service"
+  observability_role = var.observability_role
 
   project_id = var.project_id
   name       = local.service_name
