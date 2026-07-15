@@ -5,8 +5,9 @@ resource "google_service_account" "sa" {
 }
 
 module "service" {
-  source             = "../regional-go-service"
-  observability_role = var.observability_role
+  source                   = "../regional-go-service"
+  observability_role       = var.observability_role
+  enable_observability_iam = var.enable_observability_iam
 
   name       = var.name
   project_id = var.project_id
