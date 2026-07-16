@@ -114,6 +114,12 @@ Create a managed Redis instance with configurable HA, authentication, persistenc
 
 Use this when a service needs a managed Redis instance for caching or session storage.
 
+### [`valkey`](./modules/valkey/)
+
+Create a Memorystore for Valkey instance reached over Private Service Connect, with IAM-only authentication and server-authenticated TLS.
+
+Use this when a service needs a managed Valkey instance.
+
 ### [`bigquery-logsink`](./modules/bigquery-logsink/)
 
 Export logs from specified sources into BigQuery via Cloud Logging sinks, with optional retention policies and ingestion health alerts.
