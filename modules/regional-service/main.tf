@@ -131,6 +131,18 @@ resource "google_cloud_run_v2_service" "this" {
 
   deletion_protection = var.deletion_protection
 
+  // Service-level scaling bounds instances across all revisions receiving
+  // traffic, where template-level scaling only bounds each revision. Cloud
+  // Run validates per-instance ephemeral disk reservations (e.g. disk-backed
+  // emptyDir volumes) against the regional quota using this combined cap, so
+  // services with large volumes must set it to deploy at all.
+  dynamic "scaling" {
+    for_each = var.scaling.service_max_instances != null ? [""] : []
+    content {
+      max_instance_count = var.scaling.service_max_instances
+    }
+  }
+
   template {
     scaling {
       min_instance_count = var.scaling.min_instances

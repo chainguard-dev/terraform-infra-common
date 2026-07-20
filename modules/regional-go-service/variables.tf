@@ -161,10 +161,11 @@ variable "containers" {
 }
 
 variable "scaling" {
-  description = "The scaling configuration for the service."
+  description = "The scaling configuration for the service. max_instances bounds each revision individually; service_max_instances additionally bounds all revisions receiving traffic combined, which Cloud Run requires when per-instance ephemeral disk reservations must fit the regional quota across rollouts."
   type = object({
     min_instances                    = optional(number, 0)
     max_instances                    = optional(number, 100)
+    service_max_instances            = optional(number)
     max_instance_request_concurrency = optional(number)
   })
   default = {}
