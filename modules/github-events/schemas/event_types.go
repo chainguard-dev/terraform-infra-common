@@ -140,6 +140,7 @@ type PushEvent struct {
 	Action  bigquery.NullString `json:"action,omitempty" bigquery:"action"`
 	After   bigquery.NullString `json:"after,omitempty" bigquery:"after"`
 	BaseRef bigquery.NullString `json:"base_ref,omitempty" bigquery:"base_ref"`
+	Forced  bigquery.NullBool   `json:"forced,omitempty" bigquery:"forced"`
 	Repo    PushEventRepository `json:"repository,omitempty" bigquery:"repository"`
 	Sender  User                `json:"sender,omitempty" bigquery:"sender"`
 

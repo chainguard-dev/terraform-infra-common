@@ -72,6 +72,10 @@
     "type": "STRING"
    },
    {
+    "name": "forced",
+    "type": "BOOLEAN"
+   },
+   {
     "fields": [
      {
       "fields": [
