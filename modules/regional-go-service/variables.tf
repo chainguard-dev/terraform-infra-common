@@ -241,6 +241,92 @@ variable "team" {
   type        = string
 }
 
+variable "raw_containers" {
+  description = "Additional containers to run from prebuilt images rather than built from Go source — e.g. a cloud-sql-proxy sidecar. Same shape as regional-service's containers; keys must not collide with var.containers. Images are not cosign-signed by this module, so pin them by digest or a version tag you trust."
+  type = map(object({
+    image   = string
+    command = optional(list(string), [])
+    args    = optional(list(string), [])
+    ports = optional(list(object({
+      name           = optional(string, "http1")
+      container_port = number
+    })), [])
+    resources = optional(
+      object(
+        {
+          limits = optional(object(
+            {
+              cpu    = string
+              memory = string
+            }
+          ), null)
+          cpu_idle          = optional(bool)
+          startup_cpu_boost = optional(bool, true)
+        }
+      ),
+      {}
+    )
+    env = optional(list(object({
+      name  = string
+      value = optional(string)
+      value_source = optional(object({
+        secret_key_ref = object({
+          secret  = string
+          version = string
+        })
+      }), null)
+    })), [])
+    regional-env = optional(list(object({
+      name  = string
+      value = map(string)
+    })), [])
+    regional-cpu-idle = optional(map(bool), {})
+    volume_mounts = optional(list(object({
+      name       = string
+      mount_path = string
+    })), [])
+    startup_probe = optional(object({
+      initial_delay_seconds = optional(number)
+      // GCP Terraform provider defaults differ from Cloud Run defaults.
+      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe
+      period_seconds    = optional(number, 240)
+      timeout_seconds   = optional(number, 240)
+      failure_threshold = optional(number, 1)
+      http_get = optional(object({
+        path = string
+        port = optional(number)
+      }), null)
+      tcp_socket = optional(object({
+        port = optional(number)
+      }), null)
+      grpc = optional(object({
+        service = optional(string)
+        port    = optional(number)
+      }), null)
+    }))
+    liveness_probe = optional(object({
+      initial_delay_seconds = optional(number)
+      // GCP Terraform provider defaults differ from Cloud Run defaults.
+      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe
+      period_seconds    = optional(number, 240)
+      timeout_seconds   = optional(number, 240)
+      failure_threshold = optional(number, 1)
+      http_get = optional(object({
+        path = string
+        port = optional(number)
+      }), null)
+      tcp_socket = optional(object({
+        port = optional(number)
+      }), null)
+      grpc = optional(object({
+        service = optional(string)
+        port    = optional(number)
+      }), null)
+    }))
+  }))
+  default = {}
+}
+
 variable "enable_otel_sidecar" {
   description = "Enable otel sidecar for metrics. Enabled by default, should only be disabled for exceptional cases."
   type        = bool

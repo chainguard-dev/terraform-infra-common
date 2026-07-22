@@ -18,6 +18,17 @@ resource "cosign_sign" "this" {
   for_each = var.containers
   image    = ko_build.this[each.key].image_ref
   conflict = "REPLACE"
+
+  lifecycle {
+    precondition {
+      # merge() below gives raw_containers precedence, so a key collision
+      # would silently replace this signed, source-built image with an
+      # unsigned prebuilt one. A collision needs the key in both maps, so
+      # checking every source-built name covers all of them.
+      condition     = !contains(keys(var.raw_containers), each.key)
+      error_message = "raw_containers keys must not collide with containers keys: the raw image would replace the ko-built, cosign-signed container of the same name."
+    }
+  }
 }
 
 module "this" {
@@ -36,7 +47,9 @@ module "this" {
   deletion_protection = var.deletion_protection
 
   service_account = var.service_account
-  containers = {
+  # Source-built containers get signed images; raw_containers pass through
+  # as-is (prebuilt images this module neither builds nor signs).
+  containers = merge({
     for name, container in var.containers : name => {
       image             = cosign_sign.this[name].signed_ref
       command           = container.command
@@ -50,7 +63,7 @@ module "this" {
       startup_probe     = container.startup_probe
       liveness_probe    = container.liveness_probe
     }
-  }
+  }, var.raw_containers)
 
   labels           = var.labels
   team             = var.team
