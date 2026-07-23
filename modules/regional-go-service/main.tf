@@ -2,6 +2,11 @@ terraform {
   required_providers {
     ko     = { source = "ko-build/ko" }
     cosign = { source = "chainguard-dev/cosign" }
+    // Required transitively by the regional-service child module; declared
+    // here so provider configurations (including test mocks) attach at the
+    // root module.
+    google      = { source = "hashicorp/google" }
+    google-beta = { source = "hashicorp/google-beta" }
   }
 }
 
