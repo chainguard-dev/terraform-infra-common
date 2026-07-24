@@ -172,7 +172,8 @@ module "extra-triggers" {
     name   = var.name
   }
 
-  team = var.team
+  team    = var.team
+  product = var.product
 
   notification_channels = var.notification_channels
 }
