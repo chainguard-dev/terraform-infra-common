@@ -50,6 +50,40 @@ module "disk_usage" {
   primary_reduce = "REDUCE_PERCENTILE_99"
 }
 
+// The run.googleapis.com/instance/disk/* metrics only report on mounted
+// volumes (e.g. disk-backed emptyDir), broken down by volume name.
+module "instance_disk_utilization" {
+  source          = "../../widgets/xy"
+  title           = "Instance disk utilization"
+  filter          = concat(local.filter, ["metric.type=\"run.googleapis.com/instance/disk/utilizations\""])
+  group_by_fields = ["metric.label.\"volume_name\""]
+  primary_align   = "ALIGN_DELTA"
+  primary_reduce  = "REDUCE_PERCENTILE_99"
+}
+
+module "instance_disk_usage" {
+  source          = "../../widgets/xy"
+  title           = "Instance disk usage"
+  filter          = concat(local.filter, ["metric.type=\"run.googleapis.com/instance/disk/usage\""])
+  group_by_fields = ["metric.label.\"volume_name\""]
+  // Unlike the utilization metrics this one is a GAUGE distribution, which
+  // ALIGN_DELTA cannot be applied to, so take the p99 across instances.
+  primary_align  = "ALIGN_PERCENTILE_99"
+  primary_reduce = "REDUCE_PERCENTILE_99"
+}
+
+module "instance_disk_allocation" {
+  source          = "../../widgets/xy"
+  title           = "Instance disk allocation"
+  filter          = concat(local.filter, ["metric.type=\"run.googleapis.com/instance/disk/allocation_time\""])
+  group_by_fields = ["metric.label.\"volume_name\""]
+  // allocation_time counts GiB-seconds, so its rate is the number of GiB
+  // currently allocated, summed across instances.
+  primary_align  = "ALIGN_RATE"
+  primary_reduce = "REDUCE_SUM"
+  plot_type      = "STACKED_AREA"
+}
+
 module "memory_utilization" {
   source         = "../../widgets/xy"
   title          = "Memory utilization"
@@ -140,6 +174,27 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.disk_usage.widget,
+    },
+    {
+      yPos   = local.unit * 2,
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.instance_disk_utilization.widget,
+    },
+    {
+      yPos   = local.unit * 2,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.instance_disk_usage.widget,
+    },
+    {
+      yPos   = local.unit * 3,
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.instance_disk_allocation.widget,
     },
   ]
 }
