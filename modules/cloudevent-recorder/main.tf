@@ -73,6 +73,7 @@ resource "google_storage_bucket" "recorder" {
   labels        = local.merged_labels
 
   uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
 
   lifecycle_rule {
     action {
