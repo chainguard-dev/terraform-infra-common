@@ -162,7 +162,7 @@ Use this when Cloud Run services need a global load balancer with custom domains
 
 ### [`serverless-gclb-cbd`](./modules/serverless-gclb-cbd/)
 
-Same as serverless-gclb but with create-before-destroy lifecycle on the URL map to avoid resource conflicts during redeployment.
+Same as serverless-gclb but with create-before-destroy lifecycle on the URL map to avoid resource conflicts during redeployment. Accepts an optional `certificate_map` input to serve TLS from a Certificate Manager map (for example a wildcard certificate) instead of per-hostname managed certificates, which avoids the 15-certificate-per-proxy limit.
 
 Use this instead of `serverless-gclb` when URL map updates cause downtime or conflicts during `terraform apply`.
 
