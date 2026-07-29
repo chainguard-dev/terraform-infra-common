@@ -4,6 +4,10 @@
 output "job_name" {
   description = "The name of the Cloud Run Job created in each region."
   value       = var.name
+
+  # This allows callers to refer to `module.[module_name].job_name`, and get
+  # ordered after the job's resources are created.
+  depends_on = [google_cloud_run_v2_job.this]
 }
 
 output "job_etag" {
