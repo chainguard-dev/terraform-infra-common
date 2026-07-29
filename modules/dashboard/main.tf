@@ -45,6 +45,10 @@ resource "google_monitoring_dashboard" "dashboard" {
       condition     = local.widget_count <= 50
       error_message = "Dashboard '${try(var.object.displayName, "(unnamed)")}' renders ${local.widget_count} widgets, exceeding Cloud Monitoring's hard limit of 50 per dashboard. Move a section onto its own dedicated dashboard (see the microvm/agents split in modules/dashboard/reconciler/dashboard.tf)."
     }
+    precondition {
+      condition     = length(try(var.object.labels, {})) <= 64
+      error_message = "Dashboard '${try(var.object.displayName, "(unnamed)")}' declares ${length(try(var.object.labels, {}))} labels, exceeding Cloud Monitoring's hard limit of 64 per dashboard. Stop generating a label per item (e.g. one per event type) and use a small bounded set instead."
+    }
   }
 }
 

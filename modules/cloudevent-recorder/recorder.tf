@@ -183,7 +183,14 @@ module "recorder-dashboard" {
   service_name = var.name
   project_id   = var.project_id
 
-  labels = { for type, schema in var.types : replace(type, ".", "_") => "" }
+  # Cloud Monitoring caps a dashboard at 64 labels. We used to emit one empty
+  # label per event type, but recorders now record well over 60 types, so that
+  # scheme blows past the cap and fails every dashboard apply with
+  # "Labels map has more than 64 entries". These labels were only empty-valued
+  # tags for the dashboard list UI with no downstream consumer, so collapse them
+  # to a single bounded label. Per-type dashboards remain discoverable by their
+  # displayName ("Cloud Event Receiver: <service> (<type>)").
+  labels = { "cloudevent-recorder" = "" }
 
   notification_channels = var.notification_channels
 
