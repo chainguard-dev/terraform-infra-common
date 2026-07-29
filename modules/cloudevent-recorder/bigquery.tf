@@ -85,7 +85,12 @@ resource "google_service_account_iam_binding" "provisioner-acts-as-import-identi
 resource "google_bigquery_data_transfer_config" "import-job" {
   for_each = local.regional-types
 
-  depends_on = [google_service_account_iam_binding.provisioner-acts-as-import-identity]
+  // At creation time DTS checks that it can obtain a token as the import
+  // identity, so both grants on that identity are prerequisites for the job.
+  depends_on = [
+    google_service_account_iam_binding.bq-dts-assumes-import-identity,
+    google_service_account_iam_binding.provisioner-acts-as-import-identity,
+  ]
 
   project              = var.project_id
   display_name         = "${var.name}-${each.key}"
