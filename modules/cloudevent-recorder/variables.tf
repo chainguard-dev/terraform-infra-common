@@ -6,6 +6,18 @@ variable "name" {
   type = string
 }
 
+variable "service_account_id" {
+  type        = string
+  default     = ""
+  description = "Optional account-id for the recorder's runtime service account. Defaults to var.name. Override only the SA name (e.g. to release the bare var.name account-id for another workload) without renaming the dataset, buckets, subscriptions, or service, which stay keyed on var.name."
+}
+
+variable "service_name" {
+  type        = string
+  default     = ""
+  description = "Optional name for the recorder's Cloud Run service (and the trigger delivery target + dashboard). Defaults to var.name. Override to rename the service without renaming the dataset, buckets, or subscriptions, which stay keyed on var.name."
+}
+
 variable "location" {
   default     = "US"
   description = "The location to create the BigQuery dataset in, and in which to run the data transfer jobs from GCS."

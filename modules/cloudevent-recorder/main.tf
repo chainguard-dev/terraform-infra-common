@@ -12,6 +12,10 @@ data "google_project" "project" {
 locals {
   use_custom_recorder = var.method == "trigger"
 
+  # Recorder Cloud Run service name (and trigger delivery target + dashboard).
+  # Defaults to var.name; overridable without touching the dataset/buckets/subs.
+  service_name = coalesce(var.service_name, var.name)
+
   regional-types = merge([
     for region in keys(var.regions) : merge([
       for type in keys(var.types) : {

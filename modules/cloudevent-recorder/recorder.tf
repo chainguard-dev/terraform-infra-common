@@ -5,7 +5,7 @@ resource "google_service_account" "recorder" {
   # This GSA doesn't need it's own audit rule because it is used in conjunction
   # with regional-go-service, which has a built-in audit rule.
 
-  account_id   = var.name
+  account_id   = coalesce(var.service_account_id, var.name)
   display_name = "Cloudevents recorder"
   description  = "Dedicated service account for our recorder service."
 
@@ -61,7 +61,7 @@ module "this" {
   source             = "../regional-go-service"
   observability_role = var.observability_role
   project_id         = var.project_id
-  name               = var.name
+  name               = local.service_name
   regions            = var.regions
 
   team                = var.team
@@ -146,7 +146,7 @@ module "triggers" {
   depends_on = [module.this]
   private-service = {
     region = each.value.region
-    name   = var.name
+    name   = local.service_name
   }
 
   team = var.team
@@ -169,7 +169,7 @@ module "extra-triggers" {
   depends_on = [module.this]
   private-service = {
     region = each.value.region
-    name   = var.name
+    name   = local.service_name
   }
 
   team    = var.team
@@ -180,7 +180,7 @@ module "extra-triggers" {
 
 module "recorder-dashboard" {
   source       = "../dashboard/cloudevent-receiver"
-  service_name = var.name
+  service_name = local.service_name
   project_id   = var.project_id
 
   # Cloud Monitoring caps a dashboard at 64 labels. We used to emit one empty
