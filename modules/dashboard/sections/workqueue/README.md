@@ -77,7 +77,6 @@ No providers.
 | <a name="module_work-added"></a> [work-added](#module\_work-added) | ../../widgets/xy | n/a |
 | <a name="module_work-in-progress"></a> [work-in-progress](#module\_work-in-progress) | ../../widgets/xy | n/a |
 | <a name="module_work-queued"></a> [work-queued](#module\_work-queued) | ../../widgets/xy | n/a |
-| <a name="module_work-waiting"></a> [work-waiting](#module\_work-waiting) | ../../widgets/xy | n/a |
 
 ## Resources
 

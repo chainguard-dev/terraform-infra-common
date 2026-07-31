@@ -20,8 +20,10 @@ No resources.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alignment_period"></a> [alignment\_period](#input\_alignment\_period) | n/a | `string` | `"60s"` | no |
+| <a name="input_datasets"></a> [datasets](#input\_datasets) | Additional datasets to plot on the same chart alongside the primary one. | <pre>list(object({<br/>    filter          = list(string)<br/>    group_by_fields = optional(list(string), [])<br/>    plot_type       = optional(string, "LINE")<br/>    align           = optional(string, "ALIGN_RATE")<br/>    reduce          = optional(string, "REDUCE_NONE")<br/>    legend          = optional(string, "")<br/>  }))</pre> | `[]` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | n/a | yes |
 | <a name="input_group_by_fields"></a> [group\_by\_fields](#input\_group\_by\_fields) | n/a | `list` | `[]` | no |
+| <a name="input_legend"></a> [legend](#input\_legend) | Legend template for the primary dataset. | `string` | `""` | no |
 | <a name="input_plot_type"></a> [plot\_type](#input\_plot\_type) | n/a | `string` | `"LINE"` | no |
 | <a name="input_primary_align"></a> [primary\_align](#input\_primary\_align) | n/a | `string` | `"ALIGN_RATE"` | no |
 | <a name="input_primary_reduce"></a> [primary\_reduce](#input\_primary\_reduce) | n/a | `string` | `"REDUCE_NONE"` | no |

@@ -74,9 +74,13 @@ module "work-in-progress" {
   thresholds      = [local.shard_concurrent_work]
 }
 
+// Queued (dispatchable now) and waiting (deferred by a not-before) are
+// disjoint counts of the same backlog, so stacking them on one chart
+// reads as total pending work, and a shift between the two bands
+// distinguishes backoff from queue growth.
 module "work-queued" {
   source = "../../widgets/xy"
-  title  = "Amount of work queued"
+  title  = "Amount of work pending (queued vs not-before)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
@@ -86,20 +90,20 @@ module "work-queued" {
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MIN"
   primary_reduce  = "REDUCE_MIN"
-}
+  legend          = "queued"
 
-module "work-waiting" {
-  source = "../../widgets/xy"
-  title  = "Amount of work waiting (not-before)"
-  filter = concat(local.gmp_filter, [
-    "resource.type=\"prometheus_target\"",
-    "metric.type=\"prometheus.googleapis.com/workqueue_notbefore_keys/gauge\"",
-    local.dsp_filter,
-  ])
-  group_by_fields = ["metric.label.\"service_name\""]
-  plot_type       = "STACKED_AREA"
-  primary_align   = "ALIGN_MAX"
-  primary_reduce  = "REDUCE_MAX"
+  datasets = [{
+    filter = concat(local.gmp_filter, [
+      "resource.type=\"prometheus_target\"",
+      "metric.type=\"prometheus.googleapis.com/workqueue_notbefore_keys/gauge\"",
+      local.dsp_filter,
+    ])
+    group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\""]
+    plot_type       = "STACKED_AREA"
+    align           = "ALIGN_MAX"
+    reduce          = "REDUCE_MAX"
+    legend          = "waiting (not-before)"
+  }]
 }
 
 module "work-added" {
@@ -367,13 +371,6 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.time-until-eligible.widget,
-    },
-    {
-      yPos   = local.unit * 4,
-      xPos   = local.col[2],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.work-waiting.widget,
     }
     ],
     var.max_retry > 0 ? [

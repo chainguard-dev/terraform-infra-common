@@ -8,6 +8,23 @@ variable "primary_reduce" { default = "REDUCE_NONE" }
 variable "secondary_align" { default = "" }
 variable "secondary_reduce" { default = "" }
 variable "thresholds" { default = [] }
+variable "legend" {
+  description = "Legend template for the primary dataset."
+  type        = string
+  default     = ""
+}
+variable "datasets" {
+  description = "Additional datasets to plot on the same chart alongside the primary one."
+  type = list(object({
+    filter          = list(string)
+    group_by_fields = optional(list(string), [])
+    plot_type       = optional(string, "LINE")
+    align           = optional(string, "ALIGN_RATE")
+    reduce          = optional(string, "REDUCE_NONE")
+    legend          = optional(string, "")
+  }))
+  default = []
+}
 
 locals {
   use_secondary    = var.secondary_align != "" || var.secondary_reduce != ""
@@ -21,10 +38,11 @@ output "widget" {
     title = var.title
     xyChart = {
       chartOptions = { mode = "COLOR" }
-      dataSets = [{
+      dataSets = concat([{
         minAlignmentPeriod = var.alignment_period
         plotType           = var.plot_type
         targetAxis         = "Y1"
+        legendTemplate     = var.legend != "" ? var.legend : null
         timeSeriesQuery = {
           timeSeriesFilter = {
             aggregation = {
@@ -42,7 +60,23 @@ output "widget" {
             } : null
           }
         }
-      }]
+        }], [for ds in var.datasets : {
+        minAlignmentPeriod = var.alignment_period
+        plotType           = ds.plot_type
+        targetAxis         = "Y1"
+        legendTemplate     = ds.legend != "" ? ds.legend : null
+        timeSeriesQuery = {
+          timeSeriesFilter = {
+            aggregation = {
+              alignmentPeriod    = var.alignment_period
+              perSeriesAligner   = ds.align
+              crossSeriesReducer = ds.reduce
+              groupByFields      = ds.group_by_fields
+            }
+            filter = join("\n", ds.filter)
+          }
+        }
+      }])
       thresholds = [
         for threshold in var.thresholds : {
           value      = threshold
