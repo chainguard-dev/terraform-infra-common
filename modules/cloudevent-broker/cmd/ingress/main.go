@@ -36,6 +36,9 @@ import (
 const (
 	retryDelay = 10 * time.Millisecond
 	maxRetry   = 3
+
+	oidcRetryDelay  = time.Second
+	oidcMaxAttempts = 5
 )
 
 // buildPublishers creates one publisher per distinct destination topic — the
@@ -107,9 +110,23 @@ func main() {
 		clog.Fatalf("failed to create CE client, %v", err)
 	}
 
-	provider, err := oidc.NewProvider(ctx, "https://accounts.google.com")
-	if err != nil {
-		clog.Fatalf("failed to create OIDC provider, %v", err)
+	// The OIDC discovery fetch is a network call that can hit transient
+	// egress timeouts on cold start, so retry before crashing the container.
+	var provider *oidc.Provider
+	for attempt := 1; ; attempt++ {
+		provider, err = oidc.NewProvider(ctx, "https://accounts.google.com")
+		if err == nil {
+			break
+		}
+		if attempt == oidcMaxAttempts || ctx.Err() != nil {
+			clog.Fatalf("failed to create OIDC provider, %v", err)
+		}
+		clog.Warnf("failed to create OIDC provider (attempt %d/%d), retrying: %v", attempt, oidcMaxAttempts, err)
+		select {
+		case <-ctx.Done():
+			clog.Fatalf("failed to create OIDC provider, %v", ctx.Err())
+		case <-time.After(time.Duration(attempt) * oidcRetryDelay):
+		}
 	}
 	verifier := provider.Verifier(&oidc.Config{
 		// When on Cloud Run, this is checked by the platform.
