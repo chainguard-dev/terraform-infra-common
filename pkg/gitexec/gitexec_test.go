@@ -138,3 +138,56 @@ func TestRun_CombinedOutputSharedWriterNoRace(t *testing.T) {
 	assert.Contains(t, got, "to-stderr", "stderr must reach the shared writer")
 	assert.Contains(t, buf.String(), `"outcome":"success"`)
 }
+
+// WithLoggedArgs must substitute the recorded argv while leaving execution,
+// metrics, and repo-coordinate derivation on the real argv — the option
+// exists so a caller can redact sensitive argv elements (search patterns,
+// confidential file paths) from the log line without changing what runs.
+func TestOutput_WithLoggedArgs(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	cmd := CommandContext(ctx, "--version")
+	out, err := Output(ctx, "--version", cmd, WithLoggedArgs([]string{"--version", "[redacted]"}))
+	require.NoError(t, err)
+	assert.NotEmpty(t, out, "stdout must still be captured from the real command")
+
+	logged := buf.String()
+	assert.Contains(t, logged, `"[redacted]"`, "the substituted argv must be what lands in the log")
+	assert.Contains(t, logged, `"op":"--version"`)
+	assert.Contains(t, logged, `"outcome":"success"`)
+}
+
+// The substituted argv still passes through credential sanitization — a
+// caller redacting one element must not accidentally re-expose a credential
+// embedded in another.
+func TestRun_WithLoggedArgsStillSanitized(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	cmd := CommandContext(ctx, "--version")
+	err := Run(ctx, "--version", cmd, WithLoggedArgs([]string{
+		"fetch", "https://user:hunter2@github.com/org/repo.git", "[redacted]",
+	}))
+	require.NoError(t, err)
+
+	logged := buf.String()
+	assert.NotContains(t, logged, "hunter2", "credentials in substituted args must still be stripped")
+	assert.Contains(t, logged, `"[redacted]"`)
+}
+
+// WithoutStderrTail must drop stderr_tail from the failure log while keeping
+// the error, exit code, and outcome — the failure stays diagnosable without
+// echoing stderr content the caller knows to be sensitive.
+func TestRun_WithoutStderrTail(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	// A guaranteed failure whose stderr quotes its argument back.
+	cmd := CommandContext(ctx, "rev-parse", "--verify", "sensitive-value")
+	cmd.Dir = t.TempDir() // not a repo: fails, stderr mentions the setup
+	err := Run(ctx, "rev-parse", cmd, WithoutStderrTail())
+	require.Error(t, err)
+
+	logged := buf.String()
+	assert.Contains(t, logged, `"outcome":"failure"`)
+	assert.Contains(t, logged, `"err":`)
+	assert.NotContains(t, logged, "stderr_tail", "stderr_tail must be suppressed")
+}

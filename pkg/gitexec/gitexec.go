@@ -24,9 +24,11 @@ const stderrTailBytes = 512
 type Option func(*options)
 
 type options struct {
-	repoHost string
-	repoPath string
-	repoURL  string
+	repoHost     string
+	repoPath     string
+	repoURL      string
+	loggedArgs   []string
+	noStderrTail bool
 }
 
 // WithRepoURL sets the remote URL associated with the operation. It is parsed
@@ -35,6 +37,28 @@ type options struct {
 // a URL (e.g. push from a working tree).
 func WithRepoURL(rawURL string) Option {
 	return func(o *options) { o.repoURL = rawURL }
+}
+
+// WithLoggedArgs substitutes args for the command's real argv in the recorded
+// log line. Use it when elements of the argv are more sensitive than the
+// default credential sanitization understands — e.g. a search pattern or file
+// path derived from confidential data — passing a copy with those elements
+// redacted. Only the logged "args" field is affected: metrics, repo_host/
+// repo_path derivation, and the executed command are unchanged, and the
+// substituted args still pass through the same credential sanitization.
+// Callers remain responsible for the substitute being safe to log.
+func WithLoggedArgs(args []string) Option {
+	return func(o *options) { o.loggedArgs = args }
+}
+
+// WithoutStderrTail omits the stderr_tail field from a failure's log line.
+// Use it alongside WithLoggedArgs when the command's stderr can embed the
+// same sensitive values being redacted from the argv — git error messages
+// quote the missing path or pattern verbatim (`fatal: path 'X' does not
+// exist`), so a redacted argv alone still leaks on the failure path. The
+// operation's op, outcome, exit code, and error remain logged.
+func WithoutStderrTail() Option {
+	return func(o *options) { o.noStderrTail = true }
 }
 
 // CommandContext returns an *exec.Cmd configured to invoke "git" with the
@@ -141,9 +165,13 @@ func record(ctx context.Context, op string, args []string, started time.Time, ex
 	operationsTotal.WithLabelValues(op, outcome).Inc()
 	operationDuration.WithLabelValues(op).Observe(duration.Seconds())
 
+	loggedArgs := args
+	if o.loggedArgs != nil {
+		loggedArgs = o.loggedArgs
+	}
 	fields := []any{
 		"op", op,
-		"args", sanitizeArgs(args),
+		"args", sanitizeArgs(loggedArgs),
 		"repo_host", o.repoHost,
 		"repo_path", o.repoPath,
 		"duration_ms", duration.Milliseconds(),
@@ -152,7 +180,7 @@ func record(ctx context.Context, op string, args []string, started time.Time, ex
 	}
 	if err != nil {
 		fields = append(fields, "err", err.Error())
-		if len(stderrTail) > 0 {
+		if len(stderrTail) > 0 && !o.noStderrTail {
 			fields = append(fields, "stderr_tail", string(stderrTail))
 		}
 		clog.ErrorContext(ctx, "git_operation", fields...)
