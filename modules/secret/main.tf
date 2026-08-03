@@ -113,16 +113,18 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
       -- Ignore the identity that is intended to access this.
       -(
         protoPayload.authenticationInfo.principalEmail=~"${join("|", local.accessor_emails)}"
-        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(AccessSecretVersion|GetSecretVersion)"
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
       )
       -- Ignore the identities that are authorized to manipulate secret versions.
       -(
         protoPayload.authenticationInfo.principalEmail=~"${join("|", local.authorized_adder_emails)}"
         protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(DestroySecretVersion|AddSecretVersion|EnableSecretVersion)"
       )
-      -- Ignore benign secret actions.
+      -- Ignore benign secret actions. ListSecretVersions and GetSecretVersion
+      -- only return version metadata (not the secret payload), so we don't care
+      -- who calls them.
       -(
-        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.ListSecretVersions"
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(ListSecretVersions|GetSecretVersion)"
       )
       EOT
 
