@@ -7,48 +7,18 @@ package sdk
 
 import (
 	"context"
-	"time"
 
 	"chainguard.dev/sdk/octosts"
+	"github.com/chainguard-dev/clog"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // OctoTokenFunc is the function used to mint Octo STS tokens. It is exposed as
 // a package-level variable so tests can override it without going through the
 // network. Production code should not reassign this.
 var OctoTokenFunc = octosts.Token
-
-// repoTokenSource is the inner oauth2.TokenSource implementation behind
-// NewRepoTokenSource and NewOrgTokenSource. It does not revoke previously
-// issued tokens on refresh; callers that need revoke semantics should layer
-// that concern on top (see GitHubClient.Close in github.go).
-type repoTokenSource struct {
-	ctx      context.Context
-	identity string
-	org      string
-	repo     string
-}
-
-func (ts *repoTokenSource) Token() (*oauth2.Token, error) {
-	// Cap the Octo STS request at one minute. We deliberately derive from
-	// ts.ctx so that token refreshes use a stable context even when individual
-	// API request contexts are cancelled.
-	ctx, cancel := context.WithTimeout(ts.ctx, 1*time.Minute)
-	defer cancel()
-	tok, err := OctoTokenFunc(ctx, ts.identity, ts.org, ts.repo)
-	if err != nil {
-		return nil, err
-	}
-	// Octo STS issues tokens valid for 60 minutes. We refresh well before that
-	// at the 20-minute mark: re-exchanging more often means we pick up freshly
-	// issued tokens sooner, so a noisy neighbor sharing our quota can't keep us
-	// starved for the full hour until the quota resets.
-	return &oauth2.Token{
-		AccessToken: tok,
-		TokenType:   "Bearer",
-		Expiry:      time.Now().Add(20 * time.Minute),
-	}, nil
-}
 
 // NewRepoTokenSource returns an oauth2.TokenSource that mints repo-scoped
 // tokens from Octo STS for the given (org, repo) using identity as the policy
@@ -57,13 +27,15 @@ func (ts *repoTokenSource) Token() (*oauth2.Token, error) {
 // The supplied ctx is used as the parent of each token-refresh request, so it
 // should be long-lived: passing a per-request context risks "context
 // cancelled" errors on later refreshes.
+//
+// Deprecated: use octosts.NewTokenSourceFromValues instead for proper error handling.
 func NewRepoTokenSource(ctx context.Context, identity, org, repo string) oauth2.TokenSource {
-	return oauth2.ReuseTokenSource(nil, &repoTokenSource{
-		ctx:      ctx,
-		identity: identity,
-		org:      org,
-		repo:     repo,
-	})
+	ts, err := octosts.NewTokenSourceFromValues(ctx, identity, org, repo)
+	if err != nil {
+		clog.WarnContextf(ctx, "failed to create Octo STS token source for %s/%s: %v", org, repo, err)
+		return &errorTokenSource{}
+	}
+	return ts
 }
 
 // NewOrgTokenSource returns an oauth2.TokenSource that mints org-scoped tokens
@@ -73,10 +45,22 @@ func NewRepoTokenSource(ctx context.Context, identity, org, repo string) oauth2.
 // The supplied ctx is used as the parent of each token-refresh request, so it
 // should be long-lived: passing a per-request context risks "context
 // cancelled" errors on later refreshes.
+//
+// Deprecated: use octosts.NewTokenSourceFromValues instead for proper error handling.
 func NewOrgTokenSource(ctx context.Context, identity, org string) oauth2.TokenSource {
-	return oauth2.ReuseTokenSource(nil, &repoTokenSource{
-		ctx:      ctx,
-		identity: identity,
-		org:      org,
-	})
+	ts, err := octosts.NewTokenSourceFromValues(ctx, identity, org, "")
+	if err != nil {
+		clog.WarnContextf(ctx, "failed to create Octo STS token source for %s: %v", org, err)
+		return &errorTokenSource{}
+	}
+	return ts
+}
+
+// errorTokenSource is a token source that always returns an error. It is used
+// when the Octo STS token source cannot be constructed, so that callers can
+// still use the returned oauth2.TokenSource without panicking.
+type errorTokenSource struct{}
+
+func (e *errorTokenSource) Token() (*oauth2.Token, error) {
+	return nil, status.Errorf(codes.Unavailable, "token source unavailable")
 }
