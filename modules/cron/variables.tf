@@ -51,7 +51,7 @@ variable "env" {
 
 variable "secret_env" {
   default     = {}
-  description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name)"
+  description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name). A value may pin a version as secret_name@version; unpinned values mount latest, which breaks whenever a stray newer version exists — pin when the consumer must match a specific rotation (e.g. a SQL user's password)."
 }
 
 variable "execution_environment" {

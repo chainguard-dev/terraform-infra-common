@@ -55,7 +55,7 @@ module "impl" {
       resources = { limits = { cpu = var.cpu, memory = var.memory } }
       env = concat(
         [for k, v in var.env : { name = k, value = v }],
-        [for k, v in var.secret_env : { name = k, value = null, value_source = { secret_key_ref = { secret = v, version = "latest" } } }],
+        [for k, v in var.secret_env : { name = k, value = null, value_source = { secret_key_ref = { secret = split("@", v)[0], version = try(split("@", v)[1], "latest") } } }],
         [{ name = "CHAINGUARD_TEAM", value = var.team }],
         [{ name = "CHAINGUARD_PRODUCT", value = var.product }],
       )
