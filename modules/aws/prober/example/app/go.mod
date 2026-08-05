@@ -3,6 +3,6 @@ module github.com/chainguard-dev/mono/public/terraform-infra-common/modules/aws/
 go 1.25
 
 require (
-	github.com/chainguard-dev/clog v1.8.0
+	github.com/chainguard-dev/clog v1.8.1
 	github.com/sethvargo/go-envconfig v1.4.3
 )
