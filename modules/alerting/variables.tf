@@ -157,12 +157,20 @@ variable "http_error_exclude_services" {
 }
 
 variable "http_error_method_status_exclusions" {
-  description = "Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination."
+  description = "Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination(s). Set `code` for a single status code or `codes` for several; exactly one of the two must be set."
   type = map(object({
     method = string
-    code   = string
+    code   = optional(string)
+    codes  = optional(list(string), [])
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.http_error_method_status_exclusions : (v.code != null) != (length(v.codes) > 0)
+    ])
+    error_message = "Each exclusion must set exactly one of `code` or `codes`."
+  }
 }
 
 variable "grpc_error_threshold" {

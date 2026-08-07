@@ -23,6 +23,13 @@ locals {
     keys(var.http_error_method_status_exclusions),
   ))
   http_error_exclude_filter = length(local.http_error_all_excluded_services) == 0 ? "" : "metric.labels.service_name != monitoring.regex.full_match(\"${join("|", local.http_error_all_excluded_services)}\")"
+  // Normalize the single-code and multi-code forms into one codes list per entry.
+  http_error_method_status_exclusions = {
+    for k, v in var.http_error_method_status_exclusions : k => {
+      method = v.method
+      codes  = v.code != null ? [v.code] : v.codes
+    }
+  }
 }
 
 locals {
@@ -1273,9 +1280,9 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
 
   // For each service with method+status exclusions, generate two conditions:
   // 1. Non-METHOD errors for the service
-  // 2. METHOD errors excluding the specific CODE for the service
+  // 2. METHOD errors excluding the specific CODE(s) for the service
   dynamic "conditions" {
-    for_each = var.http_error_method_status_exclusions
+    for_each = local.http_error_method_status_exclusions
     content {
       condition_threshold {
         aggregations {
@@ -1313,7 +1320,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
   }
 
   dynamic "conditions" {
-    for_each = var.http_error_method_status_exclusions
+    for_each = local.http_error_method_status_exclusions
     content {
       condition_threshold {
         aggregations {
@@ -1334,7 +1341,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
           metric.labels.service_name = monitoring.regex.full_match("${conditions.key}")
           metric.labels.method = "${conditions.value.method}"
           metric.labels.code != monitoring.regex.full_match("[23]..")
-          metric.labels.code != "${conditions.value.code}"
+          metric.labels.code != monitoring.regex.full_match("${join("|", conditions.value.codes)}")
           ${local.squad_metric_filter}
         EOT
 
@@ -1347,7 +1354,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         threshold_value = var.http_error_threshold
       }
 
-      display_name = "${conditions.key} http error rate (${conditions.value.method}, non-${conditions.value.code})"
+      display_name = "${conditions.key} http error rate (${conditions.value.method}, non-${join(",", conditions.value.codes)})"
     }
   }
 
