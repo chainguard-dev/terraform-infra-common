@@ -74,6 +74,20 @@ processors:
 exporters:
   googlemanagedprometheus:
     project: "REPLACE_ME_PROJECT_ID"
+    metric:
+      extra_metrics_config:
+        # Do not synthesize the otel_scope_info gauge. It is emitted once per
+        # scrape TARGET, but unlike scraped series it never gets the
+        # per-target container_port label from the relabel above — so on any
+        # deployment with more than one metrics target (multiple containers
+        # with METRICS_PORT, e.g. a long-mode reconciler job's dispatcher on
+        # 2113 beside the reconciler on 2112) the targets' points collide on
+        # ONE Managed Prometheus series. GMP rejects the second point each
+        # cycle ("written more frequently than the maximum sampling period")
+        # and the collector then drops the ENTIRE batch ("Exporting failed.
+        # Dropping data."), losing every real metric alongside the
+        # informational gauge. Nothing consumes otel_scope_info.
+        enable_scope_info: false
     sending_queue:
       enabled: true
       # we are handling metrics for a single pod, no need to have
