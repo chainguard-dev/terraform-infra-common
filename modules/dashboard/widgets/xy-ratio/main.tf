@@ -47,7 +47,12 @@ output "widget" {
           }
         }
       }]
-      thresholds = var.thresholds
+      thresholds = [
+        for threshold in var.thresholds : {
+          value      = threshold
+          targetAxis = "Y1"
+        }
+      ]
       yAxis = {
         label = "y1Axis"
         scale = "LINEAR"
