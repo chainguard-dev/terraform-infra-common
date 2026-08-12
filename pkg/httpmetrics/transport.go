@@ -23,7 +23,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel"
 )
 
 const (
@@ -248,12 +247,7 @@ func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.Roun
 	return func(r *http.Request) (*http.Response, error) {
 		start := time.Now()
 
-		tracer := otel.Tracer("httpmetrics")
 		host := bucketize(r.Context(), r.URL.Host, skipBucketize)
-		ctx, span := tracer.Start(r.Context(), fmt.Sprintf("http-%s-%s", r.Method, host))
-		// Ensure that outgoing requests are nested under this span.
-		r = r.WithContext(ctx)
-		defer span.End()
 
 		path := ""
 		if r.URL.Host == "api.github.com" {
