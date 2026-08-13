@@ -42,3 +42,9 @@ variable "allow_psc_global_access" {
   type        = bool
   default     = false
 }
+
+variable "labels" {
+  description = "Labels to stamp on the endpoint's billable resources (reserved address and forwarding rule), e.g. team/product for cost attribution."
+  type        = map(string)
+  default     = {}
+}

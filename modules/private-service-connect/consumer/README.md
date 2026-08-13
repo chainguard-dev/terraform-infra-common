@@ -49,6 +49,7 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_address"></a> [address](#input\_address) | Optional pre-reserved internal IP address (self-link / id) for the PSC endpoint. If empty, the module reserves an internal IP from the subnetwork. | `string` | `""` | no |
 | <a name="input_allow_psc_global_access"></a> [allow\_psc\_global\_access](#input\_allow\_psc\_global\_access) | Allow clients in any region to reach this PSC endpoint. Leave false when every caller runs in the endpoint's region; set true when callers run in other regions (e.g. a multi-region Cloud Run service dialing this single-region endpoint), otherwise their connections are silently dropped at the PSC layer. | `bool` | `false` | no |
+| <a name="input_labels"></a> [labels](#input\_labels) | Labels to stamp on the endpoint's billable resources (reserved address and forwarding rule), e.g. team/product for cost attribution. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Resource name prefix for the consumer-side resources. | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | Self-link of the consumer VPC network hosting the PSC endpoint. | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | The project ID in which to create the consumer-side PSC endpoint. | `string` | n/a | yes |

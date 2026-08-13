@@ -33,6 +33,7 @@ resource "google_compute_address" "this" {
   name         = "${var.name}-ip"
   address_type = "INTERNAL"
   subnetwork   = var.subnetwork
+  labels       = var.labels
 }
 
 # The PSC endpoint: a forwarding rule targeting the producer's service
@@ -47,4 +48,5 @@ resource "google_compute_forwarding_rule" "this" {
   ip_address              = local.endpoint_address
   target                  = var.service_attachment
   allow_psc_global_access = var.allow_psc_global_access
+  labels                  = var.labels
 }
