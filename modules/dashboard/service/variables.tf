@@ -24,6 +24,12 @@ variable "notification_channels" {
   type        = list(string)
 }
 
+variable "extra_sections" {
+  description = "Extra dashboard sections (outputs of dashboard/sections/* modules) added to the dashboard layout"
+  type        = list(any)
+  default     = []
+}
+
 variable "sections" {
   description = "Sections to include in the dashboard"
   type = object({

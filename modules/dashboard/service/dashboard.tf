@@ -97,6 +97,7 @@ module "layout" {
     // recurse into each section's tile list) and not a `? :` conditional (whose
     // heterogeneous 2-section true branch cannot type-unify with []).
     concat([], module.microvm[*].sections...),
+    var.extra_sections,
     [module.resources.section],
   )
 }
