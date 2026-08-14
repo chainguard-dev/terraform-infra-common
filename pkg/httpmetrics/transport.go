@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 const (
@@ -150,6 +151,7 @@ type MetricsTransport struct {
 
 type metricsTransportOptions struct {
 	skipBucketize bool
+	propagate     bool
 }
 
 type TransportOption func(*metricsTransportOptions)
@@ -164,11 +166,29 @@ func WithSkipBucketize(skip bool) TransportOption {
 	}
 }
 
+// WithTracePropagation controls whether outbound requests carry the caller's
+// trace context. It defaults to true. When false, the client span is still
+// recorded but no trace context is injected onto the outbound request.
+func WithTracePropagation(propagate bool) TransportOption {
+	return func(opts *metricsTransportOptions) {
+		opts.propagate = propagate
+	}
+}
+
+// noopPropagator injects nothing, so otelhttp records the client span but writes
+// no trace context. Used when WithTracePropagation(false) is set.
+var noopPropagator = propagation.NewCompositeTextMapPropagator()
+
 // WrapTransport wraps an http.RoundTripper with instrumentation.
 func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripper {
-	topts := &metricsTransportOptions{}
+	topts := &metricsTransportOptions{propagate: true}
 	for _, opt := range opts {
 		opt(topts)
+	}
+
+	var otelOpts []otelhttp.Option
+	if !topts.propagate {
+		otelOpts = append(otelOpts, otelhttp.WithPropagators(noopPropagator))
 	}
 
 	return &MetricsTransport{
@@ -178,6 +198,7 @@ func WrapTransport(t http.RoundTripper, opts ...TransportOption) http.RoundTripp
 					instrumentDockerHubRateLimit(
 						otelhttp.NewTransport(
 							newPreserveTraceparentTransport(t),
+							otelOpts...,
 						),
 					),
 				), topts.skipBucketize,
