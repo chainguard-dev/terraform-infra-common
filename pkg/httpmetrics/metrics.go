@@ -22,6 +22,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/felixge/httpsnoop"
 	"github.com/mileusna/useragent"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -618,28 +619,23 @@ func (f *llmSpanFilterProcessor) ForceFlush(ctx context.Context) error {
 	return f.inner.ForceFlush(ctx)
 }
 
-type delegator struct {
-	http.ResponseWriter
-	Status int
-}
-
-func (d *delegator) WriteHeader(status int) {
-	d.Status = status
-	d.ResponseWriter.WriteHeader(status)
-}
-
 func instrumentHandlerCounter(counter *prometheus.CounterVec, next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		d := &delegator{
-			ResponseWriter: w,
-			Status:         http.StatusOK,
-		}
+		status := http.StatusOK
+		w = httpsnoop.Wrap(w, httpsnoop.Hooks{
+			WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
+				return func(code int) {
+					status = code
+					next(code)
+				}
+			},
+		})
 
-		next.ServeHTTP(d, r)
+		next.ServeHTTP(w, r)
 		ua := useragent.Parse(r.UserAgent())
 		counter.With(prometheus.Labels{
 			"method":                     r.Method,
-			"code":                       strconv.Itoa(d.Status),
+			"code":                       strconv.Itoa(status),
 			"ce_type":                    r.Header.Get(CeTypeHeader),
 			"user_agent_browser_name":    ua.Name,
 			"user_agent_browser_version": ua.VersionNoShort(),
