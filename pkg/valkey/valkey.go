@@ -3,12 +3,6 @@ Copyright 2026 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package valkey connects to the Memorystore for Valkey instances the
-// terraform valkey module creates, under the same opinions the module
-// hardcodes: IAM_AUTH as the workload identity (a fresh token per reconnect),
-// TLS pinned to the managed server CA, and the PSC connect endpoint. Resolve
-// the instance's full resource name once at boot, then dial clients from the
-// resolved Endpoint.
 package valkey
 
 import (
