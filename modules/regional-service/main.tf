@@ -153,11 +153,19 @@ resource "google_cloud_run_v2_service" "this" {
     labels                           = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
 
     vpc_access {
-      network_interfaces {
-        network    = each.value.network
-        subnetwork = each.value.subnet
+      // A region routed through a Serverless VPC Access connector must not also
+      // declare network_interfaces: Cloud Run takes one or the other, and the
+      // connector is what replaces direct VPC egress. Regions absent from
+      // regional-connector keep direct VPC egress exactly as before.
+      dynamic "network_interfaces" {
+        for_each = lookup(var.regional-connector, each.key, null) == null ? [""] : []
+        content {
+          network    = each.value.network
+          subnetwork = each.value.subnet
+        }
       }
-      egress = lookup(var.regional-egress, each.key, var.egress)
+      connector = lookup(var.regional-connector, each.key, null)
+      egress    = lookup(var.regional-egress, each.key, var.egress)
       // TODO(mattmoor): When direct VPC egress supports network tags
       // for NAT egress, then we should incorporate those here.
     }

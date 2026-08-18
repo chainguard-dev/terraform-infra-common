@@ -59,6 +59,19 @@ EOD
   default     = {}
 }
 
+variable "regional-connector" {
+  type        = map(string)
+  description = <<EOD
+Forwarded to regional-service. Optional per-region Serverless VPC Access
+connector, keyed by region name, as a fully qualified id
+projects/<project>/locations/<region>/connectors/<name>. A region present here
+egresses through the connector instead of direct VPC egress. Needed on a Shared
+VPC, where Cloud NAT does not translate Cloud Run direct VPC egress from a
+service project.
+EOD
+  default     = {}
+}
+
 variable "service_account" {
   type        = string
   description = "The service account as which to run the service."

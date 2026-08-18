@@ -45,7 +45,8 @@ module "this" {
   ingress    = var.ingress
   egress     = var.egress
 
-  regional-egress = var.regional-egress
+  regional-egress    = var.regional-egress
+  regional-connector = var.regional-connector
 
   custom_audiences = var.custom_audiences
 

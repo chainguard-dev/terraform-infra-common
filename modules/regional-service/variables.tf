@@ -61,6 +61,35 @@ EOD
   default     = {}
 }
 
+variable "regional-connector" {
+  type        = map(string)
+  description = <<EOD
+Optional per-region Serverless VPC Access connector, keyed by region name, as a
+fully qualified id: projects/<project>/locations/<region>/connectors/<name>.
+
+A region present in this map egresses through that connector instead of direct
+VPC egress, so its network_interfaces are omitted (Cloud Run accepts one or the
+other). Regions absent from the map are unchanged.
+
+Needed when the VPC and Cloud NAT live in a different project than the service:
+Cloud NAT does not translate direct VPC egress across a project boundary, so
+regional-egress = ALL_TRAFFIC alone blackholes that region's public egress. A
+connector is backed by GCE VMs in the VPC's project, which its NAT does
+translate.
+EOD
+  default     = {}
+
+  validation {
+    // A bare connector name resolves in the service's own project, which for a
+    // Shared VPC host-project connector silently is not where it lives.
+    condition = alltrue([
+      for id in values(var.regional-connector) :
+      can(regex("^projects/[^/]+/locations/[^/]+/connectors/[^/]+$", id))
+    ])
+    error_message = "regional-connector values must be fully qualified as projects/<project>/locations/<region>/connectors/<name>."
+  }
+}
+
 variable "service_account" {
   type        = string
   description = "The service account as which to run the service."
