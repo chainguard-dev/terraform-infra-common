@@ -125,24 +125,36 @@ resource "google_container_cluster" "this" {
   # Configured with separate node_pool resources
   # node_config {}
 
+  # Emitted when node auto-provisioning is enabled OR when an autoscaling
+  # profile is set: the profile governs the standard per-node-pool cluster
+  # autoscaler's binpacking and scale-down aggressiveness regardless of NAP,
+  # so it must be settable with `enabled = false`. The resource_limits and
+  # auto_provisioning_defaults sub-blocks configure NAP itself and are only
+  # emitted when NAP is enabled.
   dynamic "cluster_autoscaling" {
-    for_each = var.cluster_autoscaling == false ? [] : ["placeholder"]
+    for_each = var.cluster_autoscaling == false && var.cluster_autoscaling_profile == null ? [] : ["placeholder"]
 
     content {
       enabled                       = var.cluster_autoscaling
       default_compute_class_enabled = var.default_compute_class_enabled
-      resource_limits {
-        resource_type = var.cluster_autoscaling_cpu_limits.resource_type
-        minimum       = var.cluster_autoscaling_cpu_limits.minimum
-        maximum       = var.cluster_autoscaling_cpu_limits.maximum
-      }
-      resource_limits {
-        resource_type = var.cluster_autoscaling_memory_limits.resource_type
-        minimum       = var.cluster_autoscaling_memory_limits.minimum
-        maximum       = var.cluster_autoscaling_memory_limits.maximum
+      dynamic "resource_limits" {
+        for_each = var.cluster_autoscaling ? ["cpu"] : []
+        content {
+          resource_type = var.cluster_autoscaling_cpu_limits.resource_type
+          minimum       = var.cluster_autoscaling_cpu_limits.minimum
+          maximum       = var.cluster_autoscaling_cpu_limits.maximum
+        }
       }
       dynamic "resource_limits" {
-        for_each = var.cluster_autoscaling_gpu_limits
+        for_each = var.cluster_autoscaling ? ["memory"] : []
+        content {
+          resource_type = var.cluster_autoscaling_memory_limits.resource_type
+          minimum       = var.cluster_autoscaling_memory_limits.minimum
+          maximum       = var.cluster_autoscaling_memory_limits.maximum
+        }
+      }
+      dynamic "resource_limits" {
+        for_each = var.cluster_autoscaling ? var.cluster_autoscaling_gpu_limits : []
         content {
           resource_type = resource_limits.value.resource_type
           minimum       = resource_limits.value.minimum
@@ -150,7 +162,7 @@ resource "google_container_cluster" "this" {
         }
       }
       dynamic "auto_provisioning_defaults" {
-        for_each = var.cluster_autoscaling_provisioning_defaults == null ? [] : ["placeholder"]
+        for_each = var.cluster_autoscaling && var.cluster_autoscaling_provisioning_defaults != null ? ["placeholder"] : []
 
         content {
           service_account = google_service_account.cluster_default.email

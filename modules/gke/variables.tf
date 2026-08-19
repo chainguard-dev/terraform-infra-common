@@ -146,7 +146,7 @@ variable "cluster_autoscaling_provisioning_defaults" {
 variable "cluster_autoscaling_profile" {
   type        = string
   default     = null
-  description = "Cluster autoscaling profile"
+  description = "Cluster autoscaler profile (BALANCED or OPTIMIZE_UTILIZATION). Governs the standard per-node-pool cluster autoscaler, so it is settable independently of node auto-provisioning (var.cluster_autoscaling)."
 }
 
 variable "deletion_protection" {
