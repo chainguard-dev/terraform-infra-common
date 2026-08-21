@@ -16,6 +16,8 @@ output "cluster_endpoint" {
 }
 
 output "cluster_ca_certificate" {
-  value     = google_container_cluster.this.master_auth[0].cluster_ca_certificate
+  # one() instead of [0]: master_auth is computed and empty in mocked test
+  # plans; on a real cluster it always has exactly one element.
+  value     = one(google_container_cluster.this.master_auth[*].cluster_ca_certificate)
   sensitive = true
 }

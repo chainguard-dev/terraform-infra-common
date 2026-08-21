@@ -133,3 +133,18 @@ variable "observability_role" {
     error_message = "observability_role must be a fully-qualified role id: projects/{project}/roles/{role_id} or organizations/{org}/roles/{role_id}."
   }
 }
+
+variable "resource_manager_tags" {
+  description = "Resource Manager tags for this module's resources, as tagKeys/<id> => tagValues/<id>. Bound to the broker topics and forwarded to the regional ingress services."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition = alltrue([
+      for key, value in var.resource_manager_tags :
+      can(regex("^tagKeys/[0-9]+$", key)) && can(regex("^tagValues/[0-9]+$", value))
+    ])
+    error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
+  }
+}

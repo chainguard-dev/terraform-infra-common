@@ -69,10 +69,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -80,6 +76,7 @@ No modules.
 | [google_secret_manager_secret.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
 | [google_secret_manager_secret_version.data](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [google_tags_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
 | [google_client_openid_userinfo.me](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_openid_userinfo) | data source |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
@@ -94,6 +91,7 @@ No modules.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_replication_locations"></a> [replication\_locations](#input\_replication\_locations) | List of GCP regions for user\_managed replication. When null (default), uses automatic replication. | `list(string)` | `null` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the backing secret, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_service-account"></a> [service-account](#input\_service-account) | The email of the service account that will access the secret. | `string` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 

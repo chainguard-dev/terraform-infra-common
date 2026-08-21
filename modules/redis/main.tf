@@ -149,6 +149,8 @@ module "redis_auth_secret" {
   create_placeholder_version = false
 
   team = var.team
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 # Create the initial version of the secret with the auth string

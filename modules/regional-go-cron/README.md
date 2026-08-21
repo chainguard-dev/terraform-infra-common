@@ -12,12 +12,6 @@ No requirements.
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 | <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_invoker_name"></a> [invoker\_name](#module\_invoker\_name) | ../limited-concat | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -32,7 +26,9 @@ No requirements.
 | [google_project_iam_member.profiler-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.trace-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_service_account.invoker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
+| [google_tags_location_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
 | [ko_build.this](https://registry.terraform.io/providers/ko-build/ko/latest/docs/resources/build) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -58,6 +54,7 @@ No requirements.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regional-cronspec"></a> [regional-cronspec](#input\_regional-cronspec) | Per-region cron schedule configuration. Must contain an entry for every key in var.regions. | <pre>map(object({<br/>    schedule  = string<br/>    time_zone = optional(string, "America/New_York")<br/>    paused    = optional(bool, false)<br/>  }))</pre> | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. A job and scheduler will be created in each region. | <pre>map(object({<br/>    network = optional(string)<br/>    subnet  = optional(string)<br/>  }))</pre> | n/a | yes |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to each Cloud Run job, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_scrape_native_histograms"></a> [scrape\_native\_histograms](#input\_scrape\_native\_histograms) | Scrape native (exponential) histograms from metrics targets. Requires opentelemetry-collector-contrib v0.142.0 or later. Set to false when pinning otel\_collector\_image to an older collector, which rejects the scrape keys at startup. | `bool` | `true` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which each job task runs. | `string` | n/a | yes |
 | <a name="input_success_alert_alignment_period_seconds"></a> [success\_alert\_alignment\_period\_seconds](#input\_success\_alert\_alignment\_period\_seconds) | Alignment period for successful completion alert. 0 (default) to not create alert. | `number` | `0` | no |

@@ -9,10 +9,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -20,6 +16,7 @@ No modules.
 | [google_container_cluster.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster) | resource |
 | [google_project_iam_member.cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_service_account.cluster_default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
+| [google_tags_location_tag_binding.cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
 
 ## Inputs
 
@@ -34,6 +31,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | n/a | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones` | `string` | n/a | yes |
 | <a name="input_release_channel"></a> [release\_channel](#input\_release\_channel) | GKE release channel | `string` | `"REGULAR"` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the GKE cluster, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | The subnetwork to deploy the cluster in. | `string` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_zones"></a> [zones](#input\_zones) | If specified, will spread nodes across these zones | `list(string)` | `null` | no |

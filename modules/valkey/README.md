@@ -139,10 +139,6 @@ limitations under the License.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | >= 7.34.0 |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -151,6 +147,8 @@ No modules.
 | [google_project_iam_member.db_connection_user](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.viewer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.memorystore](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
+| [google_tags_location_tag_binding.valkey](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -171,6 +169,7 @@ No modules.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The ID of the project in which the resource belongs. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy resources to. | `string` | n/a | yes |
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replica nodes per shard. | `number` | `1` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the Valkey instance, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_shard_count"></a> [shard\_count](#input\_shard\_count) | The number of shards. Must be 1 when mode is CLUSTER\_DISABLED. | `number` | `1` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_zone_distribution"></a> [zone\_distribution](#input\_zone\_distribution) | Zone distribution of the instance's nodes. MULTI\_ZONE spreads nodes for availability; SINGLE\_ZONE places all nodes in the given zone, co-locating with zonal clients to cut cross-zone latency and egress. | <pre>object({<br/>    mode = string<br/>    zone = optional(string)<br/>  })</pre> | <pre>{<br/>  "mode": "MULTI_ZONE"<br/>}</pre> | no |

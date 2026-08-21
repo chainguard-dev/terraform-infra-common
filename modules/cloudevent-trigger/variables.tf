@@ -174,3 +174,18 @@ EOD
   type        = bool
   default     = false
 }
+
+variable "resource_manager_tags" {
+  description = "Resource Manager tags to bind to this module's taggable resources, as tagKeys/<id> => tagValues/<id>."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition = alltrue([
+      for key, value in var.resource_manager_tags :
+      can(regex("^tagKeys/[0-9]+$", key)) && can(regex("^tagValues/[0-9]+$", value))
+    ])
+    error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
+  }
+}

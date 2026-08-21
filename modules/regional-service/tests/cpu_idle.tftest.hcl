@@ -1,5 +1,7 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
+# Run in CI by .github/workflows/tf-module-tests.yaml.
+#
 
 # Plan-only tests that pin the rendered Cloud Run billing mode.
 #
@@ -12,7 +14,13 @@
 #
 # Mock providers keep this fully offline: no credentials, no state.
 
-mock_provider "google" {}
+mock_provider "google" {
+  mock_data "google_project" {
+    defaults = {
+      number = "123456789"
+    }
+  }
+}
 mock_provider "google-beta" {}
 
 variables {

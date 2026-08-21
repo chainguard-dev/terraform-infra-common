@@ -31,6 +31,8 @@ module "webhook-secret" {
   notification-channels = var.notification_channels
 
   team = var.team
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 module "this" {
@@ -86,6 +88,8 @@ module "this" {
   enable_profiler = var.enable_profiler
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 // Authorize the trampoline service account to publish events on the broker.

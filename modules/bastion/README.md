@@ -120,10 +120,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -143,6 +139,8 @@ No modules.
 | [google_project_iam_member.dev_service_account_user](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.os_config_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_service_account.bastion_sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
+| [google_tags_location_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -160,6 +158,7 @@ No modules.
 | <a name="input_patch_time_utc"></a> [patch\_time\_utc](#input\_patch\_time\_utc) | Time of day in HH:MM (UTC) when patching runs. | `string` | `"03:00"` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project in which to deploy the bastion host. | `string` | n/a | yes |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the bastion instance, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_startup_script"></a> [startup\_script](#input\_startup\_script) | additional startup script snippet to execute on bastion. | `string` | `""` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnetwork name the bastion joins (must be private). | `string` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |

@@ -80,12 +80,6 @@ No requirements.
 | <a name="provider_cosign"></a> [cosign](#provider\_cosign) | n/a |
 | <a name="provider_ko"></a> [ko](#provider\_ko) | n/a |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_this"></a> [this](#module\_this) | ../regional-service | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -122,6 +116,7 @@ No requirements.
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A service will be created in each region configured to egress the specified traffic via the specified subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_request_timeout_seconds"></a> [request\_timeout\_seconds](#input\_request\_timeout\_seconds) | The timeout for requests to the service, in seconds. | `number` | `300` | no |
 | <a name="input_require_authenticated_invocations"></a> [require\_authenticated\_invocations](#input\_require\_authenticated\_invocations) | Forwarded to regional-service. When true, do not grant `roles/run.invoker` to `allUsers`. See regional-service for details. | `bool` | `false` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Forwarded to regional-service. Resource Manager tags to bind to the service, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. max\_instances bounds each revision individually; service\_max\_instances additionally bounds all revisions receiving traffic combined, which Cloud Run requires when per-instance ephemeral disk reservations must fit the regional quota across rollouts. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    service_max_instances            = optional(number)<br/>    max_instance_request_concurrency = optional(number)<br/>  })</pre> | `{}` | no |
 | <a name="input_scrape_native_histograms"></a> [scrape\_native\_histograms](#input\_scrape\_native\_histograms) | Scrape native (exponential) histograms from metrics targets. Requires opentelemetry-collector-contrib v0.142.0 or later. Set to false when pinning otel\_collector\_image to an older collector, which rejects the scrape keys at startup. | `bool` | `true` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account as which to run the service. | `string` | n/a | yes |

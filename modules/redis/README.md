@@ -99,12 +99,6 @@ limitations under the License.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | >= 4.79 |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_redis_auth_secret"></a> [redis\_auth\_secret](#module\_redis\_auth\_secret) | ../secret | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -114,6 +108,8 @@ limitations under the License.
 | [google_project_service.redis_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_redis_instance.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/redis_instance) | resource |
 | [google_secret_manager_secret_version.auth_string](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [google_tags_location_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -140,6 +136,7 @@ limitations under the License.
 | <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy resources to. | `string` | n/a | yes |
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replica nodes. | `number` | `0` | no |
 | <a name="input_reserved_ip_range"></a> [reserved\_ip\_range](#input\_reserved\_ip\_range) | The CIDR range of internal addresses that are reserved for this instance. | `string` | `null` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the Redis instance, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_secret_accessor_sa_email"></a> [secret\_accessor\_sa\_email](#input\_secret\_accessor\_sa\_email) | The email of the service account that will access the secret. | `string` | n/a | yes |
 | <a name="input_secret_version_adder"></a> [secret\_version\_adder](#input\_secret\_version\_adder) | The user allowed to populate new redis auth secret versions. | `string` | n/a | yes |
 | <a name="input_secret_version_adders"></a> [secret\_version\_adders](#input\_secret\_version\_adders) | Additional users allowed to populate new redis auth secret versions (e.g., Terraform service accounts). | `list(string)` | `[]` | no |

@@ -89,6 +89,8 @@ module "this" {
   launch_stage = var.launch_stage
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 data "google_cloud_run_v2_service" "this" {

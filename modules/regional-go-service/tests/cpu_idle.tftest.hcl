@@ -1,11 +1,13 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
+#
+# Run in CI by .github/workflows/tf-module-tests.yaml.
 
 # Plan-only guard on this module's billing-relevant defaults.
 #
 # regional-go-service passes var.otel_resources through to regional-service
 # verbatim, and the rendered cpu_idle values are asserted in
-# ../regional-service/tests/billing.tftest.hcl. Test assertions cannot
+# ../regional-service/tests/cpu_idle.tftest.hcl. Test assertions cannot
 # reference resources inside child modules, so this file pins what this
 # layer owns: the otel_resources default must never carry cpu_idle = false,
 # which would opt every consumer into instance-based billing.

@@ -170,3 +170,18 @@ variable "enable_observability_iam" {
   default     = true
   description = "Whether this module grants the service account the observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent) on the project. Set false when the caller manages these grants itself, e.g. a service account shared across multiple services, where per-service grants would create overlapping non-authoritative IAM members that revoke each other on destroy."
 }
+
+variable "resource_manager_tags" {
+  description = "Resource Manager tags forwarded to this module's taggable resources, as tagKeys/<id> => tagValues/<id>."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition = alltrue([
+      for key, value in var.resource_manager_tags :
+      can(regex("^tagKeys/[0-9]+$", key)) && can(regex("^tagValues/[0-9]+$", value))
+    ])
+    error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
+  }
+}

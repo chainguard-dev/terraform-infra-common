@@ -31,6 +31,8 @@ module "service" {
   launch_stage = var.launch_stage
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 locals {
@@ -78,6 +80,8 @@ module "cloudevent-trigger" {
   team = var.team
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 module "dashboard" {

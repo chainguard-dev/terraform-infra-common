@@ -76,21 +76,6 @@ No requirements.
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_authorize-delivery"></a> [authorize-delivery](#module\_authorize-delivery) | ../authorize-private-service | n/a |
-| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard | n/a |
-| <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
-| <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
-| <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
-| <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
-| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
-| <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
-| <a name="module_trampoline-emits-events"></a> [trampoline-emits-events](#module\_trampoline-emits-events) | ../authorize-private-service | n/a |
-| <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -107,8 +92,13 @@ No requirements.
 | [google_service_account.service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [google_service_account_iam_binding.allow-pubsub-to-mint-tokens](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account_iam_binding) | resource |
 | [google_storage_notification.notification](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_notification) | resource |
+| [google_tags_tag_binding.dead_letter_subscription](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
+| [google_tags_tag_binding.dead_letter_topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
+| [google_tags_tag_binding.internal_topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
+| [google_tags_tag_binding.subscription](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
 | [random_string.delivery-suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [random_string.service-suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 | [google_storage_bucket.bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/storage_bucket) | data source |
 | [google_storage_project_service_account.gcs_account](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/storage_project_service_account) | data source |
 
@@ -129,6 +119,7 @@ No requirements.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. The bucket must be in one of these regions. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to this module's Pub/Sub resources, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 
 ## Outputs

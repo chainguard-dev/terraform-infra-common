@@ -52,6 +52,8 @@ module "this" {
 
   deletion_protection = var.deletion_protection
 
+  resource_manager_tags = var.resource_manager_tags
+
   service_account = var.service_account
   # Source-built containers get signed images; raw_containers pass through
   # as-is (prebuilt images this module neither builds nor signs).

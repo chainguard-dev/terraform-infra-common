@@ -84,19 +84,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard | n/a |
-| <a name="module_http"></a> [http](#module\_http) | ../dashboard/sections/http | n/a |
-| <a name="module_layout"></a> [layout](#module\_layout) | ../dashboard/sections/layout | n/a |
-| <a name="module_logs"></a> [logs](#module\_logs) | ../dashboard/sections/logs | n/a |
-| <a name="module_resources"></a> [resources](#module\_resources) | ../dashboard/sections/resources | n/a |
-| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
-| <a name="module_topic"></a> [topic](#module\_topic) | ../dashboard/sections/topic | n/a |
-| <a name="module_width"></a> [width](#module\_width) | ../dashboard/sections/width | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -106,6 +93,9 @@ No requirements.
 | [google_pubsub_topic_iam_binding.ingress-publishes-dedicated-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_pubsub_topic_iam_binding.ingress-publishes-events](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic_iam_binding) | resource |
 | [google_service_account.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
+| [google_tags_tag_binding.dedicated_topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
+| [google_tags_tag_binding.topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -126,6 +116,7 @@ No requirements.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A pub/sub topic and ingress service (publishing to the respective topic) will be created in each region, with the ingress service configured to egress all traffic via the specified subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
 | <a name="input_require_authenticated_invocations"></a> [require\_authenticated\_invocations](#input\_require\_authenticated\_invocations) | When true, do not grant roles/run.invoker to allUsers on the broker ingress service, even when ingress is not INTERNAL\_ONLY. Defaults to false to preserve existing behavior. Set to true alongside a non-internal ingress so the broker is reachable over the public internet but only invocable by callers explicitly granted run.invoker (e.g. a CI service account), rejecting unauthenticated requests. | `bool` | `false` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags for this module's resources, as tagKeys/<id> => tagValues/<id>. Bound to the broker topics and forwarded to the regional ingress services. | `map(string)` | `{}` | no |
 | <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    max_instance_request_concurrency = optional(number)<br/>  })</pre> | `{}` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 

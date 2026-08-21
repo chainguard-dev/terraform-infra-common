@@ -54,10 +54,6 @@ No requirements.
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -65,6 +61,7 @@ No modules.
 | [google_storage_bucket.status](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket) | resource |
 | [google_storage_bucket_iam_member.readers](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_member) | resource |
 | [google_storage_bucket_iam_member.writers](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket_iam_member) | resource |
+| [google_tags_location_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
 | [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 
 ## Inputs
@@ -76,6 +73,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Base name for the status bucket. A short random suffix is appended to keep the (globally unique) bucket name collision-free. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID where the status bucket will be created. | `string` | n/a | yes |
 | <a name="input_reader_service_accounts"></a> [reader\_service\_accounts](#input\_reader\_service\_accounts) | Service account members granted read-only (roles/storage.objectViewer) access, for consumers built with gcsstatusmanager.NewReadOnly. | `list(string)` | `[]` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the status bucket, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_writer_service_accounts"></a> [writer\_service\_accounts](#input\_writer\_service\_accounts) | Service account members (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) granted read+write on the status bucket. gcsstatusmanager overwrites objects, so roles/storage.objectUser (no repoAdmin/delete privilege needed for writes) is granted. | `list(string)` | `[]` | no |
 
 ## Outputs

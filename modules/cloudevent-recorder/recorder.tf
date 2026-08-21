@@ -123,6 +123,8 @@ module "this" {
   enable_profiler = var.enable_profiler
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 resource "random_id" "trigger-suffix" {
@@ -152,6 +154,8 @@ module "triggers" {
   team = var.team
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 // Additive triggers on dedicated topics for types routed off the shared broker.
@@ -176,6 +180,8 @@ module "extra-triggers" {
   product = var.product
 
   notification_channels = var.notification_channels
+
+  resource_manager_tags = var.resource_manager_tags
 }
 
 module "recorder-dashboard" {

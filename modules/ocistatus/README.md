@@ -45,16 +45,14 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
 | ---- | ---- |
 | [google_artifact_registry_repository.attestations](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository) | resource |
 | [google_artifact_registry_repository_iam_member.writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository_iam_member) | resource |
+| [google_tags_location_tag_binding.attestations](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -64,6 +62,7 @@ No modules.
 | <a name="input_location"></a> [location](#input\_location) | The location (region) for the Artifact Registry repository. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name for the Artifact Registry repository. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID where the repository will be created. | `string` | n/a | yes |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the attestations repository, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The service account member (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) to grant access to write and replace attestations. | `string` | n/a | yes |
 
 ## Outputs

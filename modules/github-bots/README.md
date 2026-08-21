@@ -88,14 +88,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_cloudevent-trigger"></a> [cloudevent-trigger](#module\_cloudevent-trigger) | ../cloudevent-trigger | n/a |
-| <a name="module_dashboard"></a> [dashboard](#module\_dashboard) | ../dashboard/cloudevent-receiver | n/a |
-| <a name="module_service"></a> [service](#module\_service) | ../regional-go-service | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -125,6 +117,7 @@ No requirements.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_raw_filter"></a> [raw\_filter](#input\_raw\_filter) | Raw PubSub filter to apply, ignores other variables. https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax | `string` | `""` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags forwarded to this module's taggable resources, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_service_account_email"></a> [service\_account\_email](#input\_service\_account\_email) | The email of the service account being authorized to invoke the private Cloud Run service. If empty, a service account will be created and used. | `string` | `""` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 

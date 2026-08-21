@@ -84,10 +84,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -96,6 +92,8 @@ No modules.
 | [google_bigquery_dataset_iam_member.sink_writers](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset_iam_member) | resource |
 | [google_logging_project_sink.sinks](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_project_sink) | resource |
 | [google_monitoring_alert_policy.log_ingestion](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_tags_location_tag_binding.dataset](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -112,6 +110,7 @@ No modules.
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channel IDs for alerts | `list(string)` | `[]` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label for resources | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID where resources will be created | `string` | n/a | yes |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the log sink dataset, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_retention_days"></a> [retention\_days](#input\_retention\_days) | The number of days to retain data in BigQuery. Partitions older than this will be automatically deleted. Only applies when use\_partitioned\_tables is true. | `number` | `30` | no |
 | <a name="input_sinks"></a> [sinks](#input\_sinks) | Map of log sinks to create. Each key is the sink name suffix, and the value is an object with:<br/>- log\_filter: Cloud Logging filter expression to route logs<br/>- description: Sink description (optional)<br/><br/>Note: Tables are auto-created by Cloud Logging based on log names.<br/>See: https://cloud.google.com/logging/docs/export/bigquery | <pre>map(object({<br/>    log_filter  = string<br/>    description = optional(string, "")<br/>  }))</pre> | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Team label for resources | `string` | `null` | no |

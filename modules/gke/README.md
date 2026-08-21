@@ -10,10 +10,6 @@ No requirements.
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -24,6 +20,7 @@ No modules.
 | [google_project_iam_member.cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_service_account.cluster_default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [google_service_account_iam_member.terraform_gke_impersonation](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account_iam_member) | resource |
+| [google_tags_location_tag_binding.cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
 
 ## Inputs
 
@@ -53,6 +50,7 @@ No modules.
 | <a name="input_project"></a> [project](#input\_project) | n/a | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones` | `any` | n/a | yes |
 | <a name="input_release_channel"></a> [release\_channel](#input\_release\_channel) | GKE release channel | `string` | `"REGULAR"` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the GKE cluster, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_resource_usage_export_config"></a> [resource\_usage\_export\_config](#input\_resource\_usage\_export\_config) | Config for exporting resource usage. | <pre>object({<br/>    bigquery_dataset_id                  = optional(string, "")<br/>    enable_network_egress_metering       = optional(bool, false)<br/>    enable_resource_consumption_metering = optional(bool, true)<br/>  })</pre> | `{}` | no |
 | <a name="input_service_account_impersonation_email"></a> [service\_account\_impersonation\_email](#input\_service\_account\_impersonation\_email) | Service account email impersonation for the service account created by this module. | `string` | `null` | no |
 | <a name="input_service_account_suffix"></a> [service\_account\_suffix](#input\_service\_account\_suffix) | Suffix appended to var.name to form the node service account ID. When null (the default), uses the region as the suffix (e.g. "-us-central1") so clusters sharing a project (e.g. the same name across regions) don't collide on this project-global resource. Set explicitly to pin a specific service account ID. | `string` | `null` | no |

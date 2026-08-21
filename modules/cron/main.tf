@@ -28,6 +28,8 @@ module "impl" {
   team            = var.team
   product         = var.product
 
+  resource_manager_tags = var.resource_manager_tags
+
   enable_observability_iam = var.enable_observability_iam
   egress                   = var.vpc_access != null ? var.vpc_access.egress : null
 

@@ -172,12 +172,6 @@ No requirements.
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_null"></a> [null](#provider\_null) | n/a |
 
-## Modules
-
-| Name | Source | Version |
-| ---- | ------ | ------- |
-| <a name="module_impl"></a> [impl](#module\_impl) | ../regional-go-cron | n/a |
-
 ## Resources
 
 | Name | Type |
@@ -216,6 +210,7 @@ No requirements.
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the cron job. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region to run the job. | `string` | `"us-east4"` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Forwarded to regional-go-cron. Resource Manager tags to bind to the job, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_schedule"></a> [schedule](#input\_schedule) | The cron schedule on which to run the job. | `any` | n/a | yes |
 | <a name="input_scrape_native_histograms"></a> [scrape\_native\_histograms](#input\_scrape\_native\_histograms) | Scrape native (exponential) histograms from metrics targets. Requires opentelemetry-collector-contrib v0.142.0 or later. Set to false when pinning otel\_collector\_image to an older collector, which rejects the scrape keys at startup. | `bool` | `true` | no |
 | <a name="input_secret_env"></a> [secret\_env](#input\_secret\_env) | A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret\_key=secret\_name). A value may pin a version as secret\_name@version; unpinned values mount latest, which breaks whenever a stray newer version exists — pin when the consumer must match a specific rotation (e.g. a SQL user's password). | `map` | `{}` | no |

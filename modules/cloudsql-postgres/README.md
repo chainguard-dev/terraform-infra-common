@@ -48,10 +48,6 @@ No requirements.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
@@ -59,6 +55,9 @@ No modules.
 | [google_project_iam_member.client_sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_sql_database_instance.replicas](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/sql_database_instance) | resource |
 | [google_sql_database_instance.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/sql_database_instance) | resource |
+| [google_tags_location_tag_binding.primary](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_tags_location_tag_binding.replicas](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
+| [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
@@ -90,6 +89,7 @@ No modules.
 | <a name="input_read_replica_regions"></a> [read\_replica\_regions](#input\_read\_replica\_regions) | List of regions in which to create read replicas. Empty list for none. | `list(string)` | `[]` | no |
 | <a name="input_region"></a> [region](#input\_region) | GCP region for the primary instance. | `string` | n/a | yes |
 | <a name="input_replicas_deletion_protection"></a> [replicas\_deletion\_protection](#input\_replicas\_deletion\_protection) | Enable deletion protection for read replicas. | `bool` | `false` | no |
+| <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the instance and its read replicas, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_ssl_mode"></a> [ssl\_mode](#input\_ssl\_mode) | SSL mode for the Cloud SQL instance. Default is TRUSTED\_CLIENT\_CERTIFICATE\_REQUIRED. | `string` | `"TRUSTED_CLIENT_CERTIFICATE_REQUIRED"` | no |
 | <a name="input_storage_gb"></a> [storage\_gb](#input\_storage\_gb) | Initial SSD storage size in GB. | `number` | `256` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
