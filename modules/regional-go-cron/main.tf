@@ -146,6 +146,14 @@ resource "google_service_account" "invoker" {
 }
 
 // One Cloud Run Job per region.
+//
+// This stays on google-beta even though the GA and beta schemas for
+// google_cloud_run_v2_job are identical. ../cron carries a moved block
+// relocating its old google_cloud_run_v2_job.job here, and that source state
+// is held by google-beta. A moved block that crosses providers makes Terraform
+// call the target provider's MoveResourceState, which the google provider
+// rejects ("does not support moving resource state across resource types").
+// Switch this once that moved block is retired.
 resource "google_cloud_run_v2_job" "this" {
   for_each = var.regions
   provider = google-beta

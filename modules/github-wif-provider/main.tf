@@ -1,6 +1,5 @@
 resource "google_iam_workload_identity_pool" "this" {
   project                   = var.project_id
-  provider                  = google-beta
   workload_identity_pool_id = var.name
 
   // Maximum display_name length is 32 characters. 32 - len("Pool for") = 23.
@@ -11,7 +10,6 @@ resource "google_iam_workload_identity_pool" "this" {
 
 resource "google_iam_workload_identity_pool_provider" "this" {
   project                            = var.project_id
-  provider                           = google-beta
   workload_identity_pool_id          = google_iam_workload_identity_pool.this.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-provider" # This gets 4-32 alphanumeric characters (and '-')
   display_name                       = "GitHub provider"

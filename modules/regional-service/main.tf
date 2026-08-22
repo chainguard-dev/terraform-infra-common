@@ -118,7 +118,6 @@ check "exactly_one_main_container" {
 resource "google_cloud_run_v2_service" "this" {
   for_each = var.regions
 
-  provider     = google-beta # For empty_dir
   project      = var.project_id
   name         = var.name
   location     = each.key

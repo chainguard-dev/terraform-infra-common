@@ -13,15 +13,14 @@
 # which would opt every consumer into instance-based billing.
 #
 # The regional-service call is replaced with override_module so the plan
-# stays fully offline: no credentials, no state. The google providers are
+# stays fully offline: no credentials, no state. The google provider is
 # mocked as well: override_module skips the child module's resources, but
-# the providers it requires are still configured, and the real ones would
+# the providers it requires are still configured, and the real one would
 # try to load application default credentials.
 
 mock_provider "ko" {}
 mock_provider "cosign" {}
 mock_provider "google" {}
-mock_provider "google-beta" {}
 
 override_module {
   target = module.this

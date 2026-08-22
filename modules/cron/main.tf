@@ -1,6 +1,8 @@
 terraform {
   required_providers {
-    google      = { source = "hashicorp/google" }
+    google = { source = "hashicorp/google" }
+    // Required transitively by the regional-go-cron child module; declared here
+    // so provider configurations attach at the root module.
     google-beta = { source = "hashicorp/google-beta" }
   }
 }

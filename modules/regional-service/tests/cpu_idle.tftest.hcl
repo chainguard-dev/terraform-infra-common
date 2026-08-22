@@ -21,7 +21,6 @@ mock_provider "google" {
     }
   }
 }
-mock_provider "google-beta" {}
 
 variables {
   project_id = "fixture-project"

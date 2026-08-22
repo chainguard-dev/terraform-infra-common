@@ -5,8 +5,7 @@ terraform {
     // Required transitively by the regional-service child module; declared
     // here so provider configurations (including test mocks) attach at the
     // root module.
-    google      = { source = "hashicorp/google" }
-    google-beta = { source = "hashicorp/google-beta" }
+    google = { source = "hashicorp/google" }
   }
 }
 
