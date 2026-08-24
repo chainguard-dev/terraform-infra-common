@@ -564,7 +564,7 @@ func (s *samplingSpanProcessor) OnEnd(span trace.ReadOnlySpan) {
 		return
 	}
 	tid := span.SpanContext().TraceID()
-	x := binary.BigEndian.Uint64(tid[8:16]) >> 1
+	x := binary.BigEndian.Uint64(tid[samplingBytesStart:samplingBytesEnd]) >> 1
 	if x < s.threshold {
 		s.inner.OnEnd(span)
 	}
