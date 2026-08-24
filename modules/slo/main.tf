@@ -119,6 +119,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
   display_name = "${var.service_name} - Multi-region ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
+  severity     = var.slo.alerting.severity
 
   conditions {
     display_name = "Multi-region ${each.key}d SLO burn rate too high"
@@ -128,9 +129,9 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
         select_slo_burn_rate("${google_monitoring_slo.success_cr[each.key].id}", "60m")
       EOT
 
-      duration        = "0s"
+      duration        = var.slo.alerting.duration
       comparison      = "COMPARISON_GT"
-      threshold_value = 10
+      threshold_value = var.slo.alerting.threshold
 
       aggregations {
         alignment_period   = "60s"
@@ -165,6 +166,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
   display_name = "${var.service_name} - ${each.value.region} ${each.value.rolling_period_key}d SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
+  severity     = var.slo.alerting.severity
 
   conditions {
     display_name = "${var.service_name} ${each.value.region} ${each.value.rolling_period_key}d SLO burn rate too high"
@@ -174,9 +176,9 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
         select_slo_burn_rate("${google_monitoring_slo.success_cr_per_region[each.key].id}", "60m")
       EOT
 
-      duration        = "0s"
+      duration        = var.slo.alerting.duration
       comparison      = "COMPARISON_GT"
-      threshold_value = 10
+      threshold_value = var.slo.alerting.threshold
 
       aggregations {
         alignment_period   = "60s"
@@ -210,6 +212,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_gclb" {
   display_name = "${var.service_name} - GCLB ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
   combiner     = "OR"
+  severity     = var.slo.alerting.severity
 
   conditions {
     display_name = "GCLB ${each.key}d SLO burn rate too high"
@@ -219,9 +222,9 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_gclb" {
         select_slo_burn_rate("${google_monitoring_slo.success_gclb[each.key].id}", "60m")
       EOT
 
-      duration        = "0s"
+      duration        = var.slo.alerting.duration
       comparison      = "COMPARISON_GT"
-      threshold_value = 10
+      threshold_value = var.slo.alerting.threshold
 
       aggregations {
         alignment_period   = "60s"

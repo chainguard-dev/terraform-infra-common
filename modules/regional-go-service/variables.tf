@@ -419,6 +419,13 @@ variable "slo" {
       }
     ), null)
     monitor_gclb = optional(bool, false)
+    alerting = optional(object(
+      {
+        threshold = optional(number, 10)
+        duration  = optional(string, "0s")
+        severity  = optional(string, null)
+      }
+    ), {})
   })
   default = {}
 }
