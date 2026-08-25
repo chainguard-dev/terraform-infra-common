@@ -64,6 +64,20 @@ locals {
     for key, value in var.containers : key => value if length(value.ports) > 0
   }
 
+  // Cloud Run defaults missing per-container CPU limits to 1 vCPU. Instances
+  // below 1 total vCPU are valid only on Gen1 with concurrency set to 1.
+  effective_cpu_limits = concat(
+    [for v in values(var.containers) : coalesce(try(v.resources.limits.cpu, null), "1000m")],
+    var.enable_otel_sidecar ? [coalesce(try(var.otel_resources.limits.cpu, null), "1000m")] : [],
+  )
+  effective_millicpu = [
+    for cpu in local.effective_cpu_limits : (
+      endswith(cpu, "m") ? tonumber(trimsuffix(cpu, "m")) : tonumber(cpu) * 1000
+    )
+  ]
+  total_effective_millicpu                   = sum(concat([0], local.effective_millicpu))
+  effective_max_instance_request_concurrency = coalesce(var.scaling.max_instance_request_concurrency, 80)
+
   extra_metrics_ports = toset(flatten([
     for c in values(var.containers) : [
       for e in c.env : e.value
@@ -449,6 +463,17 @@ resource "google_cloud_run_v2_service" "this" {
   }
 
   lifecycle {
+    precondition {
+      condition = (
+        local.total_effective_millicpu >= 1000
+        || (
+          var.execution_environment == "EXECUTION_ENVIRONMENT_GEN1"
+          && local.effective_max_instance_request_concurrency == 1
+        )
+      )
+      error_message = "Service ${var.name}: total effective CPU across all containers is ${local.total_effective_millicpu}m. Cloud Run requires at least 1000m except on Gen1 with concurrency set to 1."
+    }
+
     ignore_changes = [
       # GCP manages container names automatically
       # Supporting up to 5 total containers (main + sidecars + otel)
