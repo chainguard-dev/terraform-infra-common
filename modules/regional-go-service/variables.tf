@@ -394,8 +394,8 @@ variable "otel_resources" {
   })
   default = {
     limits = {
-      cpu    = "1000m"
-      memory = "1Gi"
+      cpu    = "250m"
+      memory = "512Mi"
     }
   }
   description = "The resource clause for otel sidecar container."
