@@ -103,6 +103,14 @@ resource "google_compute_backend_service" "public-services" {
   project = var.project_id
   name    = each.value.name
 
+  // Wire the per-service load balancing scheme and classic->managed ALB
+  // migration state. Setting load_balancing_scheme explicitly (defaults to
+  // "EXTERNAL") also decouples the backend service from the provider default,
+  // which google v8.0.0 changed from EXTERNAL to EXTERNAL_MANAGED.
+  load_balancing_scheme                         = each.value.load_balancing_scheme
+  external_managed_migration_state              = each.value.external_managed_migration_state
+  external_managed_migration_testing_percentage = each.value.external_managed_migration_testing_percentage
+
   // Create a backend for each region hosting this cloud run service.
   dynamic "backend" {
     for_each = toset(var.serving_regions)

@@ -27,7 +27,7 @@ A map from hostnames (managed by dns_zone), to the name of the regionalized clou
 
 external_managed_migration_state: The migration state for the load balancer, [PREPARE, TEST_BY_PERCENTAGE, and TEST_ALL_TRAFFIC].
 external_managed_migration_testing_percentage: The percentage of traffic to route to new load balancer, [0, 100].
-load_balancing_scheme: The default load balancing scheme to use.
+load_balancing_scheme: The load balancing scheme to use (default EXTERNAL). Consumers already migrated to EXTERNAL_MANAGED must set this explicitly to preserve state.
 EOF
   type = map(object({
     name                                          = string
@@ -37,6 +37,27 @@ EOF
     load_balancing_scheme                         = optional(string, "EXTERNAL")
     connection_draining_timeout_sec               = optional(number, 300)
   }))
+
+  validation {
+    condition = alltrue([
+      for v in values(var.public-services) : v.external_managed_migration_state == null || contains(["PREPARE", "TEST_BY_PERCENTAGE", "TEST_ALL_TRAFFIC"], v.external_managed_migration_state)
+    ])
+    error_message = "external_managed_migration_state must be one of PREPARE, TEST_BY_PERCENTAGE, TEST_ALL_TRAFFIC (or null)."
+  }
+
+  validation {
+    condition = alltrue([
+      for v in values(var.public-services) : v.external_managed_migration_testing_percentage == null || (v.external_managed_migration_testing_percentage >= 0 && v.external_managed_migration_testing_percentage <= 100)
+    ])
+    error_message = "external_managed_migration_testing_percentage must be between 0 and 100 (or null)."
+  }
+
+  validation {
+    condition = alltrue([
+      for v in values(var.public-services) : v.external_managed_migration_state != "TEST_BY_PERCENTAGE" || v.external_managed_migration_testing_percentage != null
+    ])
+    error_message = "external_managed_migration_testing_percentage is required when external_managed_migration_state is TEST_BY_PERCENTAGE."
+  }
 }
 
 variable "notification_channels" {
