@@ -110,11 +110,11 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "Rate limited without headers uses the default retry-after",
+			name: "429 without headers uses the default retry-after",
 			responses: func(_ time.Time) []*http.Response {
 				return []*http.Response{
 					{
-						StatusCode: http.StatusForbidden,
+						StatusCode: http.StatusTooManyRequests,
 						Header:     http.Header{},
 					},
 					{StatusCode: http.StatusOK},
@@ -123,6 +123,43 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			expectedCalls:  2,
 			expectedWait:   defaultRetryAfter,
 			expectedStatus: http.StatusOK,
+		},
+		{
+			// Regression: a 403 with no rate-limit signal is an
+			// authorization failure, not a rate limit. Treating it as one
+			// put a permission-denied API call into an endless
+			// pause-and-retry loop in production.
+			name: "403 without rate limit signals is returned immediately",
+			responses: func(_ time.Time) []*http.Response {
+				return []*http.Response{
+					{
+						StatusCode: http.StatusForbidden,
+						Header:     http.Header{},
+					},
+				}
+			},
+			expectedCalls:  1,
+			expectedWait:   0,
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			// The exact shape GitHub uses for "resource not accessible by
+			// integration": 403 with plenty of quota remaining.
+			name: "403 with remaining quota is a permission failure, not a rate limit",
+			responses: func(baseTime time.Time) []*http.Response {
+				return []*http.Response{
+					{
+						StatusCode: http.StatusForbidden,
+						Header: http.Header{
+							HeaderXRateLimitRemaining: []string{"4999"},
+							HeaderXRateLimitReset:     []string{fmt.Sprintf("%d", baseTime.Add(time.Hour).Unix())},
+						},
+					},
+				}
+			},
+			expectedCalls:  1,
+			expectedWait:   0,
+			expectedStatus: http.StatusForbidden,
 		},
 	}
 
@@ -184,5 +221,53 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Test_SecondaryRateLimitWaiter_retryCap: a response that keeps
+// classifying as a rate limit must stop being retried after
+// maxRateLimitRetries and be returned to the caller, rather than looping
+// until the caller's deadline kills it.
+func Test_SecondaryRateLimitWaiter_retryCap(t *testing.T) {
+	limited := func() *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Header:     http.Header{},
+		}
+	}
+	// More rate-limited responses than the waiter is allowed to consume.
+	responses := make([]*http.Response, 0, maxRateLimitRetries+5)
+	for range maxRateLimitRetries + 5 {
+		responses = append(responses, limited())
+	}
+	trt := &testRT{responses: responses}
+
+	client := &http.Client{
+		Transport: &SecondaryRateLimitWaiter{
+			base: trt,
+			limiter: &limiter{
+				base: rate.NewLimiter(rate.Inf, 100),
+				mu:   sync.Mutex{},
+			},
+			defaultRetryAfter: 10 * time.Millisecond,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://foobear.com", nil)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("failed to make request: %v", err)
+	}
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Fatalf("expected the rate-limited response to be surfaced, got %d", resp.StatusCode)
+	}
+	if want := 1 + maxRateLimitRetries; trt.callCount != want {
+		t.Fatalf("expected %d calls (initial + %d retries), got %d", want, maxRateLimitRetries, trt.callCount)
 	}
 }

@@ -7,6 +7,7 @@ package sdk
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"strconv"
 	"sync"
@@ -89,33 +90,60 @@ func NewSecondaryRateLimitWaiterClient(base http.RoundTripper) *http.Client {
 	}
 }
 
+// maxRateLimitRetries caps how many times a single request is re-sent
+// after rate-limit pauses. Retrying used to recurse without a bound, so a
+// response that never stopped classifying as a rate limit turned one API
+// call into an infinite pause-and-retry loop that only ended when the
+// caller's deadline killed it. Genuine rate limits clear within a few
+// waits; anything still limited after that is returned to the caller.
+const maxRateLimitRetries = 3
+
 func (w *SecondaryRateLimitWaiter) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 
-	if err := w.limiter.Wait(ctx); err != nil {
-		return nil, err
-	}
-
-	resp, err := w.base.RoundTrip(req)
-	if err != nil {
-		return resp, err
-	}
-
-	if w.processLimit(ctx, resp) {
-		// Track that we're retrying after a rate limit
-		retryResp, retryErr := w.RoundTrip(req)
-		if retryErr != nil {
-			secondaryRateLimitRetries.WithLabelValues("error").Inc()
-		} else {
-			secondaryRateLimitRetries.WithLabelValues("ok").Inc()
+	for attempt := 0; ; attempt++ {
+		if err := w.limiter.Wait(ctx); err != nil {
+			return nil, err
 		}
-		return retryResp, retryErr
-	}
 
-	return resp, nil
+		resp, err := w.base.RoundTrip(req)
+		if err != nil {
+			if attempt > 0 {
+				secondaryRateLimitRetries.WithLabelValues("error").Inc()
+			}
+			return resp, err
+		}
+
+		if !w.processLimit(ctx, resp) {
+			if attempt > 0 {
+				secondaryRateLimitRetries.WithLabelValues("ok").Inc()
+			}
+			return resp, nil
+		}
+
+		if attempt >= maxRateLimitRetries {
+			secondaryRateLimitRetries.WithLabelValues("exhausted").Inc()
+			clog.WarnContextf(ctx, "still rate limited after %d retries, returning the rate-limited response", maxRateLimitRetries)
+			return resp, nil
+		}
+
+		// The rate-limited response is discarded before re-sending; drain
+		// and close it so the underlying connection can be reused.
+		if resp.Body != nil {
+			_, _ = io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+		}
+	}
 }
 
-// processLimit processes a response and returns a secondaryLimit if the response is a secondary limit
+// processLimit reports whether resp is a rate-limit response, pausing the
+// limiter accordingly when it is. Only responses carrying an actual
+// rate-limit signal count: a Retry-After header, an exhausted quota
+// (X-Ratelimit-Remaining: 0 with a reset time), or a 429 status. A 403
+// without any of those is an authorization failure, not a rate limit —
+// GitHub reports permission-denied ("resource not accessible by
+// integration") as 403 with a nonzero remaining quota, and pausing on
+// those turns a hard failure the caller must see into an endless wait.
 // https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#exceeding-the-rate-limit
 func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.Response) bool {
 	if resp.StatusCode != http.StatusForbidden &&
@@ -124,9 +152,10 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 	}
 
 	var (
-		retryAfter time.Duration
-		reset      time.Time
-		remaining  int
+		retryAfter     time.Duration
+		reset          time.Time
+		remaining      int
+		remainingKnown bool
 	)
 
 	// if "retry-after" is present, set the duration to wait before our retry
@@ -148,6 +177,7 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 			secondaryRateLimitHeaderErrors.WithLabelValues("X-Ratelimit-Remaining").Inc()
 		} else {
 			remaining = r
+			remainingKnown = true
 		}
 	}
 
@@ -171,8 +201,10 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 		return true
 	}
 
-	// If remaining is 0 and reset is not zero, wait until reset time
-	if remaining == 0 && !reset.IsZero() {
+	// A reported-exhausted quota: wait until the reset time. The header
+	// must actually be present and zero — an absent header is not an
+	// exhausted quota.
+	if remainingKnown && remaining == 0 && !reset.IsZero() {
 		retryAfter = time.Until(reset)
 		secondaryRateLimitTriggered.WithLabelValues(statusCode, "remaining_zero").Inc()
 		secondaryRateLimitWaitSeconds.WithLabelValues("remaining_zero").Observe(retryAfter.Seconds())
@@ -180,11 +212,17 @@ func (w *SecondaryRateLimitWaiter) processLimit(ctx context.Context, resp *http.
 		return true
 	}
 
-	// Default fallback if no rate-limit headers are present
-	secondaryRateLimitTriggered.WithLabelValues(statusCode, "default_fallback").Inc()
-	secondaryRateLimitWaitSeconds.WithLabelValues("default_fallback").Observe(w.defaultRetryAfter.Seconds())
-	w.limiter.PauseFor(w.defaultRetryAfter)
-	return true
+	// 429 is a rate-limit signal on its own, even without usable headers.
+	if resp.StatusCode == http.StatusTooManyRequests {
+		secondaryRateLimitTriggered.WithLabelValues(statusCode, "default_fallback").Inc()
+		secondaryRateLimitWaitSeconds.WithLabelValues("default_fallback").Observe(w.defaultRetryAfter.Seconds())
+		w.limiter.PauseFor(w.defaultRetryAfter)
+		return true
+	}
+
+	// A 403 with no rate-limit signal: permission or authorization
+	// failure. Surface it to the caller instead of pausing.
+	return false
 }
 
 // https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit
