@@ -43,6 +43,7 @@ module "this" {
   regions            = var.regions
 
   ingress = var.service-ingress
+  scaling = var.scaling
 
   deletion_protection = var.deletion_protection
 

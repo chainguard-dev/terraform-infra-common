@@ -57,6 +57,17 @@ EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 }
 
+variable "scaling" {
+  description = "The scaling configuration for the trampoline service, forwarded to regional-go-service. Set min_instances >= 1 to keep a warm instance: Zendesk times out webhook deliveries at 10s and trips its circuit breaker, which cold-start queuing can exceed."
+  type = object({
+    min_instances                    = optional(number, 0)
+    max_instances                    = optional(number, 100)
+    service_max_instances            = optional(number)
+    max_instance_request_concurrency = optional(number)
+  })
+  default = {}
+}
+
 variable "enable_profiler" {
   type        = bool
   default     = false
