@@ -1,10 +1,10 @@
 module github.com/chainguard-dev/terraform-infra-common
 
-go 1.26.0
+go 1.27.0
 
 require (
 	chainguard.dev/go-grpc-kit v0.18.0
-	chainguard.dev/sdk v0.1.227
+	chainguard.dev/sdk v0.1.56
 	cloud.google.com/go/bigquery v1.79.0
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/memorystore v1.3.0
@@ -43,12 +43,7 @@ require (
 	golang.org/x/sync v0.22.0
 	golang.org/x/time v0.15.0
 	google.golang.org/api v0.293.0
-)
-
-require (
-	cloud.google.com/go/storage v1.64.0 // indirect
 	google.golang.org/grpc v1.83.0
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 )
 
 require (
@@ -59,6 +54,7 @@ require (
 	cloud.google.com/go/iam v1.11.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	cloud.google.com/go/monitoring v1.29.0 // indirect
+	cloud.google.com/go/storage v1.64.0 // indirect
 	cloud.google.com/go/trace v1.16.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.35.0 // indirect
@@ -142,6 +138,9 @@ require (
 	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260720211330-0afa2a65878a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260807164820-c8921c73eeea // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace chainguard.dev/sdk => ../../public/sdk
