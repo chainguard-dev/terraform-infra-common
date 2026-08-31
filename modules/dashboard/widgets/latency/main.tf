@@ -5,6 +5,11 @@ variable "band" {
   type    = number
   default = 99
 }
+variable "unit" {
+  description = "Unit for chart values, using Cloud Monitoring's unit format."
+  type        = string
+  default     = ""
+}
 
 // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart
 output "widget" {
@@ -16,7 +21,7 @@ output "widget" {
         minAlignmentPeriod = "60s"
         plotType           = "LINE"
         targetAxis         = "Y1"
-        timeSeriesQuery = {
+        timeSeriesQuery = merge({
           timeSeriesFilter = {
             aggregation = {
               alignmentPeriod    = "60s"
@@ -26,7 +31,7 @@ output "widget" {
             }
             filter = join("\n", var.filter)
           }
-        }
+        }, var.unit != "" ? { unitOverride = var.unit } : {})
       }]
       timeshiftDuration = "0s"
       yAxis = {

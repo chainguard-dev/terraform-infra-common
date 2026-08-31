@@ -122,24 +122,26 @@ module "work-added" {
 
 module "process-latency" {
   source = "../../widgets/latency"
-  title  = "Work processing latency"
+  title  = "Work processing latency (p99)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_process_latency_seconds/histogram\"",
     local.dsp_filter,
   ])
   group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\"", "resource.label.\"location\""]
+  unit            = "s"
 }
 
 module "wait-latency" {
   source = "../../widgets/latency"
-  title  = "Work wait times"
+  title  = "Work wait times (p99 by priority)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_from_scheduled_seconds/histogram\"",
     local.dsp_filter,
   ])
-  group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\""]
+  group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\"", "metric.label.\"priority_class\""]
+  unit            = "s"
 }
 
 module "percent-deduped" {
@@ -198,16 +200,16 @@ module "max-attempts" {
 }
 
 module "time-to-completion" {
-  source = "../../widgets/xy"
-  title  = "Time to completion (95p by priority)"
+  source = "../../widgets/latency"
+  title  = "Time to completion (p95 by priority)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_time_to_completion_seconds/histogram\"",
     local.dsp_filter,
   ])
   group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\"", "metric.label.\"priority_class\""]
-  primary_align   = "ALIGN_DELTA"
-  primary_reduce  = "REDUCE_PERCENTILE_95"
+  band            = 95
+  unit            = "s"
 }
 
 module "dead-letter-queue" {
@@ -227,13 +229,14 @@ module "dead-letter-queue" {
 
 module "lease-age" {
   source = "../../widgets/latency"
-  title  = "Active lease age (p95)"
+  title  = "Active lease age (p99)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_lease_age_seconds/histogram\"",
     local.dsp_filter,
   ])
   group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\""]
+  unit            = "s"
 }
 
 module "expired-leases" {
@@ -252,24 +255,26 @@ module "expired-leases" {
 
 module "time-until-eligible" {
   source = "../../widgets/latency"
-  title  = "Time until eligible (p95)"
+  title  = "Time until eligible (p99)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_time_until_eligible_seconds/histogram\"",
     local.dsp_filter,
   ])
   group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\""]
+  unit            = "s"
 }
 
 module "enumerate-latency" {
   source = "../../widgets/latency"
-  title  = "Enumerate latency (p95)"
+  title  = "Enumerate latency (p99)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_enumerate_latency_seconds/histogram\"",
     local.dsp_filter,
   ])
   group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\"", "resource.label.\"location\""]
+  unit            = "s"
 }
 
 locals {
