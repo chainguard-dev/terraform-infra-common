@@ -424,6 +424,12 @@ variable "slo" {
         threshold = optional(number, 10)
         duration  = optional(string, "0s")
         severity  = optional(string, null)
+        # Single-region services get identical multi-region and per-region
+        # alerts; burn rate over the 60m lookback is also independent of the
+        # rolling period, so the 07d and 30d policies fire together. These
+        # knobs let such services alert once per incident instead of 4x.
+        per_region_alerts = optional(bool, true)
+        rolling_periods   = optional(list(string), ["07", "30"])
       }
     ), {})
   })

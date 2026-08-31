@@ -34,9 +34,11 @@ No modules.
 | <a name="input_regions"></a> [regions](#input\_regions) | A list of regions that the cloudrun service is deployed in. | `list(string)` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of service to setup SLO for. | `string` | n/a | yes |
 | <a name="input_service_type"></a> [service\_type](#input\_service\_type) | Type of service to setup SLO for. | `string` | `"CLOUD_RUN"` | no |
-| <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    success = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), {})<br/>    monitor_gclb = optional(bool, false)<br/>    alerting = optional(object(<br/>      {<br/>        threshold = optional(number, 10)<br/>        duration  = optional(string, "0s")<br/>        severity  = optional(string, null)<br/>      }<br/>    ), {})<br/>  })</pre> | `{}` | no |
+| <a name="input_slo"></a> [slo](#input\_slo) | Configuration for setting up SLO | <pre>object({<br/>    enable          = optional(bool, false)<br/>    enable_alerting = optional(bool, false)<br/>    success = optional(object(<br/>      {<br/>        multi_region_goal = optional(number, 0.999)<br/>        per_region_goal   = optional(number, 0.999)<br/>      }<br/>    ), {})<br/>    monitor_gclb = optional(bool, false)<br/>    alerting = optional(object(<br/>      {<br/>        threshold = optional(number, 10)<br/>        duration  = optional(string, "0s")<br/>        severity  = optional(string, null)<br/>        # Single-region services get identical multi-region and per-region<br/>        # alerts; burn rate over the 60m lookback is also independent of the<br/>        # rolling period, so the 07d and 30d policies fire together. These<br/>        # knobs let such services alert once per incident instead of 4x.<br/>        #<br/>        # ["07", "30"] here, in the validation below, and in<br/>        # local.rolling_periods (main.tf) must stay in sync — validation<br/>        # blocks cannot reference locals, so the duplication is forced.<br/>        per_region_alerts = optional(bool, true)<br/>        rolling_periods   = optional(list(string), ["07", "30"])<br/>      }<br/>    ), {})<br/>  })</pre> | `{}` | no |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_alert_policy_keys"></a> [alert\_policy\_keys](#output\_alert\_policy\_keys) | Keys of the created burn-rate alert policies: rolling-period keys for multi\_region/gclb, region-period keys for per\_region. |
 <!-- END_TF_DOCS -->

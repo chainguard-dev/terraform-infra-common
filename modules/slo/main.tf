@@ -11,6 +11,17 @@ locals {
       rolling_period_days = local.rolling_periods[pair[1]]
     }
   }
+
+  # SLOs are always created for every rolling period (and per region); these
+  # locals only gate which of them get burn-rate alert policies.
+  alerting_rolling_periods = {
+    for k, v in local.rolling_periods : k => v
+    if contains(var.slo.alerting.rolling_periods, k)
+  }
+  alerting_region_rolling_period_map = var.slo.alerting.per_region_alerts ? {
+    for k, v in local.region_rolling_period_map : k => v
+    if contains(var.slo.alerting.rolling_periods, v.rolling_period_key)
+  } : {}
 }
 
 resource "google_monitoring_custom_service" "this" {
@@ -114,7 +125,7 @@ resource "google_monitoring_slo" "success_gclb" {
 
 # Alert policy for multi-region success SLO burn rate
 resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
-  for_each = var.slo.enable_alerting ? local.rolling_periods : {}
+  for_each = var.slo.enable_alerting ? local.alerting_rolling_periods : {}
 
   display_name = "${var.service_name} - Multi-region ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
@@ -161,7 +172,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_multi_region" {
 
 # Alert policies for per-region success SLO burn rates
 resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
-  for_each = var.slo.enable_alerting ? local.region_rolling_period_map : {}
+  for_each = var.slo.enable_alerting ? local.alerting_region_rolling_period_map : {}
 
   display_name = "${var.service_name} - ${each.value.region} ${each.value.rolling_period_key}d SLO Burn Rate Alert"
   project      = var.project_id
@@ -207,7 +218,7 @@ resource "google_monitoring_alert_policy" "slo_burn_rate_per_region" {
 
 # Alert policy for success GCLB SLO burn rate
 resource "google_monitoring_alert_policy" "slo_burn_rate_gclb" {
-  for_each = var.slo.enable_alerting && var.slo.monitor_gclb ? local.rolling_periods : {}
+  for_each = var.slo.enable_alerting && var.slo.monitor_gclb ? local.alerting_rolling_periods : {}
 
   display_name = "${var.service_name} - GCLB ${each.key}d SLO Burn Rate Alert"
   project      = var.project_id
