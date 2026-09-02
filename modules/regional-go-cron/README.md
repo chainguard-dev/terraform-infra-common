@@ -20,6 +20,7 @@ No requirements.
 | [google-beta_google_cloud_run_v2_job.this](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_cloud_run_v2_job) | resource |
 | [google_cloud_run_v2_job_iam_binding.authorize-calls](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job_iam_binding) | resource |
 | [google_cloud_scheduler_job.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job) | resource |
+| [google_monitoring_alert_policy.failed](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_alert_policy.success](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.observability](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
@@ -40,6 +41,7 @@ No requirements.
 | <a name="input_enable_observability_iam"></a> [enable\_observability\_iam](#input\_enable\_observability\_iam) | Whether this module grants the service account the observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent) on the project. Set false when the caller manages these grants itself, e.g. a service account shared across multiple services, where per-service grants would create overlapping non-authoritative IAM members that revoke each other on destroy. | `bool` | `true` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | n/a | `bool` | `true` | no |
 | <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | n/a | `string` | `"EXECUTION_ENVIRONMENT_GEN2"` | no |
+| <a name="input_failed_execution_alert"></a> [failed\_execution\_alert](#input\_failed\_execution\_alert) | Alert whenever a job execution completes as failed. Unlike the success-absence alert, this fits jobs with no fixed schedule (e.g. exec-on-apply jobs). | `bool` | `false` | no |
 | <a name="input_invokers"></a> [invokers](#input\_invokers) | Additional IAM members granted roles/run.invoker on the job, beyond the dedicated invoker service account. | `list(string)` | `[]` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Additional labels to apply to all resources. | `map(string)` | `{}` | no |
 | <a name="input_launch_stage"></a> [launch\_stage](#input\_launch\_stage) | n/a | `string` | `"GA"` | no |

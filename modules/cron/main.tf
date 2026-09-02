@@ -86,6 +86,7 @@ module "impl" {
   success_alert_alignment_period_seconds = var.success_alert_alignment_period_seconds
   success_alert_duration_seconds         = var.success_alert_duration_seconds
   success_alert_documentation            = var.success_alert_documentation
+  failed_execution_alert                 = var.failed_execution_alert
 }
 
 
@@ -95,7 +96,7 @@ resource "null_resource" "exec" {
   count = var.exec ? 1 : 0
 
   provisioner "local-exec" {
-    command = join(" ", [
+    command = join(" ", concat([
       "gcloud",
       "--project=${var.project_id}",
       "run",
@@ -103,8 +104,7 @@ resource "null_resource" "exec" {
       "execute",
       module.impl.job_name,
       "--region=${var.region}",
-      "--wait"
-    ])
+    ], var.exec_wait ? ["--wait"] : []))
   }
 
   triggers = {

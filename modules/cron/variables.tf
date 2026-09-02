@@ -176,6 +176,18 @@ variable "exec" {
   default     = false
 }
 
+variable "exec_wait" {
+  description = "Whether the apply blocks until the exec'd job execution completes. When false, the apply only waits for the execution to be created, and a failed run does not fail the apply — pair with failed_execution_alert so failures are seen at all."
+  type        = bool
+  default     = true
+}
+
+variable "failed_execution_alert" {
+  description = "Alert whenever a job execution completes as failed. Unlike the success-absence alert, this fits jobs with no fixed schedule (e.g. exec-on-apply jobs)."
+  type        = bool
+  default     = false
+}
+
 variable "success_alert_alignment_period_seconds" {
   description = "Alignment period for successful completion alert. 0 (default) to not create alert."
   type        = number

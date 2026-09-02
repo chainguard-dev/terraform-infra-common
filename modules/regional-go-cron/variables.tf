@@ -250,6 +250,12 @@ variable "success_alert_documentation" {
   default     = ""
 }
 
+variable "failed_execution_alert" {
+  description = "Alert whenever a job execution completes as failed. Unlike the success-absence alert, this fits jobs with no fixed schedule (e.g. exec-on-apply jobs)."
+  type        = bool
+  default     = false
+}
+
 variable "resource_manager_tags" {
   description = "Resource Manager tags to bind to each Cloud Run job, as tagKeys/<id> => tagValues/<id>."
   type        = map(string)

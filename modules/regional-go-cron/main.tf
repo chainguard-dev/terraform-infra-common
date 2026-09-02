@@ -405,3 +405,47 @@ resource "google_monitoring_alert_policy" "success" {
   notification_channels = var.notification_channels
   enabled               = "true"
 }
+
+resource "google_monitoring_alert_policy" "failed" {
+  for_each = var.failed_execution_alert ? var.regions : {}
+
+  alert_strategy {
+    auto_close = "3600s"
+  }
+
+  display_name = "Cloud Run Job Failed Execution: ${var.name} (${each.key})"
+  combiner     = "OR"
+  severity     = "ERROR"
+  project      = var.project_id
+
+  user_labels = local.merged_labels
+
+  conditions {
+    display_name = "Cloud Run Job Failed Execution: ${var.name} (${each.key})"
+
+    condition_threshold {
+      filter = <<EOT
+        resource.type = "cloud_run_job"
+        AND resource.labels.job_name = "${google_cloud_run_v2_job.this[each.key].name}"
+        AND metric.type = "run.googleapis.com/job/completed_execution_count"
+        AND metric.labels.result = "failed"
+      EOT
+
+      aggregations {
+        alignment_period     = "300s"
+        cross_series_reducer = "REDUCE_NONE"
+        per_series_aligner   = "ALIGN_SUM"
+      }
+
+      comparison      = "COMPARISON_GT"
+      threshold_value = 0
+      duration        = "0s"
+      trigger {
+        count = "1"
+      }
+    }
+  }
+
+  notification_channels = var.notification_channels
+  enabled               = "true"
+}
