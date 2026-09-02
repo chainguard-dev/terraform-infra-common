@@ -58,9 +58,23 @@ resource "google_dns_record_set" "public-service-v6" {
   rrdatas = [google_compute_global_address.this-v6[0].address]
 }
 
+// Per-hostname managed certs are provisioned when no certificate_map is set, or
+// while retain_managed_certificates keeps them attached during a map migration.
+// A target HTTPS proxy must always have either >=1 SSL certificate or a
+// certificate map, and the google provider updates ssl_certificates before
+// certificate_map, so flipping an existing proxy straight from certs to map in
+// one apply strips the certs before the map lands and GCP rejects it (Error
+// 412). retain_managed_certificates lets an existing proxy migrate in two steps.
+// See README "Migrating an existing proxy to a certificate map". Both operands
+// are input variables, so this stays known at plan time (for_each cannot depend
+// on a value that is unknown until apply).
+locals {
+  manage_per_host_certs = var.certificate_map == "" || var.retain_managed_certificates
+}
+
 // Provision a managed SSL certificate for each of our public services.
 resource "google_compute_managed_ssl_certificate" "public-service" {
-  for_each = var.public-services
+  for_each = local.manage_per_host_certs ? var.public-services : {}
 
   name = each.value.name
 
@@ -167,7 +181,12 @@ resource "google_compute_target_https_proxy" "public-service" {
   name    = var.name
   url_map = google_compute_url_map.public-service.id
 
-  ssl_certificates = [for domain, cert in google_compute_managed_ssl_certificate.public-service : cert.id if !var.public-services[domain].disabled]
+  # The proxy serves TLS from the per-hostname certs, the certificate map, or
+  # both at once (the legal intermediate state while migrating between them; see
+  # the retain_managed_certificates variable). The map, when used, can hold a
+  # wildcard, sidestepping the 15-certificate-per-proxy cap.
+  ssl_certificates = local.manage_per_host_certs ? [for domain, cert in google_compute_managed_ssl_certificate.public-service : cert.id if !var.public-services[domain].disabled] : null
+  certificate_map  = var.certificate_map != "" ? var.certificate_map : null
   ssl_policy       = google_compute_ssl_policy.ssl_policy.id
 }
 
