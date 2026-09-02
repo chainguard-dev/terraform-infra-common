@@ -179,8 +179,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// text the regex pass would not catch. Rejecting non-ticket resources keeps
 	// that latent PII out of the broker / GCS / BigQuery.
 	resource := suffix
-	if i := strings.IndexByte(suffix, '.'); i >= 0 {
-		resource = suffix[:i]
+	if before, _, ok := strings.Cut(suffix, "."); ok {
+		resource = before
 	}
 	if resource != "ticket" {
 		log.Errorf("unsupported event resource %q (only ticket.* events are forwarded)", resource)

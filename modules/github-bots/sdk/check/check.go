@@ -88,11 +88,11 @@ func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	cr := &github.CreateCheckRunOptions{
 		Name:    b.name,
 		HeadSHA: b.headSHA,
-		Status:  github.Ptr(string(StatusInProgress)),
+		Status:  new(string(StatusInProgress)),
 		Output: &github.CheckRunOutput{
 			Title:   &b.Summary,
 			Summary: &b.Summary,
-			Text:    github.Ptr(b.md.String()),
+			Text:    new(b.md.String()),
 		},
 		// Fields we don't set:
 		// - DetailsURL: sets the URL of the "Details" link at the bottom of the Check Run page. Defaults to the app's installation URL.
@@ -104,8 +104,8 @@ func (b *Builder) CheckRunCreate() *github.CreateCheckRunOptions {
 	}
 	// Providing conclusion will automatically set the status parameter to completed.
 	if b.Conclusion != "" {
-		cr.Conclusion = github.Ptr(string(b.Conclusion))
-		cr.Status = github.Ptr(string(StatusCompleted))
+		cr.Conclusion = new(string(b.Conclusion))
+		cr.Status = new(string(StatusCompleted))
 	}
 	return cr
 }

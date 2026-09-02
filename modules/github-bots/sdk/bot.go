@@ -305,6 +305,6 @@ func Serve(b Bot, opts ...ServeOption) {
 
 // AttributeFromContext retrieves an attribute by key from the context.
 // Returns nil if the attribute does not exist.
-func AttributeFromContext(ctx context.Context, key string) interface{} {
+func AttributeFromContext(ctx context.Context, key string) any {
 	return ctx.Value(contextKey(key))
 }

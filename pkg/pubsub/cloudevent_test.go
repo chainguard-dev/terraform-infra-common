@@ -31,7 +31,7 @@ func TestFromCloudEvent(t *testing.T) {
 			event.SetSubject("subject")
 			event.SetTime(now)
 
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{})
 			return event
 		}(),
 		out: &pubsub.Message{
@@ -56,7 +56,7 @@ func TestFromCloudEvent(t *testing.T) {
 			event.SetSubject("subject")
 			event.SetTime(now)
 
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{
 				"foo": "bar",
 				"baz": 3,
 			})
@@ -84,7 +84,7 @@ func TestFromCloudEvent(t *testing.T) {
 			event.SetSubject("subject")
 			event.SetTime(now)
 
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{})
 
 			event.SetExtension("ext1", "value1")
 			event.SetExtension("ext2", "value2")
@@ -113,7 +113,7 @@ func TestFromCloudEvent(t *testing.T) {
 			event.SetType("type")
 			event.SetSubject("subject")
 			event.SetTime(now)
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{})
 			event.SetExtension("partitionkey", "operations/abc123")
 			return event
 		}(),
@@ -139,7 +139,7 @@ func TestFromCloudEvent(t *testing.T) {
 			event.SetType("type")
 			event.SetSubject("subject")
 			event.SetTime(now)
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{})
 			// "id" maps to "ce-id" which is a standard attribute.
 			event.SetExtension("id", "evil-id")
 			return event
@@ -183,7 +183,7 @@ func TestFromCloudEventWithOrdering(t *testing.T) {
 			event.SetType("type")
 			event.SetSubject("subject")
 			event.SetTime(now)
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{})
 			event.SetExtension("partitionkey", "operations/abc123")
 			return event
 		}(),
@@ -210,7 +210,7 @@ func TestFromCloudEventWithOrdering(t *testing.T) {
 			event.SetType("type")
 			event.SetSubject("subject")
 			event.SetTime(now)
-			event.SetData(cloudevents.ApplicationJSON, map[string]interface{}{})
+			event.SetData(cloudevents.ApplicationJSON, map[string]any{})
 			return event
 		}(),
 		out: &pubsub.Message{

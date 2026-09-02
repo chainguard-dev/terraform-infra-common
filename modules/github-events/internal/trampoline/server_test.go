@@ -53,9 +53,9 @@ func TestTrampoline(t *testing.T) {
 	srv := httptest.NewServer(impl)
 	defer srv.Close()
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"action": "push",
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "org/repo",
 		},
 		"foo": "bar",
@@ -93,8 +93,8 @@ func TestTrampoline(t *testing.T) {
 			Source:          *types.ParseURIRef("localhost"),
 			ID:              "5678",
 			DataContentType: cloudevents.StringOfApplicationJSON(),
-			Subject:         github.Ptr("org/repo"),
-			Extensions: map[string]interface{}{
+			Subject:         new("org/repo"),
+			Extensions: map[string]any{
 				"action":     "push",
 				"githubhook": "1234",
 			},
@@ -106,7 +106,7 @@ func TestTrampoline(t *testing.T) {
 	}
 }
 
-func sendevent(t *testing.T, client *http.Client, url string, eventType string, payload interface{}, secret []byte) (*http.Response, error) {
+func sendevent(t *testing.T, client *http.Client, url string, eventType string, payload any, secret []byte) (*http.Response, error) {
 	t.Helper()
 
 	b := new(bytes.Buffer)
@@ -177,12 +177,12 @@ func TestRequestedOnlyWebhook(t *testing.T) {
 	defer srv.Close()
 
 	// Send an event with the requested action
-	resp, err := sendevent(t, srv.Client(), srv.URL, "check_run", map[string]interface{}{
+	resp, err := sendevent(t, srv.Client(), srv.URL, "check_run", map[string]any{
 		"action": "requested",
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "org/repo",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "org",
 		},
 	}, secret)
@@ -220,7 +220,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -238,7 +238,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -253,7 +253,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -301,7 +301,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -323,7 +323,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -344,7 +344,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -396,19 +396,19 @@ func TestPullRequestExtension(t *testing.T) {
 	defer srv.Close()
 
 	// Send a pull_request event
-	prPayload := map[string]interface{}{
+	prPayload := map[string]any{
 		"action": "opened",
-		"pull_request": map[string]interface{}{
+		"pull_request": map[string]any{
 			"number": 123,
 		},
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "foo/bar",
-			"owner": map[string]interface{}{
+			"owner": map[string]any{
 				"login": "foo",
 			},
 			"name": "bar",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "foo",
 		},
 	}
@@ -449,12 +449,12 @@ func TestPullRequestExtension(t *testing.T) {
 	client.events = nil
 
 	// Send a non-pull_request event
-	nonPrPayload := map[string]interface{}{
+	nonPrPayload := map[string]any{
 		"action": "push",
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "foo/bar",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "foo",
 		},
 	}
@@ -558,7 +558,7 @@ func TestExtractIssueURL(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -586,7 +586,7 @@ func TestExtractIssueURL(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -614,7 +614,7 @@ func TestExtractIssueURL(t *testing.T) {
 				FullName string `json:"full_name,omitempty"`
 				Owner    struct {
 					Login string `json:"login,omitempty"`
-				} `json:"owner,omitempty"`
+				} `json:"owner"`
 				Name string `json:"name,omitempty"`
 			}{
 				FullName: "foo/bar",
@@ -656,19 +656,19 @@ func TestIssueURLExtension(t *testing.T) {
 	defer srv.Close()
 
 	// Send an issues event
-	issuePayload := map[string]interface{}{
+	issuePayload := map[string]any{
 		"action": "opened",
-		"issue": map[string]interface{}{
+		"issue": map[string]any{
 			"number": 456,
 		},
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "foo/bar",
-			"owner": map[string]interface{}{
+			"owner": map[string]any{
 				"login": "foo",
 			},
 			"name": "bar",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "foo",
 		},
 	}
@@ -699,23 +699,23 @@ func TestIssueURLExtension(t *testing.T) {
 	client.events = nil
 
 	// Send an issue_comment event on an issue (not PR)
-	issueCommentPayload := map[string]interface{}{
+	issueCommentPayload := map[string]any{
 		"action": "created",
-		"issue": map[string]interface{}{
+		"issue": map[string]any{
 			"number": 789,
 			// No pull_request field means it's a regular issue
 		},
-		"comment": map[string]interface{}{
+		"comment": map[string]any{
 			"id": 123,
 		},
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "foo/bar",
-			"owner": map[string]interface{}{
+			"owner": map[string]any{
 				"login": "foo",
 			},
 			"name": "bar",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "foo",
 		},
 	}
@@ -745,23 +745,23 @@ func TestIssueURLExtension(t *testing.T) {
 	client.events = nil
 
 	// Send an issue_comment event on a PR (should NOT get issueurl)
-	prCommentPayload := map[string]interface{}{
+	prCommentPayload := map[string]any{
 		"action": "created",
-		"issue": map[string]interface{}{
+		"issue": map[string]any{
 			"number":       123,
-			"pull_request": map[string]interface{}{}, // This indicates it's a PR
+			"pull_request": map[string]any{}, // This indicates it's a PR
 		},
-		"comment": map[string]interface{}{
+		"comment": map[string]any{
 			"id": 456,
 		},
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "foo/bar",
-			"owner": map[string]interface{}{
+			"owner": map[string]any{
 				"login": "foo",
 			},
 			"name": "bar",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "foo",
 		},
 	}
@@ -808,22 +808,22 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 	testCases := []struct {
 		name        string
 		eventType   string
-		payload     map[string]interface{}
+		payload     map[string]any
 		expectedURL string
 	}{{
 		name:      "pull_request_review event",
 		eventType: "pull_request_review",
-		payload: map[string]interface{}{
+		payload: map[string]any{
 			"action": "submitted",
-			"pull_request": map[string]interface{}{
+			"pull_request": map[string]any{
 				"number": 456,
 			},
-			"review": map[string]interface{}{
+			"review": map[string]any{
 				"id": 789,
 			},
-			"repository": map[string]interface{}{
+			"repository": map[string]any{
 				"full_name": "org/repo",
-				"owner": map[string]interface{}{
+				"owner": map[string]any{
 					"login": "org",
 				},
 				"name": "repo",
@@ -833,17 +833,17 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 	}, {
 		name:      "pull_request_review_comment event",
 		eventType: "pull_request_review_comment",
-		payload: map[string]interface{}{
+		payload: map[string]any{
 			"action": "created",
-			"pull_request": map[string]interface{}{
+			"pull_request": map[string]any{
 				"number": 789,
 			},
-			"comment": map[string]interface{}{
+			"comment": map[string]any{
 				"id": 123,
 			},
-			"repository": map[string]interface{}{
+			"repository": map[string]any{
 				"full_name": "user/project",
-				"owner": map[string]interface{}{
+				"owner": map[string]any{
 					"login": "user",
 				},
 				"name": "project",
@@ -853,15 +853,15 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 	}, {
 		name:      "check_run event without PR",
 		eventType: "check_run",
-		payload: map[string]interface{}{
+		payload: map[string]any{
 			"action": "completed",
-			"check_run": map[string]interface{}{
+			"check_run": map[string]any{
 				"id":            777,
-				"pull_requests": []interface{}{}, // Empty array
+				"pull_requests": []any{}, // Empty array
 			},
-			"repository": map[string]interface{}{
+			"repository": map[string]any{
 				"full_name": "test/repo",
-				"owner": map[string]interface{}{
+				"owner": map[string]any{
 					"login": "test",
 				},
 				"name": "repo",
@@ -975,7 +975,7 @@ func TestOrgFilter(t *testing.T) {
 	defer srv.Close()
 
 	// Send an event with the requested action
-	resp, err := sendevent(t, srv.Client(), srv.URL, "pull_request", map[string]interface{}{
+	resp, err := sendevent(t, srv.Client(), srv.URL, "pull_request", map[string]any{
 		"action": "opened",
 	}, secret)
 	if err != nil {
@@ -985,12 +985,12 @@ func TestOrgFilter(t *testing.T) {
 		t.Fatalf("unexpected status: %v", resp.Status)
 	}
 
-	resp, err = sendevent(t, srv.Client(), srv.URL, "pull_request", map[string]interface{}{
+	resp, err = sendevent(t, srv.Client(), srv.URL, "pull_request", map[string]any{
 		"action": "opened",
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "org/repo",
 		},
-		"organization": map[string]interface{}{
+		"organization": map[string]any{
 			"login": "org",
 		},
 	}, secret)

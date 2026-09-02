@@ -21,22 +21,22 @@ func TestCheckRun(t *testing.T) {
 	if diff := cmp.Diff(&github.CreateCheckRunOptions{
 		Name:    "name",
 		HeadSHA: "headSHA",
-		Status:  github.Ptr("in_progress"),
+		Status:  new("in_progress"),
 		Output: &github.CheckRunOutput{
-			Title:   github.Ptr("name"),
-			Summary: github.Ptr("name"),
-			Text:    github.Ptr("test 123\n"),
+			Title:   new("name"),
+			Summary: new("name"),
+			Text:    new("test 123\n"),
 		},
 	}, b.CheckRunCreate()); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(&github.UpdateCheckRunOptions{
 		Name:   "name",
-		Status: github.Ptr("in_progress"),
+		Status: new("in_progress"),
 		Output: &github.CheckRunOutput{
-			Title:   github.Ptr("name"),
-			Summary: github.Ptr("name"),
-			Text:    github.Ptr("test 123\n"),
+			Title:   new("name"),
+			Summary: new("name"),
+			Text:    new("test 123\n"),
 		},
 	}, b.CheckRunUpdate()); diff != "" {
 		t.Errorf("CheckRunUpdate() mismatch (-want +got):\n%s", diff)
@@ -48,24 +48,24 @@ func TestCheckRun(t *testing.T) {
 	if diff := cmp.Diff(&github.CreateCheckRunOptions{
 		Name:       "name",
 		HeadSHA:    "headSHA",
-		Status:     github.Ptr("completed"),
-		Conclusion: github.Ptr("success"),
+		Status:     new("completed"),
+		Conclusion: new("success"),
 		Output: &github.CheckRunOutput{
-			Title:   github.Ptr("summary"),
-			Summary: github.Ptr("summary"),
-			Text:    github.Ptr("test 123\ntest true\n"),
+			Title:   new("summary"),
+			Summary: new("summary"),
+			Text:    new("test 123\ntest true\n"),
 		},
 	}, b.CheckRunCreate()); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(&github.UpdateCheckRunOptions{
 		Name:       "name",
-		Status:     github.Ptr("completed"),
-		Conclusion: github.Ptr("success"),
+		Status:     new("completed"),
+		Conclusion: new("success"),
 		Output: &github.CheckRunOutput{
-			Title:   github.Ptr("summary"),
-			Summary: github.Ptr("summary"),
-			Text:    github.Ptr("test 123\ntest true\n"),
+			Title:   new("summary"),
+			Summary: new("summary"),
+			Text:    new("test 123\ntest true\n"),
 		},
 	}, b.CheckRunUpdate()); diff != "" {
 		t.Errorf("CheckRunCreate() mismatch (-want +got):\n%s", diff)

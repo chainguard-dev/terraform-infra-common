@@ -13,6 +13,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/chainguard-dev/clog"
@@ -30,27 +31,27 @@ type PayloadInfo struct {
 		FullName string `json:"full_name,omitempty"`
 		Owner    struct {
 			Login string `json:"login,omitempty"`
-		} `json:"owner,omitempty"`
+		} `json:"owner"`
 		Name string `json:"name,omitempty"`
-	} `json:"repository,omitempty"`
+	} `json:"repository"`
 	Organization struct {
 		Login string `json:"login,omitempty"`
-	} `json:"organization,omitempty"`
-	PullRequest pullRequestInfo `json:"pull_request,omitempty"`
+	} `json:"organization"`
+	PullRequest pullRequestInfo `json:"pull_request"`
 	Issue       struct {
 		Number          int       `json:"number,omitempty"`
 		PullRequestInfo *struct{} `json:"pull_request,omitempty"`
-	} `json:"issue,omitempty"`
+	} `json:"issue"`
 	CheckRun struct {
-		CheckSuite checkSuiteInfo `json:"check_suite,omitempty"`
-	} `json:"check_run,omitempty"`
-	CheckSuite checkSuiteInfo `json:"check_suite,omitempty"`
+		CheckSuite checkSuiteInfo `json:"check_suite"`
+	} `json:"check_run"`
+	CheckSuite checkSuiteInfo `json:"check_suite"`
 	Comment    struct {
 		ID int `json:"id,omitempty"`
-	} `json:"comment,omitempty"`
+	} `json:"comment"`
 	Review struct {
 		ID int `json:"id,omitempty"`
-	} `json:"review,omitempty"`
+	} `json:"review"`
 }
 
 // pullRequestInfo holds the pull_request fields the extractors use. Named (not
@@ -61,7 +62,7 @@ type pullRequestInfo struct {
 	Merged bool `json:"merged,omitempty"`
 	Head   struct {
 		Ref string `json:"ref,omitempty"`
-	} `json:"head,omitempty"`
+	} `json:"head"`
 }
 
 // prRef is a minimal pull-request reference as it appears in check_suite payloads.
@@ -69,7 +70,7 @@ type prRef struct {
 	Number int `json:"number,omitempty"`
 	Head   struct {
 		Ref string `json:"ref,omitempty"`
-	} `json:"head,omitempty"`
+	} `json:"head"`
 }
 
 // checkSuiteInfo holds the check_suite fields the extractors use. It appears
@@ -132,13 +133,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hookID := r.Header.Get("X-GitHub-Hook-ID")
 	// If webhookID is set, only listen to events from the specified webhook.
 	if len(s.webhookID) > 0 {
-		found := false
-		for _, id := range s.webhookID {
-			if hookID == id {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(s.webhookID, hookID)
 		if !found {
 			log.Warnf("ignoring event from webhook due to webhook_id %q %q", hookID, github.DeliveryID(r))
 			// Use 202 Accepted to as an ACK, but no action taken.
@@ -180,13 +175,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Filter webhook at org level.
 	if len(s.orgFilter) > 0 {
-		found := false
-		for _, org := range s.orgFilter {
-			if orgLogin == org {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(s.orgFilter, orgLogin)
 		if !found {
 			log.Warnf("ignoring event from repository %q due to non-matching org", repoFullName)
 			w.WriteHeader(http.StatusAccepted)

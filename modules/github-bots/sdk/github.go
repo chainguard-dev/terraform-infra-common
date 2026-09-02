@@ -238,15 +238,13 @@ func checkRateLimiting(_ context.Context, githubErr error) (bool, time.Duration)
 
 	// If GitHub returned an error of type RateLimitError, we can attempt to
 	// compute the next time to try the request again by reading its rate limit information
-	var rateLimitError *github.RateLimitError
-	if errors.As(githubErr, &rateLimitError) {
+	if rateLimitError, ok := errors.AsType[*github.RateLimitError](githubErr); ok {
 		isRateLimited = true
 		delay = time.Until(*rateLimitError.Rate.Reset.GetTime())
 	}
 
 	// If GitHub returned a Retry-After header, use its value, otherwise use the default
-	var abuseRateLimitError *github.AbuseRateLimitError
-	if errors.As(githubErr, &abuseRateLimitError) {
+	if abuseRateLimitError, ok := errors.AsType[*github.AbuseRateLimitError](githubErr); ok {
 		isRateLimited = true
 		delay = abuseRateLimitError.GetRetryAfter()
 	}
@@ -390,9 +388,9 @@ func (c GitHubClient) FetchWorkflowRunLogs(ctx context.Context, wr *github.Workf
 
 func (c GitHubClient) GetWorkloadRunPullRequestNumber(ctx context.Context, wre github.WorkflowRunEvent) (int, error) {
 	opts := &github.PullRequestListOptions{
-		State:       "open",
-		Head:        fmt.Sprintf("%s:%s", *wre.Repo.Owner.Login, *wre.WorkflowRun.HeadBranch), // Filtering by branch name
-		ListOptions: github.ListOptions{PerPage: 10},
+		State:   "open",
+		Head:    fmt.Sprintf("%s:%s", *wre.Repo.Owner.Login, *wre.WorkflowRun.HeadBranch), // Filtering by branch name
+		PerPage: 10,
 	}
 	// Iterate through all pages of the results
 	for {

@@ -40,7 +40,7 @@ func captureLogs(t *testing.T) (context.Context, *bytes.Buffer) {
 func opLine(t *testing.T, buf *bytes.Buffer, op string) string {
 	t.Helper()
 	var found string
-	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(buf.String()), "\n") {
 		if strings.Contains(line, `"op":"`+op+`"`) {
 			found = line
 		}

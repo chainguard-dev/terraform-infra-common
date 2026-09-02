@@ -114,7 +114,7 @@ func main() {
 
 	// Info endpoint with all environment details
 	http.HandleFunc("/info", func(w http.ResponseWriter, _ *http.Request) {
-		info := map[string]interface{}{
+		info := map[string]any{
 			"version":     env.Version,
 			"region":      region,
 			"environment": env.Environment,
