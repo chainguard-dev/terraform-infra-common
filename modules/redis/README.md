@@ -99,6 +99,12 @@ limitations under the License.
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | >= 4.79 |
 
+## Modules
+
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_redis_auth_secret"></a> [redis\_auth\_secret](#module\_redis\_auth\_secret) | ../secret | n/a |
+
 ## Resources
 
 | Name | Type |
@@ -143,7 +149,7 @@ limitations under the License.
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_tier"></a> [tier](#input\_tier) | The service tier of the instance. Valid values: BASIC, STANDARD\_HA. | `string` | `"STANDARD_HA"` | no |
 | <a name="input_transit_encryption_mode"></a> [transit\_encryption\_mode](#input\_transit\_encryption\_mode) | The TLS mode of the Redis instance. Valid values: DISABLED, SERVER\_AUTHENTICATION. | `string` | `"SERVER_AUTHENTICATION"` | no |
-| <a name="input_zone"></a> [zone](#input\_zone) | The zone where the instance will be deployed. | `string` | n/a | yes |
+| <a name="input_zone"></a> [zone](#input\_zone) | The zone for the instance's primary node. Leave unset to let Memorystore choose a zone in the region. | `string` | `null` | no |
 
 ## Outputs
 

@@ -41,8 +41,9 @@ variable "region" {
 }
 
 variable "zone" {
-  description = "The zone where the instance will be deployed."
+  description = "The zone for the instance's primary node. Leave unset to let Memorystore choose a zone in the region."
   type        = string
+  default     = null
 }
 
 variable "alternative_location_id" {
