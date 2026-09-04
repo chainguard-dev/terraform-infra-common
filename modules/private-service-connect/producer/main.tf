@@ -58,14 +58,48 @@ resource "google_compute_region_url_map" "this" {
   default_service = google_compute_region_backend_service.this.id
 }
 
-# Regional target HTTP proxy. HTTP is intentional: TLS to the run.app
-# backend is handled by the serverless NEG, and inbound authorization is
-# enforced via Cloud Run invoker IAM (added in a later phase, not here).
+locals {
+  # The frontend protocol: plain HTTP on :80 unless the caller hands us
+  # Certificate Manager certificates to serve, then HTTPS on :443.
+  https = length(var.tls_certificates) > 0
+}
+
+# Regional target HTTP proxy (the default frontend). Plain HTTP here is not a
+# PSC limitation: TLS to the run.app backend is handled by the serverless NEG,
+# and inbound authorization is enforced via Cloud Run invoker IAM (configured
+# by the caller, not here). It is the historical shape, kept because an HTTPS
+# frontend needs a certificate for a name consumers resolve to their own
+# endpoint IP — see tls_certificates for that shape.
 resource "google_compute_region_target_http_proxy" "this" {
+  count = local.https ? 0 : 1
+
   project = var.project
   region  = var.region
   name    = "${var.name}-http-proxy"
   url_map = google_compute_region_url_map.this.id
+}
+
+# The frontend was unconditional before tls_certificates existed; keep the
+# state address of every existing producer stable.
+moved {
+  from = google_compute_region_target_http_proxy.this
+  to   = google_compute_region_target_http_proxy.this[0]
+}
+
+# Regional target HTTPS proxy: the frontend when the caller supplies
+# Certificate Manager regional certificates (tls_certificates). Consumers
+# dial the certificate's hostname, resolved to their PSC endpoint IP by a
+# private DNS zone in their own VPC, so the handshake verifies against public
+# roots with no trust distribution.
+resource "google_compute_region_target_https_proxy" "this" {
+  count = local.https ? 1 : 0
+
+  project = var.project
+  region  = var.region
+  name    = "${var.name}-https-proxy"
+  url_map = google_compute_region_url_map.this.id
+
+  certificate_manager_certificates = var.tls_certificates
 }
 
 # Internal ALB frontend. The REGIONAL_MANAGED_PROXY subnet must exist in the
@@ -73,7 +107,8 @@ resource "google_compute_region_target_http_proxy" "this" {
 # self-link so we can express that ordering explicitly.
 #
 # Changing allow_global_access forces this rule to be replaced (the provider
-# treats the field as immutable). GCP also won't delete the old rule while a PSC
+# treats the field as immutable), as does switching the frontend protocol
+# (port_range 80 <-> 443). GCP also won't delete the old rule while a PSC
 # service attachment references it, so the attachment is recreated alongside it
 # — see the lifecycle block on google_compute_service_attachment.this below.
 resource "google_compute_forwarding_rule" "this" {
@@ -83,8 +118,8 @@ resource "google_compute_forwarding_rule" "this" {
   load_balancing_scheme = "INTERNAL_MANAGED"
   network               = var.network
   subnetwork            = var.subnetwork
-  target                = google_compute_region_target_http_proxy.this.id
-  port_range            = "80"
+  target                = local.https ? google_compute_region_target_https_proxy.this[0].id : google_compute_region_target_http_proxy.this[0].id
+  port_range            = local.https ? "443" : "80"
   allow_global_access   = var.allow_global_access
 
   labels = var.labels
@@ -111,7 +146,7 @@ resource "google_compute_service_attachment" "this" {
   }
 
   # Recreate the attachment whenever the forwarding rule is replaced (e.g. an
-  # allow_global_access change). The forwarding rule's self-link is name-stable,
+  # allow_global_access change, or the HTTP -> HTTPS frontend switch). The forwarding rule's self-link is name-stable,
   # so target_service does not change and the attachment would otherwise be left
   # in place — but it references (and so locks) the forwarding rule, blocking the
   # rule's destroy with "resourceInUseByAnotherResource". Replacing the

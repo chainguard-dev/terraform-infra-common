@@ -69,3 +69,22 @@ variable "enable_logging" {
   type        = bool
   default     = false
 }
+
+variable "tls_certificates" {
+  description = <<-EOT
+    Certificate Manager regional certificate ids
+    (projects/<project>/locations/<region>/certificates/<name>) for the
+    frontend to serve. Empty (the default) keeps the plain-HTTP frontend on
+    :80. Non-empty switches the frontend to a target HTTPS proxy on :443,
+    which replaces the forwarding rule and so recreates the service
+    attachment (briefly disconnecting consumers, who reconnect; the
+    attachment name is unchanged). Certificates must already be ACTIVE:
+    consumers dial the certificate's hostname and resolve it to their own
+    PSC endpoint IP (a private DNS zone in the consumer VPC), so a regional
+    Google-managed certificate with DNS authorization for a real domain
+    verifies against public roots with no trust distribution. Attach it on
+    the provision after the one that issued it.
+  EOT
+  type        = list(string)
+  default     = []
+}

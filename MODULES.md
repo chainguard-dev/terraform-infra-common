@@ -168,7 +168,7 @@ Use this instead of `serverless-gclb` when URL map updates cause downtime or con
 
 ### [`private-service-connect`](./modules/private-service-connect/)
 
-Expose a regional internal Cloud Run service across VPCs or projects via Private Service Connect, with a producer submodule (internal ALB + service attachment) and a consumer submodule (PSC endpoint).
+Expose a regional internal Cloud Run service across VPCs or projects via Private Service Connect, with a producer submodule (internal ALB + service attachment, HTTP or HTTPS via Certificate Manager regional certificates) and a consumer submodule (PSC endpoint).
 
 Use this when a service in one VPC needs private, non-public connectivity to a Cloud Run service in another VPC or project.
 

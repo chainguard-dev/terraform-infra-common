@@ -44,7 +44,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 
 ## Modules
@@ -54,18 +54,19 @@ No modules.
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
+|------|------|
 | [google_compute_forwarding_rule.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_forwarding_rule) | resource |
 | [google_compute_region_backend_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_backend_service) | resource |
 | [google_compute_region_network_endpoint_group.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_network_endpoint_group) | resource |
 | [google_compute_region_target_http_proxy.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_target_http_proxy) | resource |
+| [google_compute_region_target_https_proxy.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_target_https_proxy) | resource |
 | [google_compute_region_url_map.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_url_map) | resource |
 | [google_compute_service_attachment.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_service_attachment) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_allow_global_access"></a> [allow\_global\_access](#input\_allow\_global\_access) | Allow clients in any region to reach the internal ALB forwarding rule. Required before a PSC consumer endpoint targeting this service attachment can set allow\_psc\_global\_access = true; without it the consumer apply fails with "the producer service does not support consumer global access". Leave false when all consumers are in the producer's region. | `bool` | `false` | no |
 | <a name="input_cloud_run_service_name"></a> [cloud\_run\_service\_name](#input\_cloud\_run\_service\_name) | Name of the existing regional internal Cloud Run service to front with the internal ALB. | `string` | n/a | yes |
 | <a name="input_connection_limit"></a> [connection\_limit](#input\_connection\_limit) | Per-consumer connection limit applied to each entry in consumer\_accept\_projects. | `number` | `10` | no |
@@ -79,11 +80,12 @@ No modules.
 | <a name="input_psc_nat_subnets"></a> [psc\_nat\_subnets](#input\_psc\_nat\_subnets) | List of self-links of caller-created PRIVATE\_SERVICE\_CONNECT NAT subnets used by the service attachment. The module does not create these subnets. | `list(string)` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region in which the Cloud Run service, internal ALB, and service attachment live. | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Self-link of the subnetwork in which the internal ALB VIP is allocated. | `string` | n/a | yes |
+| <a name="input_tls_certificates"></a> [tls\_certificates](#input\_tls\_certificates) | Certificate Manager regional certificate ids<br/>(projects/<project>/locations/<region>/certificates/<name>) for the<br/>frontend to serve. Empty (the default) keeps the plain-HTTP frontend on<br/>:80. Non-empty switches the frontend to a target HTTPS proxy on :443,<br/>which replaces the forwarding rule and so recreates the service<br/>attachment (briefly disconnecting consumers, who reconnect; the<br/>attachment name is unchanged). Certificates must already be ACTIVE:<br/>consumers dial the certificate's hostname and resolve it to their own<br/>PSC endpoint IP (a private DNS zone in the consumer VPC), so a regional<br/>Google-managed certificate with DNS authorization for a real domain<br/>verifies against public roots with no trust distribution. Attach it on<br/>the provision after the one that issued it. | `list(string)` | `[]` | no |
 
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
+|------|-------------|
 | <a name="output_internal_lb_ip"></a> [internal\_lb\_ip](#output\_internal\_lb\_ip) | Internal VIP of the regional internal ALB frontend. |
 | <a name="output_service_attachment_id"></a> [service\_attachment\_id](#output\_service\_attachment\_id) | Self-link / id of the PSC service attachment. This is the value handed to the consumer module's service\_attachment input. |
 <!-- END_TF_DOCS -->
