@@ -96,6 +96,14 @@ resource "null_resource" "exec" {
   count = var.exec ? 1 : 0
 
   provisioner "local-exec" {
+    // --async is load-bearing, not a tidier spelling of "no --wait". gcloud
+    // has three modes here: --wait blocks until the execution COMPLETES,
+    // --async returns as soon as it is CREATED, and the default -- neither
+    // flag -- blocks until it starts RUNNING, which means provisioning a task
+    // and pulling a freshly pushed image. That default is what exec_wait=false
+    // used to select, and it is not what this variable promises: dev-eco's
+    // role-init took 5m43s to print "has successfully started running" on an
+    // apply that had opted out of waiting.
     command = join(" ", concat([
       "gcloud",
       "--project=${var.project_id}",
@@ -104,7 +112,7 @@ resource "null_resource" "exec" {
       "execute",
       module.impl.job_name,
       "--region=${var.region}",
-    ], var.exec_wait ? ["--wait"] : []))
+    ], var.exec_wait ? ["--wait"] : ["--async"]))
   }
 
   triggers = {
