@@ -36,6 +36,13 @@ resource "google_compute_address" "this" {
   labels       = var.labels
 }
 
+# Changing var.connection_generation replaces this, and with it the endpoint
+# below (replace_triggered_by): the code-driven way to recover a CLOSED
+# connection, which the forwarding rule alone never shows as drift.
+resource "terraform_data" "connection" {
+  triggers_replace = var.connection_generation
+}
+
 # The PSC endpoint: a forwarding rule targeting the producer's service
 # attachment. load_balancing_scheme is empty for PSC endpoints.
 resource "google_compute_forwarding_rule" "this" {
@@ -49,4 +56,8 @@ resource "google_compute_forwarding_rule" "this" {
   target                  = var.service_attachment
   allow_psc_global_access = var.allow_psc_global_access
   labels                  = var.labels
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.connection]
+  }
 }

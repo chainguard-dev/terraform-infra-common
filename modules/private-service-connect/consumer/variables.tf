@@ -48,3 +48,19 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+variable "connection_generation" {
+  description = <<-EOT
+    Opaque token; changing it recreates the endpoint forwarding rule (the
+    reserved address, and so endpoint_ip, is kept). A PSC connection is closed
+    for good once the producer deletes its service attachment: even when an
+    attachment of the same name is recreated, the endpoint stays CLOSED,
+    passes no traffic, and shows no Terraform drift (its target is the
+    attachment's name-stable self-link). Bump this in the change that follows
+    a producer-side attachment replacement (the producer module's
+    allow_global_access change or HTTP -> HTTPS frontend switch), or whenever
+    the endpoint reports CLOSED. Empty (the default) is a valid first value.
+  EOT
+  type        = string
+  default     = ""
+}

@@ -30,11 +30,19 @@ Hand the `service_attachment_id` output to the `consumer` submodule (typically
 across Terraform states via a tfvar). See the parent module's
 [README](../README.md) for the producer -> consumer flow and the two-phase apply.
 
-Changing `allow_global_access` recreates the forwarding rule and, by dependency,
-the service attachment: GCP does not allow an in-place change to that field while
-the forwarding rule is referenced by a PSC service attachment. A live flip
-therefore briefly tears down the attachment, so connected PSC consumers
-disconnect and reconnect (ACCEPT_MANUAL re-accepts them once it is recreated).
+Changing `allow_global_access`, or switching the frontend between HTTP and HTTPS
+(`tls_certificates`), recreates the forwarding rule and, by dependency, the
+service attachment: GCP does not allow an in-place change to those fields while
+the forwarding rule is referenced by a PSC service attachment. Deleting the
+attachment **closes every connected consumer endpoint for good**: a `CLOSED`
+PSC connection is terminal, the endpoint does not reconnect to the recreated
+attachment (`ACCEPT_MANUAL` re-acceptance applies to new connections only), and
+the consumer's forwarding rule shows no Terraform drift because the attachment's
+self-link is unchanged. Treat such a flip as a coordinated change: after it
+applies, every accepted consumer recreates its endpoint (the `consumer`
+submodule's `connection_generation` input), and the seam is down for each
+consumer until it does. See
+[Private Service Connect endpoint status](https://cloud.google.com/vpc/docs/about-accessing-vpc-hosted-services-endpoints).
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -80,7 +88,7 @@ No modules.
 | <a name="input_psc_nat_subnets"></a> [psc\_nat\_subnets](#input\_psc\_nat\_subnets) | List of self-links of caller-created PRIVATE\_SERVICE\_CONNECT NAT subnets used by the service attachment. The module does not create these subnets. | `list(string)` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region in which the Cloud Run service, internal ALB, and service attachment live. | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Self-link of the subnetwork in which the internal ALB VIP is allocated. | `string` | n/a | yes |
-| <a name="input_tls_certificates"></a> [tls\_certificates](#input\_tls\_certificates) | Certificate Manager regional certificate ids<br/>(projects/<project>/locations/<region>/certificates/<name>) for the<br/>frontend to serve. Empty (the default) keeps the plain-HTTP frontend on<br/>:80. Non-empty switches the frontend to a target HTTPS proxy on :443,<br/>which replaces the forwarding rule and so recreates the service<br/>attachment (briefly disconnecting consumers, who reconnect; the<br/>attachment name is unchanged). Certificates must already be ACTIVE:<br/>consumers dial the certificate's hostname and resolve it to their own<br/>PSC endpoint IP (a private DNS zone in the consumer VPC), so a regional<br/>Google-managed certificate with DNS authorization for a real domain<br/>verifies against public roots with no trust distribution. Attach it on<br/>the provision after the one that issued it. | `list(string)` | `[]` | no |
+| <a name="input_tls_certificates"></a> [tls\_certificates](#input\_tls\_certificates) | Certificate Manager regional certificate ids<br/>(projects/<project>/locations/<region>/certificates/<name>) for the<br/>frontend to serve. Empty (the default) keeps the plain-HTTP frontend on<br/>:80. Non-empty switches the frontend to a target HTTPS proxy on :443,<br/>which replaces the forwarding rule and so recreates the service<br/>attachment (closing every connected consumer endpoint for good: each<br/>consumer must then recreate its endpoint, see the README; the attachment<br/>name is unchanged). Certificates must already be ACTIVE:<br/>consumers dial the certificate's hostname and resolve it to their own<br/>PSC endpoint IP (a private DNS zone in the consumer VPC), so a regional<br/>Google-managed certificate with DNS authorization for a real domain<br/>verifies against public roots with no trust distribution. Attach it on<br/>the provision after the one that issued it. | `list(string)` | `[]` | no |
 
 ## Outputs
 

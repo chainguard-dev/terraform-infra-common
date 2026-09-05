@@ -77,8 +77,9 @@ variable "tls_certificates" {
     frontend to serve. Empty (the default) keeps the plain-HTTP frontend on
     :80. Non-empty switches the frontend to a target HTTPS proxy on :443,
     which replaces the forwarding rule and so recreates the service
-    attachment (briefly disconnecting consumers, who reconnect; the
-    attachment name is unchanged). Certificates must already be ACTIVE:
+    attachment (closing every connected consumer endpoint for good: each
+    consumer must then recreate its endpoint, see the README; the attachment
+    name is unchanged). Certificates must already be ACTIVE:
     consumers dial the certificate's hostname and resolve it to their own
     PSC endpoint IP (a private DNS zone in the consumer VPC), so a regional
     Google-managed certificate with DNS authorization for a real domain

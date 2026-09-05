@@ -145,15 +145,24 @@ resource "google_compute_service_attachment" "this" {
     }
   }
 
-  # Recreate the attachment whenever the forwarding rule is replaced (e.g. an
-  # allow_global_access change, or the HTTP -> HTTPS frontend switch). The forwarding rule's self-link is name-stable,
-  # so target_service does not change and the attachment would otherwise be left
-  # in place — but it references (and so locks) the forwarding rule, blocking the
-  # rule's destroy with "resourceInUseByAnotherResource". Replacing the
-  # attachment too makes Terraform tear it down first (dependents are destroyed
-  # before their dependencies), freeing the rule to be replaced, then recreates
-  # it. A live flip therefore briefly drops connected PSC consumers, which
-  # reconnect once the attachment is recreated (ACCEPT_MANUAL re-accepts them).
+  # Recreate the attachment whenever the forwarding rule is replaced (an
+  # allow_global_access change, or the HTTP -> HTTPS frontend switch). The
+  # forwarding rule's self-link is name-stable, so target_service does not
+  # change and the attachment would otherwise be left in place — but it
+  # references (and so locks) the forwarding rule, blocking the rule's destroy
+  # with "resourceInUseByAnotherResource". Replacing the attachment too makes
+  # Terraform tear it down first (dependents are destroyed before their
+  # dependencies), freeing the rule to be replaced, then recreates it.
+  #
+  # Deleting the attachment closes every connected consumer endpoint, and a
+  # CLOSED PSC connection is terminal: the endpoint does not reconnect to the
+  # recreated attachment (ACCEPT_MANUAL re-acceptance is for new connections),
+  # and its forwarding rule shows no Terraform drift because the attachment's
+  # self-link is unchanged. Every consumer must recreate its endpoint after
+  # this applies (the consumer module's connection_generation input); the
+  # seam is down for each consumer until it does. A live flip is therefore a
+  # coordinated change with every accepted consumer, not a producer-only one.
+  # https://cloud.google.com/vpc/docs/about-accessing-vpc-hosted-services-endpoints
   lifecycle {
     replace_triggered_by = [google_compute_forwarding_rule.this]
   }
