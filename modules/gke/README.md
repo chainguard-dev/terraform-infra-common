@@ -1,14 +1,16 @@
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+| ---- | ------- |
+| <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | >= 6.32.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
-| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
+| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | >= 6.32.0 |
 
 ## Resources
 
@@ -45,7 +47,7 @@ No requirements.
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the gke resources. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | The network to deploy the cluster in. | `string` | n/a | yes |
-| <a name="input_pools"></a> [pools](#input\_pools) | n/a | <pre>map(object({<br/>    min_node_count                    = optional(number, 1)<br/>    max_node_count                    = optional(number, 1)<br/>    machine_type                      = optional(string, "c3-standard-4")<br/>    disk_type                         = optional(string, "pd-balanced")<br/>    disk_size                         = optional(number, 100)<br/>    ephemeral_storage_local_ssd_count = optional(number, 0)<br/>    node_locations                    = optional(list(string), null)<br/>    spot                              = optional(bool, false)<br/>    gvisor                            = optional(bool, false)<br/>    enable_nested_virtualization      = optional(bool, null)<br/>    enable_secure_boot                = optional(bool, false)<br/>    enable_integrity_monitoring       = optional(bool, true)<br/>    labels                            = optional(map(string), {})<br/>    tags                              = optional(list(string), [])<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string<br/>    })), [])<br/>    network_config = optional(object({<br/>      enable_private_nodes = optional(bool, false)<br/>      create_pod_range     = optional(bool, true)<br/>      pod_ipv4_cidr_block  = optional(string, null)<br/>    }), null)<br/>    guest_accelerator = optional(list(object({<br/>      type  = string<br/>      count = number<br/>      gpu_driver_installation_config = optional(list(object({<br/>        gpu_driver_version = string<br/>      })), [])<br/>    })), [])<br/>  }))</pre> | n/a | yes |
+| <a name="input_pools"></a> [pools](#input\_pools) | n/a | <pre>map(object({<br/>    min_node_count                    = optional(number, 1)<br/>    max_node_count                    = optional(number, 1)<br/>    machine_type                      = optional(string, "c3-standard-4")<br/>    disk_type                         = optional(string, "pd-balanced")<br/>    disk_size                         = optional(number, 100)<br/>    ephemeral_storage_local_ssd_count = optional(number, 0)<br/>    node_locations                    = optional(list(string), null)<br/>    # Older spelling of provisioning_model = "spot".<br/>    spot = optional(bool, false)<br/>    # "on-demand" (the default), "spot", or "flex-start" (Dynamic Workload<br/>    # Scheduler). max_run_duration is the flex-start node lifetime as a<br/>    # seconds string ("57600s").<br/>    provisioning_model           = optional(string, null)<br/>    max_run_duration             = optional(string, null)<br/>    gvisor                       = optional(bool, false)<br/>    enable_nested_virtualization = optional(bool, null)<br/>    enable_secure_boot           = optional(bool, false)<br/>    enable_integrity_monitoring  = optional(bool, true)<br/>    labels                       = optional(map(string), {})<br/>    tags                         = optional(list(string), [])<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string<br/>    })), [])<br/>    network_config = optional(object({<br/>      enable_private_nodes = optional(bool, false)<br/>      create_pod_range     = optional(bool, true)<br/>      pod_ipv4_cidr_block  = optional(string, null)<br/>    }), null)<br/>    guest_accelerator = optional(list(object({<br/>      type  = string<br/>      count = number<br/>      gpu_driver_installation_config = optional(list(object({<br/>        gpu_driver_version = string<br/>      })), [])<br/>    })), [])<br/>  }))</pre> | n/a | yes |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project"></a> [project](#input\_project) | n/a | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones` | `any` | n/a | yes |

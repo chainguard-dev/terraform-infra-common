@@ -3,6 +3,11 @@ terraform {
     google = {
       source = "hashicorp/google"
     }
+    google-beta = {
+      source = "hashicorp/google-beta"
+      # node_config.flex_start arrived in 6.32.0. max_run_duration is older.
+      version = ">= 6.32.0"
+    }
   }
 }
 
@@ -63,6 +68,11 @@ locals {
   product_label = var.product != "" ? {
     product = var.product
   } : {}
+
+  // Each pool's provisioning model, with the older spot boolean folded in.
+  pool_models = {
+    for name, p in var.pools : name => coalesce(p.provisioning_model, p.spot ? "spot" : "on-demand")
+  }
 }
 
 resource "google_container_cluster" "this" {
@@ -367,10 +377,20 @@ resource "google_container_node_pool" "pools" {
       }
     }
 
-    spot            = each.value.spot
-    labels          = each.value.labels
-    tags            = each.value.tags
-    resource_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+    spot             = local.pool_models[each.key] == "spot"
+    flex_start       = local.pool_models[each.key] == "flex-start"
+    max_run_duration = each.value.max_run_duration
+    labels           = each.value.labels
+    tags             = each.value.tags
+    resource_labels  = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+
+    # Dynamic Workload Scheduler does not consume reservations.
+    dynamic "reservation_affinity" {
+      for_each = local.pool_models[each.key] == "flex-start" ? [1] : []
+      content {
+        consume_reservation_type = "NO_RESERVATION"
+      }
+    }
 
     dynamic "advanced_machine_features" {
       for_each = each.value.enable_nested_virtualization != null ? [1] : []
@@ -398,10 +418,13 @@ resource "google_container_node_pool" "pools" {
   autoscaling {
     min_node_count = each.value.min_node_count
     max_node_count = each.value.max_node_count
+    # GKE requires location policy ANY on flex-start pools.
+    location_policy = local.pool_models[each.key] == "flex-start" ? "ANY" : null
   }
 
   management {
-    auto_repair  = true
+    # GKE requires auto-repair off on flex-start pools.
+    auto_repair  = local.pool_models[each.key] != "flex-start"
     auto_upgrade = true
   }
 }

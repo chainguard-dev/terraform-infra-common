@@ -61,13 +61,19 @@ variable "pools" {
     disk_size                         = optional(number, 100)
     ephemeral_storage_local_ssd_count = optional(number, 0)
     node_locations                    = optional(list(string), null)
-    spot                              = optional(bool, false)
-    gvisor                            = optional(bool, false)
-    enable_nested_virtualization      = optional(bool, null)
-    enable_secure_boot                = optional(bool, false)
-    enable_integrity_monitoring       = optional(bool, true)
-    labels                            = optional(map(string), {})
-    tags                              = optional(list(string), [])
+    # Older spelling of provisioning_model = "spot".
+    spot = optional(bool, false)
+    # "on-demand" (the default), "spot", or "flex-start" (Dynamic Workload
+    # Scheduler). max_run_duration is the flex-start node lifetime as a
+    # seconds string ("57600s").
+    provisioning_model           = optional(string, null)
+    max_run_duration             = optional(string, null)
+    gvisor                       = optional(bool, false)
+    enable_nested_virtualization = optional(bool, null)
+    enable_secure_boot           = optional(bool, false)
+    enable_integrity_monitoring  = optional(bool, true)
+    labels                       = optional(map(string), {})
+    tags                         = optional(list(string), [])
     taints = optional(list(object({
       key    = string
       value  = string
@@ -86,6 +92,21 @@ variable "pools" {
       })), [])
     })), [])
   }))
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.provisioning_model == null || contains(["on-demand", "spot", "flex-start"], p.provisioning_model)])
+    error_message = "provisioning_model must be \"on-demand\", \"spot\", or \"flex-start\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : !(p.spot && p.provisioning_model != null && p.provisioning_model != "spot")])
+    error_message = "spot = true means provisioning_model = \"spot\". A pool cannot set spot with a different provisioning_model."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.max_run_duration == null || p.provisioning_model == "flex-start"])
+    error_message = "max_run_duration is only valid with provisioning_model = \"flex-start\"."
+  }
 }
 
 variable "extra_roles" {
