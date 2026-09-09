@@ -39,6 +39,39 @@ EOF
   }))
 }
 
+variable "buckets" {
+  description = <<EOF
+A map from hostnames (managed by dns_zone) to Cloud Storage buckets the hostname serves: content comes straight from the bucket through a backend bucket, and through Cloud CDN by default, rather than from a Cloud Run service. A managed SSL certificate and a DNS record are created for each hostname, as for public-services.
+
+name: the name for the backend bucket, the certificate and the URL-map path matcher; unique across public-services and buckets.
+bucket_name: the Cloud Storage bucket to serve, which must already exist.
+enable_cdn: front the bucket with Cloud CDN (the default).
+disabled: keep the hostname's records but route nothing to it.
+cdn_policy: optional Cloud CDN policy for the backend bucket; omitted, Cloud CDN applies its defaults.
+signed_url_keys: optional map from key name to key value (the 128-bit base64url-without-padding form Cloud CDN takes) of signed-URL keys to attach to the backend bucket. Present, the hostname is served to signed URLs only: the module attaches the keys and grants Cloud CDN's fill service agent read on the bucket. PREREQUISITE: the caller must have removed public read (allUsers, allAuthenticatedUsers) from the bucket's IAM and ACLs, as Cloud CDN's signed-URL guidance requires; the module cannot make the bucket private, and a bucket that stays public is served to everyone regardless of the keys. Absent, the bucket is public and its objects must be readable by allUsers. Key values are held in state; a deployment that keeps them out of state attaches its keys out of band and grants the fill agent itself.
+EOF
+  type = map(object({
+    name        = string
+    bucket_name = string
+    enable_cdn  = optional(bool, true)
+    disabled    = optional(bool, false)
+    cdn_policy = optional(object({
+      cache_mode                   = optional(string)
+      client_ttl                   = optional(number)
+      default_ttl                  = optional(number)
+      max_ttl                      = optional(number)
+      signed_url_cache_max_age_sec = optional(number)
+    }))
+    signed_url_keys = optional(map(string), {})
+  }))
+  default = {}
+
+  validation {
+    condition     = alltrue([for b in var.buckets : b.enable_cdn || length(b.signed_url_keys) == 0])
+    error_message = "signed_url_keys require enable_cdn: Cloud CDN is what honors signed URLs."
+  }
+}
+
 variable "notification_channels" {
   description = "The set of notification channels to which to send alerts."
   type        = list(string)
