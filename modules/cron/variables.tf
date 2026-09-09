@@ -176,6 +176,12 @@ variable "exec" {
   default     = false
 }
 
+variable "exec_triggers" {
+  description = "Values whose change re-runs the exec'd job. Empty (the default) re-runs on every container image change, i.e. every build. Set it when the job's work is keyed to something narrower — a schema file's hash, a list of grantees — so a rebuild that changes none of it does not re-execute (and, with exec_wait, does not hold the apply)."
+  type        = map(string)
+  default     = {}
+}
+
 variable "exec_wait" {
   description = "Whether the apply blocks until the exec'd job execution completes. When false, the apply only waits for the execution to be created, and a failed run does not fail the apply — pair with failed_execution_alert so failures are seen at all."
   type        = bool

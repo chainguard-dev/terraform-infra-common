@@ -115,11 +115,12 @@ resource "null_resource" "exec" {
     ], var.exec_wait ? ["--wait"] : ["--async"]))
   }
 
-  triggers = {
-    // Re-run the exec provisioner whenever the container images change.
-    // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
-    // so these values are stable at apply time (unlike job_etag or job_generation,
-    // which are server-side computed values that change mid-apply).
+  // Re-run the exec provisioner whenever the container images change, or —
+  // when the caller names its own signal — whenever that changes instead.
+  // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
+  // so these values are stable at apply time (unlike job_etag or job_generation,
+  // which are server-side computed values that change mid-apply).
+  triggers = length(var.exec_triggers) > 0 ? var.exec_triggers : {
     image_refs = join(",", values(module.impl.image_refs))
   }
 }
