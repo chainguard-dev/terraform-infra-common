@@ -389,7 +389,7 @@ var (
 	mGitHubRateLimitErrors = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "github_rate_limit_errors_total",
-			Help: "GitHub API requests rejected due to rate limiting (403/429 with rate limit headers)",
+			Help: "GitHub API requests rejected by a primary or secondary rate limit",
 		},
 		[]string{"resource", "organization", "app_id", "installation_id", "service_name", "code", "rate_limit_type"},
 	)
@@ -515,30 +515,10 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				}
 			}
 
-			// Detect rate limit errors (403/429).
-			// Only classify as rate-limit if rate limit headers are actually present,
-			// otherwise a permission 403 would be miscounted.
-			hasRateLimitHeaders := resp.Header.Get("X-RateLimit-Remaining") != ""
-			if (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests) && hasRateLimitHeaders {
-				rateLimitType := "unknown"
-				if remaining == 0 {
-					rateLimitType = "primary"
-				} else if resp.Body != nil {
-					// Check for secondary rate limit by inspecting the response body
-					// for documentation_url containing abuse or secondary rate limit references.
-					// Re-populate the body afterward so downstream code can still read it,
-					// matching the pattern used by go-github's CheckResponse.
-					data, readErr := io.ReadAll(resp.Body)
-					resp.Body.Close()
-					if readErr == nil {
-						body := string(data)
-						if strings.Contains(body, "#abuse-rate-limits") || strings.Contains(body, "secondary-rate-limits") {
-							rateLimitType = "secondary"
-						}
-					}
-					resp.Body = io.NopCloser(bytes.NewBuffer(data))
-				}
-
+			// Count and log only genuine rate-limit rejections. A 403 that
+			// classifyRateLimit does not recognise is a permission or policy
+			// refusal and belongs to the caller's error handling, not here.
+			if rateLimitType := classifyRateLimit(resp); rateLimitType != "" {
 				mGitHubRateLimitErrors.With(prometheus.Labels{
 					"resource":        resource,
 					"organization":    organization,
@@ -593,6 +573,36 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 		}
 		return resp, err
 	}
+}
+
+// classifyRateLimit reports which GitHub rate limit rejected the response:
+// "primary" when the response reports zero remaining quota, "secondary" when
+// its body points at the secondary (abuse) rate-limit documentation, and ""
+// for anything else. The rules are those of go-github's CheckResponse.
+// GitHub attaches X-RateLimit-* headers to every authenticated response,
+// permission refusals included, so the headers' presence says nothing about
+// why a 403 was returned; only a zero remaining count does. The body is
+// re-populated after reading so callers can still decode the error.
+func classifyRateLimit(resp *http.Response) string {
+	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusTooManyRequests {
+		return ""
+	}
+	if resp.Header.Get("X-RateLimit-Remaining") == "0" {
+		return "primary"
+	}
+	if resp.Body == nil {
+		return ""
+	}
+	data, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	resp.Body = io.NopCloser(bytes.NewBuffer(data))
+	if err != nil {
+		return ""
+	}
+	if body := string(data); strings.Contains(body, "#abuse-rate-limits") || strings.Contains(body, "secondary-rate-limits") {
+		return "secondary"
+	}
+	return ""
 }
 
 var (

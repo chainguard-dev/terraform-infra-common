@@ -9,9 +9,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
@@ -381,6 +383,112 @@ func TestGitHubRateLimit_LogIncludesRetryAfter(t *testing.T) {
 	}
 	if attrs["retry_after_seconds"] != int64(60) {
 		t.Errorf("retry_after_seconds: got %v, want 60", attrs["retry_after_seconds"])
+	}
+}
+
+// TestClassifyRateLimit pins the rule that separates a rate-limit rejection
+// from every other 403. GitHub sends X-RateLimit-* headers on permission
+// refusals too, so a classifier keyed on header presence would report a rate
+// limit while thousands of requests of quota remain and point responders at
+// the wrong cause.
+func TestClassifyRateLimit(t *testing.T) {
+	const permissionBody = `{"message":"Resource not accessible by integration","documentation_url":"https://docs.github.com/rest/commits/commits#compare-two-commits"}`
+	const secondaryBody = `{"message":"You have exceeded a secondary rate limit.","documentation_url":"https://docs.github.com/rest/overview/rate-limits-for-the-rest-api#about-secondary-rate-limits"}`
+	for _, tt := range []struct {
+		name      string
+		status    int
+		remaining string
+		body      string
+		want      string
+	}{
+		{name: "403 with zero remaining is primary", status: http.StatusForbidden, remaining: "0", body: `{"message":"API rate limit exceeded"}`, want: "primary"},
+		{name: "429 with zero remaining is primary", status: http.StatusTooManyRequests, remaining: "0", want: "primary"},
+		{name: "403 naming the secondary limit docs is secondary", status: http.StatusForbidden, remaining: "4999", body: secondaryBody, want: "secondary"},
+		{name: "403 with quota remaining and a permission body is not a rate limit", status: http.StatusForbidden, remaining: "4999", body: permissionBody, want: ""},
+		{name: "403 without rate limit headers is not a rate limit", status: http.StatusForbidden, body: permissionBody, want: ""},
+		{name: "200 on the last permitted request is not a rate limit", status: http.StatusOK, remaining: "0", want: ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := &http.Response{
+				StatusCode: tt.status,
+				Header:     http.Header{},
+				Body:       io.NopCloser(strings.NewReader(tt.body)),
+			}
+			if tt.remaining != "" {
+				resp.Header.Set("X-RateLimit-Remaining", tt.remaining)
+			}
+			if got := classifyRateLimit(resp); got != tt.want {
+				t.Errorf("classifyRateLimit: got %q, want %q", got, tt.want)
+			}
+			// Callers decode the GitHub error from the body after classification.
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(data) != tt.body {
+				t.Errorf("body after classification: got %q, want %q", data, tt.body)
+			}
+		})
+	}
+}
+
+// TestGitHubRateLimit_Permission403IsNotARateLimit drives a permission
+// refusal through the round tripper. The rate-limit warning and counter stay
+// silent so that, during a GitHub-side 403 episode, the logs and metrics
+// keep pointing at permissions rather than quota.
+func TestGitHubRateLimit_Permission403IsNotARateLimit(t *testing.T) {
+	const body = `{"message":"Resource not accessible by integration","documentation_url":"https://docs.github.com/rest/commits/commits#compare-two-commits"}`
+	stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusForbidden,
+			Header: http.Header{
+				"X-Ratelimit-Resource":  []string{"core"},
+				"X-Ratelimit-Remaining": []string{"14963"},
+				"X-Ratelimit-Limit":     []string{"15000"},
+				"X-Ratelimit-Reset":     []string{"9999999999"},
+			},
+			Body: io.NopCloser(strings.NewReader(body)),
+		}, nil
+	})
+
+	rec := &recordingHandler{}
+	ctx := clog.WithLogger(t.Context(), clog.New(rec))
+
+	transport := instrumentGitHubRateLimits(stub)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/permission-org/repo/compare/a...b", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := transport.RoundTrip(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, r := range rec.records {
+		if strings.HasPrefix(r.Message, "GitHub rate limit hit") {
+			t.Errorf("permission 403 logged as a rate limit: %q", r.Message)
+		}
+	}
+	for _, rateLimitType := range []string{"primary", "secondary"} {
+		labels := prometheus.Labels{
+			"resource":        "core",
+			"organization":    "permission-org",
+			"app_id":          "",
+			"installation_id": "",
+			"service_name":    serviceName,
+			"code":            "403",
+			"rate_limit_type": rateLimitType,
+		}
+		if got := testutil.ToFloat64(mGitHubRateLimitErrors.With(labels)); got != 0 {
+			t.Errorf("github_rate_limit_errors_total{rate_limit_type=%q}: got %v, want 0", rateLimitType, got)
+		}
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != body {
+		t.Errorf("body after round trip: got %q, want %q", data, body)
 	}
 }
 
