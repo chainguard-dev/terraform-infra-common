@@ -153,52 +153,8 @@ resource "google_compute_backend_bucket" "buckets" {
 }
 
 locals {
-  // The buckets that route, and the signed-URL keys across them, keyed
-  // "<hostname>/<key name>".
+  // The buckets that route.
   buckets = { for k, v in var.buckets : k => v if !v.disabled }
-  bucket_signed_url_keys = merge([
-    for host, b in local.buckets : {
-      for name, value in b.signed_url_keys : "${host}/${name}" => {
-        host  = host
-        name  = name
-        value = value
-      }
-    }
-  ]...)
-  private_buckets      = { for host, b in local.buckets : host => b if length(b.signed_url_keys) > 0 }
-  private_bucket_names = toset([for _, b in local.private_buckets : b.bucket_name])
-}
-
-// A private bucket's signed-URL keys, attached to its backend bucket. A URL
-// signed under any attached key is honored; rotation is attaching the next key
-// and, once nothing signs under the previous one, removing it.
-resource "google_compute_backend_bucket_signed_url_key" "buckets" {
-  for_each = local.bucket_signed_url_keys
-
-  project        = var.project_id
-  name           = each.value.name
-  key_value      = each.value.value
-  backend_bucket = google_compute_backend_bucket.buckets[each.value.host].name
-}
-
-data "google_project" "this" {
-  project_id = var.project_id
-}
-
-// Cloud CDN fills a private bucket's cache as the project's cloud-cdn-fill
-// service agent, which needs read on the bucket: one grant per storage bucket,
-// however many hostnames serve it, so dropping one hostname never revokes the
-// others' access. GCP creates that agent lazily, once a signed-URL key has been
-// attached to a backend bucket in the project, so the grant is ordered after
-// the keys or the first apply fails with an unknown principal.
-resource "google_storage_bucket_iam_member" "cdn_fill" {
-  for_each = local.private_bucket_names
-
-  bucket = each.value
-  role   = "roles/storage.objectViewer"
-  member = "serviceAccount:service-${data.google_project.this.number}@cloud-cdn-fill.iam.gserviceaccount.com"
-
-  depends_on = [google_compute_backend_bucket_signed_url_key.buckets]
 }
 
 // Create the cross-product of public services and regions so we can for_each over it.
@@ -371,8 +327,6 @@ locals {
     [for _, v in google_compute_managed_ssl_certificate.public-service : v.id],
     [for _, v in google_compute_managed_ssl_certificate.bucket : v.id],
     [for _, v in google_compute_backend_bucket.buckets : v.id],
-    [for _, v in google_compute_backend_bucket_signed_url_key.buckets : v.id],
-    [for _, v in google_storage_bucket_iam_member.cdn_fill : v.id],
     [for _, v in google_compute_backend_service.public-services : v.id],
     [for _, v in google_compute_region_network_endpoint_group.regional-backends : v.id],
     [google_compute_url_map.public-service.id,

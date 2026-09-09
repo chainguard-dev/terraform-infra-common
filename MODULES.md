@@ -156,7 +156,7 @@ Use this when you want a GKE cluster without managing node pools — Autopilot h
 
 ### [`serverless-gclb`](./modules/serverless-gclb/)
 
-Front multiple regional Cloud Run services — and, via `buckets`, hostnames served straight from Cloud Storage buckets through Cloud CDN, public or behind signed URLs — with a Google Cloud Load Balancer, managed SSL certificates, DNS records, and host-based routing. Accepts an optional `certificate_map` input to serve TLS from a Certificate Manager map (for example a wildcard certificate) instead of per-hostname managed certificates, which avoids the 15-certificate-per-proxy limit.
+Front multiple regional Cloud Run services — and, via `buckets`, hostnames served straight from Cloud Storage buckets through Cloud CDN, public or, with signed-URL keys the caller attaches to the exported backend buckets, private — with a Google Cloud Load Balancer, managed SSL certificates, DNS records, and host-based routing. Accepts an optional `certificate_map` input to serve TLS from a Certificate Manager map (for example a wildcard certificate) instead of per-hostname managed certificates, which avoids the 15-certificate-per-proxy limit.
 
 Use this when Cloud Run services need a global load balancer with custom domains and TLS.
 
