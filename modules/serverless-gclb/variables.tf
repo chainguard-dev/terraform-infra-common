@@ -27,7 +27,9 @@ A map from hostnames (managed by dns_zone), to the name of the regionalized clou
 
 external_managed_migration_state: The migration state for the load balancer, [PREPARE, TEST_BY_PERCENTAGE, and TEST_ALL_TRAFFIC].
 external_managed_migration_testing_percentage: The percentage of traffic to route to new load balancer, [0, 100].
-load_balancing_scheme: The default load balancing scheme to use.
+load_balancing_scheme: The backend service's load balancing scheme, EXTERNAL (classic) or EXTERNAL_MANAGED (Envoy-based). Pair EXTERNAL_MANAGED with forwarding_rule_load_balancing.load_balancing_scheme.
+connection_draining_timeout_sec: How long a backend being removed keeps serving in-flight connections.
+cors_policy: When set, the URL map answers cross-origin browser requests for this hostname at the edge (preflights included), so the Cloud Run service needs no CORS handling of its own. Requires EXTERNAL_MANAGED on both the service and the forwarding rule; the classic load balancer rejects a corsPolicy. allow_methods and allow_headers default to what a JSON API behind bearer-token auth needs; allow_credentials stays false because a bearer token is a plain header, not a credential in the CORS sense.
 EOF
   type = map(object({
     name                                          = string
@@ -36,7 +38,24 @@ EOF
     external_managed_migration_testing_percentage = optional(number, null)
     load_balancing_scheme                         = optional(string, "EXTERNAL")
     connection_draining_timeout_sec               = optional(number, 300)
+    cors_policy = optional(object({
+      allow_origins        = optional(list(string), [])
+      allow_origin_regexes = optional(list(string), [])
+      allow_methods        = optional(list(string), ["GET", "HEAD", "POST", "OPTIONS"])
+      allow_headers        = optional(list(string), ["Authorization", "Content-Type"])
+      expose_headers       = optional(list(string), [])
+      max_age              = optional(number, 3600)
+      allow_credentials    = optional(bool, false)
+    }), null)
   }))
+
+  validation {
+    condition = alltrue([
+      for host, svc in var.public-services :
+      svc.cors_policy == null || length(concat(svc.cors_policy.allow_origins, svc.cors_policy.allow_origin_regexes)) > 0
+    ])
+    error_message = "cors_policy must allow at least one origin, via allow_origins or allow_origin_regexes."
+  }
 }
 
 variable "buckets" {

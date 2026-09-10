@@ -191,6 +191,17 @@ resource "google_compute_backend_service" "public-services" {
   project = var.project_id
   name    = each.value.name
 
+  // The scheme must match the forwarding rule's: EXTERNAL for the classic
+  // load balancer, EXTERNAL_MANAGED for the Envoy-based one (which is what
+  // advanced URL map actions such as cors_policy require). The provider
+  // updates an existing backend service in place when it changes; the
+  // migration fields exist for callers who want a traffic-shifted cutover
+  // rather than a flip.
+  load_balancing_scheme                         = each.value.load_balancing_scheme
+  external_managed_migration_state              = each.value.external_managed_migration_state
+  external_managed_migration_testing_percentage = each.value.external_managed_migration_testing_percentage
+  connection_draining_timeout_sec               = each.value.connection_draining_timeout_sec
+
   // Create a backend for each region hosting this cloud run service.
   dynamic "backend" {
     for_each = toset(var.serving_regions)
@@ -209,6 +220,17 @@ resource "google_compute_backend_service" "public-services" {
   }
 
   security_policy = var.security-policy
+
+  lifecycle {
+    // A URL map may only reference backend services whose scheme matches its
+    // forwarding rule's, so catch a lone EXTERNAL_MANAGED service behind a
+    // classic forwarding rule (or vice versa) at plan time. The migration
+    // fields are the sanctioned way to hold the two apart temporarily.
+    precondition {
+      condition     = each.value.load_balancing_scheme == var.forwarding_rule_load_balancing.load_balancing_scheme || each.value.external_managed_migration_state != null
+      error_message = "public-services[\"${each.key}\"].load_balancing_scheme (${each.value.load_balancing_scheme}) must match forwarding_rule_load_balancing.load_balancing_scheme (${var.forwarding_rule_load_balancing.load_balancing_scheme}) unless external_managed_migration_state is set."
+    }
+  }
 }
 
 // Create a URL map that routes each hostname to the appropriate backend service.
@@ -230,13 +252,48 @@ resource "google_compute_url_map" "public-service" {
     }
   }
 
-  // For each of the public services create an empty path matcher
-  // that routes to its backend service.
+  // For each of the public services create a path matcher that routes to its
+  // backend service, carrying the service's CORS policy when it has one.
   dynamic "path_matcher" {
     for_each = { for k, v in var.public-services : k => v if !v.disabled }
     content {
       name            = path_matcher.value.name
       default_service = google_compute_backend_service.public-services[path_matcher.key].id
+
+      // A CORS policy rides on the path matcher's default route action, which
+      // may sit alongside default_service as long as it names no weighted
+      // backends. The load balancer then answers preflight OPTIONS requests
+      // itself and stamps Access-Control-* headers on the backend's responses,
+      // so the service never sees a preflight. Emitted only when configured:
+      // classic (EXTERNAL) load balancers reject a corsPolicy outright, so
+      // existing callers see no change to their URL maps.
+      dynamic "default_route_action" {
+        for_each = path_matcher.value.cors_policy[*]
+        content {
+          cors_policy {
+            allow_origins        = default_route_action.value.allow_origins
+            allow_origin_regexes = default_route_action.value.allow_origin_regexes
+            allow_methods        = default_route_action.value.allow_methods
+            allow_headers        = default_route_action.value.allow_headers
+            expose_headers       = default_route_action.value.expose_headers
+            max_age              = default_route_action.value.max_age
+            allow_credentials    = default_route_action.value.allow_credentials
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    // GCP only honours corsPolicy on the Envoy-based load balancer, and the
+    // backend service and forwarding rule schemes must agree, so fail at plan
+    // time rather than with an opaque API error at apply.
+    precondition {
+      condition = alltrue([
+        for host, svc in var.public-services :
+        svc.cors_policy == null || (svc.load_balancing_scheme == "EXTERNAL_MANAGED" && var.forwarding_rule_load_balancing.load_balancing_scheme == "EXTERNAL_MANAGED")
+      ])
+      error_message = "cors_policy requires the Envoy-based load balancer: set load_balancing_scheme = \"EXTERNAL_MANAGED\" on the public service and on forwarding_rule_load_balancing. The classic (EXTERNAL) load balancer rejects a corsPolicy in its URL map."
     }
   }
 

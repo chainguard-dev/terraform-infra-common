@@ -143,6 +143,42 @@ Greenfield proxies created with `certificate_map` set (and
 `retain_managed_certificates` left false) need none of this; they are born with
 only the map.
 
+## Answering cross-origin (CORS) requests at the edge
+
+A browser app on one origin (say `console.example.dev`) calling an API on
+another (`api.example.dev`) with an `Authorization` header first sends a
+preflight `OPTIONS` request, and the API's responses must carry
+`Access-Control-Allow-Origin`. Rather than teach every Cloud Run service to do
+this, set `cors_policy` on the public service and the load balancer handles it:
+Envoy answers the preflight itself and stamps the `Access-Control-*` headers on
+the backend's responses, so the service never sees a preflight.
+
+```hcl
+  public-services = {
+    "api.example.dev" = {
+      name                  = "my-api"
+      load_balancing_scheme = "EXTERNAL_MANAGED"
+      cors_policy = {
+        allow_origins = ["https://console.example.dev", "http://localhost:3000"]
+        # allow_methods, allow_headers, max_age have API-friendly defaults.
+      }
+    }
+  }
+
+  forwarding_rule_load_balancing = {
+    load_balancing_scheme = "EXTERNAL_MANAGED"
+  }
+```
+
+Only the Envoy-based global external Application Load Balancer honours a
+`corsPolicy`; the classic one rejects it, so both the service's
+`load_balancing_scheme` and `forwarding_rule_load_balancing` must be
+`EXTERNAL_MANAGED` (the module fails the plan otherwise). Switching an existing
+classic load balancer flips the scheme on its backend service and forwarding
+rule in place; allow for a brief interruption on that hostname, or use the
+`external_managed_migration_*` fields for a traffic-shifted cutover. The global
+IP address and DNS records are untouched either way.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -197,7 +233,7 @@ No modules.
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The set of notification channels to which to send alerts. | `list(string)` | `[]` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
-| <a name="input_public-services"></a> [public-services](#input\_public-services) | A map from hostnames (managed by dns\_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname (unless certificate\_map is set), and a DNS record set will be created for each hostname pointing to the load balancer's global IP address.<br/><br/>external\_managed\_migration\_state: The migration state for the load balancer, [PREPARE, TEST\_BY\_PERCENTAGE, and TEST\_ALL\_TRAFFIC].<br/>external\_managed\_migration\_testing\_percentage: The percentage of traffic to route to new load balancer, [0, 100].<br/>load\_balancing\_scheme: The default load balancing scheme to use. | <pre>map(object({<br/>    name                                          = string<br/>    disabled                                      = optional(bool, false)<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, "EXTERNAL")<br/>    connection_draining_timeout_sec               = optional(number, 300)<br/>  }))</pre> | n/a | yes |
+| <a name="input_public-services"></a> [public-services](#input\_public-services) | A map from hostnames (managed by dns\_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname (unless certificate\_map is set), and a DNS record set will be created for each hostname pointing to the load balancer's global IP address.<br/><br/>external\_managed\_migration\_state: The migration state for the load balancer, [PREPARE, TEST\_BY\_PERCENTAGE, and TEST\_ALL\_TRAFFIC].<br/>external\_managed\_migration\_testing\_percentage: The percentage of traffic to route to new load balancer, [0, 100].<br/>load\_balancing\_scheme: The backend service's load balancing scheme, EXTERNAL (classic) or EXTERNAL\_MANAGED (Envoy-based). Pair EXTERNAL\_MANAGED with forwarding\_rule\_load\_balancing.load\_balancing\_scheme.<br/>connection\_draining\_timeout\_sec: How long a backend being removed keeps serving in-flight connections.<br/>cors\_policy: When set, the URL map answers cross-origin browser requests for this hostname at the edge (preflights included), so the Cloud Run service needs no CORS handling of its own. Requires EXTERNAL\_MANAGED on both the service and the forwarding rule; the classic load balancer rejects a corsPolicy. allow\_methods and allow\_headers default to what a JSON API behind bearer-token auth needs; allow\_credentials stays false because a bearer token is a plain header, not a credential in the CORS sense. | <pre>map(object({<br/>    name                                          = string<br/>    disabled                                      = optional(bool, false)<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, "EXTERNAL")<br/>    connection_draining_timeout_sec               = optional(number, 300)<br/>    cors_policy = optional(object({<br/>      allow_origins        = optional(list(string), [])<br/>      allow_origin_regexes = optional(list(string), [])<br/>      allow_methods        = optional(list(string), ["GET", "HEAD", "POST", "OPTIONS"])<br/>      allow_headers        = optional(list(string), ["Authorization", "Content-Type"])<br/>      expose_headers       = optional(list(string), [])<br/>      max_age              = optional(number, 3600)<br/>      allow_credentials    = optional(bool, false)<br/>    }), null)<br/>  }))</pre> | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | The set of regions containing backends for the load balancer (regions must be added here before they can be added as serving regions). | `list` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
 | <a name="input_retain_managed_certificates"></a> [retain\_managed\_certificates](#input\_retain\_managed\_certificates) | Only meaningful when certificate\_map is set. When true, the per-hostname managed SSL certificates are still created and stay attached to the HTTPS proxy alongside the certificate map, which is the legal intermediate state for migrating an existing proxy without a TLS gap. A target HTTPS proxy must always have >=1 SSL certificate or a certificate map, and the provider strips ssl\_certificates before attaching the map, so flipping straight from certs to map in one apply is rejected (Error 412). Instead set certificate\_map with this true in one apply (both attached), then set this back to false in a follow-up apply to drop the per-hostname certs. Roll back the same way in reverse, waiting for the recreated certs to be ACTIVE before removing the map. See the module README. Defaults to false, so greenfield proxies and existing callers are unaffected. | `bool` | `false` | no |
 | <a name="input_security-policy"></a> [security-policy](#input\_security-policy) | The security policy associated with the backend service. | `string` | `null` | no |
