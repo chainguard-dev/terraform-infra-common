@@ -132,3 +132,14 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
+
+variable "scaling" {
+  description = "Scaling configuration for the trampoline service, passed through to regional-go-service. Defaults to scale-to-zero; set min_instances when a webhook burst arriving cold would be dropped rather than queued."
+  type = object({
+    min_instances                    = optional(number, 0)
+    max_instances                    = optional(number, 100)
+    service_max_instances            = optional(number)
+    max_instance_request_concurrency = optional(number)
+  })
+  default = {}
+}

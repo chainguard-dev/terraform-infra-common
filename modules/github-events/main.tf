@@ -37,6 +37,8 @@ module "this" {
 
   ingress = var.service-ingress
 
+  scaling = var.scaling
+
   deletion_protection = var.deletion_protection
 
   team            = var.team
