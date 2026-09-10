@@ -234,6 +234,15 @@ var githubAPIPatterns = []pathPattern{{
 	bucket:  "/repos/{org}/{repo}/git/trees/{sha}",
 }}
 
+// GitHubPathBucket maps a GitHub REST API path to its bounded-cardinality
+// bucket (e.g. "/repos/{org}/{repo}/pulls/{number}"), the same bucket the
+// instrumented transport stamps on github_api_call log lines. Paths matching
+// no known endpoint collapse into "unknown_gh_path". It is exported so
+// services that front the GitHub API can label their own metrics consistently.
+func GitHubPathBucket(path string) string {
+	return bucketizeGitHubPath(path)
+}
+
 func bucketizeGitHubPath(path string) string {
 	for _, p := range githubAPIPatterns {
 		if p.pattern.MatchString(path) {
