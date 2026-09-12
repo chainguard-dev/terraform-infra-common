@@ -8,13 +8,13 @@ Reusable Terraform modules for Cloud Run services, event-driven architectures, a
 
 Deploy a regionalized Cloud Run service from a pre-built container image, with multi-region support, region-specific environment variables, VPC integration, and optional OpenTelemetry telemetry.
 
-Use this when deploying a pre-built container as a Cloud Run service across one or more regions.
+Use this when deploying a pre-built container as a Cloud Run service across one or more regions. Set `iap_members` to enable Google IAP with service-scoped user/group access and automatic invoker grants.
 
 ### [`regional-go-service`](./modules/regional-go-service/)
 
 Deploy a regionalized Cloud Run service by building and signing Go source code using ko and cosign, with regional environment configuration and telemetry sidecar injection.
 
-Use this when deploying a Go service from source — it handles the build, sign, and deploy pipeline.
+Use this when deploying a Go service from source — it handles the build, sign, and deploy pipeline. Supports the same `iap_members` access configuration as `regional-service`.
 
 ### [`cron`](./modules/cron/)
 

@@ -5,7 +5,8 @@ terraform {
     // Required transitively by the regional-service child module; declared
     // here so provider configurations (including test mocks) attach at the
     // root module.
-    google = { source = "hashicorp/google" }
+    google      = { source = "hashicorp/google" }
+    google-beta = { source = "hashicorp/google-beta" }
   }
 }
 
@@ -93,6 +94,7 @@ module "this" {
   launch_stage            = var.launch_stage
 
   require_authenticated_invocations = var.require_authenticated_invocations
+  iap_members                       = var.iap_members
 
   slo = var.slo
 

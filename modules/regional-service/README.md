@@ -54,6 +54,30 @@ cloud run v2 service itself, with one primary change:
    `cloudevent-broker` ingress endpoint or another regionalized service's
    localized URI).
 
+To require Google sign-in and allow specific users or Google groups, set
+`iap_members` on the service module:
+
+```hcl
+iap_members = [
+  "user:alice@example.com",
+  "group:developers@example.com",
+]
+```
+
+A non-empty set enables IAP and manages its service agent and service-scoped
+IAM grants in every region. It suppresses the public invoker grant without
+requiring `require_authenticated_invocations`. Ingress restrictions still apply;
+use `INGRESS_TRAFFIC_ALL` for direct browser access to the service URL. Do not
+also enable IAP on a load balancer in front of this service.
+
+An empty set (the default) disables IAP and restores the usual invocation
+policy, including public invocation when permitted by ingress and
+`require_authenticated_invocations`. The shared IAP API remains enabled when
+this opt-in is removed. Access inherited from parent IAM policies still applies.
+For external users or projects outside a Google organization, configure the
+[Google OAuth setup](https://cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run)
+separately.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -64,17 +88,22 @@ No requirements.
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
+| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 
 ## Resources
 
 | Name | Type |
 | ---- | ---- |
+| [google-beta_google_project_service_identity.iap](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
 | [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service) | resource |
+| [google_cloud_run_v2_service_iam_member.iap-invoker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
 | [google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
+| [google_iap_web_cloud_run_service_iam_binding.access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/iap_web_cloud_run_service_iam_binding) | resource |
 | [google_project_iam_member.metrics-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.observability](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.profiler-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.trace-writer](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
+| [google_project_service.iap](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_tags_location_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
 | [google_client_openid_userinfo.me](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_openid_userinfo) | data source |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
@@ -82,7 +111,7 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+| ---- | ----------- | ---- | ------- |:--------:|
 | <a name="input_containers"></a> [containers](#input\_containers) | The containers to run in the service.  Each container will be run in each region. | <pre>map(object({<br/>    image   = string<br/>    command = optional(list(string), [])<br/>    args    = optional(list(string), [])<br/>    ports = optional(list(object({<br/>      name           = optional(string, "http1")<br/>      container_port = number<br/>    })), [])<br/>    resources = optional(<br/>      object(<br/>        {<br/>          limits = optional(object(<br/>            {<br/>              cpu    = string<br/>              memory = string<br/>            }<br/>          ), null)<br/>          cpu_idle          = optional(bool)<br/>          startup_cpu_boost = optional(bool, true)<br/>        }<br/>      ),<br/>      {}<br/>    )<br/>    env = optional(list(object({<br/>      name  = string<br/>      value = optional(string)<br/>      value_source = optional(object({<br/>        secret_key_ref = object({<br/>          secret  = string<br/>          version = string<br/>        })<br/>      }), null)<br/>    })), [])<br/>    regional-env = optional(list(object({<br/>      name  = string<br/>      value = map(string)<br/>    })), [])<br/>    regional-cpu-idle = optional(map(bool), {})<br/>    volume_mounts = optional(list(object({<br/>      name       = string<br/>      mount_path = string<br/>    })), [])<br/>    startup_probe = optional(object({<br/>      initial_delay_seconds = optional(number)<br/>      // GCP Terraform provider defaults differ from Cloud Run defaults.<br/>      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe<br/>      period_seconds    = optional(number, 240)<br/>      timeout_seconds   = optional(number, 240)<br/>      failure_threshold = optional(number, 1)<br/>      http_get = optional(object({<br/>        path = string<br/>        port = optional(number)<br/>      }), null)<br/>      tcp_socket = optional(object({<br/>        port = optional(number)<br/>      }), null)<br/>      grpc = optional(object({<br/>        service = optional(string)<br/>        port    = optional(number)<br/>      }), null)<br/>    }))<br/>    liveness_probe = optional(object({<br/>      initial_delay_seconds = optional(number)<br/>      // GCP Terraform provider defaults differ from Cloud Run defaults.<br/>      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe<br/>      period_seconds    = optional(number, 240)<br/>      timeout_seconds   = optional(number, 240)<br/>      failure_threshold = optional(number, 1)<br/>      http_get = optional(object({<br/>        path = string<br/>        port = optional(number)<br/>      }), null)<br/>      tcp_socket = optional(object({<br/>        port = optional(number)<br/>      }), null)<br/>      grpc = optional(object({<br/>        service = optional(string)<br/>        port    = optional(number)<br/>      }), null)<br/>    }))<br/>  }))</pre> | n/a | yes |
 | <a name="input_custom_audiences"></a> [custom\_audiences](#input\_custom\_audiences) | Optional list of custom audiences accepted by the Cloud Run service's ID-token<br/>validation, in addition to the service's default *.run.app URL. Required for<br/>services reached by a non-run.app hostname or IP (e.g. behind an internal HTTP<br/>ALB / Private Service Connect) where callers cannot use the run.app URL as the<br/>token audience. Empty leaves custom audiences unset. | `list(string)` | `[]` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
@@ -91,6 +120,7 @@ No requirements.
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Enable otel sidecar for metrics. Enabled by default, should only be disabled for exceptional cases. | `bool` | `true` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
 | <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment for the service | `string` | `"EXECUTION_ENVIRONMENT_GEN2"` | no |
+| <a name="input_iap_members"></a> [iap\_members](#input\_iap\_members) | IAM members allowed to access the service through Identity-Aware Proxy, for<br/>example user:alice@example.com or group:developers@example.com. A non-empty<br/>set enables IAP on every regional service, grants these members<br/>roles/iap.httpsResourceAccessor, grants the IAP service agent roles/run.invoker,<br/>and suppresses the public invoker grant regardless of require\_authenticated\_invocations.<br/>An empty set disables IAP and preserves the existing invocation policy.<br/>The module enables the project IAP API without disabling it on removal and<br/>creates its service agent. Google OAuth setup for external users or projects<br/>outside an organization must be configured separately. Inherited IAP access<br/>at the project or organization level still applies. | `set(string)` | `[]` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | Which type of ingress traffic to accept for the service.<br/><br/>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br/>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer<br/>- INGRESS\_TRAFFIC\_INTERNAL\_ONLY accepts internal traffic only | `string` | `"INGRESS_TRAFFIC_INTERNAL_ONLY"` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the service. | `map(string)` | `{}` | no |
 | <a name="input_launch_stage"></a> [launch\_stage](#input\_launch\_stage) | The launch stage of the Cloud Run service (e.g. BETA to leverage features like disk volumes). | `string` | `"GA"` | no |

@@ -12,6 +12,8 @@
 #
 # Mock providers keep this fully offline: no credentials, no state.
 
+mock_provider "google-beta" {}
+
 mock_provider "google" {}
 
 variables {

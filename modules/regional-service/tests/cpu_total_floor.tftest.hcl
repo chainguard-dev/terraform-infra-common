@@ -3,6 +3,8 @@
 
 # Offline tests for Cloud Run's 1 vCPU instance-total floor.
 
+mock_provider "google-beta" {}
+
 mock_provider "google" {}
 
 variables {

@@ -20,6 +20,8 @@
 
 mock_provider "ko" {}
 mock_provider "cosign" {}
+mock_provider "google-beta" {}
+
 mock_provider "google" {}
 
 override_module {

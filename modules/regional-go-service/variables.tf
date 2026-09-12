@@ -462,3 +462,21 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
+
+variable "iap_members" {
+  description = <<EOD
+IAM members allowed to access the service through Identity-Aware Proxy, for
+example user:alice@example.com or group:developers@example.com. A non-empty
+set enables IAP on every regional service, grants these members
+roles/iap.httpsResourceAccessor, grants the IAP service agent roles/run.invoker,
+and suppresses the public invoker grant regardless of require_authenticated_invocations.
+An empty set disables IAP and preserves the existing invocation policy.
+The module enables the project IAP API without disabling it on removal and
+creates its service agent. Google OAuth setup for external users or projects
+outside an organization must be configured separately. Inherited IAP access
+at the project or organization level still applies.
+EOD
+  type        = set(string)
+  default     = []
+  nullable    = false
+}

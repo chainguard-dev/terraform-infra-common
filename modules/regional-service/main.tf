@@ -138,6 +138,9 @@ resource "google_cloud_run_v2_service" "this" {
   labels       = merge(var.labels, local.default_labels, local.squad_label, local.product_label)
   ingress      = var.ingress
   launch_stage = var.launch_stage
+  iap_enabled  = local.iap_enabled
+
+  depends_on = [google_project_service_identity.iap]
 
   // null (not []) when unset so existing callers see no diff.
   custom_audiences = length(var.custom_audiences) > 0 ? var.custom_audiences : null
@@ -497,7 +500,7 @@ data "google_client_openid_userinfo" "me" {}
 // gated by Cloud Run IAM (e.g. accessed via `gcloud run services proxy`) can opt out
 // by setting `require_authenticated_invocations = true`.
 resource "google_cloud_run_v2_service_iam_member" "public-services-are-unauthenticated" {
-  for_each = (var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" && !var.require_authenticated_invocations) ? var.regions : {}
+  for_each = (var.ingress != "INGRESS_TRAFFIC_INTERNAL_ONLY" && !var.require_authenticated_invocations && !local.iap_enabled) ? var.regions : {}
 
   // Ensure that the service exists before attempting to expose things publicly.
   depends_on = [google_cloud_run_v2_service.this]

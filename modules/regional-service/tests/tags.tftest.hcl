@@ -5,6 +5,8 @@
 
 # Plan-only. Mock providers keep this offline.
 
+mock_provider "google-beta" {}
+
 mock_provider "google" {
   mock_data "google_project" {
     defaults = {
