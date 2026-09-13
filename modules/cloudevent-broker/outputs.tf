@@ -2,7 +2,7 @@ output "ingress" {
   depends_on  = [module.this]
   description = "An object holding the name of the ingress service, which can be used to authorize callers to publish cloud events."
   value = {
-    name = var.name
+    name = local.ingress_name
   }
 }
 

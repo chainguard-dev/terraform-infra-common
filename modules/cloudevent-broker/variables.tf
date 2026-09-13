@@ -6,6 +6,12 @@ variable "name" {
   type = string
 }
 
+variable "ingress_name" {
+  description = "Optional name for the ingress Cloud Run service and its service account. Defaults to name; topic names are unaffected."
+  type        = string
+  default     = ""
+}
+
 variable "regions" {
   description = "A map from region names to a network and subnetwork.  A pub/sub topic and ingress service (publishing to the respective topic) will be created in each region, with the ingress service configured to egress all traffic via the specified subnetwork."
   type = map(object({

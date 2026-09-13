@@ -1,3 +1,7 @@
+locals {
+  ingress_name = coalesce(var.ingress_name, var.name)
+}
+
 // Create a dedicated identity as which to run the broker ingress service
 // (and authorize it's actions)
 resource "google_service_account" "this" {
@@ -6,7 +10,7 @@ resource "google_service_account" "this" {
   # This GSA doesn't need it's own audit rule because it is used in conjunction
   # with regional-go-service, which has a built-in audit rule.
 
-  account_id   = var.name
+  account_id   = local.ingress_name
   display_name = "Broker Ingress"
   description  = "A dedicated identity for the ${var.name} broker ingress to operate as."
 }
@@ -49,7 +53,7 @@ module "this" {
   source             = "../regional-go-service"
   observability_role = var.observability_role
   project_id         = var.project_id
-  name               = var.name
+  name               = local.ingress_name
   regions            = var.regions
   team               = var.team
 
@@ -113,14 +117,14 @@ module "http" {
   source       = "../dashboard/sections/http"
   title        = "HTTP"
   filter       = []
-  service_name = var.name
+  service_name = local.ingress_name
 }
 
 module "resources" {
   source        = "../dashboard/sections/resources"
   title         = "Resources"
   filter        = []
-  cloudrun_name = var.name
+  cloudrun_name = local.ingress_name
   cloudrun_type = "service"
 
   notification_channels = var.notification_channels
@@ -151,13 +155,13 @@ module "dashboard" {
       {
         # for GCP Cloud Run built-in metrics
         filterType  = "RESOURCE_LABEL"
-        stringValue = var.name
+        stringValue = local.ingress_name
         labelKey    = "service_name"
       },
       {
         # for Prometheus user added metrics
         filterType  = "METRIC_LABEL"
-        stringValue = var.name
+        stringValue = local.ingress_name
         labelKey    = "service_name"
       },
     ]

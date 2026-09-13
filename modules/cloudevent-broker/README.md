@@ -107,6 +107,7 @@ No requirements.
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
 | <a name="input_extra_publishers"></a> [extra\_publishers](#input\_extra\_publishers) | Additional service account emails (without 'serviceAccount:' prefix) to grant roles/pubsub.publisher on each regional broker topic. Listed alongside the ingress SA in the authoritative IAM binding. | `list(string)` | `[]` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | Which type of ingress traffic to accept for the broker ingress Cloud Run service. Defaults to INGRESS\_TRAFFIC\_INTERNAL\_ONLY so existing consumers see no diff. Set to INGRESS\_TRAFFIC\_ALL only when the broker must be reachable from outside any VPC (e.g. a CI environment without VPC connectivity). | `string` | `"INGRESS_TRAFFIC_INTERNAL_ONLY"` | no |
+| <a name="input_ingress_name"></a> [ingress\_name](#input\_ingress\_name) | Optional name for the ingress Cloud Run service and its service account. Defaults to name; topic names are unaffected. | `string` | `""` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the broker resources. | `map(string)` | `{}` | no |
 | <a name="input_limits"></a> [limits](#input\_limits) | Resource limits for the regional go service. | <pre>object({<br/>    cpu    = string<br/>    memory = string<br/>  })</pre> | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
