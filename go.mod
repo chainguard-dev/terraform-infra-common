@@ -4,13 +4,13 @@ go 1.27.0
 
 require (
 	chainguard.dev/go-grpc-kit v0.18.0
-	chainguard.dev/sdk v0.1.264
-	cloud.google.com/go/bigquery v1.79.0
+	chainguard.dev/sdk v0.1.56
+	cloud.google.com/go/bigquery v1.83.0
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/memorystore v1.3.0
 	cloud.google.com/go/profiler v0.6.0
-	cloud.google.com/go/pubsub/v2 v2.6.1
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.35.0
+	cloud.google.com/go/pubsub/v2 v2.7.0
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.37.0
 	github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/chainguard-dev/clog v1.8.1
@@ -54,12 +54,12 @@ require (
 	cloud.google.com/go/iam v1.12.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	cloud.google.com/go/monitoring v1.30.0 // indirect
-	cloud.google.com/go/storage v1.64.0 // indirect
+	cloud.google.com/go/storage v1.67.0 // indirect
 	cloud.google.com/go/trace v1.16.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.36.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.59.0 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.59.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.61.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
@@ -140,3 +140,5 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
+
+replace chainguard.dev/sdk => ../../public/sdk
