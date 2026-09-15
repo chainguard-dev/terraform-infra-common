@@ -25,10 +25,18 @@ resource "google_bigquery_table" "types" {
     type  = "DAY"
     field = each.value.partition_field
 
-    expiration_ms = coalesce(
-      each.value.retention_period_days,
-      var.retention-period
-    ) * 24 * 60 * 60 * 1000
+    // A type with retention_period_days = 0 keeps its partitions forever, so
+    // no expiration is set. The google provider treats expiration_ms as
+    // Optional+Computed: writing 0 would plan a change on every run (the
+    // API reports an unlimited expiration as absent, never as 0), and
+    // leaving it null cannot clear an expiration a table already carries.
+    // Switching an existing table to 0 therefore also needs the operator
+    // to clear its current expiration once, out of band; see variables.tf.
+    expiration_ms = (
+      coalesce(each.value.retention_period_days, var.retention-period) == 0
+      ? null
+      : coalesce(each.value.retention_period_days, var.retention-period) * 24 * 60 * 60 * 1000
+    )
   }
 
   clustering = each.value.clustering

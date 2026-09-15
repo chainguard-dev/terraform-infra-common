@@ -72,7 +72,18 @@ variable "types" {
   description = "A map from cloudevent types to the BigQuery schema associated with them, as well as an alert threshold and a list of notification channels (for subscription-level issues)."
 
   type = map(object({
-    schema                = string
+    schema = string
+    // Per-type override for how many days of partitions the BigQuery table
+    // keeps. When null (the default), the module-wide var.retention-period
+    // applies. 0 means the partitions never expire: the table is created
+    // with no partition expiration. Two caveats follow from how the google
+    // provider models expiration_ms (Optional+Computed): a table that
+    // already carries an expiration keeps it until an operator clears it
+    // once (bq update --time_partitioning_expiration -1 <table>, or ALTER
+    // TABLE ... SET OPTIONS (partition_expiration_days = NULL)), and a table
+    // created new in a dataset whose default_partition_expiration_ms is set
+    // (this module sets it from var.retention-period) inherits that default
+    // at creation and needs the same one-time clear.
     retention_period_days = optional(number, null)
     alert_threshold       = optional(number, 50000)
     notification_channels = optional(list(string), [])
