@@ -16,12 +16,12 @@ func TestScrapeDiskUsage(t *testing.T) {
 
 	usage := scrapeDiskUsage()
 	if len(usage) == 0 {
-		t.Error("expected disk usage, got none")
+		t.Errorf("scrapeDiskUsage(): got = empty, want non-empty")
 	}
 
 	for k := range usage {
 		if strings.HasPrefix(k, "/dev") {
-			t.Errorf("expected non-dev mount, got %q", k)
+			t.Errorf("mount: got = %q, want non-dev mount", k)
 		}
 	}
 }
@@ -30,11 +30,11 @@ func TestScrapeInterval(t *testing.T) {
 	// Do not use t.Parallel() — t.Setenv modifies process-global state.
 
 	if got, want := scrapeInterval(), DiskUsageScrapeInterval; got != want {
-		t.Errorf("expected positive scrape interval, want %v got %v", want, got)
+		t.Errorf("scrapeInterval(): got = %v, want = %v", got, want)
 	}
 
 	t.Setenv(DiskUsageScrapeIntervalEnv, "1m30s")
 	if got, want := scrapeInterval(), 90*time.Second; got != want {
-		t.Errorf("expected positive scrape interval, want %v got %v", want, got)
+		t.Errorf("scrapeInterval(): got = %v, want = %v", got, want)
 	}
 }

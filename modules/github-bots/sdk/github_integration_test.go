@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package sdk
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -18,7 +17,7 @@ import (
 // NOTE: This is an integration test that requires 'GITHUB_TOKEN' env variable to be set!
 // It is recommended to run this test in a local environment.
 func Test_SearchFilenameInRepository(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	if os.Getenv("GITHUB_TOKEN") == "" {
 		t.Fatalf("GITHUB_TOKEN env var not set\n")
@@ -42,7 +41,7 @@ func Test_SearchFilenameInRepository(t *testing.T) {
 // NOTE: This is an integration test that requires 'GITHUB_TOKEN' env variable to be set!
 // It is recommended to run this test in a local environment.
 func Test_SearchContentInFilename(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	if os.Getenv("GITHUB_TOKEN") == "" {
 		t.Fatalf("GITHUB_TOKEN env var not set\n")

@@ -60,7 +60,7 @@ func TestNewClient_TransportWrapped(t *testing.T) {
 	base := &roundTripFunc{}
 	c := NewClient(base)
 
-	if got := c.Client().Transport; got == http.RoundTripper(base) {
-		t.Error("NewClient returned the bare base transport; expected httpmetrics wrapping")
+	if got, want := c.Client().Transport, http.RoundTripper(base); got == want {
+		t.Errorf("Transport: got = %T (bare base), want httpmetrics wrapping", got)
 	}
 }

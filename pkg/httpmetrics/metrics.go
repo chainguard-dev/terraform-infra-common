@@ -27,7 +27,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sethvargo/go-envconfig"
 	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -45,22 +44,30 @@ import (
 	gcpclog "github.com/chainguard-dev/clog/gcp"
 )
 
-var env = envconfig.MustProcess(context.Background(), &struct {
-	MetricsPort int `env:"METRICS_PORT, default=2112"`
+// metricsPort returns the port for the metrics server, defaulting to 2112.
+func metricsPort() int {
+	if v := os.Getenv("METRICS_PORT"); v != "" {
+		p, err := strconv.Atoi(v)
+		if err != nil {
+			clog.Warnf("METRICS_PORT=%q is not a valid integer, using default port 2112: %v", v, err)
+		} else {
+			return p
+		}
+	}
+	return 2112
+}
 
-	// https://cloud.google.com/run/docs/container-contract#services-env-vars
-	KnativeServiceName  string `env:"K_SERVICE"`
-	KnativeRevisionName string `env:"K_REVISION, default=unknown"`
-
-	// Cloud Run Jobs don't get K_SERVICE injected (only Services do); the job
-	// name comes through CLOUD_RUN_JOB instead.
-	// https://cloud.google.com/run/docs/container-contract#jobs-env-vars
-	CloudRunJobName string `env:"CLOUD_RUN_JOB"`
-}{})
+// knativeRevisionName returns the K_REVISION env var, defaulting to "unknown".
+func knativeRevisionName() string {
+	if v := os.Getenv("K_REVISION"); v != "" {
+		return v
+	}
+	return "unknown"
+}
 
 // serviceName is the value for the service_name metric label and the trace
 // service.name attribute, derived once at startup.
-var serviceName = resolveServiceName(env.KnativeServiceName, env.CloudRunJobName)
+var serviceName = resolveServiceName(os.Getenv("K_SERVICE"), os.Getenv("CLOUD_RUN_JOB"))
 
 // resolveServiceName falls back to the Cloud Run Job name when K_SERVICE is
 // unset, because Cloud Run Jobs don't set K_SERVICE the way Services do. This
@@ -110,7 +117,7 @@ func ServeMetrics() {
 			ErrorHandling: promhttp.ContinueOnError, // IMPORTANT: This returns partial metrics + logs error
 		}))
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", env.MetricsPort),
+		Addr:              fmt.Sprintf(":%d", metricsPort()),
 		Handler:           mux,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
@@ -175,7 +182,7 @@ func Handler(name string, handler http.Handler) http.Handler {
 		labels := prometheus.Labels{
 			"handler":       name,
 			"service_name":  serviceName,
-			"revision_name": env.KnativeRevisionName,
+			"revision_name": knativeRevisionName(),
 			"email":         "unknown",
 		}
 

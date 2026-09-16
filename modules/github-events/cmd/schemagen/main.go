@@ -9,9 +9,9 @@ package main
 
 import (
 	"flag"
-	"log"
 	"path/filepath"
 
+	"github.com/chainguard-dev/clog"
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/internal/schemagen"
 	"github.com/chainguard-dev/terraform-infra-common/modules/github-events/schemas"
 )
@@ -36,7 +36,7 @@ func main() {
 
 func mustGenerate[T any](path string, w schemas.Wrapper[T]) {
 	if err := generate(path, w); err != nil {
-		log.Fatalf("Failed to generate %T -> %s: %v", w, path, err)
+		clog.Fatalf("Failed to generate %T -> %s: %v", w, path, err)
 	}
 }
 

@@ -279,7 +279,7 @@ func instrumentRequest(next http.RoundTripper, skipBucketize bool) promhttp.Roun
 			"method":        r.Method,
 			"host":          host,
 			"service_name":  serviceName,
-			"revision_name": env.KnativeRevisionName,
+			"revision_name": knativeRevisionName(),
 			"ce_type":       r.Header.Get(CeTypeHeader),
 			"path":          path,
 		}
@@ -441,7 +441,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 					"org", extractOrgFromGitHubURL(r.URL.Path),
 					"ce_type", r.Header.Get(CeTypeHeader),
 					"service_name", serviceName,
-					"revision_name", env.KnativeRevisionName,
+					"revision_name", knativeRevisionName(),
 				)
 			}
 			return resp, err
@@ -562,7 +562,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				"rate_limit_limit", int64(limit),
 				"ce_type", r.Header.Get(CeTypeHeader),
 				"service_name", serviceName,
-				"revision_name", env.KnativeRevisionName,
+				"revision_name", knativeRevisionName(),
 			}
 			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
 				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {

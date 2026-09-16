@@ -35,7 +35,7 @@ func TestBody_redactsAndStaysValidJSON(t *testing.T) {
 		"ACME-RT-99", "customer:acme.com", "can't pull",
 	} {
 		if strings.Contains(s, leak) {
-			t.Errorf("leak %q remained: %s", leak, s)
+			t.Errorf("output: got = %s, want to not contain %q", s, leak)
 		}
 	}
 	// Retained technical signal: numeric ids (clustering keys), enums, and the
@@ -46,13 +46,13 @@ func TestBody_redactsAndStaysValidJSON(t *testing.T) {
 		"cri:regression", "customer:<CUSTOMER>",
 	} {
 		if !strings.Contains(s, keep) {
-			t.Errorf("expected %q to be preserved: %s", keep, s)
+			t.Errorf("output: got = %s, want to contain %q", s, keep)
 		}
 	}
 	// Free-text keys are dropped entirely (deny-by-default), not just blanked.
 	for _, key := range []string{`"subject"`, `"description"`, `"external_id"`, `"body"`} {
 		if strings.Contains(s, key) {
-			t.Errorf("free-text key %q should have been dropped: %s", key, s)
+			t.Errorf("output: got = %s, want to not contain key %q", s, key)
 		}
 	}
 }
@@ -73,12 +73,12 @@ func TestBody_dropsFreeFormTags(t *testing.T) {
 	s := string(out)
 	for _, keep := range []string{"cri:regression", "customer:<CUSTOMER>"} {
 		if !strings.Contains(s, keep) {
-			t.Errorf("expected allowlisted tag %q to survive: %s", keep, s)
+			t.Errorf("output: got = %s, want to contain %q", s, keep)
 		}
 	}
 	for _, drop := range []string{"acme-corporation", "project-thunderbird", "bastion-01", "customer:acme.com"} {
 		if strings.Contains(s, drop) {
-			t.Errorf("free-form/unmasked tag %q should have been dropped: %s", drop, s)
+			t.Errorf("output: got = %s, want to not contain %q", s, drop)
 		}
 	}
 }
@@ -106,19 +106,19 @@ func TestBody_dropsUnknownStringFields(t *testing.T) {
 		`"subject"`, `"external_id"`, `"description"`, `"body"`, `"html_body"`, `"plain_body"`,
 	} {
 		if strings.Contains(s, key) {
-			t.Errorf("free-text key %q should have been dropped: %s", key, s)
+			t.Errorf("output: got = %s, want to not contain key %q", s, key)
 		}
 	}
 	// And none of the prose survives.
 	for _, leak := range []string{"Jane Doe", "Acme", "db-prod-01", "ACME-RT-99", "555"} {
 		if strings.Contains(s, leak) {
-			t.Errorf("leak %q remained: %s", leak, s)
+			t.Errorf("output: got = %s, want to not contain %q", s, leak)
 		}
 	}
 	// Safe technical fields are retained.
 	for _, keep := range []string{`"status":"open"`, `"requester_id":"99"`, `"author_id":"7"`} {
 		if !strings.Contains(s, keep) {
-			t.Errorf("expected %q to be preserved: %s", keep, s)
+			t.Errorf("output: got = %s, want to contain %q", s, keep)
 		}
 	}
 }
@@ -135,16 +135,16 @@ func TestBody_preservesChainguardRegistries(t *testing.T) {
 	s := string(Body(in))
 	for _, keep := range []string{"cgr.dev/chainguard-private/nginx", "cgr.dev/chainguard/nginx", "chainguard.cgr.dev"} {
 		if !strings.Contains(s, keep) {
-			t.Errorf("non-customer registry %q wrongly redacted: %s", keep, s)
+			t.Errorf("output: got = %s, want to contain %q", s, keep)
 		}
 	}
 	for _, leak := range []string{"cgr.dev/acme.com", "acme.cgr.dev"} {
 		if strings.Contains(s, leak) {
-			t.Errorf("customer registry %q not redacted: %s", leak, s)
+			t.Errorf("output: got = %s, want to not contain %q", s, leak)
 		}
 	}
 	if !strings.Contains(s, "<CUSTOMER_REGISTRY>") {
-		t.Errorf("expected <CUSTOMER_REGISTRY> token in: %s", s)
+		t.Errorf("output: got = %s, want to contain <CUSTOMER_REGISTRY>", s)
 	}
 }
 
@@ -173,11 +173,11 @@ func TestBody_redactsSecretsInRetainedFields(t *testing.T) {
 	s := string(out)
 	for _, leak := range []string{ghpToken, akiaKey, bearerToken} {
 		if strings.Contains(s, leak) {
-			t.Errorf("secret %q was not redacted: %s", leak, s)
+			t.Errorf("output: got = %s, want to not contain secret %q", s, leak)
 		}
 	}
 	if !strings.Contains(s, "[REDACTED]") {
-		t.Errorf("expected [REDACTED] placeholder in: %s", s)
+		t.Errorf("output: got = %s, want to contain [REDACTED]", s)
 	}
 }
 
@@ -193,13 +193,13 @@ func TestBody_dropsSecretsInUnknownFields(t *testing.T) {
 	}
 	s := string(out)
 	if strings.Contains(s, ghpToken) {
-		t.Errorf("secret in unknown field was not dropped: %s", s)
+		t.Errorf("output: got = %s, want to not contain secret", s)
 	}
 	if strings.Contains(s, `"api_token"`) {
-		t.Errorf("unknown field key should have been dropped: %s", s)
+		t.Errorf("output: got = %s, want to not contain key %q", s, "api_token")
 	}
 	if !strings.Contains(s, `"status":"open"`) {
-		t.Errorf("expected safe field to be preserved: %s", s)
+		t.Errorf("output: got = %s, want to contain %q", s, `"status":"open"`)
 	}
 }
 
@@ -217,7 +217,7 @@ func TestBody_preservesLargeIntegers(t *testing.T) {
 		t.Fatalf("redacted body is not valid JSON: %s", out)
 	}
 	if s := string(out); !strings.Contains(s, `"account_id":9007199254740993`) {
-		t.Errorf("account_id did not round-trip exactly: %s", s)
+		t.Errorf("output: got = %s, want to contain %q", s, `"account_id":9007199254740993`)
 	}
 }
 
@@ -233,13 +233,13 @@ func TestBody_dropsNumbersUnderUnknownKeys(t *testing.T) {
 	}
 	s := string(out)
 	if strings.Contains(s, "15550101234") || strings.Contains(s, "custom_phone") {
-		t.Errorf("numeric field under unknown key should have been dropped: %s", s)
+		t.Errorf("output: got = %s, want to not contain numeric field under unknown key", s)
 	}
 	if !strings.Contains(s, `"account_id":12345`) {
-		t.Errorf("account_id should be retained: %s", s)
+		t.Errorf("output: got = %s, want to contain %q", s, `"account_id":12345`)
 	}
 	if !strings.Contains(s, `"status":"open"`) {
-		t.Errorf("safe string field should be retained: %s", s)
+		t.Errorf("output: got = %s, want to contain %q", s, `"status":"open"`)
 	}
 }
 
@@ -255,14 +255,14 @@ func TestBody_scrubsIPv6(t *testing.T) {
 	s := string(out)
 	for _, leak := range []string{"2001:db8::1", "fe80::1ff:fe23:4567:890a"} {
 		if strings.Contains(s, leak) {
-			t.Errorf("IPv6 %q was not scrubbed: %s", leak, s)
+			t.Errorf("output: got = %s, want to not contain IPv6 %q", s, leak)
 		}
 	}
 	if !strings.Contains(s, "<IP>") {
-		t.Errorf("expected <IP> token in: %s", s)
+		t.Errorf("output: got = %s, want to contain <IP>", s)
 	}
 	if !strings.Contains(s, "2025-01-01T12:34:56Z") {
-		t.Errorf("timestamp should not be mangled by the IPv6 regex: %s", s)
+		t.Errorf("output: got = %s, want to contain timestamp 2025-01-01T12:34:56Z", s)
 	}
 }
 

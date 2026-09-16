@@ -7,7 +7,6 @@ package httpmetrics
 
 import (
 	"bufio"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -319,7 +318,7 @@ func TestBucketize(t *testing.T) {
 }
 
 func Test_SetupMetrics(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cleanup := SetupMetrics(ctx)
 	if cleanup == nil {
@@ -348,7 +347,7 @@ func Test_SetupMetrics(t *testing.T) {
 }
 
 func Test_SetupMetricsCleanup(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cleanup := SetupMetrics(ctx)
 	if cleanup == nil {

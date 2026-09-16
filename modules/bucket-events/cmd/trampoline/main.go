@@ -26,7 +26,7 @@ import (
 
 var env = envconfig.MustProcess(context.Background(), &struct {
 	Port       int    `env:"PORT, default=8080"`
-	IngressURI string `env:"INGRESS_URI, required"`
+	IngressURI string `env:"INGRESS_URI"`
 }{})
 
 var eventTypes = map[string]string{
@@ -39,6 +39,10 @@ var eventTypes = map[string]string{
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	if env.IngressURI == "" {
+		clog.FatalContextf(ctx, "INGRESS_URI is required")
+	}
 
 	go httpmetrics.ServeMetrics()
 	defer httpmetrics.SetupTracer(ctx)()

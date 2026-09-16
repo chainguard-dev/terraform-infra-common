@@ -25,7 +25,7 @@ import (
 
 var env = envconfig.MustProcess(context.Background(), &struct {
 	Port       int    `env:"PORT,default=8080"`
-	IngressURI string `env:"EVENT_INGRESS_URI,required"`
+	IngressURI string `env:"EVENT_INGRESS_URI"`
 	// Note: any environment variable starting with "WEBHOOK_SECRET" will be loaded as a webhook secret to be checked.
 	WebhookSecret string `env:"WEBHOOK_SECRET"`
 }{})
@@ -33,6 +33,10 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	if env.IngressURI == "" {
+		clog.FatalContextf(ctx, "EVENT_INGRESS_URI is required")
+	}
 
 	// Get all secrets from the environment.
 	// Reuses the github-events secrets loader which loads any env var prefixed with WEBHOOK_SECRET.

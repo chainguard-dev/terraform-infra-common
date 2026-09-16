@@ -167,7 +167,7 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			baseTime := time.Now()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 			defer cancel()
 
 			trt := &testRT{
@@ -199,17 +199,17 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 			elapsed := time.Since(baseTime)
 
 			if resp != nil && resp.StatusCode != tt.expectedStatus {
-				t.Fatalf("expected status %d, got %d", tt.expectedStatus, resp.StatusCode)
+				t.Fatalf("StatusCode: got = %d, want = %d", resp.StatusCode, tt.expectedStatus)
 			}
 
 			if trt.callCount != tt.expectedCalls {
-				t.Fatalf("expected %d calls, got %d", tt.expectedCalls, trt.callCount)
+				t.Fatalf("callCount: got = %d, want = %d", trt.callCount, tt.expectedCalls)
 			}
 
 			// Apply some buffer to account for these bad tests and the fact that we're not mocking the clock
 			if tt.expectedWait == 0 {
 				if elapsed > 100*time.Millisecond {
-					t.Fatalf("expected no significant wait, but got %s", elapsed)
+					t.Fatalf("elapsed: got = %s, want = no significant wait (< 100ms)", elapsed)
 				}
 			} else {
 				buffer := tt.expectedWait / 4 // 10% of expected wait
@@ -217,7 +217,7 @@ func TestSecondaryRateLimitWaiter(t *testing.T) {
 				maxExpectedWait := tt.expectedWait + buffer
 
 				if elapsed < minExpectedWait || elapsed > maxExpectedWait {
-					t.Fatalf("expected wait time between %s and %s, got %s", minExpectedWait, maxExpectedWait, elapsed)
+					t.Fatalf("elapsed: got = %s, want = between %s and %s", elapsed, minExpectedWait, maxExpectedWait)
 				}
 			}
 		})
@@ -265,9 +265,9 @@ func Test_SecondaryRateLimitWaiter_retryCap(t *testing.T) {
 		t.Fatalf("failed to make request: %v", err)
 	}
 	if resp.StatusCode != http.StatusTooManyRequests {
-		t.Fatalf("expected the rate-limited response to be surfaced, got %d", resp.StatusCode)
+		t.Fatalf("StatusCode: got = %d, want = %d", resp.StatusCode, http.StatusTooManyRequests)
 	}
 	if want := 1 + maxRateLimitRetries; trt.callCount != want {
-		t.Fatalf("expected %d calls (initial + %d retries), got %d", want, maxRateLimitRetries, trt.callCount)
+		t.Fatalf("callCount: got = %d, want = %d (initial + %d retries)", trt.callCount, want, maxRateLimitRetries)
 	}
 }

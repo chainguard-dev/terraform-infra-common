@@ -146,7 +146,7 @@ func TestBlobUploader(t *testing.T) {
 
 	// Trigger shutdown — the uploader should flush one more time.
 	cancel()
-	blobsFinal := waitForBlobs(context.Background(), t, bucket, len(wantAfterCombineBlobs), 10*time.Second)
+	blobsFinal := waitForBlobs(t.Context(), t, bucket, len(wantAfterCombineBlobs), 10*time.Second)
 	gotFinal := slices.Sorted(maps.Values(blobsFinal))
 	wantFinal := slices.Sorted(slices.Values(wantAfterCombineBlobs))
 	if !slices.Equal(gotFinal, wantFinal) {

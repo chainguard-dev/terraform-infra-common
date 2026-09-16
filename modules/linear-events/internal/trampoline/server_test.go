@@ -305,40 +305,40 @@ func TestServeHTTP_issueUpdatedFieldExtensions(t *testing.T) {
 	tests := []struct {
 		name           string
 		updatedFrom    string // raw JSON object body for updatedFrom
-		wantExtensions map[string]bool
+		wantExtensions map[string]struct{}
 		wantAbsent     []string // extensions that must NOT be present
 	}{
 		{
 			name:        "description-only update",
 			updatedFrom: `{"description":"old body"}`,
-			wantExtensions: map[string]bool{
-				"updateddescription": true,
+			wantExtensions: map[string]struct{}{
+				"updateddescription": {},
 			},
 			wantAbsent: []string{"updatedstate", "updatedassignee", "updatedlabels"},
 		},
 		{
 			name:        "state-only update (status change)",
 			updatedFrom: `{"stateId":"old-state-uuid"}`,
-			wantExtensions: map[string]bool{
-				"updatedstate": true,
+			wantExtensions: map[string]struct{}{
+				"updatedstate": {},
 			},
 			wantAbsent: []string{"updateddescription", "updatedassignee"},
 		},
 		{
 			name:        "assignee-only update (must NOT trigger description/state)",
 			updatedFrom: `{"assigneeId":null}`,
-			wantExtensions: map[string]bool{
-				"updatedassignee": true,
+			wantExtensions: map[string]struct{}{
+				"updatedassignee": {},
 			},
 			wantAbsent: []string{"updateddescription", "updatedstate", "updatedtitle"},
 		},
 		{
 			name:        "multi-field update (description + state)",
 			updatedFrom: `{"description":"old","stateId":"old-state","assigneeId":null}`,
-			wantExtensions: map[string]bool{
-				"updateddescription": true,
-				"updatedstate":       true,
-				"updatedassignee":    true,
+			wantExtensions: map[string]struct{}{
+				"updateddescription": {},
+				"updatedstate":       {},
+				"updatedassignee":    {},
 			},
 		},
 		{
@@ -376,10 +376,10 @@ func TestServeHTTP_issueUpdatedFieldExtensions(t *testing.T) {
 			}
 
 			ext := client.events[0].Extensions()
-			for k, want := range tc.wantExtensions {
+			for k := range tc.wantExtensions {
 				got, _ := ext[k].(bool)
-				if got != want {
-					t.Errorf("extension %q: got = %v, want = %v", k, got, want)
+				if !got {
+					t.Errorf("extension %q: got = %v, want = true", k, got)
 				}
 			}
 			for _, k := range tc.wantAbsent {
@@ -419,7 +419,7 @@ func TestServeHTTP_issueNonUpdateActionsNoUpdatedExtensions(t *testing.T) {
 			s.clock = clock
 
 			body := fmt.Sprintf(
-				`{"action":"%s","type":"Issue","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"createdAt":"2025-01-01T00:00:00.000Z","url":"https://linear.app/team/issue/ENG-1","data":{"id":"issue-789","team":{"key":"ENG"}},"updatedFrom":{"description":"shouldnt-leak"}}`,
+				`{"action":%q,"type":"Issue","organizationId":"org-123","webhookId":"wh-456","webhookTimestamp":%d,"createdAt":"2025-01-01T00:00:00.000Z","url":"https://linear.app/team/issue/ENG-1","data":{"id":"issue-789","team":{"key":"ENG"}},"updatedFrom":{"description":"shouldnt-leak"}}`,
 				tc.action,
 				now.UnixMilli(),
 			)

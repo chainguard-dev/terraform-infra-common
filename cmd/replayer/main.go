@@ -9,13 +9,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
+	"github.com/chainguard-dev/clog"
 )
 
 const PollTimeout = 10 * time.Second
@@ -34,26 +34,24 @@ func main() {
 	flag.StringVar(&prjID, "projectID", "", "project id")
 
 	flag.Parse()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
 	if srcSub == "" {
-		log.Fatal("--source is required")
+		clog.FatalContextf(ctx, "--source is required")
 	}
 	if dstTop == "" {
-		log.Fatal("--dest is required")
+		clog.FatalContextf(ctx, "--dest is required")
 	}
 
 	if prjID == "" {
-		log.Fatal("--projectID is required")
+		clog.FatalContextf(ctx, "--projectID is required")
 	}
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	client, err := pubsub.NewClient(ctx, prjID)
 	if err != nil {
-		cancel()
-		log.Fatalf("pubsub.NewClient: %v", err)
+		clog.FatalContextf(ctx, "pubsub.NewClient: %v", err)
 	}
-	defer func() {
-		cancel()
-		client.Close()
-	}()
+	defer client.Close()
 
 	sub := client.Subscriber(srcSub)
 	top := client.Publisher(dstTop)

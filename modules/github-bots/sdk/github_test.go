@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package sdk
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,7 +36,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 
 				// Verify a default client was created
 				if got := client.Client(); got == nil {
-					t.Error("expected default client to be created, got nil")
+					t.Errorf("Client(): got = nil, want non-nil")
 				}
 
 				// Verify default buffer size
@@ -58,7 +57,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 
 				// Verify client was set
 				if got := client.Client(); got == nil {
-					t.Error("expected client to be set, got nil")
+					t.Errorf("Client(): got = nil, want non-nil")
 				}
 			},
 		},
@@ -86,7 +85,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 				}
 
 				customClient := NewGitHubClient(
-					context.Background(),
+					t.Context(),
 					"test-org",
 					"test-repo",
 					"test-policy",
@@ -134,7 +133,7 @@ func TestGitHubClientConfiguration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := NewGitHubClient(
-				context.Background(),
+				t.Context(),
 				"test-org",
 				"test-repo",
 				"test-policy",

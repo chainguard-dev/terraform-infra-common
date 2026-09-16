@@ -448,9 +448,8 @@ func (c GitHubClient) GetWorkflowRunArtifact(ctx context.Context, wr *github.Wor
 		if err != nil {
 			return nil, fmt.Errorf("could not download artifact: %w", err)
 		}
-		defer resp.Body.Close()
-
 		data, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read artifact: %w", err)
 		}

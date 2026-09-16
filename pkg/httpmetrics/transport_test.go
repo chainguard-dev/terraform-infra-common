@@ -174,7 +174,7 @@ func TestGitHubRateLimitContextLabels(t *testing.T) {
 
 	transport := instrumentGitHubRateLimits(stub)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ctx = WithGitHubAppID(ctx, 42)
 	ctx = WithGitHubInstallationID(ctx, 1234)
 
@@ -218,7 +218,7 @@ func TestGitHubRateLimitContextLabels_NoContext(t *testing.T) {
 
 	transport := instrumentGitHubRateLimits(stub)
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://api.github.com/repos/org2/repo/contents/file", nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, "https://api.github.com/repos/org2/repo/contents/file", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -418,7 +418,7 @@ func TestClassifyRateLimit(t *testing.T) {
 				resp.Header.Set("X-RateLimit-Remaining", tt.remaining)
 			}
 			if got := classifyRateLimit(resp); got != tt.want {
-				t.Errorf("classifyRateLimit: got %q, want %q", got, tt.want)
+				t.Errorf("classifyRateLimit: got = %q, want = %q", got, tt.want)
 			}
 			// Callers decode the GitHub error from the body after classification.
 			data, err := io.ReadAll(resp.Body)
@@ -426,7 +426,7 @@ func TestClassifyRateLimit(t *testing.T) {
 				t.Fatal(err)
 			}
 			if string(data) != tt.body {
-				t.Errorf("body after classification: got %q, want %q", data, tt.body)
+				t.Errorf("body after classification: got = %q, want = %q", data, tt.body)
 			}
 		})
 	}

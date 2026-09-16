@@ -278,7 +278,7 @@ func TestExtractPullRequestInfo(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("result: got = %q, wanted = %q", result, tc.expected)
+				t.Errorf("result: got = %q, want = %q", result, tc.expected)
 			}
 		})
 	}
@@ -375,7 +375,7 @@ func TestExtractPullRequestURL(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("result: got = %q, wanted = %q", result, tc.expected)
+				t.Errorf("result: got = %q, want = %q", result, tc.expected)
 			}
 		})
 	}
@@ -433,7 +433,7 @@ func TestPullRequestExtension(t *testing.T) {
 		t.Fatal("pullrequest extension not found")
 	}
 	if pullrequest != "foo/bar#123" {
-		t.Errorf("unexpected pullrequest value: %v", pullrequest)
+		t.Errorf("pullrequest: got = %v, want = foo/bar#123", pullrequest)
 	}
 
 	// Check new pullrequesturl extension
@@ -442,7 +442,7 @@ func TestPullRequestExtension(t *testing.T) {
 		t.Fatal("pullrequesturl extension not found")
 	}
 	if pullrequesturl != "https://github.com/foo/bar/pull/123" {
-		t.Errorf("unexpected pullrequesturl value: %v", pullrequesturl)
+		t.Errorf("pullrequesturl: got = %v, want = https://github.com/foo/bar/pull/123", pullrequesturl)
 	}
 
 	// Reset client events
@@ -636,7 +636,7 @@ func TestExtractIssueURL(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("result: got = %q, wanted = %q", result, tc.expected)
+				t.Errorf("result: got = %q, want = %q", result, tc.expected)
 			}
 		})
 	}
@@ -692,7 +692,7 @@ func TestIssueURLExtension(t *testing.T) {
 		t.Fatal("issueurl extension not found")
 	}
 	if issueurl != "https://github.com/foo/bar/issues/456" {
-		t.Errorf("unexpected issueurl value: %v", issueurl)
+		t.Errorf("issueurl: got = %v, want = https://github.com/foo/bar/issues/456", issueurl)
 	}
 
 	// Reset client events
@@ -738,7 +738,7 @@ func TestIssueURLExtension(t *testing.T) {
 		t.Fatal("issueurl extension not found for issue_comment")
 	}
 	if issueurl != "https://github.com/foo/bar/issues/789" {
-		t.Errorf("unexpected issueurl value: %v", issueurl)
+		t.Errorf("issueurl: got = %v, want = https://github.com/foo/bar/issues/789", issueurl)
 	}
 
 	// Reset client events
@@ -790,7 +790,7 @@ func TestIssueURLExtension(t *testing.T) {
 		t.Fatal("pullrequesturl extension not found for PR comment")
 	}
 	if pullrequesturl != "https://github.com/foo/bar/pull/123" {
-		t.Errorf("unexpected pullrequesturl value: %v", pullrequesturl)
+		t.Errorf("pullrequesturl: got = %v, want = https://github.com/foo/bar/pull/123", pullrequesturl)
 	}
 }
 
@@ -895,7 +895,7 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 					t.Fatalf("pullrequesturl extension not found for %s event", tc.eventType)
 				}
 				if pullrequesturl != tc.expectedURL {
-					t.Errorf("unexpected pullrequesturl value: got %v, want %v", pullrequesturl, tc.expectedURL)
+					t.Errorf("pullrequesturl: got = %v, want = %v", pullrequesturl, tc.expectedURL)
 				}
 			} else if hasPRURL {
 				t.Errorf("pullrequesturl extension should not be present for %s event without PR", tc.eventType)
@@ -959,7 +959,7 @@ func TestIsPullRequestMerged(t *testing.T) {
 
 			// Check the result
 			if result != tc.expected {
-				t.Errorf("result: got = %v, wanted = %v", result, tc.expected)
+				t.Errorf("result: got = %v, want = %v", result, tc.expected)
 			}
 		})
 	}
