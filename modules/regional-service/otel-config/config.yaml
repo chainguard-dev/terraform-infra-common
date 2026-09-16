@@ -24,9 +24,7 @@ receivers:
           - source_labels: [ __name__ ]
             regex: '^process_.*'
             action: drop
-          - source_labels: [ __name__ ]
-            regex: '^go_.*'
-            action: drop
+          # REPLACE_ME_GO_METRICS
 
 processors:
   attributes:

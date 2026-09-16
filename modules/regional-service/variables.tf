@@ -288,6 +288,17 @@ variable "scrape_native_histograms" {
   description = "Scrape native (exponential) histograms from metrics targets. Requires opentelemetry-collector-contrib v0.142.0 or later. Set to false when pinning otel_collector_image to an older collector, which rejects the scrape keys at startup."
 }
 
+variable "keep_go_metrics" {
+  type        = list(string)
+  default     = []
+  description = "Go runtime series (go_*) to export from the metrics targets. The sidecar drops every go_* series by default; the names listed here are kept and the rest are still dropped."
+
+  validation {
+    condition     = alltrue([for m in var.keep_go_metrics : can(regex("^go_[a-zA-Z0-9_]+$", m))])
+    error_message = "keep_go_metrics entries must be Prometheus series names starting with go_."
+  }
+}
+
 variable "enable_profiler" {
   type        = bool
   default     = false

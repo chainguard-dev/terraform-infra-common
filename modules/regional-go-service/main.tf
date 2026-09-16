@@ -86,6 +86,7 @@ module "this" {
   enable_otel_sidecar      = var.enable_otel_sidecar
   otel_collector_image     = var.otel_collector_image
   scrape_native_histograms = var.scrape_native_histograms
+  keep_go_metrics          = var.keep_go_metrics
   otel_resources           = var.otel_resources
   observability_role       = var.observability_role
 

@@ -103,6 +103,25 @@ locals {
     "",
   ]) : ""
 
+  go_metrics_drop_all = [
+    "          - source_labels: [ __name__ ]",
+    "            regex: '^go_.*'",
+    "            action: drop",
+  ]
+  // RE2 has no negative lookahead, so "all go_* but these" needs a scratch label.
+  go_metrics_keep_listed = [
+    "          - source_labels: [ __name__ ]",
+    "            regex: '^(${join("|", var.keep_go_metrics)})$'",
+    "            target_label: __tmp_keep_go",
+    "            replacement: keep",
+    "          - source_labels: [ __name__, __tmp_keep_go ]",
+    "            regex: '^go_.*;$'",
+    "            action: drop",
+    "          - regex: '^__tmp_keep_go$'",
+    "            action: labeldrop",
+  ]
+  go_metrics_config = join("\n", concat(length(var.keep_go_metrics) == 0 ? local.go_metrics_drop_all : local.go_metrics_keep_listed, [""]))
+
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
@@ -384,12 +403,13 @@ resource "google_cloud_run_v2_service" "this" {
         args = ["--config=env:OTEL_CONFIG"]
         env {
           name = "OTEL_CONFIG"
-          value = replace(replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
+          value = replace(replace(replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
             "REPLACE_ME_TEAM", var.team),
             "REPLACE_ME_PROJECT_ID", var.project_id),
             "REPLACE_ME_NAME", var.name),
             "REPLACE_ME_TARGETS", local.metrics_targets),
-          "        # REPLACE_ME_NATIVE_HISTOGRAMS\n", local.native_histograms_config)
+            "        # REPLACE_ME_NATIVE_HISTOGRAMS\n", local.native_histograms_config),
+          "          # REPLACE_ME_GO_METRICS\n", local.go_metrics_config)
         }
 
         dynamic "resources" {
