@@ -63,7 +63,7 @@ func (u *uploader) Run(ctx context.Context) error {
 		}
 
 		if processed > 0 {
-			clog.InfoContextf(ctx, "Processed %d files to blobstore", processed)
+			clog.DebugContextf(ctx, "Processed %d files to blobstore", processed)
 		}
 
 		if done {
@@ -121,7 +121,7 @@ func (u *uploader) flush(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	for k, v := range fileMap {
-		clog.InfoContextf(ctx, "Found %d files in dir %s to process", len(v), k)
+		clog.DebugContextf(ctx, "Found %d files in dir %s to process", len(v), k)
 	}
 
 	for dir, files := range fileMap {

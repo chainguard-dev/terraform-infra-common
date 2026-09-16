@@ -11,13 +11,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"maps"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/chainguard-dev/clog"
 	"gocloud.dev/blob/memblob"
 
 	"github.com/google/go-cmp/cmp"
@@ -162,6 +165,44 @@ func TestBlobUploaderNoop(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond*80)
 	defer cancel()
 	uploader.Run(ctx)
+}
+
+func TestBlobUploaderRoutineLogsAreDebugOnly(t *testing.T) {
+	dir := t.TempDir()
+	blobDir := t.TempDir()
+	filename := filepath.Join(dir, "routine.log")
+	if err := os.WriteFile(filename, []byte("routine log\n"), 0600); err != nil {
+		t.Fatalf("failed to write source file: %v", err)
+	}
+
+	var logs bytes.Buffer
+	logger := clog.New(slog.NewJSONHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	ctx, cancel := context.WithCancel(clog.WithLogger(t.Context(), logger))
+	// Cancel before Run so it performs its one final flush before exiting.
+	cancel()
+
+	bucketName := "file://" + blobDir
+	uploader := NewUploader(dir, bucketName, time.Minute)
+	if err := uploader.Run(ctx); err != nil {
+		t.Fatalf("uploader.Run() = %v", err)
+	}
+
+	gotLogs := logs.String()
+	if strings.Contains(gotLogs, "Processed 1 files to blobstore") {
+		t.Errorf("routine processed log emitted at INFO: %s", gotLogs)
+	}
+	if strings.Contains(gotLogs, "Found 1 files in dir") {
+		t.Errorf("routine discovery log emitted at INFO: %s", gotLogs)
+	}
+	if !strings.Contains(gotLogs, "Uploading combined logs") {
+		t.Errorf("startup log missing: %s", gotLogs)
+	}
+	if !strings.Contains(gotLogs, "Flushing one more time") {
+		t.Errorf("shutdown flush log missing: %s", gotLogs)
+	}
+	if !strings.Contains(gotLogs, "Exiting flush Run loop") {
+		t.Errorf("shutdown log missing: %s", gotLogs)
+	}
 }
 
 func TestBlobUpload(t *testing.T) {
