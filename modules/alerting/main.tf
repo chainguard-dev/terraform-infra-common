@@ -1474,16 +1474,12 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
     condition_threshold {
       aggregations {
         alignment_period     = "600s"
-        cross_series_reducer = "REDUCE_NONE"
-        per_series_aligner   = "ALIGN_COUNT"
-      }
-      aggregations {
-        alignment_period     = "600s"
-        cross_series_reducer = "REDUCE_COUNT"
-        per_series_aligner   = "ALIGN_COUNT"
+        cross_series_reducer = "REDUCE_MAX"
+        per_series_aligner   = "ALIGN_MAX"
         group_by_fields = [
           "metric.label.team",
           "metric.label.service_name",
+          "metric.label.queue_name",
         ]
       }
 
@@ -1491,8 +1487,7 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
       duration   = "0s"
       filter     = <<EOT
         resource.type = "prometheus_target"
-        metric.type = "prometheus.googleapis.com/workqueue_task_max_attempts/gauge"
-        metric.label.task_id != "placeholder",
+        metric.type = "prometheus.googleapis.com/workqueue_max_attempts/gauge"
         ${local.squad_metric_filter}
       EOT
 
@@ -1500,18 +1495,17 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
         count = "1"
       }
 
-      threshold_value = 1
+      threshold_value = 20
     }
 
-    // number of attempts threshold built into metric.
-    display_name = "Workqueue tasks with over 20 attempt ${local.name}"
+    display_name = "Workqueue queues with over 20 attempts ${local.name}"
   }
-  display_name = "Workqueue tasks with over 20 attempts ${local.name}"
+  display_name = "Workqueue queues with over 20 attempts ${local.name}"
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${metric.label.team}: Workqueue $${metric.label.service_name} has tasks with more than 20 attempts"
-    content = "$${metric.label.team}: Workqueue $${metric.label.service_name} has tasks with more than 20 attempts"
+    subject = "$${metric.label.team}: Workqueue $${metric.label.service_name}/$${metric.label.queue_name} has a task with more than 20 attempts"
+    content = "$${metric.label.team}: Workqueue $${metric.label.service_name}/$${metric.label.queue_name} has a task with more than 20 attempts"
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack
