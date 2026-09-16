@@ -375,7 +375,7 @@ func TestGitHubRateLimit_LogIncludesRetryAfter(t *testing.T) {
 		}
 	}
 	if got == nil {
-		t.Fatal("expected github_api_call record")
+		t.Fatalf("github_api_call record: got = nil (none emitted), want = 1 record; total records: %d", len(rec.records))
 	}
 	attrs := recordAttrs(*got)
 	if attrs["status_code"] != int64(403) {

@@ -423,7 +423,7 @@ func TestPullRequestExtension(t *testing.T) {
 
 	// Check that the pullrequest extension was added
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("events: got = %d, want = 1", len(client.events))
 	}
 
 	// Check original pullrequest extension
@@ -469,7 +469,7 @@ func TestPullRequestExtension(t *testing.T) {
 
 	// Check that no pullrequest extension was added
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("events: got = %d, want = 1", len(client.events))
 	}
 
 	// Check that neither pullrequest extension was added for non-PR events
@@ -683,7 +683,7 @@ func TestIssueURLExtension(t *testing.T) {
 
 	// Check that the issueurl extension was added
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("events: got = %d, want = 1", len(client.events))
 	}
 
 	issueurl, ok := client.events[0].Extensions()["issueurl"]
@@ -730,7 +730,7 @@ func TestIssueURLExtension(t *testing.T) {
 
 	// Check that the issueurl extension was added
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("events: got = %d, want = 1", len(client.events))
 	}
 
 	issueurl, ok = client.events[0].Extensions()["issueurl"]
@@ -776,7 +776,7 @@ func TestIssueURLExtension(t *testing.T) {
 
 	// Check that the issueurl extension was NOT added (but pullrequesturl should be)
 	if len(client.events) != 1 {
-		t.Fatalf("expected 1 event, got %d", len(client.events))
+		t.Fatalf("events: got = %d, want = 1", len(client.events))
 	}
 
 	_, hasIssueURL := client.events[0].Extensions()["issueurl"]
@@ -885,7 +885,7 @@ func TestPullRequestURLExtensionMultipleEventTypes(t *testing.T) {
 
 			// Check the event was received
 			if len(client.events) != 1 {
-				t.Fatalf("expected 1 event, got %d", len(client.events))
+				t.Fatalf("events: got = %d, want = 1", len(client.events))
 			}
 
 			// Check pullrequesturl extension

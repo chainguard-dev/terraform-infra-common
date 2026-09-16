@@ -49,7 +49,7 @@ func TestNewClient_DispatchesThroughBaseTransport(t *testing.T) {
 	resp.Body.Close()
 
 	if !base.called {
-		t.Error("expected base RoundTripper to be called via the httpmetrics wrapper")
+		t.Error("base RoundTripper: got = not called, want = called via the httpmetrics wrapper")
 	}
 }
 
