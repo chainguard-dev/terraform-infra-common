@@ -106,6 +106,19 @@ module "work-queued" {
   }]
 }
 
+module "work-queued-lower-bound" {
+  source = "../../widgets/xy"
+  title  = "Queued work (exact or lower bound)"
+  filter = concat(local.gmp_filter, [
+    "resource.type=\"prometheus_target\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys_lower_bound/gauge\"",
+    local.dsp_filter,
+  ])
+  group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\""]
+  primary_align   = "ALIGN_MAX"
+  primary_reduce  = "REDUCE_MAX"
+}
+
 module "work-added" {
   source = "../../widgets/xy"
   title  = "Amount of work added"
@@ -376,6 +389,13 @@ locals {
       height = local.unit,
       width  = local.unit,
       widget = module.time-until-eligible.widget,
+    },
+    {
+      yPos   = local.unit * 4,
+      xPos   = local.col[2],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.work-queued-lower-bound.widget,
     }
     ],
     var.max_retry > 0 ? [
