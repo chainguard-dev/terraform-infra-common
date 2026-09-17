@@ -88,19 +88,21 @@ func TestFromCloudEvent(t *testing.T) {
 
 			event.SetExtension("ext1", "value1")
 			event.SetExtension("ext2", "value2")
+			event.SetExtension("policyresults", "true")
 			return event
 		}(),
 		out: &pubsub.Message{
 			Attributes: map[string]string{
-				"ce-id":          "id",
-				"ce-source":      "source",
-				"ce-specversion": "1.0",
-				"ce-type":        "another-type",
-				"ce-subject":     "subject",
-				"ce-time":        "1973-11-29T21:33:09Z",
-				"ce-ext1":        "value1",
-				"ce-ext2":        "value2",
-				"content-type":   "application/json",
+				"ce-id":            "id",
+				"ce-source":        "source",
+				"ce-specversion":   "1.0",
+				"ce-type":          "another-type",
+				"ce-subject":       "subject",
+				"ce-time":          "1973-11-29T21:33:09Z",
+				"ce-ext1":          "value1",
+				"ce-ext2":          "value2",
+				"ce-policyresults": "true",
+				"content-type":     "application/json",
 			},
 			Data: []byte("{}"),
 		},
