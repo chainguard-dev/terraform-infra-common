@@ -26,7 +26,7 @@ variable "refspec" {
   }
 }
 variable "audit_refspec" {
-  description = "The regular expression to use for auditing the refspec component when using '*'"
+  description = "Deprecated: has no effect. It only fed a subject-regex matcher that no resource ever consumed; federation is matched via the provider's attribute mappings, which have no audited-wildcard form. Retained so existing callers do not break; do not set it expecting tightened scoping."
   type        = string
   default     = ""
 }
@@ -41,7 +41,7 @@ variable "workflow_ref" {
 }
 
 variable "audit_workflow_ref" {
-  description = "The regular expression to use for auditing the workflow ref component when using '*'"
+  description = "Deprecated: has no effect, for the same reason as audit_refspec."
   type        = string
   default     = ""
 }

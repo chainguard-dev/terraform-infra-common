@@ -5,42 +5,11 @@ resource "google_service_account" "this" {
 }
 
 locals {
-  # Build up the "ref" portion of the principal match regular expression.
-  refPart = (var.refspec == "*") ? (
-    (var.audit_refspec != "") ? (
-      var.audit_refspec
-      ) : (
-      "[^|]+"
-    )
-    ) : (
-    (var.refspec == "pull_request") ? (
-      "refs/pull/[0-9]+/merge"
-      ) : (
-      (var.refspec == "version_tags") ? (
-        "refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?"
-        ) : (
-        # TODO(mattmoor): How can we "quote" this?
-        var.refspec
-      )
-    )
-  )
-  # Build up the "workflow" portion of the principal match regular expression.
-  workflowPart = "${var.repository}/${(var.workflow_ref == "*") ? (
-    (var.audit_workflow_ref != "") ? (
-      var.audit_workflow_ref
-      ) : (
-      "[^|]+"
-    )
-    ) : (
-    # TODO(mattmoor): How can we "quote" this?
-    var.workflow_ref
-  )}"
-  # TODO(mattmoor): How can we "quote" the `wif-pool` here?
-  principalSubject = "^(principal://iam\\.googleapis\\.com/${var.wif-pool}/subject/${join("[|]", [
-    local.workflowPart,
-    local.refPart,
-  ])})$"
-
+  # NOTE: this module matches federated identities exclusively through the
+  # provider's attribute mappings (attribute-match below). An earlier
+  # regex-over-subject matcher (refPart/workflowPart/principalSubject) was
+  # never consumed by any resource and was removed: it misled readers into
+  # believing refspec values were regex-matched against OIDC subjects.
   exact = "attribute.exact/${join("|", [
     var.repository,
     var.refspec,
