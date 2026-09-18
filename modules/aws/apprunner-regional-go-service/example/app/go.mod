@@ -1,6 +1,6 @@
 module github.com/chainguard-dev/mono/public/terraform-infra-common/modules/aws/apprunner-regional-go-service/example/app
 
-go 1.25
+go 1.27
 
 require (
 	github.com/chainguard-dev/clog v1.8.1
