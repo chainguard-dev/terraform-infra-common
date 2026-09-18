@@ -225,6 +225,7 @@ resource "google_cloud_run_v2_job" "this" {
       dynamic "containers" {
         for_each = var.containers
         content {
+          name    = containers.value.name
           image   = cosign_sign.this[containers.key].signed_ref
           command = length(containers.value.command) > 0 ? containers.value.command : null
           args    = length(containers.value.args) > 0 ? containers.value.args : null
@@ -304,6 +305,8 @@ resource "google_cloud_run_v2_job" "this" {
   }
 
   lifecycle {
+    // Preserve deployed names, including those assigned by Cloud Run. Explicit
+    // container names are honored only on job creation, not on later updates.
     ignore_changes = [
       template[0].template[0].containers[0].name,
       template[0].template[0].containers[1].name,

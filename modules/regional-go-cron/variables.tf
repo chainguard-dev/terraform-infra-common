@@ -56,8 +56,9 @@ variable "enable_observability_iam" {
 }
 
 variable "containers" {
-  description = "The containers to run in each job task. Ports, probes, and cpu_idle are accepted for type compatibility with regional-go-service but are not used in job tasks."
+  description = "The containers to run in each job task. Optional names are honored only when the job is created; later name changes are ignored. Ports, probes, and cpu_idle are accepted for type compatibility with regional-go-service but are not used in job tasks."
   type = map(object({
+    name = optional(string)
     source = object({
       base_image  = optional(string, "cgr.dev/chainguard/static:latest-glibc@sha256:24dd7ff8788fdfadda39eeeaefefb6d1cec6002a545935a5f7e017484053734f")
       working_dir = string

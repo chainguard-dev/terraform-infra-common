@@ -33,6 +33,16 @@ module "cron" {
 
 > See our [example](./example/).
 
+For a new job using Cloud Run execution overrides, set `container_name` to an
+explicit application container name before creating the job. The default is
+null, letting Cloud Run assign the name. This does not name the optional
+observability sidecar.
+
+Container names are ignored on subsequent Terraform updates. Setting or changing
+`container_name` on an existing job does not rename its container or produce a
+name-change plan diff; execution overrides must use the deployed name. To use a
+different name, create a new job through Terraform and migrate callers to it.
+
 ## Passing additional configuration
 
 You can pass additional configuration to your custom cron jobs via environment
@@ -187,6 +197,7 @@ No requirements.
 | <a name="input_args"></a> [args](#input\_args) | Override the container args (CMD). | `list(string)` | `[]` | no |
 | <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image that will be used to build the container image. | `string` | `"cgr.dev/chainguard/static:latest-glibc@sha256:24dd7ff8788fdfadda39eeeaefefb6d1cec6002a545935a5f7e017484053734f"` | no |
 | <a name="input_command"></a> [command](#input\_command) | Override the container entrypoint command. | `list(string)` | `[]` | no |
+| <a name="input_container_name"></a> [container\_name](#input\_container\_name) | Optional application container name, honored only when the job is created. Null lets Cloud Run assign the name. Later changes are ignored; execution overrides must use the deployed name. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the job. | `string` | `"1000m"` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
 | <a name="input_enable_observability_iam"></a> [enable\_observability\_iam](#input\_enable\_observability\_iam) | Whether this module grants the service account the observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent) on the project. Set false when the caller manages these grants itself, e.g. a service account shared across multiple services, where per-service grants would create overlapping non-authoritative IAM members that revoke each other on destroy. | `bool` | `true` | no |

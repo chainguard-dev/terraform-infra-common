@@ -48,6 +48,7 @@ module "impl" {
 
   containers = {
     "this" = {
+      name = var.container_name
       source = {
         base_image  = var.base_image
         working_dir = var.working_dir

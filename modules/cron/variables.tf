@@ -314,3 +314,9 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
+
+variable "container_name" {
+  description = "Optional application container name, honored only when the job is created. Null lets Cloud Run assign the name. Later changes are ignored; execution overrides must use the deployed name."
+  type        = string
+  default     = null
+}
