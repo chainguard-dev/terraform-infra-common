@@ -10,6 +10,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"os/exec"
 	"strings"
 	"testing"
@@ -79,13 +81,18 @@ func TestRun_Failure(t *testing.T) {
 func TestRun_RedactsTokenInArgs(t *testing.T) {
 	ctx, buf := captureLogs(t)
 
-	// We don't actually need this to succeed; failure path also logs args.
-	cmd := CommandContext(ctx, "ls-remote", "https://x-access-token:SUPERSECRET@example.invalid/o/r.git")
+	// The remote is a loopback server that answers 404: the operation fails,
+	// and the failure path logs args just as the success path would.
+	srv := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(srv.Close)
+	host := srv.Listener.Addr().String()
+
+	cmd := CommandContext(ctx, "ls-remote", "http://x-access-token:SUPERSECRET@"+host+"/o/r.git")
 	_ = Run(ctx, "ls-remote", cmd)
 
 	out := buf.String()
 	assert.NotContains(t, out, "SUPERSECRET", "credential leaked into log output")
-	assert.Contains(t, out, `"repo_host":"example.invalid"`)
+	assert.Contains(t, out, `"repo_host":"`+host+`"`)
 }
 
 // Observe is the go-git path. It must record the same observation shape as

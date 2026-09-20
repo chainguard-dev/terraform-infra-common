@@ -9,6 +9,8 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -162,16 +164,20 @@ func TestRepositoryPushContext_RecordsPush(t *testing.T) {
 
 // A remote built with NewRemote must observe its fetch and derive repo_host and
 // repo_path from the remote's configured URL, with no WithRepoURL at the call
-// site. example.invalid fails fast (NXDOMAIN), exercising the failure path.
+// site. The remote is a loopback server that answers 404, so the fetch fails
+// without a DNS query and exercises the failure path.
 func TestRemoteFetchContext_DerivesRepoFromConfig(t *testing.T) {
 	ctx, buf := captureLogs(t)
 	dst := filepath.Join(t.TempDir(), "clone")
 	repo, err := PlainCloneContext(ctx, dst, false, &git.CloneOptions{URL: seedRemote(t)})
 	require.NoError(t, err)
 
+	srv := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(srv.Close)
+	host := srv.Listener.Addr().String()
 	rem := NewRemote(repo.Storer, &config.RemoteConfig{
 		Name: "observed",
-		URLs: []string{"https://example.invalid/chainguard-dev/mono.git"},
+		URLs: []string{"http://" + host + "/chainguard-dev/mono.git"},
 	})
 
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -181,7 +187,7 @@ func TestRemoteFetchContext_DerivesRepoFromConfig(t *testing.T) {
 
 	line := opLine(t, buf, "fetch")
 	assert.Contains(t, line, `"outcome":"failure"`)
-	assert.Contains(t, line, `"repo_host":"example.invalid"`)
+	assert.Contains(t, line, `"repo_host":"`+host+`"`)
 	assert.Contains(t, line, `"repo_path":"chainguard-dev/mono"`)
 }
 
