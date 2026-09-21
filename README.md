@@ -9,6 +9,11 @@ GCP patterns.
 
 See [MODULES.md](./MODULES.md) for a summary of all available modules.
 
+## Go helpers
+
+The [httpmetrics package](./pkg/httpmetrics/README.md) provides HTTP instrumentation
+and opt-in serving-revision metadata for HTTP and gRPC services.
+
 ## Usage
 
 To use components in this library, you must provide the `project` in a
