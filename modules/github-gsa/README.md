@@ -55,8 +55,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_audit_refspec"></a> [audit\_refspec](#input\_audit\_refspec) | The regular expression to use for auditing the refspec component when using '*' | `string` | `""` | no |
-| <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | The regular expression to use for auditing the workflow ref component when using '*' | `string` | `""` | no |
+| <a name="input_audit_refspec"></a> [audit\_refspec](#input\_audit\_refspec) | Deprecated: has no effect. It only fed a subject-regex matcher that no resource ever consumed; federation is matched via the provider's attribute mappings, which have no audited-wildcard form. Retained so existing callers do not break; do not set it expecting tightened scoping. | `string` | `""` | no |
+| <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | Deprecated: has no effect, for the same reason as audit\_refspec. | `string` | `""` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the service account. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when the service account is misused. | `list(string)` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |

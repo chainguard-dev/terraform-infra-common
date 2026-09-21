@@ -89,6 +89,15 @@ No requirements.
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
+## Modules
+
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_extra-triggers"></a> [extra-triggers](#module\_extra-triggers) | ../cloudevent-trigger | n/a |
+| <a name="module_recorder-dashboard"></a> [recorder-dashboard](#module\_recorder-dashboard) | ../dashboard/cloudevent-receiver | n/a |
+| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
+| <a name="module_triggers"></a> [triggers](#module\_triggers) | ../cloudevent-trigger | n/a |
+
 ## Resources
 
 | Name | Type |

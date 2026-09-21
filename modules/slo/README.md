@@ -39,6 +39,6 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_alert_policy_keys"></a> [alert\_policy\_keys](#output\_alert\_policy\_keys) | Keys of the created burn-rate alert policies: rolling-period keys for multi\_region/gclb, region-period keys for per\_region. |
 <!-- END_TF_DOCS -->

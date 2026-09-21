@@ -64,6 +64,14 @@ No requirements.
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
+## Modules
+
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
+| <a name="module_trampoline-emits-events"></a> [trampoline-emits-events](#module\_trampoline-emits-events) | ../authorize-private-service | n/a |
+| <a name="module_webhook-secret"></a> [webhook-secret](#module\_webhook-secret) | ../secret | n/a |
+
 ## Resources
 
 | Name | Type |

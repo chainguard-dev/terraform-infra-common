@@ -75,6 +75,13 @@ No requirements.
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
+## Modules
+
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_gclb"></a> [gclb](#module\_gclb) | ../serverless-gclb | n/a |
+| <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
+
 ## Resources
 
 | Name | Type |

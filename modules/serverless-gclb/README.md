@@ -183,14 +183,14 @@ IP address and DNS records are untouched either way.
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 7.34.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 8.2.0 |
+| ---- | ------- |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 7.34.0 |
 
 ## Modules
 
@@ -199,7 +199,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_backend_bucket.buckets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_bucket) | resource |
 | [google_compute_backend_service.public-services](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_service) | resource |
 | [google_compute_global_address.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_address) | resource |
@@ -222,7 +222,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_buckets"></a> [buckets](#input\_buckets) | A map from hostnames (managed by dns\_zone) to Cloud Storage buckets the hostname serves: content comes straight from the bucket through a backend bucket, and through Cloud CDN by default, rather than from a Cloud Run service. A managed SSL certificate and a DNS record are created for each hostname, as for public-services.<br/><br/>name: the name for the backend bucket, the certificate and the URL-map path matcher; unique across public-services and buckets.<br/>bucket\_name: the Cloud Storage bucket to serve, which must already exist.<br/>enable\_cdn: front the bucket with Cloud CDN (the default).<br/>disabled: keep the hostname's records but route nothing to it.<br/>cdn\_policy: optional Cloud CDN policy for the backend bucket; omitted, Cloud CDN applies its defaults.<br/><br/>A bucket is public unless the caller arranges otherwise: its objects must be readable by allUsers. To serve a bucket to signed URLs only, the caller attaches Cloud CDN signed-URL keys to the backend bucket this module creates (output backend\_buckets) and grants Cloud CDN's fill service agent read on the storage bucket, having removed public read (allUsers, allAuthenticatedUsers) from its IAM and ACLs as Cloud CDN's signed-URL guidance requires. The module holds no key: a deployment may attach its keys outside Terraform so their values never enter state. | <pre>map(object({<br/>    name        = string<br/>    bucket_name = string<br/>    enable_cdn  = optional(bool, true)<br/>    disabled    = optional(bool, false)<br/>    cdn_policy = optional(object({<br/>      cache_mode                   = optional(string)<br/>      client_ttl                   = optional(number)<br/>      default_ttl                  = optional(number)<br/>      max_ttl                      = optional(number)<br/>      signed_url_cache_max_age_sec = optional(number)<br/>    }))<br/>  }))</pre> | `{}` | no |
 | <a name="input_certificate_map"></a> [certificate\_map](#input\_certificate\_map) | Optional Certificate Manager certificate map id, formatted as "//certificatemanager.googleapis.com/projects/.../certificateMaps/...". When set, the HTTPS proxy serves TLS from this map and the module creates no per-hostname managed SSL certificates, escaping the 15-certificate-per-proxy limit (e.g. with a wildcard certificate). Create the map in an earlier apply than the one that sets this, so its id is known at plan time. When empty (the default), the module keeps its per-hostname managed-certificate behaviour. Migrating an existing proxy between the two modes is a two-apply operation, see retain\_managed\_certificates and the module README. | `string` | `""` | no |
 | <a name="input_dns_zone"></a> [dns\_zone](#input\_dns\_zone) | The managed DNS zone in which to create record sets. | `string` | n/a | yes |
@@ -243,6 +243,6 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_backend_buckets"></a> [backend\_buckets](#output\_backend\_buckets) | The backend buckets created for buckets, keyed by hostname: name and id. A caller serving a bucket to signed URLs only attaches its Cloud CDN signed-URL keys to the name, in Terraform or out of band so the key values never enter state, and grants Cloud CDN's fill service agent read on the storage bucket; the id is what the URL map routes the hostname's traffic through. |
 <!-- END_TF_DOCS -->

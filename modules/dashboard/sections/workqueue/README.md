@@ -71,7 +71,7 @@ No providers.
 | <a name="module_max-attempts"></a> [max-attempts](#module\_max-attempts) | ../../widgets/xy | n/a |
 | <a name="module_percent-deduped"></a> [percent-deduped](#module\_percent-deduped) | ../../widgets/xy-ratio | n/a |
 | <a name="module_process-latency"></a> [process-latency](#module\_process-latency) | ../../widgets/latency | n/a |
-| <a name="module_time-to-completion"></a> [time-to-completion](#module\_time-to-completion) | ../../widgets/xy | n/a |
+| <a name="module_time-to-completion"></a> [time-to-completion](#module\_time-to-completion) | ../../widgets/latency | n/a |
 | <a name="module_time-until-eligible"></a> [time-until-eligible](#module\_time-until-eligible) | ../../widgets/latency | n/a |
 | <a name="module_wait-latency"></a> [wait-latency](#module\_wait-latency) | ../../widgets/latency | n/a |
 | <a name="module_width"></a> [width](#module\_width) | ../width | n/a |

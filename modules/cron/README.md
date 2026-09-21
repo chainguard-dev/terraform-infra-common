@@ -182,6 +182,12 @@ No requirements.
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_null"></a> [null](#provider\_null) | n/a |
 
+## Modules
+
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_impl"></a> [impl](#module\_impl) | ../regional-go-cron | n/a |
+
 ## Resources
 
 | Name | Type |
@@ -195,7 +201,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_args"></a> [args](#input\_args) | Override the container args (CMD). | `list(string)` | `[]` | no |
-| <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image that will be used to build the container image. | `string` | `"cgr.dev/chainguard/static:latest-glibc@sha256:24dd7ff8788fdfadda39eeeaefefb6d1cec6002a545935a5f7e017484053734f"` | no |
+| <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image that will be used to build the container image. | `string` | `"cgr.dev/chainguard/static:latest-glibc@sha256:bf639cba19ba56329e6907ac26a7afcdde57a80b6aa66d5100da6883196e6b82"` | no |
 | <a name="input_command"></a> [command](#input\_command) | Override the container entrypoint command. | `list(string)` | `[]` | no |
 | <a name="input_container_name"></a> [container\_name](#input\_container\_name) | Optional application container name, honored only when the job is created. Null lets Cloud Run assign the name. Later changes are ignored; execution overrides must use the deployed name. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the job. | `string` | `"1000m"` | no |
