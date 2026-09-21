@@ -6,8 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 package gitexec_test
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
+	"strings"
 
 	"github.com/chainguard-dev/terraform-infra-common/pkg/gitexec"
 )
@@ -91,4 +95,54 @@ func ExampleWithoutStderrTail() {
 	); err != nil {
 		fmt.Println("log failed:", err)
 	}
+}
+
+// errBranchNotFound stands for the typed error a caller maps git's
+// "couldn't find remote ref" onto.
+var errBranchNotFound = errors.New("branch not found on remote")
+
+func ExampleWithFailure() {
+	ctx := context.Background()
+	repoURL := "https://github.com/example/repo"
+	// The caller reads stderr itself: a fetch with --progress writes
+	// progress there, which the caller strips before reading git's words.
+	var stderr bytes.Buffer
+	cmd := gitexec.CommandContext(ctx, "fetch", "--progress", repoURL, "+refs/heads/feature:refs/remotes/origin/feature")
+	cmd.Dir = "/tmp/repo"
+	cmd.Stderr = &stderr
+	// WithFailure lets that caller supply the failure's log line with its
+	// own reading of stderr, a classification, and a level. Without it the
+	// line would carry the raw tail (mostly progress) at ERROR, whatever
+	// the failure was.
+	err := gitexec.Run(ctx, "fetch", cmd, gitexec.WithRepoURL(repoURL),
+		gitexec.WithFailure(func(error) gitexec.Failure {
+			words := strings.TrimSpace(stderr.String())
+			if strings.Contains(words, "couldn't find remote ref") {
+				// An answer the remote gives in normal operation: INFO.
+				return gitexec.Failure{Stderr: words, Class: "branch_not_found", Level: slog.LevelInfo}
+			}
+			// Unrecognised: no classification, and loud.
+			return gitexec.Failure{Stderr: words, Level: slog.LevelError}
+		}))
+	if err != nil {
+		fmt.Println("fetch failed:", err)
+	}
+}
+
+func ExampleFailure() {
+	// A Failure describes one failed command for its log line. Class is
+	// empty when the caller did not recognise the failure, and Level's zero
+	// value is INFO, so a caller that classifies must set Level on every
+	// path, including the unrecognised one.
+	describe := func(err error) gitexec.Failure {
+		if errors.Is(err, errBranchNotFound) {
+			return gitexec.Failure{Stderr: err.Error(), Class: "branch_not_found", Level: slog.LevelInfo}
+		}
+		return gitexec.Failure{Stderr: err.Error(), Level: slog.LevelError}
+	}
+	fmt.Println(describe(errBranchNotFound).Level)
+	fmt.Println(describe(errors.New("fatal: index-pack failed")).Level)
+	// Output:
+	// INFO
+	// ERROR
 }

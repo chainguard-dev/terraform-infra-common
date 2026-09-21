@@ -41,7 +41,10 @@ SPDX-License-Identifier: Apache-2.0
 //
 //   - One clog line with message "git_operation" carrying: op, args,
 //     repo_host, repo_path, duration_ms, exit_code, outcome.
-//     On failure the line also carries err and stderr_tail.
+//     On failure the line also carries err and stderr_tail, and is
+//     written at ERROR; a caller that reads stderr itself and classifies
+//     the failure supplies the text, a classification field and the level
+//     through WithFailure.
 //
 //   - Counter git_operations_total{op,outcome}.
 //

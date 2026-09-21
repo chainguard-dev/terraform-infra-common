@@ -8,6 +8,7 @@ package gitexec
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -197,4 +198,90 @@ func TestRun_WithoutStderrTail(t *testing.T) {
 	assert.Contains(t, logged, `"outcome":"failure"`)
 	assert.Contains(t, logged, `"err":`)
 	assert.NotContains(t, logged, "stderr_tail", "stderr_tail must be suppressed")
+}
+
+// WithFailure lets a caller that reads stderr itself say what a failure's
+// line carries: its own text in place of the raw tail, a classification,
+// and a level. A caller that strips progress from stderr and recognises a
+// missing branch would otherwise log a tail of progress, at ERROR, for a
+// failure it handles as an outcome. The metric counts the failure however
+// it is logged.
+func TestRun_WithFailure(t *testing.T) {
+	ctx, buf := captureLogs(t)
+	before := testutil.ToFloat64(operationsTotal.WithLabelValues("rev-parse", outcomeFailure))
+
+	cmd := CommandContext(ctx, "rev-parse", "--verify", "HEAD")
+	cmd.Dir = t.TempDir() // not a repository: fails
+	var seen error
+	err := Run(ctx, "rev-parse", cmd, WithFailure(func(err error) Failure {
+		seen = err
+		return Failure{Stderr: "the caller's reading of stderr", Class: "expected_miss", Level: slog.LevelInfo}
+	}))
+	require.Error(t, err)
+	assert.Equal(t, err, seen, "fn must be given the error Run returns")
+
+	after := testutil.ToFloat64(operationsTotal.WithLabelValues("rev-parse", outcomeFailure))
+	assert.Equal(t, before+1, after)
+
+	logged := buf.String()
+	assert.Contains(t, logged, `"level":"INFO"`)
+	assert.Contains(t, logged, `"outcome":"failure"`)
+	assert.Contains(t, logged, `"exit_code":128`)
+	assert.Contains(t, logged, `"classification":"expected_miss"`)
+	assert.Contains(t, logged, `"stderr_tail":"the caller's reading of stderr"`)
+	assert.NotContains(t, logged, "fatal", "the raw stderr must give way to the caller's text")
+}
+
+// A failure the caller does not recognise keeps ERROR and carries no
+// classification field, so its line reads as it would without the option.
+func TestRun_WithFailureUnrecognised(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	cmd := CommandContext(ctx, "rev-parse", "--verify", "HEAD")
+	cmd.Dir = t.TempDir()
+	err := Run(ctx, "rev-parse", cmd, WithFailure(func(error) Failure {
+		return Failure{Stderr: "unrecognised", Level: slog.LevelError}
+	}))
+	require.Error(t, err)
+
+	logged := buf.String()
+	assert.Contains(t, logged, `"level":"ERROR"`)
+	assert.Contains(t, logged, `"stderr_tail":"unrecognised"`)
+	assert.NotContains(t, logged, "classification")
+}
+
+// fn is not consulted for a command that succeeded; there is no failure to
+// describe, and a caller's fn may assume one.
+func TestRun_WithFailureNotCalledOnSuccess(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	cmd := CommandContext(ctx, "--version")
+	err := Run(ctx, "--version", cmd, WithFailure(func(err error) Failure {
+		t.Errorf("fn called for a successful command with %v", err)
+		return Failure{}
+	}))
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), `"outcome":"success"`)
+}
+
+// The caller's text is bounded as the raw tail is, and from the same end:
+// a failure's line stays small whatever the caller kept of stderr, and
+// git's fatal line comes last.
+func TestRun_WithFailureBoundsStderr(t *testing.T) {
+	ctx, buf := captureLogs(t)
+
+	cmd := CommandContext(ctx, "rev-parse", "--verify", "HEAD")
+	cmd.Dir = t.TempDir()
+	long := strings.Repeat("x", 2*stderrTailBytes) + "END"
+	err := Run(ctx, "rev-parse", cmd, WithFailure(func(error) Failure {
+		return Failure{Stderr: long, Level: slog.LevelError}
+	}))
+	require.Error(t, err)
+
+	var line struct {
+		StderrTail string `json:"stderr_tail"`
+	}
+	require.NoError(t, json.Unmarshal(buf.Bytes(), &line))
+	assert.Len(t, line.StderrTail, stderrTailBytes)
+	assert.True(t, strings.HasSuffix(line.StderrTail, "END"), "the end of the caller's text must be what is kept, got %q", line.StderrTail)
 }

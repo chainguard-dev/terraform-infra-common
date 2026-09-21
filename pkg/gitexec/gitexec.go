@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"os/exec"
 	"time"
 
@@ -29,6 +30,7 @@ type options struct {
 	repoURL      string
 	loggedArgs   []string
 	noStderrTail bool
+	failure      func(err error) Failure
 }
 
 // WithRepoURL sets the remote URL associated with the operation. It is parsed
@@ -56,9 +58,48 @@ func WithLoggedArgs(args []string) Option {
 // same sensitive values being redacted from the argv — git error messages
 // quote the missing path or pattern verbatim (`fatal: path 'X' does not
 // exist`), so a redacted argv alone still leaks on the failure path. The
-// operation's op, outcome, exit code, and error remain logged.
+// operation's op, outcome, exit code, and error remain logged. A caller
+// that holds a redacted or otherwise cleaned copy of stderr can log that
+// copy instead, through WithFailure.
 func WithoutStderrTail() Option {
 	return func(o *options) { o.noStderrTail = true }
+}
+
+// Failure is a caller's account of a failed command, for the failure's log
+// line. See WithFailure.
+type Failure struct {
+	// Stderr is the text the line's stderr_tail field carries in place of
+	// the tail gitexec kept from the raw stream: what the caller kept of the
+	// command's stderr, with whatever it strips (progress output, values it
+	// redacts) already gone. Its final stderrTailBytes are logged, as with
+	// the raw tail.
+	Stderr string
+	// Class names the failure as the caller classified it, for the line's
+	// classification field. Empty when the caller did not recognise the
+	// failure, and the field is then omitted.
+	Class string
+	// Level is the level the line is logged at. A failure the caller
+	// recognises as an answer the remote gives in the normal course of
+	// operation — a branch that does not exist, a lease that did not hold —
+	// belongs at INFO, where it does not count against an ERROR-rate
+	// signal; one the caller does not recognise belongs at ERROR, where it
+	// is seen. The zero value is INFO, so a caller that sets Level for some
+	// failures must set it for all.
+	Level slog.Level
+}
+
+// WithFailure sets how a failure is described in its log line, for a caller
+// that reads the command's stderr itself and classifies what it says. fn is
+// called once, when the command has failed and its stderr is complete, with
+// the error Run, Output or Observe is about to return; what it returns
+// replaces the raw stderr tail and the ERROR level. The error, exit code,
+// outcome and metric are recorded as they are for any failure.
+//
+// Without this option a failure logs the last stderrTailBytes of the raw
+// stream — for a command that writes progress to stderr, mostly progress —
+// at ERROR, whatever the failure was.
+func WithFailure(fn func(err error) Failure) Option {
+	return func(o *options) { o.failure = fn }
 }
 
 // CommandContext returns an *exec.Cmd configured to invoke "git" with the
@@ -180,10 +221,21 @@ func record(ctx context.Context, op string, args []string, started time.Time, ex
 	}
 	if err != nil {
 		fields = append(fields, "err", err.Error())
-		if len(stderrTail) > 0 && !o.noStderrTail {
-			fields = append(fields, "stderr_tail", string(stderrTail))
+		tail, level := stderrTail, slog.LevelError
+		if o.failure != nil {
+			f := o.failure(err)
+			tail, level = []byte(f.Stderr), f.Level
+			if f.Class != "" {
+				fields = append(fields, "classification", f.Class)
+			}
 		}
-		clog.ErrorContext(ctx, "git_operation", fields...)
+		if len(tail) > stderrTailBytes {
+			tail = tail[len(tail)-stderrTailBytes:]
+		}
+		if len(tail) > 0 && !o.noStderrTail {
+			fields = append(fields, "stderr_tail", string(tail))
+		}
+		clog.FromContext(ctx).Log(ctx, level, "git_operation", fields...)
 		return
 	}
 	clog.InfoContext(ctx, "git_operation", fields...)
