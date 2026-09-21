@@ -97,6 +97,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_alert_description"></a> [alert\_description](#input\_alert\_description) | Alert documentation. Use this to link to playbooks or give additional context. | `string` | `"An uptime check has failed."` | no |
+| <a name="input_alert_links"></a> [alert\_links](#input\_alert\_links) | Links to troubleshooting resources in the alert documentation. | <pre>list(object({<br/>    display_name = string<br/>    url          = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image to use for the prober. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the prober. | `string` | `"1000m"` | no |
 | <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | A map of region names to cpu\_idle settings. When true, CPU is throttled when no requests are being processed. | `map(bool)` | `{}` | no |

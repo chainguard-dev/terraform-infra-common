@@ -121,6 +121,15 @@ variable "alert_description" {
   description = "Alert documentation. Use this to link to playbooks or give additional context."
 }
 
+variable "alert_links" {
+  type = list(object({
+    display_name = string
+    url          = string
+  }))
+  default     = []
+  description = "Links to troubleshooting resources in the alert documentation."
+}
+
 variable "uptime_alert_duration" {
   type        = string
   default     = "600s"

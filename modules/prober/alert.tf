@@ -49,6 +49,14 @@ resource "google_monitoring_alert_policy" "uptime_alert" {
 
   documentation {
     content = var.alert_description
+
+    dynamic "links" {
+      for_each = var.alert_links
+      content {
+        display_name = links.value.display_name
+        url          = links.value.url
+      }
+    }
   }
 
   notification_channels = var.notification_channels
