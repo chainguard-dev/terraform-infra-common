@@ -178,6 +178,16 @@ resource "google_cloud_run_v2_service" "this" {
     }
   }
 
+  // Declaring the split is what reverts an out-of-band revision pin: traffic is
+  // Optional+Computed, so an unset block leaves whatever the API already holds.
+  dynamic "traffic" {
+    for_each = var.manage_traffic ? [""] : []
+    content {
+      type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+      percent = 100
+    }
+  }
+
   template {
     scaling {
       min_instance_count = var.scaling.min_instances

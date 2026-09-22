@@ -45,6 +45,8 @@ module "this" {
   ingress    = var.ingress
   egress     = var.egress
 
+  manage_traffic = var.manage_traffic
+
   regional-egress    = var.regional-egress
   regional-connector = var.regional-connector
 

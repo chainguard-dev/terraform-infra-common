@@ -26,6 +26,20 @@ EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 }
 
+variable "manage_traffic" {
+  type        = bool
+  description = <<EOD
+Whether Terraform owns the service's traffic split.
+
+Cloud Run's traffic field is Optional+Computed, so leaving it undeclared (the
+default) lets an out-of-band `gcloud run services update-traffic` pin survive
+every subsequent apply: new revisions keep deploying but never serve. Setting
+this declares 100% to the latest ready revision, which reverts such a pin on
+the next apply and keeps it reverted.
+EOD
+  default     = false
+}
+
 variable "custom_audiences" {
   type        = list(string)
   description = <<EOD
