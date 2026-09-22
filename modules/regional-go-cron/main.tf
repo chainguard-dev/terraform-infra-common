@@ -292,13 +292,22 @@ resource "google_cloud_run_v2_job" "this" {
       }
 
       dynamic "vpc_access" {
-        for_each = each.value.network != null ? [1] : []
+        for_each = each.value.network != null || lookup(var.regional-connector, each.key, null) != null ? [1] : []
         content {
-          network_interfaces {
-            network    = each.value.network
-            subnetwork = each.value.subnet
+          // A region routed through a Serverless VPC Access connector must not
+          // also declare network_interfaces: Cloud Run takes one or the other,
+          // and the connector is what replaces direct VPC egress. Regions
+          // absent from regional-connector keep direct VPC egress exactly as
+          // before.
+          dynamic "network_interfaces" {
+            for_each = lookup(var.regional-connector, each.key, null) == null ? [1] : []
+            content {
+              network    = each.value.network
+              subnetwork = each.value.subnet
+            }
           }
-          egress = var.egress
+          connector = lookup(var.regional-connector, each.key, null)
+          egress    = var.egress
         }
       }
     }

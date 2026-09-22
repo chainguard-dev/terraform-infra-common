@@ -103,16 +103,26 @@ variable "parallelism" {
 variable "vpc_access" {
   default = null
   type = object({
-    # Currently, only one network interface is supported.
-    network_interfaces = list(object({
+    # Currently, only one network interface is supported. Leave empty when
+    # connector is set instead — Cloud Run accepts one or the other.
+    network_interfaces = optional(list(object({
       network    = string
       subnetwork = string
       tags       = optional(list(string))
-    }))
+    })), [])
+    # Optional Serverless VPC Access connector, as a fully qualified id
+    # (projects/<project>/locations/<region>/connectors/<name>), egressing
+    # through it instead of a per-job Direct VPC Egress network interface.
+    connector = optional(string)
     # Egress is one of "PRIVATE_RANGES_ONLY", "ALL_TRAFFIC", or "ALL_PRIVATE_RANGES"
     egress = string
   })
   description = "The VPC to send egress to. For more information, visit https://cloud.google.com/run/docs/configuring/vpc-direct-vpc"
+
+  validation {
+    condition     = var.vpc_access == null ? true : (length(var.vpc_access.network_interfaces) > 0) != (var.vpc_access.connector != null)
+    error_message = "vpc_access must set exactly one of network_interfaces or connector, not both and not neither."
+  }
 }
 
 variable "volumes" {

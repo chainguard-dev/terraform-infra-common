@@ -4,6 +4,8 @@ terraform {
     // Required transitively by the regional-go-cron child module; declared here
     // so provider configurations attach at the root module.
     google-beta = { source = "hashicorp/google-beta" }
+    ko          = { source = "ko-build/ko" }
+    cosign      = { source = "chainguard-dev/cosign" }
   }
 }
 
@@ -35,10 +37,14 @@ module "impl" {
   enable_observability_iam = var.enable_observability_iam
   egress                   = var.vpc_access != null ? var.vpc_access.egress : null
 
-  regions = { (var.region) = var.vpc_access != null ? {
+  regions = { (var.region) = var.vpc_access != null && length(var.vpc_access.network_interfaces) > 0 ? {
     network = var.vpc_access.network_interfaces[0].network
     subnet  = var.vpc_access.network_interfaces[0].subnetwork
   } : {} }
+
+  regional-connector = var.vpc_access != null && var.vpc_access.connector != null ? {
+    (var.region) = var.vpc_access.connector
+  } : {}
 
   regional-cronspec = { (var.region) = {
     schedule  = var.schedule

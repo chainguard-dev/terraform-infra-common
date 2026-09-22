@@ -38,6 +38,33 @@ variable "egress" {
   default     = "ALL_TRAFFIC"
 }
 
+variable "regional-connector" {
+  type        = map(string)
+  description = <<EOD
+Optional per-region Serverless VPC Access connector, keyed by region name, as a
+fully qualified id: projects/<project>/locations/<region>/connectors/<name>.
+
+A region present in this map egresses through that connector instead of direct
+VPC egress, so its network_interfaces are omitted (Cloud Run accepts one or
+the other). Regions absent from the map are unchanged. Besides the Shared-VPC
+NAT-translation case regional-service documents this for, a connector also
+amortizes network-interface provisioning across many job executions instead of
+allocating one per execution, which avoids the concurrent-deploy contention
+direct VPC egress can hit when many revisions in the same VPC start at once.
+EOD
+  default     = {}
+
+  validation {
+    // A bare connector name resolves in the job's own project, which for a
+    // Shared VPC host-project connector silently is not where it lives.
+    condition = alltrue([
+      for id in values(var.regional-connector) :
+      can(regex("^projects/[^/]+/locations/[^/]+/connectors/[^/]+$", id))
+    ])
+    error_message = "regional-connector values must be fully qualified as projects/<project>/locations/<region>/connectors/<name>."
+  }
+}
+
 variable "service_account" {
   type        = string
   description = "The service account as which each job task runs."
