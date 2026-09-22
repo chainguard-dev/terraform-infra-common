@@ -5,8 +5,9 @@ terraform {
     }
     google-beta = {
       source = "hashicorp/google-beta"
-      # node_config.flex_start arrived in 6.32.0. max_run_duration is older.
-      version = ">= 6.32.0"
+      # node_config.boot_disk (provisioned IOPS/throughput) arrived in
+      # 6.48.0; node_config.flex_start in 6.32.0. max_run_duration is older.
+      version = ">= 6.48.0"
     }
   }
 }
@@ -334,6 +335,21 @@ resource "google_container_node_pool" "pools" {
 
     disk_type    = each.value.disk_type
     disk_size_gb = each.value.disk_size
+
+    # Provisioned boot-disk performance rides the boot_disk block, which
+    # the provider is migrating disk_type/disk_size_gb into as well; the
+    # two spellings must agree while both are set, so the block repeats
+    # them. Emitted only when performance is provisioned, so pools that
+    # do not ask for it keep the plan they have.
+    dynamic "boot_disk" {
+      for_each = each.value.boot_disk_provisioned_iops != null || each.value.boot_disk_provisioned_throughput != null ? [1] : []
+      content {
+        disk_type              = each.value.disk_type
+        size_gb                = each.value.disk_size
+        provisioned_iops       = each.value.boot_disk_provisioned_iops
+        provisioned_throughput = each.value.boot_disk_provisioned_throughput
+      }
+    }
 
     dynamic "ephemeral_storage_local_ssd_config" {
       for_each = each.value.ephemeral_storage_local_ssd_count > 0 ? [1] : []

@@ -91,6 +91,14 @@ variable "pools" {
         gpu_driver_version = string
       })), [])
     })), [])
+    # Provisioned boot-disk performance, hyperdisk-balanced only. Unset
+    # leaves the disk at its baseline (3,000 IOPS, 140 MiB/s). Set when
+    # the boot disk carries the pods' ephemeral storage (emptyDirs,
+    # writable layers) for a machine shape with no local SSD: the
+    # baseline is per disk, not per vCPU, so a large node's pods share
+    # it. Hyperdisk requires throughput <= IOPS / 4.
+    boot_disk_provisioned_iops       = optional(number, null)
+    boot_disk_provisioned_throughput = optional(number, null)
   }))
 
   validation {
@@ -106,6 +114,11 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : p.max_run_duration == null || p.provisioning_model == "flex-start"])
     error_message = "max_run_duration is only valid with provisioning_model = \"flex-start\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : (p.boot_disk_provisioned_iops == null && p.boot_disk_provisioned_throughput == null) || p.disk_type == "hyperdisk-balanced"])
+    error_message = "boot_disk_provisioned_iops / boot_disk_provisioned_throughput are only valid with disk_type = \"hyperdisk-balanced\"."
   }
 }
 
