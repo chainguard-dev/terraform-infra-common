@@ -1,81 +1,8 @@
 # `github-bots`
 
-This module has scaffolding for event-driven GitHub bots. This integrates with [`github-events`](../github-events/) to receive events, and provides SDK methods to interact with GitHub resources. The Terraform module creates a service account for the bot, and deploys the bot as a regional service.
+This Terraform module deploys a regional GitHub bot service and subscribes it to a GitHub event type through a CloudEvents broker. It creates a service account unless you provide `service_account_email`, and it adds a Cloud Monitoring dashboard.
 
-Out-of-the-box bots include:
-
-- [`dnm`](./dnm/): A bot that adds or removes a `blocking/dnm` label on pull requests if the title contains the text "do not merge".
-- [`blocker`](./blocker/): A bot that passes or fails a GitHub Check Run based on the presence of a `blocking/*` label on a pull request.
-  - this check can be used to block merges in GitHub.
-
-```hcl
-// ... networking and cloudevent-broker modules...
-
-module "github-events" {
-  source = "./modules/github-events"
-
-  project_id = var.project_id
-  name       = "github-events"
-  regions    = module.networking.regional-networks
-  ingress    = module.cloudevent-broker.ingress
-
-  // Which user is allowed to populate webhook secret values.
-  secret_version_adder = "user:you@company.biz"
-}
-
-module "bots" {
-  source = "./modules/github-bots"
-  for_each = {
-    "dnm"     = "dev.chainguard.github.pull_request",
-    "blocker" = "dev.chainguard.github.pull_request",
-  }
-
-  project_id = var.project_id
-  regions    = module.networking.regional-networks
-  broker     = module.cloudevent-broker.broker
-
-  name         = each.key
-  github-event = each.value
-  containers = {
-    "bot" = {
-      source = {
-        importpath  = "./${each.key}"
-      }
-      env = [
-        {
-          name  = "FOO"
-          value = "BAR"
-        }
-      ]
-    }
-  }
-}
-
-
-module "my-custom-bot" {
-  source = "./modules/github-bots"
-
-  project_id = var.project_id
-  regions    = module.networking.regional-networks
-  broker     = module.cloudevent-broker.broker
-
-  name         = "my-custom-bot"
-  github-event = "dev.chainguard.github.pull_request"
-  containers = {
-    "bot" = {
-      source = {
-        working_dir = path.module
-        importpath  = "chainguard.dev/bots/my-custom-bot"
-      }
-      ports = [{ container_port = 8080 }]
-      env = [{
-        name  = "LOG_LEVEL"
-        value = "info"
-      }]
-    }
-
-}
-```
+Supply the project, region network settings, broker topics, container source, GitHub event type, and notification channels. See [the module inputs](./variables.tf) for the current contract and [the module implementation](./main.tf) for the resources it creates. The SDK under [`sdk/`](./sdk/) contains helpers for bot handlers.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

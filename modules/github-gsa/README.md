@@ -2,7 +2,7 @@
 
 This module creates a Google Service Account that can be assumed by particular
 GitHub Actions workflows. It is intended to be used in conjunction with the
-[`github-wif-provider` module](./github-wif-provider/README.md).
+[`github-wif-provider` module](../github-wif-provider/README.md).
 
 ```hcl
 module "github-wif" {
