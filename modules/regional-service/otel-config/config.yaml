@@ -21,12 +21,58 @@ receivers:
           - source_labels: [ __name__ ]
             regex: '^prometheus_.*'
             action: drop
+          # Drop process_* except process_start_time_seconds, which the
+          # metricstarttime processor below reads and then drops itself.
+          # Relabel regexes are RE2 (no lookahead), so mark the one to keep
+          # with a scratch label, drop the unmarked rest, then drop the label.
+          # The scratch label uses the reserved __tmp prefix so it can never
+          # collide with a label an application exports.
           - source_labels: [ __name__ ]
-            regex: '^process_.*'
+            regex: 'process_start_time_seconds'
+            target_label: __tmp_keep_process_start_time
+            replacement: 'true'
+          - source_labels: [ __name__, __tmp_keep_process_start_time ]
+            regex: 'process_.*;'
             action: drop
+          - regex: __tmp_keep_process_start_time
+            action: labeldrop
           # REPLACE_ME_GO_METRICS
 
 processors:
+  # The prometheus receiver sets no start time on cumulative points, and the
+  # googlemanagedprometheus exporter's cumulative normalization then treats the
+  # first point it sees for each series as the zero baseline and drops it.
+  # Every job execution, and every new service instance, is a fresh process
+  # with a fresh collector, so each series' first point is the value at the
+  # collector's first scrape — and anything observed before that scrape (a
+  # long-mode reconciler's queue wait, recorded as a key is picked up, before
+  # the sidecar has booted) is subtracted out and lost.
+  # Stamping each point with the process's start time instead gives the first
+  # point a real interval, which the exporter passes through whole.
+  #
+  # The strategy uses the first process_start_time_seconds it finds in a
+  # batch, so this runs first in the pipeline, ahead of the batch processor:
+  # there, each batch is one scrape of one target. A target that does not
+  # export the metric falls back to the collector's start time, which in a
+  # sidecar is close to the process's.
+  #
+  # metricstarttime is the processor's original type name, which v0.142.0
+  # (the oldest collector this config supports, for the native histogram
+  # scrape keys) requires; later releases renamed it metric_start_time and
+  # keep this one as an alias.
+  metricstarttime:
+    strategy: start_time_metric
+
+  # process_start_time_seconds is kept past the scrape relabeling only for
+  # metricstarttime; do not export it. This is the filter processor's
+  # legacy metrics.metric form: its replacement, metric_conditions, is newer
+  # than v0.142.0, and an unknown key fails collector startup.
+  filter/process_start_time:
+    error_mode: ignore
+    metrics:
+      metric:
+        - name == "process_start_time_seconds"
+
   attributes:
     actions:
       - action: insert
@@ -109,5 +155,5 @@ service:
   pipelines:
     metrics:
       receivers: [prometheus]
-      processors: [batch, memory_limiter, resourcedetection, resource, attributes]
+      processors: [metricstarttime, filter/process_start_time, batch, memory_limiter, resourcedetection, resource, attributes]
       exporters: [googlemanagedprometheus]
