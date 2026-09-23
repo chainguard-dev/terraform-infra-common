@@ -432,6 +432,14 @@ resource "google_monitoring_alert_policy" "failed" {
 
   user_labels = local.merged_labels
 
+  dynamic "documentation" {
+    for_each = var.failed_execution_alert_documentation == "" ? [] : [var.failed_execution_alert_documentation]
+    content {
+      content   = documentation.value
+      mime_type = "text/markdown"
+    }
+  }
+
   conditions {
     display_name = "Cloud Run Job Failed Execution: ${var.name} (${each.key})"
 

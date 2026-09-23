@@ -94,6 +94,7 @@ module "impl" {
   success_alert_duration_seconds         = var.success_alert_duration_seconds
   success_alert_documentation            = var.success_alert_documentation
   failed_execution_alert                 = var.failed_execution_alert
+  failed_execution_alert_documentation   = var.failed_execution_alert_documentation
 }
 
 

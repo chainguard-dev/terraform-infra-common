@@ -284,6 +284,12 @@ variable "failed_execution_alert" {
   default     = false
 }
 
+variable "failed_execution_alert_documentation" {
+  description = "Markdown documentation attached to the failed-execution alert. Shown in the incident and notification (e.g. a runbook or a Logs Explorer link). Empty (default) attaches none, which is the same shape as success_alert_documentation -- but the two alerts differ in who is likely to need it. A job with no fixed schedule reaches on-call only when someone ran it deliberately, so the receiver may be the one person who knows least about why it exists."
+  type        = string
+  default     = ""
+}
+
 variable "resource_manager_tags" {
   description = "Resource Manager tags to bind to each Cloud Run job, as tagKeys/<id> => tagValues/<id>."
   type        = map(string)
