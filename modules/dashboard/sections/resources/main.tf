@@ -21,11 +21,17 @@ locals {
 
 module "width" { source = "../width" }
 
+// Jobs have no instance_count metric and no revisions; the closest equivalent
+// is the number of task attempts running, per region.
 module "instance_count" {
-  source          = "../../widgets/xy"
-  title           = "Instance count + revisions"
-  filter          = concat(local.filter, ["metric.type=\"run.googleapis.com/container/instance_count\""])
-  group_by_fields = ["resource.label.\"revision_name\""]
+  source = "../../widgets/xy"
+  title  = var.cloudrun_type == "job" ? "Running task attempts by region" : "Instance count + revisions"
+  filter = concat(local.filter, [
+    var.cloudrun_type == "job"
+    ? "metric.type=\"run.googleapis.com/job/running_task_attempts\""
+    : "metric.type=\"run.googleapis.com/container/instance_count\""
+  ])
+  group_by_fields = [var.cloudrun_type == "job" ? "resource.label.\"location\"" : "resource.label.\"revision_name\""]
   primary_align   = "ALIGN_MEAN"
   primary_reduce  = "REDUCE_SUM"
   plot_type       = "STACKED_AREA"
