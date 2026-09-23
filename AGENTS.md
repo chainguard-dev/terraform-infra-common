@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance for coding agents working on these modules.
 
 ## Build & Test Commands
 - Run tests: `go test -race -timeout=5m ./...`
