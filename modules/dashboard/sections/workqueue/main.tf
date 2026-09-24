@@ -34,6 +34,15 @@ variable "shards" {
   default     = 1
 }
 
+variable "latency_titles" {
+  description = "Optional titles for the processing and scheduled-wait latency charts."
+  type = object({
+    process = optional(string, "Work processing latency (p99)")
+    wait    = optional(string, "Work wait times (p99 by priority)")
+  })
+  default = {}
+}
+
 locals {
   // Use provided names or derive from service_name
   rcv_name = var.receiver_name != "" ? var.receiver_name : "${var.service_name}-rcv"
@@ -135,7 +144,7 @@ module "work-added" {
 
 module "process-latency" {
   source = "../../widgets/latency"
-  title  = "Work processing latency (p99)"
+  title  = var.latency_titles.process
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_process_latency_seconds/histogram\"",
@@ -147,7 +156,7 @@ module "process-latency" {
 
 module "wait-latency" {
   source = "../../widgets/latency"
-  title  = "Work wait times (p99 by priority)"
+  title  = var.latency_titles.wait
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/workqueue_wait_latency_from_scheduled_seconds/histogram\"",
