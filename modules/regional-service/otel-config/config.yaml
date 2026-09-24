@@ -21,21 +21,6 @@ receivers:
           - source_labels: [ __name__ ]
             regex: '^prometheus_.*'
             action: drop
-          # Drop process_* except process_start_time_seconds, which the
-          # metricstarttime processor below reads and then drops itself.
-          # Relabel regexes are RE2 (no lookahead), so mark the one to keep
-          # with a scratch label, drop the unmarked rest, then drop the label.
-          # The scratch label uses the reserved __tmp prefix so it can never
-          # collide with a label an application exports.
-          - source_labels: [ __name__ ]
-            regex: 'process_start_time_seconds'
-            target_label: __tmp_keep_process_start_time
-            replacement: 'true'
-          - source_labels: [ __name__, __tmp_keep_process_start_time ]
-            regex: 'process_.*;'
-            action: drop
-          - regex: __tmp_keep_process_start_time
-            action: labeldrop
           # REPLACE_ME_GO_METRICS
 
 processors:

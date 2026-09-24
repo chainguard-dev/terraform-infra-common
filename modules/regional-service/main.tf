@@ -103,24 +103,46 @@ locals {
     "",
   ]) : ""
 
-  go_metrics_drop_all = [
+  // With no keep list, render the rules the template used to inline, so
+  // services that do not opt in keep the same OTEL_CONFIG and see no
+  // revision roll. process_start_time_seconds is kept past scrape relabeling
+  // for the metricstarttime processor; filter/process_start_time drops it
+  // before export.
+  go_metrics_default = [
+    "          # Drop process_* except process_start_time_seconds, which the",
+    "          # metricstarttime processor below reads and then drops itself.",
+    "          # Relabel regexes are RE2 (no lookahead), so mark the one to keep",
+    "          # with a scratch label, drop the unmarked rest, then drop the label.",
+    "          # The scratch label uses the reserved __tmp prefix so it can never",
+    "          # collide with a label an application exports.",
+    "          - source_labels: [ __name__ ]",
+    "            regex: 'process_start_time_seconds'",
+    "            target_label: __tmp_keep_process_start_time",
+    "            replacement: 'true'",
+    "          - source_labels: [ __name__, __tmp_keep_process_start_time ]",
+    "            regex: 'process_.*;'",
+    "            action: drop",
+    "          - regex: __tmp_keep_process_start_time",
+    "            action: labeldrop",
     "          - source_labels: [ __name__ ]",
     "            regex: '^go_.*'",
     "            action: drop",
   ]
-  // RE2 has no negative lookahead, so "all go_* but these" needs a scratch label.
+  // RE2 has no negative lookahead, so "all go_*/process_* but these" needs a
+  // scratch label. process_start_time_seconds rides along for the same reason
+  // as above.
   go_metrics_keep_listed = [
     "          - source_labels: [ __name__ ]",
-    "            regex: '^(${join("|", var.keep_go_metrics)})$'",
+    "            regex: '^(${join("|", concat(["process_start_time_seconds"], var.keep_go_metrics))})$'",
     "            target_label: __tmp_keep_go",
     "            replacement: keep",
     "          - source_labels: [ __name__, __tmp_keep_go ]",
-    "            regex: '^go_.*;$'",
+    "            regex: '^(go|process)_.*;$'",
     "            action: drop",
     "          - regex: '^__tmp_keep_go$'",
     "            action: labeldrop",
   ]
-  go_metrics_config = join("\n", concat(length(var.keep_go_metrics) == 0 ? local.go_metrics_drop_all : local.go_metrics_keep_listed, [""]))
+  go_metrics_config = join("\n", concat(length(var.keep_go_metrics) == 0 ? local.go_metrics_default : local.go_metrics_keep_listed, [""]))
 
   default_labels = {
     basename(abspath(path.module)) = var.name

@@ -375,11 +375,11 @@ variable "scrape_native_histograms" {
 variable "keep_go_metrics" {
   type        = list(string)
   default     = []
-  description = "Go runtime series (go_*) to export from the metrics targets. The sidecar drops every go_* series by default; the names listed here are kept and the rest are still dropped."
+  description = "Go runtime (go_*) and process (process_*) series to export from the metrics targets. The sidecar drops every go_* and process_* series by default; the names listed here are kept and the rest are still dropped."
 
   validation {
-    condition     = alltrue([for m in var.keep_go_metrics : can(regex("^go_[a-zA-Z0-9_]+$", m))])
-    error_message = "keep_go_metrics entries must be Prometheus series names starting with go_."
+    condition     = alltrue([for m in var.keep_go_metrics : can(regex("^(go|process)_[a-zA-Z0-9_]+$", m))])
+    error_message = "keep_go_metrics entries must be Prometheus series names starting with go_ or process_."
   }
 }
 
