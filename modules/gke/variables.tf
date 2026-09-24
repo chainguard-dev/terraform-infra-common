@@ -99,6 +99,12 @@ variable "pools" {
     # it. Hyperdisk requires throughput <= IOPS / 4.
     boot_disk_provisioned_iops       = optional(number, null)
     boot_disk_provisioned_throughput = optional(number, null)
+    # GKE node auto-repair, on by default. Turn it off for a pool whose
+    # nodes can legitimately sit NotReady for close to GKE's ~10 minute
+    # repair threshold (a bare-metal node rebooting during bring-up), where
+    # a repair would recreate the node mid-boot. Always off on flex-start
+    # pools, which GKE requires.
+    auto_repair = optional(bool, true)
   }))
 
   validation {
@@ -181,6 +187,16 @@ variable "cluster_autoscaling_profile" {
   type        = string
   default     = null
   description = "Cluster autoscaler profile (BALANCED or OPTIMIZE_UTILIZATION). Governs the standard per-node-pool cluster autoscaler, so it is settable independently of node auto-provisioning (var.cluster_autoscaling)."
+}
+
+variable "maintenance_recurring_window" {
+  type = object({
+    start_time = string
+    end_time   = string
+    recurrence = string
+  })
+  default     = null
+  description = "Recurring maintenance window for automatic upgrades: RFC 3339 start_time and end_time (their times of day and length define each occurrence) and an RFC 5545 RRULE recurrence, e.g. FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR. GKE requires at least 48 hours of availability in any 32 days, in windows of 4 hours or more. Null (the default) sets no window, so GKE may upgrade at any time."
 }
 
 variable "deletion_protection" {

@@ -133,6 +133,20 @@ resource "google_container_cluster" "this" {
     channel = var.release_channel
   }
 
+  # Confines GKE's automatic maintenance (control plane and node pool
+  # upgrades, including surge drains) to a recurring window. Unset, GKE may
+  # upgrade at any time of day.
+  dynamic "maintenance_policy" {
+    for_each = var.maintenance_recurring_window == null ? [] : [var.maintenance_recurring_window]
+    content {
+      recurring_window {
+        start_time = maintenance_policy.value.start_time
+        end_time   = maintenance_policy.value.end_time
+        recurrence = maintenance_policy.value.recurrence
+      }
+    }
+  }
+
   # Configured with separate node_pool resources
   # node_config {}
 
@@ -440,7 +454,7 @@ resource "google_container_node_pool" "pools" {
 
   management {
     # GKE requires auto-repair off on flex-start pools.
-    auto_repair  = local.pool_models[each.key] != "flex-start"
+    auto_repair  = each.value.auto_repair && local.pool_models[each.key] != "flex-start"
     auto_upgrade = true
   }
 }
