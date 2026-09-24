@@ -154,6 +154,10 @@ resource "google_compute_service_attachment" "this" {
   # Terraform tear it down first (dependents are destroyed before their
   # dependencies), freeing the rule to be replaced, then recreates it.
   #
+  # Watch the computed id: a replacement makes it unknown until apply, while
+  # an in-place update retains it. Watching the whole resource also fires on
+  # label updates, unnecessarily replacing the attachment and closing consumers.
+  #
   # Deleting the attachment closes every connected consumer endpoint, and a
   # CLOSED PSC connection is terminal: the endpoint does not reconnect to the
   # recreated attachment (ACCEPT_MANUAL re-acceptance is for new connections),
@@ -164,6 +168,6 @@ resource "google_compute_service_attachment" "this" {
   # coordinated change with every accepted consumer, not a producer-only one.
   # https://cloud.google.com/vpc/docs/about-accessing-vpc-hosted-services-endpoints
   lifecycle {
-    replace_triggered_by = [google_compute_forwarding_rule.this]
+    replace_triggered_by = [google_compute_forwarding_rule.this.id]
   }
 }

@@ -30,6 +30,9 @@ Hand the `service_attachment_id` output to the `consumer` submodule (typically
 across Terraform states via a tfvar). See the parent module's
 [README](../README.md) for the producer -> consumer flow and the two-phase apply.
 
+In-place forwarding-rule updates, such as changing labels, preserve the service
+attachment and its existing consumer connections.
+
 Changing `allow_global_access`, or switching the frontend between HTTP and HTTPS
 (`tls_certificates`), recreates the forwarding rule and, by dependency, the
 service attachment: GCP does not allow an in-place change to those fields while
