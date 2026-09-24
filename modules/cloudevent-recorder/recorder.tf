@@ -65,6 +65,7 @@ module "this" {
   regions            = var.regions
 
   team                = var.team
+  product             = var.product
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.recorder.email
   containers = {

@@ -56,6 +56,7 @@ module "this" {
   name               = local.ingress_name
   regions            = var.regions
   team               = var.team
+  product            = var.product
 
   deletion_protection               = var.deletion_protection
   ingress                           = var.ingress

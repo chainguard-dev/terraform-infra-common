@@ -81,6 +81,7 @@ module "this" {
   }
 
   team                = var.team
+  product             = var.product
   deletion_protection = var.deletion_protection
   service_account     = google_service_account.service.email
   containers = {
