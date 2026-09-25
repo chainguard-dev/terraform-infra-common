@@ -6,8 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 // Create a shared secret to have the uptime check pass to the
 // Cloud Run app as an "Authorization" header to keep ~anyone
 // from being able to use our prober endpoints to indirectly
-// DoS our SaaS.
+// DoS our SaaS. With service_agent_auth, Cloud Run IAM plays
+// that role instead and no secret exists at all.
 resource "random_password" "secret" {
+  count = var.service_agent_auth ? 0 : 1
+
   length           = 64
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
@@ -15,6 +18,12 @@ resource "random_password" "secret" {
 
 locals {
   service_name = "prb-${substr(var.name, 0, 45)}" // use a common prefix so that they group together.
+
+  // service_agent_auth relies on Cloud Run IAM in front of the service. A
+  // GCLB terminates the uptime check's identity rather than forwarding it
+  // to the backing service, so multi-region probers must keep the
+  // shared-secret gate.
+  service_agent_auth_guard = (var.service_agent_auth && local.use_gclb) ? tobool("service_agent_auth is not supported for multi-region (GCLB) probers") : true
 }
 
 module "this" {
@@ -36,6 +45,11 @@ module "this" {
   // Different probers have different egress requirements.
   egress = var.egress
 
+  // With service_agent_auth, the service accepts only IAM-authenticated
+  // invocations; the uptime check's service agent is granted run.invoker
+  // below.
+  require_authenticated_invocations = var.service_agent_auth
+
   request_timeout_seconds = var.service_timeout_seconds
 
   deletion_protection = var.deletion_protection
@@ -49,14 +63,15 @@ module "this" {
         base_image  = var.base_image
       }
       ports = [{ container_port = 8080 }]
-      env = concat([
-        {
-          // This is a shared secret with the uptime check, which must be
-          // passed in an Authorization header for the probe to do work.
+      env = concat(
+        // This is a shared secret with the uptime check, which must be
+        // passed in an Authorization header for the probe to do work.
+        // Under service_agent_auth, Cloud Run IAM gates the endpoint and
+        // no secret is injected.
+        var.service_agent_auth ? [] : [{
           name  = "AUTHORIZATION"
-          value = random_password.secret.result
-        }
-        ],
+          value = random_password.secret[0].result
+        }],
         [for k, v in var.env : { name = k, value = v }],
         [
           for k, v in var.secret_env : {
@@ -120,9 +135,19 @@ resource "google_monitoring_uptime_check_config" "regional_uptime_check" {
     use_ssl      = true
     validate_ssl = true
 
-    // Pass the shared secret as an Authorization header.
-    headers = {
-      "Authorization" = random_password.secret.result
+    // Pass the shared secret as an Authorization header, unless Cloud Run
+    // IAM gates the endpoint instead.
+    headers = var.service_agent_auth ? {} : {
+      "Authorization" = random_password.secret[0].result
+    }
+
+    // Authenticate as the Cloud Monitoring service agent, which holds
+    // run.invoker on the service.
+    dynamic "service_agent_authentication" {
+      for_each = var.service_agent_auth ? [1] : []
+      content {
+        type = "OIDC_TOKEN"
+      }
     }
   }
 
@@ -161,9 +186,11 @@ resource "google_monitoring_uptime_check_config" "global_uptime_check" {
     use_ssl      = true
     validate_ssl = true
 
-    // Pass the shared secret as an Authorization header.
+    // Pass the shared secret as an Authorization header. (This check only
+    // exists for multi-region probers, where service_agent_auth is
+    // unsupported — see service_agent_auth_guard.)
     headers = {
-      "Authorization" = random_password.secret.result
+      "Authorization" = random_password.secret[0].result
     }
   }
 
@@ -181,4 +208,25 @@ resource "google_monitoring_uptime_check_config" "global_uptime_check" {
     # we tear this check down.
     create_before_destroy = true
   }
+}
+
+// With service_agent_auth, the uptime check authenticates as the Cloud
+// Monitoring service agent, which must be allowed to invoke the otherwise
+// IAM-gated service in each region.
+data "google_project" "this" {
+  count = var.service_agent_auth ? 1 : 0
+
+  project_id = var.project_id
+}
+
+resource "google_cloud_run_v2_service_iam_member" "uptime-check-invoker" {
+  for_each = var.service_agent_auth ? var.regions : {}
+
+  project  = var.project_id
+  location = each.key
+  name     = local.service_name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:service-${data.google_project.this[0].number}@gcp-sa-monitoring.iam.gserviceaccount.com"
+
+  depends_on = [module.this]
 }

@@ -236,3 +236,16 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
+
+variable "service_agent_auth" {
+  type        = bool
+  default     = false
+  description = <<EOD
+When true, no shared secret exists: the service accepts only
+IAM-authenticated invocations (run.invoker is not granted to allUsers), the
+uptime check authenticates with an OIDC token as the Cloud Monitoring
+service agent, and that agent is granted run.invoker on the service. Only
+supported for single-region probers — a GCLB terminates the check's
+identity rather than forwarding it to the backing service.
+EOD
+}

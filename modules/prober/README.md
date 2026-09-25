@@ -71,33 +71,35 @@ No requirements.
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
-| ---- | ------ | ------- |
+|------|--------|---------|
 | <a name="module_gclb"></a> [gclb](#module\_gclb) | ../serverless-gclb | n/a |
 | <a name="module_this"></a> [this](#module\_this) | ../regional-go-service | n/a |
 
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
+|------|------|
+| [google_cloud_run_v2_service_iam_member.uptime-check-invoker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
 | [google_monitoring_alert_policy.uptime_alert](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_monitoring_uptime_check_config.global_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
 | [google_monitoring_uptime_check_config.regional_uptime_check](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config) | resource |
 | [random_password.secret](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/cloud_run_v2_service) | data source |
+| [google_project.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_alert_description"></a> [alert\_description](#input\_alert\_description) | Alert documentation. Use this to link to playbooks or give additional context. | `string` | `"An uptime check has failed."` | no |
-| <a name="input_alert_links"></a> [alert\_links](#input\_alert\_links) | Links to troubleshooting resources in the alert documentation. | <pre>list(object({<br/>    display_name = string<br/>    url          = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_alert_links"></a> [alert\_links](#input\_alert\_links) | Links to troubleshooting resources in the alert documentation. | <pre>list(object({<br>    display_name = string<br>    url          = string<br>  }))</pre> | `[]` | no |
 | <a name="input_base_image"></a> [base\_image](#input\_base\_image) | The base image to use for the prober. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The CPU limit for the prober. | `string` | `"1000m"` | no |
 | <a name="input_cpu_idle"></a> [cpu\_idle](#input\_cpu\_idle) | A map of region names to cpu\_idle settings. When true, CPU is throttled when no requests are being processed. | `map(bool)` | `{}` | no |
@@ -110,7 +112,7 @@ No requirements.
 | <a name="input_env"></a> [env](#input\_env) | A map of custom environment variables (e.g. key=value) | `map` | `{}` | no |
 | <a name="input_importpath"></a> [importpath](#input\_importpath) | The import path that contains the prober application. | `string` | n/a | yes |
 | <a name="input_launch_stage"></a> [launch\_stage](#input\_launch\_stage) | The launch stage of the Cloud Run service (e.g. BETA to leverage features like disk volumes). | `string` | `"GA"` | no |
-| <a name="input_load_balancing"></a> [load\_balancing](#input\_load\_balancing) | n/a | <pre>object({<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, null)<br/>  })</pre> | `{}` | no |
+| <a name="input_load_balancing"></a> [load\_balancing](#input\_load\_balancing) | n/a | <pre>object({<br>    external_managed_migration_state              = optional(string, null)<br>    external_managed_migration_testing_percentage = optional(number, null)<br>    load_balancing_scheme                         = optional(string, null)<br>  })</pre> | `{}` | no |
 | <a name="input_memory"></a> [memory](#input\_memory) | The memory limit for the prober. | `string` | `"512Mi"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to prefix to created resources. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | A list of notification channels to send alerts to. | `list(string)` | n/a | yes |
@@ -118,14 +120,15 @@ No requirements.
 | <a name="input_period"></a> [period](#input\_period) | The period for the prober in seconds. Supported values: 60s (1 minute), 300s (5 minutes), 600s (10 minutes), and 900s (15 minutes) | `string` | `"300s"` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the prober. | `string` | n/a | yes |
-| <a name="input_regional-env"></a> [regional-env](#input\_regional-env) | A list of object that provides a map env per region. | <pre>list(object({<br/>    name  = string<br/>    value = map(string)<br/>  }))</pre> | `[]` | no |
-| <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br/>    network = string<br/>    subnet  = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_regional-env"></a> [regional-env](#input\_regional-env) | A list of object that provides a map env per region. | <pre>list(object({<br>    name  = string<br>    value = map(string)<br>  }))</pre> | `[]` | no |
+| <a name="input_regions"></a> [regions](#input\_regions) | A map from region names to a network and subnetwork.  A prober service will be created in each region. | <pre>map(object({<br>    network = string<br>    subnet  = string<br>  }))</pre> | n/a | yes |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags forwarded to this module's taggable resources, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
-| <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br/>    min_instances                    = optional(number, 0)<br/>    max_instances                    = optional(number, 100)<br/>    max_instance_request_concurrency = optional(number)<br/>  })</pre> | `{}` | no |
+| <a name="input_scaling"></a> [scaling](#input\_scaling) | The scaling configuration for the service. | <pre>object({<br>    min_instances                    = optional(number, 0)<br>    max_instances                    = optional(number, 100)<br>    max_instance_request_concurrency = optional(number)<br>  })</pre> | `{}` | no |
 | <a name="input_secret_env"></a> [secret\_env](#input\_secret\_env) | A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret\_key=secret\_name) | `map` | `{}` | no |
 | <a name="input_security-policy"></a> [security-policy](#input\_security-policy) | The security policy associated with the prober backend service. | `string` | `null` | no |
 | <a name="input_selected_regions"></a> [selected\_regions](#input\_selected\_regions) | List of uptime check region, minimum 3. Valid [USA (has 3 regions), EUROPE, SOUTH\_AMERICA, ASIA\_PACIFIC, USA\_OREGON, USA\_IOWA, USA\_VIRGINIA] | `list(string)` | `null` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | The email address of the service account to run the service as. | `string` | n/a | yes |
+| <a name="input_service_agent_auth"></a> [service\_agent\_auth](#input\_service\_agent\_auth) | When true, no shared secret exists: the service accepts only<br>IAM-authenticated invocations (run.invoker is not granted to allUsers), the<br>uptime check authenticates with an OIDC token as the Cloud Monitoring<br>service agent, and that agent is granted run.invoker on the service. Only<br>supported for single-region probers — a GCLB terminates the check's<br>identity rather than forwarding it to the backing service. | `bool` | `false` | no |
 | <a name="input_service_timeout_seconds"></a> [service\_timeout\_seconds](#input\_service\_timeout\_seconds) | The timeout set on the cloud run service routing the uptime check request. | `number` | `"300"` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | The timeout for the prober in seconds. Supported values 1-60s | `string` | `"60s"` | no |
@@ -135,7 +138,7 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
+|------|-------------|
 | <a name="output_alert_id"></a> [alert\_id](#output\_alert\_id) | n/a |
 | <a name="output_uptime_check"></a> [uptime\_check](#output\_uptime\_check) | n/a |
 | <a name="output_uptime_check_name"></a> [uptime\_check\_name](#output\_uptime\_check\_name) | n/a |
