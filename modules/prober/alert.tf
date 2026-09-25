@@ -27,9 +27,12 @@ resource "google_monitoring_alert_policy" "uptime_alert" {
 
       comparison = "COMPARISON_GT"
       duration   = var.uptime_alert_duration
-      filter     = <<-EOT
+      // With service_agent_auth the uptime check monitors the Cloud Run
+      // service, so check_passed is emitted under cloud_run_revision
+      // rather than uptime_url.
+      filter = <<-EOT
         metric.type="monitoring.googleapis.com/uptime_check/check_passed"
-        resource.type="uptime_url"
+        resource.type="${var.service_agent_auth ? "cloud_run_revision" : "uptime_url"}"
         metric.label.check_id="${local.uptime_check_id}"
       EOT
 

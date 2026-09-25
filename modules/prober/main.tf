@@ -151,14 +151,21 @@ resource "google_monitoring_uptime_check_config" "regional_uptime_check" {
     }
   }
 
+  // Service-agent authentication is only supported against a Cloud Run
+  // resource, not an arbitrary URL, so that mode monitors the service
+  // directly instead of its uptime_url.
   monitored_resource {
-    labels = {
+    type = var.service_agent_auth ? "cloud_run_revision" : "uptime_url"
+
+    labels = var.service_agent_auth ? {
+      project_id   = var.project_id
+      service_name = local.service_name
+      location     = keys(var.regions)[0]
+      } : {
       // Strip the scheme and path off of the Cloud Run URL.
       host       = split("/", data.google_cloud_run_v2_service.this[0].uri)[2]
       project_id = var.project_id
     }
-
-    type = "uptime_url"
   }
 
   lifecycle {
@@ -210,13 +217,21 @@ resource "google_monitoring_uptime_check_config" "global_uptime_check" {
   }
 }
 
-// With service_agent_auth, the uptime check authenticates as the Cloud
-// Monitoring service agent, which must be allowed to invoke the otherwise
-// IAM-gated service in each region.
-data "google_project" "this" {
-  count = var.service_agent_auth ? 1 : 0
+// With service_agent_auth, the uptime check authenticates as Monitoring's
+// service agent, which must be allowed to invoke the otherwise IAM-gated
+// service in each region. The agent that signs the check's OIDC token is
+// the one this resource returns — service-N@gcp-sa-monitoring-notification,
+// NOT service-N@gcp-sa-monitoring (observed on the wire:
+// https://seankhliao.com/blog/12024-07-20-gcp-uptime-service-agent-auth/).
+// The agent is also created lazily by GCP, so provision it explicitly
+// rather than assuming a prior uptime check or notification channel
+// already forced it into existence.
+resource "google_project_service_identity" "monitoring" {
+  count    = var.service_agent_auth ? 1 : 0
+  provider = google-beta
 
-  project_id = var.project_id
+  project = var.project_id
+  service = "monitoring.googleapis.com"
 }
 
 resource "google_cloud_run_v2_service_iam_member" "uptime-check-invoker" {
@@ -226,7 +241,7 @@ resource "google_cloud_run_v2_service_iam_member" "uptime-check-invoker" {
   location = each.key
   name     = local.service_name
   role     = "roles/run.invoker"
-  member   = "serviceAccount:service-${data.google_project.this[0].number}@gcp-sa-monitoring.iam.gserviceaccount.com"
+  member   = "serviceAccount:${google_project_service_identity.monitoring[0].email}"
 
   depends_on = [module.this]
 }
