@@ -446,8 +446,11 @@ resource "google_container_node_pool" "pools" {
   }
 
   autoscaling {
-    min_node_count = each.value.min_node_count
-    max_node_count = each.value.max_node_count
+    # Per-zone bounds unless the pool sets total ones; GKE refuses both.
+    min_node_count       = each.value.total_min_node_count == null ? each.value.min_node_count : null
+    max_node_count       = each.value.total_min_node_count == null ? each.value.max_node_count : null
+    total_min_node_count = each.value.total_min_node_count
+    total_max_node_count = each.value.total_max_node_count
     # GKE requires location policy ANY on flex-start pools.
     location_policy = local.pool_models[each.key] == "flex-start" ? "ANY" : null
   }

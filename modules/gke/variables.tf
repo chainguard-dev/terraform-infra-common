@@ -105,6 +105,15 @@ variable "pools" {
     # a repair would recreate the node mid-boot. Always off on flex-start
     # pools, which GKE requires.
     auto_repair = optional(bool, true)
+    # Autoscaling bounds for the whole pool rather than each zone. GKE's
+    # min_node_count and max_node_count are PER ZONE, so a pool spanning
+    # three zones with min_node_count = 1 keeps three nodes; set both of
+    # these instead to bound the pool's total (e.g. exactly one always-on
+    # node across its zones). When set they replace min_node_count and
+    # max_node_count, which GKE refuses alongside them. Moving an existing
+    # pool between the two forms is an in-place autoscaling update.
+    total_min_node_count = optional(number, null)
+    total_max_node_count = optional(number, null)
   }))
 
   validation {
@@ -125,6 +134,18 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : (p.boot_disk_provisioned_iops == null && p.boot_disk_provisioned_throughput == null) || p.disk_type == "hyperdisk-balanced"])
     error_message = "boot_disk_provisioned_iops / boot_disk_provisioned_throughput are only valid with disk_type = \"hyperdisk-balanced\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : (p.total_min_node_count == null) == (p.total_max_node_count == null)])
+    error_message = "total_min_node_count and total_max_node_count must be set together: GKE takes a pool's bounds either per zone or in total, not a mix."
+  }
+
+  # try(): an unset pair compares null and is valid; the pairing rule
+  # above catches a half-set one.
+  validation {
+    condition     = alltrue([for name, p in var.pools : try(p.total_min_node_count >= 0 && p.total_min_node_count <= p.total_max_node_count, true)])
+    error_message = "total_min_node_count must be between 0 and total_max_node_count."
   }
 }
 
