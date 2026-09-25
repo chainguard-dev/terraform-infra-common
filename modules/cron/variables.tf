@@ -1,4 +1,5 @@
 variable "name" {
+  type        = string
   description = "Name to prefix to created resources."
 }
 
@@ -8,11 +9,13 @@ variable "project_id" {
 }
 
 variable "region" {
+  type        = string
   default     = "us-east4"
   description = "The region to run the job."
 }
 
 variable "schedule" {
+  type        = string
   description = "The cron schedule on which to run the job."
 }
 
@@ -45,11 +48,13 @@ variable "working_dir" {
 }
 
 variable "env" {
+  type        = map(string)
   default     = {}
   description = "A map of custom environment variables (e.g. key=value)"
 }
 
 variable "secret_env" {
+  type        = map(string)
   default     = {}
   description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name). A value may pin a version as secret_name@version; unpinned values mount latest, which breaks whenever a stray newer version exists — pin when the consumer must match a specific rotation (e.g. a SQL user's password)."
 }

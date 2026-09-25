@@ -18,6 +18,7 @@ variable "network" {
 }
 
 variable "region" {
+  type        = string
   description = "Always create a regional cluster since GKE doesn't charge differently for regional/zonal clusters. Rather, we configure the node locations using `var.zones`"
 }
 

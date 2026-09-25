@@ -19,6 +19,7 @@ variable "service_name" {
 }
 
 variable "location" {
+  type        = string
   default     = "US"
   description = "The location to create the BigQuery dataset in, and in which to run the data transfer jobs from GCS."
 }
@@ -34,6 +35,7 @@ variable "retention-period" {
 }
 
 variable "deletion_protection" {
+  type        = bool
   default     = true
   description = "Whether to enable deletion protection on data resources."
 }

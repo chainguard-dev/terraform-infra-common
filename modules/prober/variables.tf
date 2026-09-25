@@ -61,6 +61,7 @@ variable "domain" {
 }
 
 variable "env" {
+  type        = map(string)
   default     = {}
   description = "A map of custom environment variables (e.g. key=value)"
 }
@@ -81,6 +82,7 @@ variable "cpu_idle" {
 }
 
 variable "secret_env" {
+  type        = map(string)
   default     = {}
   description = "A map of secrets to mount as environment variables from Google Secrets Manager (e.g. secret_key=secret_name)"
 }

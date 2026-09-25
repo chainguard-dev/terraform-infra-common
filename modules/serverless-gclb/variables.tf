@@ -7,11 +7,13 @@ variable "project_id" {
 }
 
 variable "regions" {
+  type        = list(string)
   description = "The set of regions containing backends for the load balancer (regions must be added here before they can be added as serving regions)."
   default     = ["us-central1"]
 }
 
 variable "serving_regions" {
+  type        = list(string)
   description = "The set of regions with backends suitable for serving traffic from the load balancer (regions must be removed from here before they can be removed from regions)."
   default     = ["us-central1"]
 }
