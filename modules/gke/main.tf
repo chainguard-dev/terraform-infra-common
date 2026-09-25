@@ -451,8 +451,9 @@ resource "google_container_node_pool" "pools" {
     max_node_count       = each.value.total_min_node_count == null ? each.value.max_node_count : null
     total_min_node_count = each.value.total_min_node_count
     total_max_node_count = each.value.total_max_node_count
-    # GKE requires location policy ANY on flex-start pools.
-    location_policy = local.pool_models[each.key] == "flex-start" ? "ANY" : null
+    # The pool's own choice (null leaves GKE's default, BALANCED); GKE
+    # requires ANY on flex-start pools.
+    location_policy = local.pool_models[each.key] == "flex-start" ? "ANY" : each.value.location_policy
   }
 
   management {

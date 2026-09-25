@@ -115,6 +115,14 @@ variable "pools" {
     # pool between the two forms is an in-place autoscaling update.
     total_min_node_count = optional(number, null)
     total_max_node_count = optional(number, null)
+    # Which zones the autoscaler grows the pool in: "BALANCED" spreads
+    # nodes evenly across the pool's zones, "ANY" picks whichever zone has
+    # capacity. Null (the default) leaves GKE's default, BALANCED. ANY suits
+    # a scarce machine type: under BALANCED a zone that keeps stocking out
+    # is the one with the fewest nodes, so it is tried first on every
+    # scale-up, and each failure costs a retry before another zone is used.
+    # Flex-start pools always get ANY, which GKE requires.
+    location_policy = optional(string, null)
   }))
 
   validation {
@@ -135,6 +143,11 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : (p.boot_disk_provisioned_iops == null && p.boot_disk_provisioned_throughput == null) || p.disk_type == "hyperdisk-balanced"])
     error_message = "boot_disk_provisioned_iops / boot_disk_provisioned_throughput are only valid with disk_type = \"hyperdisk-balanced\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.location_policy == null || contains(["BALANCED", "ANY"], coalesce(p.location_policy, "BALANCED"))])
+    error_message = "location_policy must be null, \"BALANCED\", or \"ANY\"."
   }
 
   validation {
