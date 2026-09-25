@@ -130,10 +130,13 @@ resource "google_monitoring_uptime_check_config" "regional_uptime_check" {
   selected_regions = var.selected_regions
 
   http_check {
-    path         = "/"
-    port         = "443"
-    use_ssl      = true
-    validate_ssl = true
+    path    = "/"
+    port    = "443"
+    use_ssl = true
+    // The API only permits validate_ssl on uptime_url checks; a
+    // cloud_run_revision check (the service_agent_auth mode below) is
+    // rejected with Error 400 when it is set.
+    validate_ssl = var.service_agent_auth ? null : true
 
     // Pass the shared secret as an Authorization header, unless Cloud Run
     // IAM gates the endpoint instead.
