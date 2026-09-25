@@ -1,4 +1,6 @@
-variable "sections" {}
+variable "sections" {
+  type = any
+}
 
 module "width" { source = "../width" }
 

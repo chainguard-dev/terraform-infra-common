@@ -1,5 +1,8 @@
 variable "title" { type = string }
-variable "collapsed" { default = false }
+variable "collapsed" {
+  type    = bool
+  default = false
+}
 variable "alert" { type = string }
 
 module "width" { source = "../width" }

@@ -1,6 +1,9 @@
 variable "title" { type = string }
 variable "filter" { type = list(string) }
-variable "collapsed" { default = false }
+variable "collapsed" {
+  type    = bool
+  default = false
+}
 
 module "width" { source = "../width" }
 

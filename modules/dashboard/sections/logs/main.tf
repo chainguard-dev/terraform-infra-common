@@ -1,6 +1,9 @@
 variable "title" { type = string }
 variable "filter" { type = list(string) }
-variable "collapsed" { default = true }
+variable "collapsed" {
+  type    = bool
+  default = true
+}
 module "width" { source = "../width" }
 variable "cloudrun_type" {
   type    = string

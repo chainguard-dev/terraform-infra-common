@@ -1,5 +1,8 @@
 variable "title" { type = string }
-variable "group_by_fields" { default = [] }
+variable "group_by_fields" {
+  type    = list(string)
+  default = []
+}
 variable "filter" { type = list(string) }
 variable "band" {
   type    = number

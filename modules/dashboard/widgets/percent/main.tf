@@ -3,15 +3,36 @@
 // with additional filtering.
 
 variable "title" { type = string }
-variable "legend" { default = "" }
-variable "group_by_fields" { default = [] }
+variable "legend" {
+  type    = string
+  default = ""
+}
+variable "group_by_fields" {
+  type    = list(string)
+  default = []
+}
 variable "numerator_additional_filter" { type = list(string) }
 variable "common_filter" { type = list(string) }
-variable "plot_type" { default = "LINE" }
-variable "alignment_period" { default = "60s" }
-variable "align" { default = "ALIGN_RATE" }
-variable "reduce" { default = "REDUCE_SUM" }
-variable "thresholds" { default = [] }
+variable "plot_type" {
+  type    = string
+  default = "LINE"
+}
+variable "alignment_period" {
+  type    = string
+  default = "60s"
+}
+variable "align" {
+  type    = string
+  default = "ALIGN_RATE"
+}
+variable "reduce" {
+  type    = string
+  default = "REDUCE_SUM"
+}
+variable "thresholds" {
+  type    = list(number)
+  default = []
+}
 
 module "plot" {
   source = "../xy-ratio"

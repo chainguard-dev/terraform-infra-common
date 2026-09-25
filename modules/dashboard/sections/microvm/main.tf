@@ -32,6 +32,7 @@ variable "namespace" {
 }
 
 variable "collapsed" {
+  type        = bool
   description = "Whether the two microvm groups start collapsed."
   default     = true
 }

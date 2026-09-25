@@ -10,7 +10,10 @@ variable "cloudrun_type" {
     error_message = "Allowed values for 'cloudrun_type' are 'service' or 'job'."
   }
 }
-variable "collapsed" { default = false }
+variable "collapsed" {
+  type    = bool
+  default = false
+}
 variable "notification_channels" {
   type = list(string)
 }

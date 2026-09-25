@@ -1,16 +1,46 @@
 variable "title" { type = string }
-variable "legend" { default = "" }
-variable "numerator_group_by_fields" { default = [] }
-variable "denominator_group_by_fields" { default = [] }
+variable "legend" {
+  type    = string
+  default = ""
+}
+variable "numerator_group_by_fields" {
+  type    = list(string)
+  default = []
+}
+variable "denominator_group_by_fields" {
+  type    = list(string)
+  default = []
+}
 variable "numerator_filter" { type = list(string) }
 variable "denominator_filter" { type = list(string) }
-variable "plot_type" { default = "LINE" }
-variable "alignment_period" { default = "60s" }
-variable "numerator_align" { default = "ALIGN_RATE" }
-variable "numerator_reduce" { default = "REDUCE_SUM" }
-variable "denominator_align" { default = "ALIGN_RATE" }
-variable "denominator_reduce" { default = "REDUCE_SUM" }
-variable "thresholds" { default = [] }
+variable "plot_type" {
+  type    = string
+  default = "LINE"
+}
+variable "alignment_period" {
+  type    = string
+  default = "60s"
+}
+variable "numerator_align" {
+  type    = string
+  default = "ALIGN_RATE"
+}
+variable "numerator_reduce" {
+  type    = string
+  default = "REDUCE_SUM"
+}
+variable "denominator_align" {
+  type    = string
+  default = "ALIGN_RATE"
+}
+variable "denominator_reduce" {
+  type    = string
+  default = "REDUCE_SUM"
+}
+variable "thresholds" {
+  type    = list(number)
+  default = []
+}
 
 // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#XyChart
 output "widget" {

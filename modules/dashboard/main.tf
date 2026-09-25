@@ -1,4 +1,5 @@
 variable "object" {
+  type        = any
   description = "Object to encode into JSON"
 }
 

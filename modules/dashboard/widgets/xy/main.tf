@@ -1,13 +1,37 @@
 variable "title" { type = string }
-variable "group_by_fields" { default = [] }
+variable "group_by_fields" {
+  type    = list(string)
+  default = []
+}
 variable "filter" { type = list(string) }
-variable "plot_type" { default = "LINE" }
-variable "alignment_period" { default = "60s" }
-variable "primary_align" { default = "ALIGN_RATE" }
-variable "primary_reduce" { default = "REDUCE_NONE" }
-variable "secondary_align" { default = "" }
-variable "secondary_reduce" { default = "" }
-variable "thresholds" { default = [] }
+variable "plot_type" {
+  type    = string
+  default = "LINE"
+}
+variable "alignment_period" {
+  type    = string
+  default = "60s"
+}
+variable "primary_align" {
+  type    = string
+  default = "ALIGN_RATE"
+}
+variable "primary_reduce" {
+  type    = string
+  default = "REDUCE_NONE"
+}
+variable "secondary_align" {
+  type    = string
+  default = ""
+}
+variable "secondary_reduce" {
+  type    = string
+  default = ""
+}
+variable "thresholds" {
+  type    = list(number)
+  default = []
+}
 variable "legend" {
   description = "Legend template for the primary dataset."
   type        = string

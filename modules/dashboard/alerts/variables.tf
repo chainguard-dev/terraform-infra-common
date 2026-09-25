@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 variable "labels" {
+  type        = map(string)
   description = "Additional labels to apply to the dashboard."
   default     = {}
 }

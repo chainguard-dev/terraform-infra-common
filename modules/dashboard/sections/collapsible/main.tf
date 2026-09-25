@@ -1,6 +1,11 @@
 variable "title" { type = string }
-variable "tiles" {}
-variable "collapsed" { default = false }
+variable "tiles" {
+  type = any
+}
+variable "collapsed" {
+  type    = bool
+  default = false
+}
 
 locals {
   start_row = length(var.tiles) == 0 ? 0 : min([for s in var.tiles : s.yPos]...)

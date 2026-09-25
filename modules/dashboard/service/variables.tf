@@ -4,6 +4,7 @@ variable "service_name" {
 }
 
 variable "labels" {
+  type        = map(string)
   description = "Additional labels to apply to the dashboard."
   default     = {}
 }
