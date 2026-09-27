@@ -28,6 +28,10 @@ Set up a GCP VPC network with regional subnets, DNS policies, and private Google
 
 Use this when Cloud Run services need VPC networking for private connectivity or egress control.
 
+### [`regional-leasepool`](./modules/regional-leasepool/)
+
+Creates an independent GCS lease bucket in each region and grants object access to one identity. Use with `pkg/leasepool/gcs` for cooperative leadership across replicas or overlapping scheduled jobs. Lease ownership does not fence external API mutations.
+
 ## Event-Driven Architecture
 
 ### [`cloudevent-broker`](./modules/cloudevent-broker/)
