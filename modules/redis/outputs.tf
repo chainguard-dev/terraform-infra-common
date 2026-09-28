@@ -73,6 +73,12 @@ output "rdb_snapshot_period" {
 output "auth_secret_id" {
   description = "The ID of the Secret Manager secret containing the Redis AUTH string"
   value       = var.auth_enabled ? module.redis_auth_secret[0].secret_id : null
+
+  # The secret ID survives an instance replacement, but the AUTH string does
+  # not. Consumers that resolve the "latest" version (for example a Cloud Run
+  # revision) must not read it until the current auth string is stored, or
+  # they pin the replaced instance's password.
+  depends_on = [google_secret_manager_secret_version.auth_string]
 }
 
 output "auth_enabled" {
