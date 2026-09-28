@@ -175,6 +175,11 @@ type GitHubClient struct {
 
 func (c GitHubClient) Client() *github.Client { return c.inner }
 
+// TokenSource returns the token source that authenticates the client, for
+// callers that reach GitHub outside the go-github client, such as the git
+// CLI.
+func (c GitHubClient) TokenSource() oauth2.TokenSource { return c.ts }
+
 func (c GitHubClient) Close(ctx context.Context) error {
 	// TODO: We shouldn't get a token here if it's the first time, just to revoke it.
 	tok, err := c.ts.Token()
