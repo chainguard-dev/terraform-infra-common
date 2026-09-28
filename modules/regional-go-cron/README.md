@@ -81,7 +81,7 @@ No requirements.
 | <a name="input_success_alert_duration_seconds"></a> [success\_alert\_duration\_seconds](#input\_success\_alert\_duration\_seconds) | How long the absence of successful executions must persist before the alert fires. If not set or 0, defaults to success\_alert\_alignment\_period\_seconds for backward compatibility. | `number` | `0` | no |
 | <a name="input_task_count"></a> [task\_count](#input\_task\_count) | n/a | `number` | `1` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources. | `string` | n/a | yes |
-| <a name="input_timeout"></a> [timeout](#input\_timeout) | Maximum time allowed for a single task execution. | `string` | `"600s"` | no |
+| <a name="input_timeout"></a> [timeout](#input\_timeout) | Maximum time allowed for a single task execution, as a duration in seconds with an "s" suffix (e.g. "600s"). | `string` | `"600s"` | no |
 | <a name="input_volumes"></a> [volumes](#input\_volumes) | Volumes to make available to job task containers. | <pre>list(object({<br/>    name = string<br/>    empty_dir = optional(object({<br/>      medium     = optional(string, "MEMORY")<br/>      size_limit = optional(string)<br/>    }))<br/>    secret = optional(object({<br/>      secret = string<br/>      items = list(object({<br/>        version = string<br/>        path    = string<br/>      }))<br/>    }))<br/>    nfs = optional(object({<br/>      server    = string<br/>      path      = string<br/>      read_only = optional(bool, true)<br/>    }))<br/>    gcs = optional(object({<br/>      bucket        = string<br/>      read_only     = optional(bool, true)<br/>      mount_options = optional(list(string), [])<br/>    }))<br/>  }))</pre> | `[]` | no |
 
 ## Outputs

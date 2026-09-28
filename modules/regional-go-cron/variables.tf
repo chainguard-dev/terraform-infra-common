@@ -200,9 +200,16 @@ variable "max_retries" {
 }
 
 variable "timeout" {
-  description = "Maximum time allowed for a single task execution."
+  description = "Maximum time allowed for a single task execution, as a duration in seconds with an \"s\" suffix (e.g. \"600s\")."
   type        = string
   default     = "600s"
+
+  # The provider checks this only at apply; a bare number type-converts to a
+  # string and passes plan.
+  validation {
+    condition     = var.timeout == null || can(regex("^[0-9]+(\\.[0-9]{1,9})?s$", var.timeout))
+    error_message = "timeout must be a duration in seconds with an \"s\" suffix, e.g. \"600s\", not a bare number."
+  }
 }
 
 variable "task_count" {

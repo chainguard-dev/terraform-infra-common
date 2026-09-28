@@ -74,7 +74,14 @@ variable "max_retries" {
 variable "timeout" {
   default     = "600s" # 10 minutes is the default for Cloud Run jobs
   type        = string
-  description = "The maximum amount of time in seconds to allow the job to run."
+  description = "The maximum amount of time to allow the job to run, as a duration in seconds with an \"s\" suffix (e.g. \"600s\")."
+
+  # The provider checks this only at apply; a bare number type-converts to a
+  # string and passes plan.
+  validation {
+    condition     = var.timeout == null || can(regex("^[0-9]+(\\.[0-9]{1,9})?s$", var.timeout))
+    error_message = "timeout must be a duration in seconds with an \"s\" suffix, e.g. \"600s\", not a bare number."
+  }
 }
 
 variable "cpu" {
