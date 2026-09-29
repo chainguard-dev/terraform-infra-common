@@ -125,13 +125,12 @@ resource "null_resource" "exec" {
 
   // Re-run the exec provisioner whenever the container images change, or —
   // when the caller names its own signal — whenever that changes instead.
-  // exec_include_image_refs retains image changes alongside that custom signal.
   // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
   // so these values are stable at apply time (unlike job_etag or job_generation,
   // which are server-side computed values that change mid-apply).
-  triggers = length(var.exec_triggers) > 0 && !var.exec_include_image_refs ? var.exec_triggers : merge(var.exec_triggers, {
+  triggers = length(var.exec_triggers) > 0 ? var.exec_triggers : {
     image_refs = join(",", values(module.impl.image_refs))
-  })
+  }
 }
 
 moved {

@@ -72,15 +72,12 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_labels"></a> [labels](#input\_labels) | Additional labels for the status bucket. Merged after team and product, so a key here overrides them. | `map(string)` | `{}` | no |
 | <a name="input_lifecycle_age_days"></a> [lifecycle\_age\_days](#input\_lifecycle\_age\_days) | When > 0, adds a bucket lifecycle rule that deletes status objects older than this many days. Status objects are cheap and self-heal, so a TTL bounds the cost of abandoned entries. 0 disables the rule. | `number` | `0` | no |
 | <a name="input_location"></a> [location](#input\_location) | The location (region or multi-region) for the status bucket. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Base name for the status bucket. A short random suffix is appended to keep the (globally unique) bucket name collision-free. | `string` | n/a | yes |
-| <a name="input_product"></a> [product](#input\_product) | Product label for the status bucket, for cost attribution. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID where the status bucket will be created. | `string` | n/a | yes |
 | <a name="input_reader_service_accounts"></a> [reader\_service\_accounts](#input\_reader\_service\_accounts) | Service account members granted read-only (roles/storage.objectViewer) access, for consumers built with gcsstatusmanager.NewReadOnly. | `list(string)` | `[]` | no |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the status bucket, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label for the status bucket, for cost attribution. | `string` | `null` | no |
 | <a name="input_writer_service_accounts"></a> [writer\_service\_accounts](#input\_writer\_service\_accounts) | Service account members (e.g. serviceAccount:foo@project.iam.gserviceaccount.com) granted read+write on the status bucket. gcsstatusmanager overwrites objects, so roles/storage.objectUser (no repoAdmin/delete privilege needed for writes) is granted. | `list(string)` | `[]` | no |
 
 ## Outputs

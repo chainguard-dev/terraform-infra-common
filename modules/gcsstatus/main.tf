@@ -7,16 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 # gcsstatusmanager (public/go-driftlessaf/reconcilers/gcsstatusmanager). Objects
 # live at "<identity>/<key>"; the identity prefix is chosen by the reconciler, not
 # this module.
-locals {
-  # Cost attribution. Empty unless a caller passes team, product, or labels,
-  # so existing callers see no change.
-  labels = merge(
-    var.team != null ? { team = var.team } : {},
-    var.product != null ? { product = var.product } : {},
-    var.labels,
-  )
-}
-
 resource "random_string" "suffix" {
   length  = 6
   special = false
@@ -31,7 +21,6 @@ resource "google_storage_bucket" "status" {
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
   storage_class               = "STANDARD"
-  labels                      = local.labels
 
   # Status objects are overwritten in place; keeping old versions would only
   # accumulate cost.

@@ -50,22 +50,3 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
-
-variable "team" {
-  description = "Team label for the status bucket, for cost attribution."
-  type        = string
-  default     = null
-}
-
-variable "product" {
-  description = "Product label for the status bucket, for cost attribution."
-  type        = string
-  default     = null
-}
-
-variable "labels" {
-  description = "Additional labels for the status bucket. Merged after team and product, so a key here overrides them."
-  type        = map(string)
-  default     = {}
-  nullable    = false
-}
