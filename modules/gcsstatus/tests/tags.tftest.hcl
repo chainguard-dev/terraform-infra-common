@@ -41,3 +41,24 @@ run "resource_manager_tags_bind_bucket_location" {
     error_message = "bucket tag binding must use the documented full resource name"
   }
 }
+
+run "labels_default_to_empty" {
+  command = plan
+  assert {
+    condition     = length(google_storage_bucket.status.labels) == 0
+    error_message = "a caller passing no team, product, or labels must get an unlabelled bucket"
+  }
+}
+
+run "labels_merge_team_product_and_extra" {
+  command = plan
+  variables {
+    team    = "containers"
+    product = "images"
+    labels  = { component = "watermarks" }
+  }
+  assert {
+    condition     = google_storage_bucket.status.labels == tomap({ team = "containers", product = "images", component = "watermarks" })
+    error_message = "team, product, and extra labels must all reach the bucket"
+  }
+}
