@@ -204,6 +204,20 @@ variable "exec_triggers" {
   default     = {}
 }
 
+variable "exec_include_image_refs" {
+  description = "Retain container image changes alongside custom exec_triggers. False preserves the existing custom-trigger behavior. The image_refs key is reserved when enabled."
+  type        = bool
+  default     = false
+  nullable    = false
+
+  validation {
+    condition = var.exec_include_image_refs ? (
+      var.exec_triggers == null ? false : !contains(keys(var.exec_triggers), "image_refs")
+    ) : true
+    error_message = "When exec_include_image_refs is enabled, exec_triggers must be a non-null map without the reserved image_refs key."
+  }
+}
+
 variable "exec_wait" {
   description = "Whether the apply blocks until the exec'd job execution completes. When false, the apply only waits for the execution to be created, and a failed run does not fail the apply — pair with failed_execution_alert so failures are seen at all."
   type        = bool
