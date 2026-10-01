@@ -84,6 +84,12 @@ module "this" {
             }
           }
         }],
+        // Bind each secret with webhook_ids to those hooks. The name must not
+        // start with WEBHOOK_SECRET, or the trampoline would load it as a secret.
+        [for name, secret in var.additional_webhook_secrets : {
+          name  = "BOUND_WEBHOOK_IDS_${upper(name)}"
+          value = join(",", secret.webhook_ids)
+        } if length(secret.webhook_ids) > 0],
       )
 
       regional-env = [{

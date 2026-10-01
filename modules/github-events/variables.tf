@@ -45,8 +45,9 @@ variable "secret_version_adder" {
 
 variable "additional_webhook_secrets" {
   type = map(object({
-    secret  = string
-    version = string
+    secret      = string
+    version     = string
+    webhook_ids = optional(list(string), [])
   }))
   description = <<EOD
 Additional secrets to be used by the service.
@@ -54,10 +55,18 @@ Additional secrets to be used by the service.
 - key: Local identifier for the secret. This will be prefixed with WEBHOOK_SECRET_ in the service's environment vars.
 - secret: The name of the secret in Cloud Secret Manager. Format: {secretName} if the secret is in the same project. projects/{project}/secrets/{secretName} if the secret is in a different project.
 - version: The version of the secret to use. Can be a number or 'latest'.
+- webhook_ids: Optional X-GitHub-Hook-ID values bound to the secret. When set, a delivery that validates only with this secret is accepted only when its X-GitHub-Hook-ID is one of these IDs, and only as a requested check event (the treatment requested_only_webhook_id gives). Empty accepts any delivery the secret validates.
 
 See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service#nested_env for related documentation.
 EOD
   default     = {}
+
+  validation {
+    condition = alltrue(flatten([
+      for s in var.additional_webhook_secrets : [for id in s.webhook_ids : can(regex("^[0-9]+$", id))]
+    ]))
+    error_message = "additional_webhook_secrets webhook_ids must be numeric X-GitHub-Hook-ID strings."
+  }
 }
 
 variable "service-ingress" {

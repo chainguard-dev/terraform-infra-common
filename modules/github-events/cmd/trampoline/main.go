@@ -27,6 +27,7 @@ var env = envconfig.MustProcess(context.Background(), &struct {
 	Port       int    `env:"PORT, default=8080"`
 	IngressURI string `env:"EVENT_INGRESS_URI"`
 	// Note: any environment variable starting with "WEBHOOK_SECRET" will be loaded as as a webhook secret to be checked.
+	// BOUND_WEBHOOK_IDS_<NAME> binds WEBHOOK_SECRET_<NAME> to those hook IDs (see secrets.LoadFromEnv).
 	WebhookSecret string `env:"WEBHOOK_SECRET"`
 	// If set, any matching webhook IDs will only pass through the event if the event is a requested event:
 	// - check_run.requested_action
@@ -50,7 +51,7 @@ func main() {
 	}
 
 	// Get all secrets from the environment.
-	secrets := secrets.LoadFromEnv(ctx)
+	unbound, bound := secrets.LoadFromEnv(ctx)
 
 	go httpmetrics.ServeMetrics()
 	defer httpmetrics.SetupTracer(ctx)()
@@ -64,7 +65,8 @@ func main() {
 		Addr:              fmt.Sprintf(":%d", env.Port),
 		ReadHeaderTimeout: 10 * time.Second,
 		Handler: httpmetrics.Handler("trampoline", trampoline.NewServer(ceclient, trampoline.ServerOptions{
-			Secrets:              secrets,
+			Secrets:              unbound,
+			BoundSecrets:         bound,
 			WebhookID:            env.WebhookID,
 			RequestedOnlyWebhook: env.RequestedOnly,
 			OrgFilter:            env.OrgFilter,

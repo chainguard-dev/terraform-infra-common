@@ -7,5 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 // environment.
 //
 // Use [LoadFromEnv] to collect all environment variables whose names begin
-// with "WEBHOOK_SECRET" as webhook signing secrets.
+// with "WEBHOOK_SECRET" as webhook signing secrets. A secret named
+// WEBHOOK_SECRET_<NAME> is bound to the hook IDs in BOUND_WEBHOOK_IDS_<NAME>
+// when that variable is set.
 package secrets

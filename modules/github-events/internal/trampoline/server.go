@@ -80,9 +80,10 @@ type checkSuiteInfo struct {
 }
 
 type Server struct {
-	client  cloudevents.Client
-	secrets [][]byte
-	clock   clockwork.Clock
+	client       cloudevents.Client
+	secrets      [][]byte
+	boundSecrets []BoundSecret
+	clock        clockwork.Clock
 	// webhookID is an optional config that will instruct the trampoline to only listen to events coming from a specific webhook.
 	// If webhookID is empty, the trampoline will listen to all events.
 	webhookID            []string
@@ -90,8 +91,19 @@ type Server struct {
 	orgFilter            []string
 }
 
+// BoundSecret is a webhook secret that only the hooks in HookIDs may use. A
+// delivery that validates only with bound secrets is accepted when one of them
+// lists its X-GitHub-Hook-ID, and then only as a requested check event. A
+// BoundSecret with no HookIDs accepts no deliveries.
+type BoundSecret struct {
+	Secret  []byte
+	HookIDs []string
+}
+
 type ServerOptions struct {
+	// Secrets validate deliveries from any hook.
 	Secrets              [][]byte
+	BoundSecrets         []BoundSecret
 	WebhookID            []string
 	RequestedOnlyWebhook []string
 	OrgFilter            []string
@@ -101,6 +113,7 @@ func NewServer(client cloudevents.Client, opts ServerOptions) *Server {
 	return &Server{
 		client:               client,
 		secrets:              opts.Secrets,
+		boundSecrets:         opts.BoundSecrets,
 		requestedOnlyWebhook: opts.RequestedOnlyWebhook,
 		webhookID:            opts.WebhookID,
 		orgFilter:            opts.OrgFilter,
@@ -113,7 +126,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log := clog.FromContext(ctx)
 
 	// https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
-	payload, err := ValidatePayload(r, s.secrets)
+	payload, bound, err := ValidatePayload(r, s.secrets, s.boundSecrets)
 	if err != nil {
 		log.Errorf("failed to verify webhook: %v", err)
 		w.WriteHeader(http.StatusForbidden)
@@ -149,18 +162,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Warnf("failed to unmarshal payload, cloud event headers will not be set: %v", err)
 	}
 
-	// If requestedOnlyWebhook is set, only listen to events from the specified webhook if the event is a requested event.
+	// Deliveries from requestedOnlyWebhook, or validated only by a bound secret, pass only if the event is a requested event.
 	var requested bool
 	if t == "check_run" || t == "check_suite" {
 		requested = info.Action == "requested" || info.Action == "rerequested" || info.Action == "requested_action"
 	}
-	for _, id := range s.requestedOnlyWebhook {
-		if !requested && hookID == id {
-			log.Warnf("ignoring event from webhook due to non-requested event %q %q", hookID, github.DeliveryID(r))
-			// Use 202 Accepted to as an ACK, but no action taken.
-			w.WriteHeader(http.StatusAccepted)
-			return
-		}
+	if !requested && (bound || slices.Contains(s.requestedOnlyWebhook, hookID)) {
+		log.Warnf("ignoring event from webhook due to non-requested event %q %q", hookID, github.DeliveryID(r))
+		// Use 202 Accepted to as an ACK, but no action taken.
+		w.WriteHeader(http.StatusAccepted)
+		return
 	}
 
 	// Store original event type for extension extraction
@@ -399,7 +410,9 @@ func isPullRequestMerged(eventType string, info PayloadInfo) bool {
 
 // ValidatePayload validates the payload of a webhook request for a given set of secrets.
 // If any of the secrets are valid, the payload is returned with no error.
-func ValidatePayload(r *http.Request, secrets [][]byte) ([]byte, error) {
+// A bound secret is valid only for the hooks it lists; bound reports that
+// only bound secrets validated the payload.
+func ValidatePayload(r *http.Request, secrets [][]byte, boundSecrets []BoundSecret) (payload []byte, bound bool, err error) {
 	// Largely forked from github.ValidatePayload - we can't use this directly to avoid consuming the body.
 	signature := r.Header.Get(github.SHA256SignatureHeader)
 	if signature == "" {
@@ -407,19 +420,37 @@ func ValidatePayload(r *http.Request, secrets [][]byte) ([]byte, error) {
 	}
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	for _, secret := range secrets {
 		payload, err := github.ValidatePayloadFromBody(contentType, bytes.NewBuffer(body), signature, secret)
 		if err == nil {
-			return payload, nil
+			return payload, false, nil
 		}
 	}
-	return nil, fmt.Errorf("failed to validate payload")
+
+	// The signature does not cover X-GitHub-Hook-ID, so a bound secret limits
+	// which hooks its holder can claim, not which hook sent the delivery.
+	hookID := r.Header.Get("X-GitHub-Hook-ID")
+	var signedByBound bool
+	for _, b := range boundSecrets {
+		payload, err := github.ValidatePayloadFromBody(contentType, bytes.NewBuffer(body), signature, b.Secret)
+		if err != nil {
+			continue
+		}
+		if hookID != "" && slices.Contains(b.HookIDs, hookID) {
+			return payload, true, nil
+		}
+		signedByBound = true
+	}
+	if signedByBound {
+		return nil, false, fmt.Errorf("hook ID %q is not bound to the secret that signed the payload", hookID)
+	}
+	return nil, false, fmt.Errorf("failed to validate payload")
 }

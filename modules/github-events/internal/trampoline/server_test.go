@@ -108,6 +108,13 @@ func TestTrampoline(t *testing.T) {
 
 func sendevent(t *testing.T, client *http.Client, url string, eventType string, payload any, secret []byte) (*http.Response, error) {
 	t.Helper()
+	return sendeventFromHook(t, client, url, eventType, payload, secret, "1234")
+}
+
+// sendeventFromHook is sendevent with X-GitHub-Hook-ID set to hookID, or
+// omitted when hookID is empty.
+func sendeventFromHook(t *testing.T, client *http.Client, url string, eventType string, payload any, secret []byte, hookID string) (*http.Response, error) {
+	t.Helper()
 
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(payload); err != nil {
@@ -127,7 +134,9 @@ func sendevent(t *testing.T, client *http.Client, url string, eventType string, 
 	r.Header.Add("Content-Type", "application/json")
 	r.Header.Add(github.SHA256SignatureHeader, sig)
 	r.Header.Add(github.EventTypeHeader, eventType)
-	r.Header.Add("X-Github-Hook-ID", "1234")
+	if hookID != "" {
+		r.Header.Add("X-Github-Hook-ID", hookID)
+	}
 	r.Header.Add(github.DeliveryIDHeader, "5678")
 	r.Header.Set("User-Agent", t.Name())
 
@@ -200,6 +209,144 @@ func TestRequestedOnlyWebhook(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+}
+
+func TestBoundSecrets(t *testing.T) {
+	primary := []byte("hunter2")
+	unbound := []byte("guardener")
+	bound := []byte("codeowners-gate")
+	const boundHook, otherHook = "690373031", "530976053"
+
+	event := func(action string) map[string]any {
+		return map[string]any{
+			"action":       action,
+			"repository":   map[string]any{"full_name": "org/repo"},
+			"organization": map[string]any{"login": "org"},
+		}
+	}
+
+	tests := []struct {
+		name          string
+		bound         []BoundSecret
+		secret        []byte
+		hookID        string
+		eventType     string
+		payload       any
+		wantStatus    int
+		wantForwarded bool
+	}{{
+		name:          "bound secret forwards a requested check_run from its hook",
+		secret:        bound,
+		hookID:        boundHook,
+		eventType:     "check_run",
+		payload:       event("requested"),
+		wantStatus:    http.StatusOK,
+		wantForwarded: true,
+	}, {
+		name:          "bound secret forwards a rerequested check_suite from its hook",
+		secret:        bound,
+		hookID:        boundHook,
+		eventType:     "check_suite",
+		payload:       event("rerequested"),
+		wantStatus:    http.StatusOK,
+		wantForwarded: true,
+	}, {
+		name:       "bound secret drops a completed check_run from its hook",
+		secret:     bound,
+		hookID:     boundHook,
+		eventType:  "check_run",
+		payload:    event("completed"),
+		wantStatus: http.StatusAccepted,
+	}, {
+		name:       "bound secret drops a pull_request from its hook",
+		secret:     bound,
+		hookID:     boundHook,
+		eventType:  "pull_request",
+		payload:    event("opened"),
+		wantStatus: http.StatusAccepted,
+	}, {
+		name:       "bound secret rejects a hook it is not bound to",
+		secret:     bound,
+		hookID:     otherHook,
+		eventType:  "check_run",
+		payload:    event("requested"),
+		wantStatus: http.StatusForbidden,
+	}, {
+		name:       "bound secret rejects a delivery without a hook ID",
+		secret:     bound,
+		eventType:  "check_run",
+		payload:    event("requested"),
+		wantStatus: http.StatusForbidden,
+	}, {
+		name:       "bound secret with no hook IDs rejects every hook",
+		bound:      []BoundSecret{{Secret: bound}},
+		secret:     bound,
+		hookID:     boundHook,
+		eventType:  "check_run",
+		payload:    event("requested"),
+		wantStatus: http.StatusForbidden,
+	}, {
+		name: "bound secrets sharing a value accept each other's hooks",
+		bound: []BoundSecret{
+			{Secret: bound, HookIDs: []string{boundHook}},
+			{Secret: bound, HookIDs: []string{otherHook}},
+		},
+		secret:        bound,
+		hookID:        otherHook,
+		eventType:     "check_run",
+		payload:       event("requested"),
+		wantStatus:    http.StatusOK,
+		wantForwarded: true,
+	}, {
+		name:          "primary secret forwards a pull_request from the bound hook",
+		secret:        primary,
+		hookID:        boundHook,
+		eventType:     "pull_request",
+		payload:       event("opened"),
+		wantStatus:    http.StatusOK,
+		wantForwarded: true,
+	}, {
+		name:          "unbound additional secret forwards a pull_request from any hook",
+		secret:        unbound,
+		hookID:        otherHook,
+		eventType:     "pull_request",
+		payload:       event("opened"),
+		wantStatus:    http.StatusOK,
+		wantForwarded: true,
+	}, {
+		name:       "unknown secret is rejected",
+		secret:     []byte("not-configured"),
+		hookID:     boundHook,
+		eventType:  "check_run",
+		payload:    event("requested"),
+		wantStatus: http.StatusForbidden,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			boundSecrets := tt.bound
+			if boundSecrets == nil {
+				boundSecrets = []BoundSecret{{Secret: bound, HookIDs: []string{boundHook}}}
+			}
+			client := &fakeClient{}
+			srv := httptest.NewServer(NewServer(client, ServerOptions{
+				Secrets:      [][]byte{primary, unbound},
+				BoundSecrets: boundSecrets,
+			}))
+			defer srv.Close()
+
+			resp, err := sendeventFromHook(t, srv.Client(), srv.URL, tt.eventType, tt.payload, tt.secret, tt.hookID)
+			if err != nil {
+				t.Fatalf("error sending event: %v", err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("status: got = %d, want = %d", resp.StatusCode, tt.wantStatus)
+			}
+			if got := len(client.events) > 0; got != tt.wantForwarded {
+				t.Errorf("forwarded: got = %v, want = %v", got, tt.wantForwarded)
+			}
+		})
 	}
 }
 

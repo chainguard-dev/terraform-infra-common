@@ -14,9 +14,10 @@ import (
 
 func ExampleLoadFromEnv() {
 	ctx := context.Background()
-	// LoadFromEnv reads all WEBHOOK_SECRET* environment variables.
-	// With no such variables set, it returns nil.
-	s := secrets.LoadFromEnv(ctx)
-	fmt.Println(len(s))
-	// Output: 0
+	// LoadFromEnv reads all WEBHOOK_SECRET* environment variables and binds
+	// WEBHOOK_SECRET_<NAME> to the hook IDs in BOUND_WEBHOOK_IDS_<NAME>.
+	// With no such variables set, it returns nil for both.
+	unbound, bound := secrets.LoadFromEnv(ctx)
+	fmt.Println(len(unbound), len(bound))
+	// Output: 0 0
 }
