@@ -32,7 +32,8 @@ type Interface interface {
 }
 
 // Lease renews automatically until its parent context ends, ownership is lost,
-// or Release is called. Methods are safe for concurrent use.
+// or Release is called. Filesystem leases use OS locks without renewal or expiry.
+// Methods are safe for concurrent use.
 type Lease interface {
 	// Context is canceled on ownership loss or release, or with the parent.
 	// context.Cause distinguishes these cases. Cancellation is cooperative; it

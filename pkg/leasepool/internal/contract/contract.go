@@ -14,8 +14,8 @@ import (
 	"github.com/chainguard-dev/terraform-infra-common/pkg/leasepool"
 )
 
-// Test runs the same public operations against memory, the GCS wire adapter,
-// and optionally real GCS. newPool returns another client to the same namespace.
+// Test runs the same public operations against each leasepool backend.
+// newPool returns another client to the same namespace.
 func Test(t *testing.T, newPool func(*testing.T) leasepool.Interface) {
 	t.Helper()
 	t.Run("exclusive_and_independent_names", func(t *testing.T) {

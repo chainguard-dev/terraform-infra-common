@@ -78,3 +78,20 @@ LEASEPOOL_TEST_BUCKET=my-test-bucket go test -race ./pkg/leasepool/gcs -run Test
 
 The HTTP adapter tests exercise the real storage client against a narrow GCS wire
 model. They are not a substitute for the opt-in real-service contract test.
+
+For development and tests with multiple processes on one host, use
+`filesystem.New(directory)` with an existing local directory shared by every
+contender. Simple names retain the existing `<name>.lock` filename, so old and new
+local pool managers exclude one another. Names that exceed the filename limit or
+contain path separators use a SHA-256 filename with a distinct suffix. Literal
+names follow the host filesystem's case sensitivity. The OS releases a lock when its owner
+exits; there is no renewal timer or TTL. Parent cancellation cancels the lease
+context but retains the lock until `Release`, so shutdown cannot admit a successor
+while protected work is still running. Release closes the descriptor even when
+its context is canceled. Stop all participants before removing the directory or
+its lock files; unlinking an active lock can allow two owners of the same name.
+
+The filesystem backend supports Linux and macOS and is tested with the shared
+contract and a subprocess death test. It does not coordinate different hosts or
+Cloud Run instances. Use GCS for those; lease storage is independent of the type
+of resources the caller manages.
