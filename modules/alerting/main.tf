@@ -218,6 +218,7 @@ locals {
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 severity<=ERROR
 textPayload=~"panic: .*" OR textPayload=~"runtime/panic"
+-textPayload=~"^[{]"
 ${var.panic_filter}
 ${local.squad_log_filter}
 EOF
@@ -334,9 +335,13 @@ locals {
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 textPayload:"fatal error: "
 -textPayload:"caught signal: terminated"
+-textPayload=~"^[{]"
 ${local.squad_log_filter}
 EOF
   # Exclude "caught signal: terminated" from watcher.go - this is expected behavior during graceful shutdown
+  # Exclude text payloads that start with "{" (here and in panic_filter): a JSON log line
+  # too long for Cloud Logging to parse lands as truncated text, and a "panic: " or
+  # "fatal error: " it quotes, such as build output in an agent trace, is not a crash.
 }
 
 resource "google_monitoring_alert_policy" "fatal" {
