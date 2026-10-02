@@ -72,6 +72,7 @@ No modules.
 | ---- | ----------- |
 | <a name="output_cluster_ca_certificate"></a> [cluster\_ca\_certificate](#output\_cluster\_ca\_certificate) | n/a |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | n/a |
+| <a name="output_cluster_private_endpoint"></a> [cluster\_private\_endpoint](#output\_cluster\_private\_endpoint) | Private control-plane IP for clients on the cluster VPC. |
 | <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | n/a |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | n/a |
 | <a name="output_cluster_pod_ipv4_cidr_block"></a> [cluster\_pod\_ipv4\_cidr\_block](#output\_cluster\_pod\_ipv4\_cidr\_block) | The cluster's pod secondary IPv4 CIDR range (ip\_allocation\_policy.cluster\_ipv4\_cidr\_block). |

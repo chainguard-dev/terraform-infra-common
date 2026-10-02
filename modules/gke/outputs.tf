@@ -15,6 +15,12 @@ output "cluster_endpoint" {
   sensitive = true
 }
 
+output "cluster_private_endpoint" {
+  description = "Private control-plane IP for clients on the cluster VPC."
+  value       = one(google_container_cluster.this.private_cluster_config[*].private_endpoint)
+  sensitive   = true
+}
+
 output "cluster_ca_certificate" {
   # one() instead of [0]: master_auth is computed and empty in mocked test
   # plans; on a real cluster it always has exactly one element.
