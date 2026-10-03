@@ -280,7 +280,39 @@ func HandlerFunc(name string, f func(http.ResponseWriter, *http.Request)) http.H
 //
 //	defer metrics.SetupTracer(ctx)()
 func SetupTracer(ctx context.Context) func() {
-	tp := trace.NewTracerProvider(tracerOptions(ctx)...)
+	return SetupTracerWith(ctx)
+}
+
+// TracerOption configures [SetupTracerWith].
+type TracerOption func(*tracerConfig)
+
+type tracerConfig struct {
+	skipGCPDetection bool
+}
+
+func newTracerConfig(opts ...TracerOption) tracerConfig {
+	var cfg tracerConfig
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+// NoGCPDetection skips the metadata-server probe that decides whether
+// the process runs on GCP, and treats it as off GCP: no Cloud Trace exporter
+// unless OTEL_TRACES_EXPORTER names one, and no GCP resource detector.
+// Exporters named in OTEL_TRACES_EXPORTER, OTLP included, still install. It
+// is for a process that cannot reach the metadata server, where the probe
+// would wait out its 2s timeout at every start.
+// OTEL_TRACES_EXPORTER=gcp still needs credentials that name a project, and
+// exits without them, as it does off GCP.
+func NoGCPDetection() TracerOption {
+	return func(c *tracerConfig) { c.skipGCPDetection = true }
+}
+
+// SetupTracerWith is [SetupTracer] configured by opts.
+func SetupTracerWith(ctx context.Context, opts ...TracerOption) func() {
+	tp := trace.NewTracerProvider(tracerOptions(ctx, newTracerConfig(opts...))...)
 	otel.SetTracerProvider(tp)
 
 	prp := propagation.NewCompositeTextMapPropagator(
@@ -317,13 +349,8 @@ func SetupTracer(ctx context.Context) func() {
 // sampling; OTLP exporters receive only spans carrying at least one
 // attribute under the gen_ai.* namespace, so evaluation backends see LLM
 // traces without infra noise.
-func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
-	// Bound the metadata probe so non-GCP startup isn't delayed by the
-	// metadata client's default retry window (~15s).
-	probeCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	projectID, _ := metadata.ProjectIDWithContext(probeCtx)
-	onGCP := projectID != ""
+func tracerOptions(ctx context.Context, cfg tracerConfig) []trace.TracerProviderOption {
+	onGCP := !cfg.skipGCPDetection && probeGCP(ctx)
 
 	opts := []trace.TracerProviderOption{
 		trace.WithResource(buildResource(ctx, onGCP)),
@@ -348,6 +375,17 @@ func tracerOptions(ctx context.Context) []trace.TracerProviderOption {
 		}
 	}
 	return opts
+}
+
+// probeGCP reports whether the metadata server answers with a project ID.
+// (var, not func, so tests can count the probes.)
+var probeGCP = func(ctx context.Context) bool {
+	// Bound the metadata probe so non-GCP startup isn't delayed by the
+	// metadata client's default retry window (~15s).
+	probeCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	projectID, _ := metadata.ProjectIDWithContext(probeCtx)
+	return projectID != ""
 }
 
 // parseExporterEntry splits "otlp/primary" into ("otlp", "primary") and

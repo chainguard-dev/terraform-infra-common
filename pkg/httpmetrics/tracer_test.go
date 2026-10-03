@@ -7,13 +7,19 @@ package httpmetrics
 
 import (
 	"context"
+	"fmt"
+	"math/rand/v2"
 	"sync/atomic"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/trace"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 // toKVStrings converts []attribute.KeyValue to []string ("key=value") for
@@ -282,7 +288,7 @@ func TestTracerOptions_Matrix(t *testing.T) {
 			for k, v := range tt.env {
 				t.Setenv(k, v)
 			}
-			opts := tracerOptions(t.Context())
+			opts := tracerOptions(t.Context(), tracerConfig{})
 			// Two non-processor opts: WithResource + WithSampler.
 			if got := len(opts) - 2; got != tt.wantProcessors {
 				t.Errorf("tracerOptions produced %d span processors, want %d (total opts=%d)", got, tt.wantProcessors, len(opts))
@@ -407,5 +413,107 @@ func TestParseOTLPHeaders(t *testing.T) {
 				t.Errorf("parseOTLPHeaders(%q) mismatch (-want, +got):\n%s", tt.in, diff)
 			}
 		})
+	}
+}
+
+// TestTracerOptions_NoGCPDetection pins that NoGCPDetection skips the
+// metadata probe, while exporters named in OTEL_TRACES_EXPORTER still
+// install, and that without it the probe still runs.
+func TestTracerOptions_NoGCPDetection(t *testing.T) {
+	tests := []struct {
+		name           string
+		opts           []TracerOption
+		wantProbes     int64
+		wantProcessors int
+	}{{
+		name:           "default probes the metadata server",
+		wantProbes:     1,
+		wantProcessors: 1,
+	}, {
+		name:           "NoGCPDetection does not",
+		opts:           []TracerOption{NoGCPDetection()},
+		wantProcessors: 1,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var probes atomic.Int64
+			orig := probeGCP
+			probeGCP = func(context.Context) bool {
+				probes.Add(1)
+				return false
+			}
+			t.Cleanup(func() { probeGCP = orig })
+			t.Setenv("OTEL_TRACES_EXPORTER", "otlp")
+			t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://localhost:4318")
+
+			opts := tracerOptions(t.Context(), newTracerConfig(tt.opts...))
+			if got := probes.Load(); got != tt.wantProbes {
+				t.Errorf("metadata probes: got = %d, want = %d", got, tt.wantProbes)
+			}
+			// Two non-processor opts: WithResource + WithSampler.
+			if got := len(opts) - 2; got != tt.wantProcessors {
+				t.Errorf("span processors: got = %d, want = %d", got, tt.wantProcessors)
+			}
+		})
+	}
+}
+
+// TestSetupTracerWith_NoGCPDetection runs the configuration a process that
+// cannot reach the metadata server uses: no exporter named, and the public
+// option. It pins that nothing probes the metadata server and that the
+// installed propagator still carries trace context and baggage.
+func TestSetupTracerWith_NoGCPDetection(t *testing.T) {
+	var probes atomic.Int64
+	orig := probeGCP
+	probeGCP = func(context.Context) bool {
+		probes.Add(1)
+		return false
+	}
+	origTP, origProp := otel.GetTracerProvider(), otel.GetTextMapPropagator()
+	t.Cleanup(func() {
+		probeGCP = orig
+		otel.SetTracerProvider(origTP)
+		otel.SetTextMapPropagator(origProp)
+	})
+	t.Setenv("OTEL_TRACES_EXPORTER", "")
+
+	shutdown := SetupTracerWith(t.Context(), NoGCPDetection())
+	defer shutdown()
+	if got := probes.Load(); got != 0 {
+		t.Errorf("metadata probes: got = %d, want = 0", got)
+	}
+
+	traceID, err := oteltrace.TraceIDFromHex(fmt.Sprintf("%032x", rand.Uint64()|1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spanID, err := oteltrace.SpanIDFromHex(fmt.Sprintf("%016x", rand.Uint64()|1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	member, err := baggage.NewMember("k", fmt.Sprintf("v%d", rand.Int64()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	bag, err := baggage.New(member)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := oteltrace.ContextWithSpanContext(t.Context(), oteltrace.NewSpanContext(oteltrace.SpanContextConfig{
+		TraceID:    traceID,
+		SpanID:     spanID,
+		TraceFlags: oteltrace.FlagsSampled,
+		Remote:     true,
+	}))
+	ctx = baggage.ContextWithBaggage(ctx, bag)
+
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+	out := otel.GetTextMapPropagator().Extract(t.Context(), carrier)
+	if got := oteltrace.SpanContextFromContext(out).TraceID(); got != traceID {
+		t.Errorf("trace ID: got = %s, want = %s", got, traceID)
+	}
+	if got, want := baggage.FromContext(out).Member("k").Value(), member.Value(); got != want {
+		t.Errorf("baggage: got = %q, want = %q", got, want)
 	}
 }

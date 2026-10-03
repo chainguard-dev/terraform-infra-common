@@ -26,6 +26,14 @@ func ExampleSetupTracer() {
 	defer cleanup()
 }
 
+func ExampleSetupTracerWith() {
+	// A process that cannot reach the metadata server skips the probe; an
+	// exporter named in OTEL_TRACES_EXPORTER still installs.
+	ctx := context.Background()
+	cleanup := httpmetrics.SetupTracerWith(ctx, httpmetrics.NoGCPDetection())
+	defer cleanup()
+}
+
 func ExampleHandler() {
 	inner := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
