@@ -456,6 +456,45 @@ resource "google_container_node_pool" "pools" {
     location_policy = local.pool_models[each.key] == "flex-start" ? "ANY" : each.value.location_policy
   }
 
+  # Node upgrade strategy, emitted only when the pool sets upgrade_settings, so
+  # a pool that does not keeps GKE's default surge upgrade and plans no change.
+  # Surge counts go out for SURGE only; the variable validation refuses them
+  # with BLUE_GREEN, where GKE ignores them. A Pod a PodDisruptionBudget
+  # protects survives a blue-green drain until the blue pool is deleted after
+  # node_pool_soak_duration, which is the grace period a caller with
+  # long-running pods buys with this block.
+  dynamic "upgrade_settings" {
+    for_each = each.value.upgrade_settings != null ? [each.value.upgrade_settings] : []
+    content {
+      strategy        = upgrade_settings.value.strategy
+      max_surge       = upgrade_settings.value.max_surge
+      max_unavailable = upgrade_settings.value.max_unavailable
+      dynamic "blue_green_settings" {
+        for_each = upgrade_settings.value.blue_green_settings != null ? [upgrade_settings.value.blue_green_settings] : []
+        content {
+          node_pool_soak_duration = blue_green_settings.value.node_pool_soak_duration
+          standard_rollout_policy {
+            batch_node_count    = blue_green_settings.value.standard_rollout_policy.batch_node_count
+            batch_percentage    = blue_green_settings.value.standard_rollout_policy.batch_percentage
+            batch_soak_duration = blue_green_settings.value.standard_rollout_policy.batch_soak_duration
+          }
+        }
+      }
+    }
+  }
+
+  // Emitted only when set: a timeouts block added to a pool whose state has
+  // none plans as an in-place update (no API call), so the default keeps
+  // every existing caller's plan empty.
+  dynamic "timeouts" {
+    for_each = var.node_pool_timeouts == null ? [] : [var.node_pool_timeouts]
+    content {
+      create = timeouts.value.create
+      update = timeouts.value.update
+      delete = timeouts.value.delete
+    }
+  }
+
   management {
     # GKE requires auto-repair off on flex-start pools.
     auto_repair  = each.value.auto_repair && local.pool_models[each.key] != "flex-start"

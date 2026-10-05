@@ -123,6 +123,36 @@ variable "pools" {
     # scale-up, and each failure costs a retry before another zone is used.
     # Flex-start pools always get ANY, which GKE requires.
     location_policy = optional(string, null)
+    # Node upgrade strategy. Null (the default) emits no upgrade_settings block,
+    # so the pool keeps GKE's default surge upgrade (maxSurge 1, maxUnavailable
+    # 0) and existing callers plan no change. strategy is "SURGE" or
+    # "BLUE_GREEN". max_surge and max_unavailable apply to SURGE only, and at
+    # least one of them must be above zero there. blue_green_settings is
+    # required with BLUE_GREEN: node_pool_soak_duration is how long the drained
+    # blue pool is kept before deletion (a seconds string such as "43200s", at
+    # most "604800s"), and standard_rollout_policy drains the blue pool in
+    # batches of batch_node_count nodes or batch_percentage (0 to 1) of the
+    # pool, waiting batch_soak_duration between batches. GKE keeps a Pod a
+    # PodDisruptionBudget protects through the blue-green drain and deletes it
+    # only with the blue pool, so the soak is the grace period long-running
+    # pods get. The green pool is created at the blue pool's size, so the
+    # machine family needs quota for twice the pool's running nodes. The field
+    # is Optional and Computed in the provider: a caller that once set it and
+    # then drops the block keeps the old value in state, so a caller that
+    # wants a real rollback renders the surge default explicitly instead.
+    upgrade_settings = optional(object({
+      strategy        = optional(string, "SURGE")
+      max_surge       = optional(number, null)
+      max_unavailable = optional(number, null)
+      blue_green_settings = optional(object({
+        node_pool_soak_duration = optional(string, null)
+        standard_rollout_policy = object({
+          batch_node_count    = optional(number, null)
+          batch_percentage    = optional(number, null)
+          batch_soak_duration = optional(string, null)
+        })
+      }), null)
+    }), null)
   }))
 
   validation {
@@ -160,6 +190,30 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : try(p.total_min_node_count >= 0 && p.total_min_node_count <= p.total_max_node_count, true)])
     error_message = "total_min_node_count must be between 0 and total_max_node_count."
+  }
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.upgrade_settings == null ? true : contains(["SURGE", "BLUE_GREEN"], p.upgrade_settings.strategy)])
+    error_message = "upgrade_settings.strategy must be \"SURGE\" or \"BLUE_GREEN\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.upgrade_settings == null ? true : (p.upgrade_settings.strategy == "BLUE_GREEN") == (p.upgrade_settings.blue_green_settings != null)])
+    error_message = "upgrade_settings.blue_green_settings is required with strategy = \"BLUE_GREEN\" and must be omitted with \"SURGE\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.upgrade_settings == null ? true : p.upgrade_settings.strategy != "BLUE_GREEN" ? true : p.upgrade_settings.max_surge == null && p.upgrade_settings.max_unavailable == null])
+    error_message = "upgrade_settings.max_surge and max_unavailable apply to strategy = \"SURGE\" only."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.upgrade_settings == null ? true : p.upgrade_settings.strategy != "SURGE" ? true : coalesce(p.upgrade_settings.max_surge, 0) + coalesce(p.upgrade_settings.max_unavailable, 0) > 0])
+    error_message = "upgrade_settings with strategy = \"SURGE\" needs max_surge or max_unavailable above zero."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : p.upgrade_settings == null ? true : p.upgrade_settings.blue_green_settings == null ? true : (p.upgrade_settings.blue_green_settings.standard_rollout_policy.batch_node_count != null) != (p.upgrade_settings.blue_green_settings.standard_rollout_policy.batch_percentage != null)])
+    error_message = "standard_rollout_policy needs exactly one of batch_node_count or batch_percentage."
   }
 }
 
@@ -337,4 +391,14 @@ variable "resource_manager_tags" {
     ])
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
+}
+
+variable "node_pool_timeouts" {
+  description = "How long Terraform waits for a node pool create, update, or delete before giving up. null (the default) emits no timeouts block, so the google provider's own 30 minute defaults apply and callers that leave this unset plan no change. Setting it plans a one-time in-place update on each pool that adds the block to state and makes no API call. Raise update and delete where a pool hosts pods a PodDisruptionBudget protects: GKE holds each node's drain for up to an hour on the surge strategy, and a pool on the blue-green strategy holds its blue pool through the whole node_pool_soak_duration, so a Terraform change that recreates nodes (machine type, disk size or type, image type) outlasts 30 minutes, the apply fails, and the GKE operation keeps running until the next apply reports it as already in progress. Duration strings such as \"4h\"; an attribute left null keeps the provider default."
+  type = object({
+    create = optional(string)
+    update = optional(string)
+    delete = optional(string)
+  })
+  default = null
 }

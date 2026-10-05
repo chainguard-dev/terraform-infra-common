@@ -150,6 +150,8 @@ Provision a GKE cluster with Dataplane V2, workload identity, managed Prometheus
 
 Use this when you need a standard GKE cluster with full control over node pool configuration.
 
+Each pool takes an optional `upgrade_settings` (surge counts, or the blue-green strategy with a node-pool soak) for workloads that must not be evicted mid-run; pools that leave it unset keep GKE's default surge upgrade.
+
 ### [`gke-ap`](./modules/gke-ap/)
 
 Deploy a GKE Autopilot cluster with automatic node provisioning and the same networking, monitoring, and identity capabilities as standard GKE.
