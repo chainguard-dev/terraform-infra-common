@@ -27,6 +27,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_cloudrun_type"></a> [cloudrun\_type](#input\_cloudrun\_type) | A job serves no requests, so "job" charts outbound calls only. | `string` | `"service"` | no |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
 | <a name="input_filter"></a> [filter](#input\_filter) | n/a | `list(string)` | n/a | yes |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | n/a | `string` | n/a | yes |

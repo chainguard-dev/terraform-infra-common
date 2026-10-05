@@ -40,7 +40,9 @@ module "grpc" {
 module "github" {
   source = "../sections/github"
   title  = "GitHub API"
-  filter = []
+  filter = [
+    "metric.label.\"service_name\"=\"${var.service_name}\""
+  ]
 }
 
 module "resources" {

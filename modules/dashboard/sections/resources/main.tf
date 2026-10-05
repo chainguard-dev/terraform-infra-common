@@ -19,7 +19,13 @@ variable "notification_channels" {
 }
 
 locals {
-  filter = concat(var.filter, var.cloudrun_type == "job" ? ["resource.type=\"cloud_run_job\""] : ["resource.type=\"cloud_run_revision\""])
+  filter = concat(var.filter, var.cloudrun_type == "job" ? [
+    "resource.type=\"cloud_run_job\"",
+    "resource.label.\"job_name\"=\"${var.cloudrun_name}\"",
+    ] : [
+    "resource.type=\"cloud_run_revision\"",
+    "resource.label.\"service_name\"=\"${var.cloudrun_name}\"",
+  ])
 }
 
 module "width" { source = "../width" }
@@ -51,7 +57,9 @@ module "cpu_utilization" {
 module "disk_usage" {
   source = "../../widgets/xy"
   title  = "Disk usage"
+  // The otel sidecar stamps the Cloud Run service or job name as service_name.
   filter = concat(var.filter, [
+    "metric.label.\"service_name\"=\"${var.cloudrun_name}\"",
     "metric.type=\"prometheus.googleapis.com/disk_usage_bytes/gauge\"",
     "resource.type=\"prometheus_target\"",
   ])

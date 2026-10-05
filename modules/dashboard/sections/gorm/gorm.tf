@@ -8,10 +8,15 @@ variable "service_name" { type = string }
 
 module "width" { source = "../width" }
 
+locals {
+  // The otel sidecar stamps the Cloud Run service or job name as service_name.
+  filter = concat(var.filter, ["metric.label.\"service_name\"=\"${var.service_name}\""])
+}
+
 module "total_request_count" {
   source = "../../widgets/xy"
   title  = "GORM total request count"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -25,7 +30,7 @@ module "total_request_count" {
 module "request_errors" {
   source = "../../widgets/xy"
   title  = "GORM error request count"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
     "metric.label.\"code\"!=monitoring.regex.full_match(\"(ok|record not found)\")",
@@ -41,7 +46,7 @@ module "request_errors" {
 module "table_request_count" {
   source = "../../widgets/xy"
   title  = "GORM table request count"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -58,7 +63,7 @@ module "error_rate" {
   title  = "GORM Request error rate"
   legend = "Non-OK / All responses"
 
-  common_filter = concat(var.filter, [
+  common_filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -68,7 +73,7 @@ module "error_rate" {
 module "op_request_count" {
   source = "../../widgets/xy"
   title  = "GORM op request count"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_calls_total/counter\"",
   ])
@@ -83,7 +88,7 @@ module "op_request_count" {
 module "open_connections" {
   source = "../../widgets/xy"
   title  = "GORM DB open connections"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/gorm_dbstats_open_connections/gauge\"",
   ])
@@ -95,7 +100,7 @@ module "open_connections" {
 module "txn_retries" {
   source = "../../widgets/xy"
   title  = "Transaction retries by reason"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/chorm_transaction_retries_total/counter\"",
   ])
@@ -109,7 +114,7 @@ module "txn_retries" {
 module "txn_retry_exhausted" {
   source = "../../widgets/xy"
   title  = "Transaction retry exhaustions by reason"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "resource.type=\"prometheus_target\"",
     "metric.type=\"prometheus.googleapis.com/chorm_transaction_retry_exhausted_total/counter\"",
   ])

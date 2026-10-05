@@ -19,10 +19,15 @@ variable "grpc_non_error_codes" {
 
 module "width" { source = "../width" }
 
+locals {
+  // The otel sidecar stamps the Cloud Run service or job name as service_name.
+  filter = concat(var.filter, ["metric.label.\"service_name\"=\"${var.service_name}\""])
+}
+
 module "request_count" {
   source = "../../widgets/xy"
   title  = "Request count"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
   ])
@@ -40,7 +45,7 @@ module "failure_rate" {
   title  = "Request failure rate"
   legend = "Non-[${join("|", var.grpc_non_error_codes)}] responses / All responses"
 
-  common_filter = concat(var.filter, [
+  common_filter = concat(local.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
   ])
@@ -52,7 +57,7 @@ module "failure_rate" {
 module "incoming_latency" {
   source = "../../widgets/latency"
   title  = "Incoming request latency"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handling_seconds/histogram\"",
     "resource.type=\"prometheus_target\"",
   ])
@@ -65,7 +70,7 @@ module "incoming_latency" {
 module "outbound_request_count" {
   source = "../../widgets/xy"
   title  = "Outbound request count"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_client_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
   ])
@@ -81,7 +86,7 @@ module "outbound_request_count" {
 module "outbound_latency" {
   source = "../../widgets/latency"
   title  = "Outbound request latency"
-  filter = concat(var.filter, [
+  filter = concat(local.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_client_handling_seconds/histogram\"",
     "resource.type=\"prometheus_target\"",
   ])
