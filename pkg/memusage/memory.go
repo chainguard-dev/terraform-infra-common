@@ -55,6 +55,13 @@ func processPeakRSS(root fs.FS) (*uint64, error) {
 }
 
 func containerPeakMemory(root fs.FS) (*uint64, string, error) {
+	return containerMemory(root, "memory.peak", "memory.max_usage_in_bytes")
+}
+
+// containerMemory reads one memory accounting file from the cgroup controller
+// mounted at the current process's root: v2File under cgroup v2, else v1File
+// under cgroup v1. A v2 value of "max" means no limit and is unknown, not zero.
+func containerMemory(root fs.FS, v2File, v1File string) (*uint64, string, error) {
 	membership, err := readMemoryFile(root, "proc/self/cgroup")
 	if err != nil {
 		return nil, "", err
@@ -69,8 +76,8 @@ func containerPeakMemory(root fs.FS) (*uint64, string, error) {
 	for _, candidate := range []struct {
 		mount, kind, file string
 	}{
-		{mount: "/sys/fs/cgroup", kind: "cgroup2", file: "memory.peak"},
-		{mount: "/sys/fs/cgroup/memory", kind: "cgroup", file: "memory.max_usage_in_bytes"},
+		{mount: "/sys/fs/cgroup", kind: "cgroup2", file: v2File},
+		{mount: "/sys/fs/cgroup/memory", kind: "cgroup", file: v1File},
 	} {
 		if !rootMemoryController(membership, mounts, candidate.kind, candidate.mount) {
 			continue
@@ -83,13 +90,16 @@ func containerPeakMemory(root fs.FS) (*uint64, string, error) {
 			}
 			return nil, name, err
 		}
+		if strings.TrimSpace(value) == "max" {
+			return nil, name, fmt.Errorf("%s has no limit", name)
+		}
 		bytes, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
 		if err != nil {
-			return nil, name, fmt.Errorf("invalid cgroup memory peak")
+			return nil, name, fmt.Errorf("invalid cgroup memory value in %s", name)
 		}
 		return new(bytes), name, nil
 	}
-	return nil, "", fmt.Errorf("cgroup memory peak unavailable")
+	return nil, "", fmt.Errorf("cgroup memory accounting %s unavailable", v2File)
 }
 
 func rootMemoryController(membership, mounts, kind, mount string) bool {

@@ -34,3 +34,8 @@ than one operation. Calls do not reset the counters. A hard kill or OOM can prev
 a deferred log, so continue checking execution status and monitoring metrics.
 
 The package keeps no shared state and is safe for concurrent use.
+
+`memusage.ReadContainer()` returns the container cgroup's current usage, limit,
+and lifetime peak for callers that sample memory themselves. It uses the same
+bounded, verified reads: each value is a `*uint64` with its own error, and a
+missing, malformed, or unlimited (`max`) value is nil with an error, never zero.
