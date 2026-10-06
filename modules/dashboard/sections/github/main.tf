@@ -13,7 +13,7 @@ module "used" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/github_rate_limit_used/gauge\"",
   ])
-  group_by_fields = ["metric.label.\"resource\"", "metric.label.\"organization\""]
+  group_by_fields = ["metric.label.\"resource\"", "metric.label.\"organization\"", "metric.label.\"window\""]
   primary_align   = "ALIGN_MAX"
   primary_reduce  = "REDUCE_MAX"
 }
@@ -24,7 +24,7 @@ module "time_to_reset" {
   filter = concat(var.filter, [
     "metric.type=\"prometheus.googleapis.com/github_rate_limit_time_to_reset/gauge\"",
   ])
-  group_by_fields = ["metric.label.\"resource\"", "metric.label.\"organization\""]
+  group_by_fields = ["metric.label.\"resource\"", "metric.label.\"organization\"", "metric.label.\"window\""]
   primary_align   = "ALIGN_MIN"
   primary_reduce  = "REDUCE_MIN"
 }

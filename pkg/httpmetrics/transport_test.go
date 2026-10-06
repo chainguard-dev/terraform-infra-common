@@ -11,11 +11,15 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httptrace"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/chainguard-dev/clog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -191,6 +195,7 @@ func TestGitHubRateLimitContextLabels(t *testing.T) {
 		"organization":    "org",
 		"app_id":          "42",
 		"installation_id": "1234",
+		"window":          "46",
 	}
 	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels)); got != 4500 {
 		t.Errorf("github_rate_limit_remaining: got %v, want 4500", got)
@@ -231,6 +236,7 @@ func TestGitHubRateLimitContextLabels_NoContext(t *testing.T) {
 		"organization":    "org2",
 		"app_id":          "",
 		"installation_id": "",
+		"window":          "46",
 	}
 	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels)); got != 3000 {
 		t.Errorf("github_rate_limit_remaining: got %v, want 3000", got)
@@ -740,4 +746,154 @@ func TestExtractInnerTransport(t *testing.T) {
 			t.Errorf("want base *http.Transport through 4 layers, got %T", got)
 		}
 	})
+}
+
+// tcpConn is a net.Conn that reports a fixed remote address, for driving
+// httptrace's GotConn hook from a stub round tripper.
+type tcpConn struct {
+	net.Conn
+	remote net.Addr
+}
+
+func (c tcpConn) RemoteAddr() net.Addr { return c.remote }
+
+// TestGitHubRateLimit_AccessLogBudgetFields pins the fields that tell one
+// rate-limit budget from another (reset, window, used), the connection's
+// remote address, and the cache result a cache below the transport reports.
+func TestGitHubRateLimit_AccessLogBudgetFields(t *testing.T) {
+	reset := time.Date(2026, 10, 5, 20, 12, 11, 0, time.UTC).Unix()
+	tests := []struct {
+		name      string
+		cache     string
+		wantCache any
+	}{{
+		name:      "revalidation hit",
+		cache:     "hit",
+		wantCache: "hit",
+	}, {
+		name:      "revalidation changed",
+		cache:     "changed",
+		wantCache: "changed",
+	}, {
+		name:      "no cache below",
+		cache:     "",
+		wantCache: nil,
+	}}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			stub := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				if trace := httptrace.ContextClientTrace(r.Context()); trace != nil && trace.GotConn != nil {
+					trace.GotConn(httptrace.GotConnInfo{Conn: tcpConn{remote: &net.TCPAddr{IP: net.IPv4(140, 82, 112, 6), Port: 443}}})
+				}
+				h := http.Header{
+					"X-Ratelimit-Resource":  []string{"core"},
+					"X-Ratelimit-Remaining": []string{"1200"},
+					"X-Ratelimit-Limit":     []string{"15000"},
+					"X-Ratelimit-Used":      []string{"13800"},
+					"X-Ratelimit-Reset":     []string{strconv.FormatInt(reset, 10)},
+				}
+				if tc.cache != "" {
+					h.Set(CacheResultHeader, tc.cache)
+				}
+				return &http.Response{StatusCode: http.StatusOK, Header: h, Body: http.NoBody}, nil
+			})
+
+			rec := &recordingHandler{}
+			ctx := clog.WithLogger(t.Context(), clog.New(rec))
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/budget-org/repo/pulls/1", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			resp, err := instrumentGitHubRateLimits(stub).RoundTrip(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := resp.Header.Get(CacheResultHeader); got != "" {
+				t.Errorf("%s on the caller's response: got = %q, want = absent", CacheResultHeader, got)
+			}
+
+			var attrs map[string]any
+			for _, r := range rec.records {
+				if r.Message == "github_api_call" {
+					attrs = recordAttrs(r)
+				}
+			}
+			if attrs == nil {
+				t.Fatal("no github_api_call record emitted")
+			}
+			want := map[string]any{
+				"rate_limit_used":   int64(13800),
+				"rate_limit_reset":  reset,
+				"rate_limit_window": "12",
+				"remote_ip":         "140.82.112.6",
+				"cache":             tc.wantCache,
+			}
+			for k, v := range want {
+				if attrs[k] != v {
+					t.Errorf("attr %s: got = %v (%T), want = %v (%T)", k, attrs[k], attrs[k], v, v)
+				}
+			}
+		})
+	}
+}
+
+// TestGitHubRateLimit_WindowsAreSeparateSeries pins that two budgets with
+// different reset minutes report on separate series rather than overwriting
+// one, and that a window's series is deleted once its budget has reset.
+func TestGitHubRateLimit_WindowsAreSeparateSeries(t *testing.T) {
+	now := time.Now().UTC()
+	// Two resets in the future, on distinct minutes.
+	resetA := now.Add(10 * time.Minute).Truncate(time.Minute)
+	resetB := resetA.Add(10 * time.Minute)
+
+	call := func(reset time.Time, remaining string) {
+		t.Helper()
+		stub := roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"X-Ratelimit-Resource":  []string{"core"},
+					"X-Ratelimit-Remaining": []string{remaining},
+					"X-Ratelimit-Limit":     []string{"15000"},
+					"X-Ratelimit-Reset":     []string{strconv.FormatInt(reset.Unix(), 10)},
+				},
+				Body: http.NoBody,
+			}, nil
+		})
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, "https://api.github.com/repos/window-org/repo", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := instrumentGitHubRateLimits(stub).RoundTrip(req); err != nil {
+			t.Fatal(err)
+		}
+	}
+	labels := func(reset time.Time) prometheus.Labels {
+		return prometheus.Labels{
+			"resource":        "core",
+			"organization":    "window-org",
+			"app_id":          "",
+			"installation_id": "",
+			"window":          strconv.Itoa(reset.Minute()),
+		}
+	}
+
+	call(resetA, "100")
+	call(resetB, "9000")
+
+	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels(resetA))); got != 100 {
+		t.Errorf("remaining for window %s: got = %v, want = 100", labels(resetA)["window"], got)
+	}
+	if got := testutil.ToFloat64(mGitHubRateLimitRemaining.With(labels(resetB))); got != 9000 {
+		t.Errorf("remaining for window %s: got = %v, want = 9000", labels(resetB)["window"], got)
+	}
+
+	// Budget A resets: its series must go, B's must stay.
+	gitHubRateLimitWindows.observe(labels(resetB), resetB.Unix(), resetA.Add(time.Second))
+	if mGitHubRateLimitRemaining.Delete(labels(resetA)) {
+		t.Errorf("window %s series still present after its reset", labels(resetA)["window"])
+	}
+	if !mGitHubRateLimitRemaining.Delete(labels(resetB)) {
+		t.Errorf("window %s series deleted before its reset", labels(resetB)["window"])
+	}
 }

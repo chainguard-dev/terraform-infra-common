@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"net"
 	"net/http"
+	"net/http/httptrace"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,6 +33,16 @@ const (
 	GoogClientTraceHeader string = "googclient_traceparent"
 	OriginalTraceHeader   string = "original-traceparent"
 )
+
+// CacheResultHeader is how a response cache wrapped by this transport (that
+// is, one between it and the network) says how it answered: "hit" for a
+// replayed body GitHub confirmed with a 304, "changed" for a revalidation
+// GitHub answered with a new body, "miss" for a request it had nothing
+// cached for. Such a cache replays a 304 as the 200 it stands for, so this
+// is the only way the github_api_call log can tell the two apart. The
+// transport logs the value as the cache field and deletes the header, so
+// callers above it never see it.
+const CacheResultHeader = "X-Httpmetrics-Cache-Result"
 
 // contextKey is an unexported type for context keys in this package, preventing
 // collisions with keys defined in other packages.
@@ -350,41 +362,48 @@ func bucketize(ctx context.Context, host string, skip bool) string {
 	return "other"
 }
 
+// rateLimitGaugeLabels label every github_rate_limit_* gauge. window is the
+// minute of the hour the reporting budget resets at: one installation's
+// calls can draw on more than one budget, each with its own reset time, and
+// without the label those budgets overwrite one series and it alternates
+// between their readings.
+var rateLimitGaugeLabels = []string{"resource", "organization", "app_id", "installation_id", "window"}
+
 var (
 	mGitHubRateLimitRemaining = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_remaining",
 			Help: "The number of requests remaining in the current rate limit window",
 		},
-		[]string{"resource", "organization", "app_id", "installation_id"},
+		rateLimitGaugeLabels,
 	)
 	mGitHubRateLimit = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit",
 			Help: "The number of requests allowed during the rate limit window",
 		},
-		[]string{"resource", "organization", "app_id", "installation_id"},
+		rateLimitGaugeLabels,
 	)
 	mGitHubRateLimitReset = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_reset",
 			Help: "The timestamp at which the current rate limit window resets",
 		},
-		[]string{"resource", "organization", "app_id", "installation_id"},
+		rateLimitGaugeLabels,
 	)
 	mGitHubRateLimitUsed = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_used",
 			Help: "The fraction of the rate limit window used",
 		},
-		[]string{"resource", "organization", "app_id", "installation_id"},
+		rateLimitGaugeLabels,
 	)
 	mGitHubRateLimitTimeToReset = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "github_rate_limit_time_to_reset",
 			Help: "The number of minutes until the current rate limit window resets",
 		},
-		[]string{"resource", "organization", "app_id", "installation_id"},
+		rateLimitGaugeLabels,
 	)
 	mGitHubRateLimitErrors = promauto.NewCounterVec(
 		prometheus.CounterOpts{
@@ -429,7 +448,16 @@ func extractOrgFromGitHubURL(path string) string {
 func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFunc {
 	return func(r *http.Request) (*http.Response, error) {
 		start := time.Now()
+		var conn remoteAddr
+		if r.URL.Host == "api.github.com" {
+			r = r.WithContext(httptrace.WithClientTrace(r.Context(), &httptrace.ClientTrace{GotConn: conn.record}))
+		}
 		resp, err := next.RoundTrip(r)
+		var cacheResult string
+		if resp != nil {
+			cacheResult = resp.Header.Get(CacheResultHeader)
+			resp.Header.Del(CacheResultHeader)
+		}
 		if err != nil {
 			if r.URL.Host == "api.github.com" {
 				clog.InfoContext(r.Context(), "github_api_call",
@@ -439,6 +467,7 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 					"error_label", mapErrorToLabel(err),
 					"duration_ms", time.Since(start).Milliseconds(),
 					"org", extractOrgFromGitHubURL(r.URL.Path),
+					"remote_ip", conn.ip(),
 					"ce_type", r.Header.Get(CeTypeHeader),
 					"service_name", serviceName,
 					"revision_name", knativeRevisionName(),
@@ -473,12 +502,16 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				}
 				return float64(i)
 			}
+			reset := val("X-RateLimit-Reset")
+			window := resetWindow(reset)
 			labels := prometheus.Labels{
 				"resource":        resource,
 				"organization":    organization,
 				"app_id":          appID,
 				"installation_id": installationID,
+				"window":          window,
 			}
+			gitHubRateLimitWindows.observe(labels, int64(reset), time.Now())
 
 			remaining := val("X-RateLimit-Remaining")
 			mGitHubRateLimitRemaining.With(labels).Set(remaining)
@@ -486,7 +519,6 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			limit := val("X-RateLimit-Limit")
 			mGitHubRateLimit.With(labels).Set(limit)
 
-			reset := val("X-RateLimit-Reset")
 			mGitHubRateLimitReset.With(labels).Set(reset)
 
 			if limit > 0 {
@@ -560,9 +592,16 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 				"rate_limit_resource", resource,
 				"rate_limit_remaining", int64(remaining),
 				"rate_limit_limit", int64(limit),
+				"rate_limit_used", int64(val("X-RateLimit-Used")),
+				"rate_limit_reset", int64(reset),
+				"rate_limit_window", window,
+				"remote_ip", conn.ip(),
 				"ce_type", r.Header.Get(CeTypeHeader),
 				"service_name", serviceName,
 				"revision_name", knativeRevisionName(),
+			}
+			if cacheResult != "" {
+				logAttrs = append(logAttrs, "cache", cacheResult)
 			}
 			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
 				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
@@ -572,6 +611,91 @@ func instrumentGitHubRateLimits(next http.RoundTripper) promhttp.RoundTripperFun
 			clog.InfoContext(r.Context(), "github_api_call", logAttrs...)
 		}
 		return resp, err
+	}
+}
+
+// remoteAddr records the IP address of the connection a request was sent on,
+// from httptrace's GotConn. GitHub has been seen to answer one token's calls
+// from more than one rate-limit budget; the address says whether the budget
+// follows the server that answered.
+type remoteAddr struct {
+	addr atomic.Pointer[string]
+}
+
+func (a *remoteAddr) record(info httptrace.GotConnInfo) {
+	if info.Conn == nil {
+		return
+	}
+	if host, _, err := net.SplitHostPort(info.Conn.RemoteAddr().String()); err == nil {
+		a.addr.Store(&host)
+	}
+}
+
+// ip returns the recorded address, or "" when no connection was obtained.
+func (a *remoteAddr) ip() string {
+	if p := a.addr.Load(); p != nil {
+		return *p
+	}
+	return ""
+}
+
+// resetWindow names the budget a response drew on by the minute of the hour
+// it resets at, or "" when the response carried no reset time. A budget
+// keeps its reset minute from window to window while it stays busy, so the
+// minute identifies it across hours with at most 60 values.
+func resetWindow(reset float64) string {
+	if reset <= 0 {
+		return ""
+	}
+	return strconv.Itoa(time.Unix(int64(reset), 0).UTC().Minute())
+}
+
+// gitHubRateLimitGauges are the gauges labelled by rateLimitGaugeLabels.
+var gitHubRateLimitGauges = []*prometheus.GaugeVec{
+	mGitHubRateLimitRemaining,
+	mGitHubRateLimit,
+	mGitHubRateLimitReset,
+	mGitHubRateLimitUsed,
+	mGitHubRateLimitTimeToReset,
+}
+
+// rateLimitWindows deletes a window's gauge series once its budget has
+// reset. A gauge holds its last value, so a budget that stops being drawn on
+// would otherwise keep reporting its final reading (95% used, say) for as
+// long as the process lives, and keep any alert on it firing.
+type rateLimitWindows struct {
+	mu sync.Mutex
+	// resets maps a series' labels other than window to the last reset time
+	// each of its windows reported.
+	resets map[string]map[string]int64
+}
+
+var gitHubRateLimitWindows = &rateLimitWindows{resets: make(map[string]map[string]int64)}
+
+// observe records that labels' window resets at reset, and deletes the
+// series of the same labels' other windows whose reset time has passed.
+func (w *rateLimitWindows) observe(labels prometheus.Labels, reset int64, now time.Time) {
+	key := strings.Join([]string{labels["resource"], labels["organization"], labels["app_id"], labels["installation_id"]}, "\x00")
+	current := labels["window"]
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	windows, ok := w.resets[key]
+	if !ok {
+		windows = make(map[string]int64, 2)
+		w.resets[key] = windows
+	}
+	windows[current] = reset
+	for window, at := range windows {
+		if window == current || at > now.Unix() {
+			continue
+		}
+		stale := maps.Clone(labels)
+		stale["window"] = window
+		for _, g := range gitHubRateLimitGauges {
+			g.Delete(stale)
+		}
+		delete(windows, window)
 	}
 }
 
