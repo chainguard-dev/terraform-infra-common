@@ -56,3 +56,8 @@ resource "google_monitoring_dashboard" "dashboard" {
 output "json" {
   value = local.json
 }
+
+output "id" {
+  description = "The dashboard's resource name, projects/<project>/dashboards/<dashboard id>."
+  value       = google_monitoring_dashboard.dashboard.id
+}

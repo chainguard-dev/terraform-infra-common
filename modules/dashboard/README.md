@@ -59,5 +59,6 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_id"></a> [id](#output\_id) | The dashboard's resource name, projects/<project>/dashboards/<dashboard id>. |
 | <a name="output_json"></a> [json](#output\_json) | n/a |
 <!-- END_TF_DOCS -->
