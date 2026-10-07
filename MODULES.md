@@ -216,6 +216,12 @@ Define Service Level Objectives for Cloud Run services with request-based succes
 
 Use this when a service needs formal SLOs with automated burn-rate alerts.
 
+### [`service-health`](./modules/service-health/)
+
+Send Google Cloud incidents that affect a project, from Personalized Service Health, to Slack, email, Pub/Sub, or other Cloud Monitoring notification channels.
+
+Use this when a team wants GCP outage notifications scoped to the products and regions a project actually uses, instead of the global status feed.
+
 ### [`ocistatus`](./modules/ocistatus/)
 
 Create an Artifact Registry repository for OCI status attestations with automatic cleanup policies and write access grants.
