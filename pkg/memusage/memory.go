@@ -62,13 +62,32 @@ func containerPeakMemory(root fs.FS) (*uint64, string, error) {
 // mounted at the current process's root: v2File under cgroup v2, else v1File
 // under cgroup v1. A v2 value of "max" means no limit and is unknown, not zero.
 func containerMemory(root fs.FS, v2File, v1File string) (*uint64, string, error) {
+	value, name, _, err := containerFile(root, v2File, v1File)
+	if err != nil {
+		return nil, name, err
+	}
+	if strings.TrimSpace(value) == "max" {
+		return nil, name, fmt.Errorf("%s has no limit", name)
+	}
+	bytes, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+	if err != nil {
+		return nil, name, fmt.Errorf("invalid cgroup memory value in %s", name)
+	}
+	return new(bytes), name, nil
+}
+
+// containerFile reads one accounting file from the cgroup controller mounted
+// at the current process's root: v2File under cgroup v2, else v1File under
+// cgroup v1. It returns the contents, the path relative to root, and whether
+// the file came from cgroup v2.
+func containerFile(root fs.FS, v2File, v1File string) (string, string, bool, error) {
 	membership, err := readMemoryFile(root, "proc/self/cgroup")
 	if err != nil {
-		return nil, "", err
+		return "", "", false, err
 	}
 	mounts, err := readMemoryFile(root, "proc/self/mountinfo")
 	if err != nil {
-		return nil, "", err
+		return "", "", false, err
 	}
 	// Only use a controller mounted at the current process's namespace root.
 	// A parent cgroup's hierarchical peak would include unrelated processes.
@@ -88,18 +107,11 @@ func containerMemory(root fs.FS, v2File, v1File string) (*uint64, string, error)
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, name, err
+			return "", name, false, err
 		}
-		if strings.TrimSpace(value) == "max" {
-			return nil, name, fmt.Errorf("%s has no limit", name)
-		}
-		bytes, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
-		if err != nil {
-			return nil, name, fmt.Errorf("invalid cgroup memory value in %s", name)
-		}
-		return new(bytes), name, nil
+		return value, name, candidate.kind == "cgroup2", nil
 	}
-	return nil, "", fmt.Errorf("cgroup memory accounting %s unavailable", v2File)
+	return "", "", false, fmt.Errorf("cgroup memory accounting %s unavailable", v2File)
 }
 
 func rootMemoryController(membership, mounts, kind, mount string) bool {

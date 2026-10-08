@@ -21,6 +21,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/memusage"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/felixge/httpsnoop"
 	"github.com/mileusna/useragent"
@@ -84,12 +85,17 @@ func resolveServiceName(kService, cloudRunJob string) string {
 	return "unknown"
 }
 
-// SetupMetrics setups a prometheus exporter for otel metrics
+// SetupMetrics setups a prometheus exporter for otel metrics, and starts
+// memusage.Heartbeat, which logs the container's memory use while it is at
+// or over half its limit. The heartbeat outlives ctx so that it still logs
+// while the process drains after SIGTERM.
 //
 // Expected usage:
 //
 //	defer metrics.SetupMetrics(ctx)()
 func SetupMetrics(ctx context.Context) func() {
+	go memusage.Heartbeat(context.WithoutCancel(ctx))
+
 	// OTel → Prometheus exporter (no GCP SDK needed)
 	exporter, err := prometheusexporter.New()
 	if err != nil {
@@ -125,6 +131,8 @@ func ServeMetrics() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go ScrapeDiskUsage(ctx)
+	// Not ctx: the heartbeat must outlive this server if it fails to listen.
+	go memusage.Heartbeat(context.Background())
 	if err := srv.ListenAndServe(); err != nil {
 		clog.ErrorContext(ctx, "listen and serve for http /metrics", "error", err)
 	}
