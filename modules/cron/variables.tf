@@ -278,6 +278,19 @@ variable "otel_collector_image" {
   description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub. The bundled scrape config enables native histogram scraping by default, which needs opentelemetry-collector-contrib v0.142.0 or later; older collectors reject the config at startup."
 }
 
+variable "otel_resources" {
+  type = object({
+    limits = optional(object(
+      {
+        cpu    = string
+        memory = string
+      }
+    ), null)
+  })
+  default     = null
+  description = "The resource clause for the otel sidecar container, passed to regional-go-cron. When null, the sidecar gets 250m CPU and 512Mi memory, with its CPU raised as needed to bring the task to the 1 vCPU total that Cloud Run jobs require."
+}
+
 variable "scrape_native_histograms" {
   type        = bool
   default     = true

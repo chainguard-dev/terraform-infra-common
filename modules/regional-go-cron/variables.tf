@@ -240,9 +240,16 @@ variable "scrape_native_histograms" {
 }
 
 variable "otel_resources" {
-  description = "Resources to add to the OpenTelemetry resource."
-  type        = map(string)
-  default     = {}
+  type = object({
+    limits = optional(object(
+      {
+        cpu    = string
+        memory = string
+      }
+    ), null)
+  })
+  default     = null
+  description = "The resource clause for the otel sidecar container. When null, the sidecar gets 250m CPU and 512Mi memory, with its CPU raised as needed to bring the task to the 1 vCPU total that Cloud Run jobs require."
 }
 
 variable "observability_role" {

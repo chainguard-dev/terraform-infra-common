@@ -86,6 +86,7 @@ module "impl" {
   labels                   = var.labels
   enable_otel_sidecar      = var.enable_otel_sidecar
   otel_collector_image     = var.otel_collector_image
+  otel_resources           = var.otel_resources
   scrape_native_histograms = var.scrape_native_histograms
   observability_role       = var.observability_role
   invokers                 = var.invokers

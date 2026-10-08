@@ -45,21 +45,31 @@ locals {
   ]) : ""
 
   // Cloud Run caps total CPU across all containers in a task at 8 vCPU
-  // (8000m). Normalize each application container's cpu limit to millicpu
-  // ("2" -> 2000, "1.5" -> 1500, "500m" -> 500) and add the otel sidecar's
-  // implicit 1000m (it runs with no explicit limit) so an over-allocation
-  // fails at plan time here instead of on a Cloud Run 400 at apply.
-  container_millicpu = [
+  // (8000m) and gives a container with no cpu limit 1 vCPU. Normalize each
+  // application container's cpu limit to millicpu ("2" -> 2000, "1.5" ->
+  // 1500, "500m" -> 500) so an over-allocation fails at plan time here
+  // instead of on a Cloud Run 400 at apply.
+  app_millicpu = sum(concat([0], [
     for c in values(var.containers) : try(
       endswith(c.resources.limits.cpu, "m")
       ? tonumber(trimsuffix(c.resources.limits.cpu, "m"))
       : tonumber(c.resources.limits.cpu) * 1000,
-      0
+      1000
     )
-    if try(c.resources.limits.cpu, null) != null
-  ]
-  otel_sidecar_millicpu = var.enable_otel_sidecar ? 1000 : 0
-  total_millicpu        = sum(concat([0], local.container_millicpu, [local.otel_sidecar_millicpu]))
+  ]))
+
+  // Jobs run only on gen2, which rejects a task whose containers total under
+  // 1 vCPU, so the default sidecar CPU absorbs any shortfall.
+  otel_limits = var.otel_resources != null ? var.otel_resources.limits : {
+    cpu    = "${max(250, ceil(1000 - local.app_millicpu))}m"
+    memory = "512Mi"
+  }
+  otel_sidecar_millicpu = !var.enable_otel_sidecar ? 0 : local.otel_limits == null ? 1000 : (
+    endswith(local.otel_limits.cpu, "m")
+    ? tonumber(trimsuffix(local.otel_limits.cpu, "m"))
+    : tonumber(local.otel_limits.cpu) * 1000
+  )
+  total_millicpu = local.app_millicpu + local.otel_sidecar_millicpu
 }
 
 // Build each application container image from source, mirroring regional-go-service.
@@ -288,6 +298,13 @@ resource "google_cloud_run_v2_job" "this" {
               "REPLACE_ME_TARGETS", local.metrics_targets),
             "        # REPLACE_ME_NATIVE_HISTOGRAMS\n", local.native_histograms_config)
           }
+
+          dynamic "resources" {
+            for_each = local.otel_limits != null ? [local.otel_limits] : []
+            content {
+              limits = resources.value
+            }
+          }
         }
       }
 
@@ -325,7 +342,14 @@ resource "google_cloud_run_v2_job" "this" {
 
     precondition {
       condition     = local.total_millicpu <= 8000
-      error_message = "Cron ${var.name}: total CPU across all containers is ${local.total_millicpu}m, which exceeds the Cloud Run per-task limit of 8000m. The otel sidecar (enable_otel_sidecar=true) adds an implicit 1000m; lower the container cpu limit(s) to leave room for it."
+      error_message = "Cron ${var.name}: total CPU across all containers is ${local.total_millicpu}m, which exceeds the Cloud Run per-task limit of 8000m. The otel sidecar accounts for ${local.otel_sidecar_millicpu}m of that; lower the container cpu limit(s) or otel_resources to fit."
+    }
+
+    // Only an explicit otel_resources can leave a task under 1 vCPU; the
+    // default sidecar CPU is padded to prevent it.
+    precondition {
+      condition     = !var.enable_otel_sidecar || local.total_millicpu >= 1000
+      error_message = "Cron ${var.name}: total CPU across all containers is ${local.total_millicpu}m, but Cloud Run jobs run on gen2, which needs at least 1000m per task. Raise the otel_resources cpu limit or the container cpu limit(s)."
     }
   }
 }
