@@ -52,10 +52,13 @@ resource "google_monitoring_alert_policy" "incident" {
       label_extractors = {
         title             = "EXTRACT(jsonPayload.title)"
         state             = "EXTRACT(jsonPayload.state)"
+        detailedState     = "EXTRACT(jsonPayload.detailedState)"
+        relevance         = "EXTRACT(jsonPayload.relevance)"
         description       = "EXTRACT(jsonPayload.description)"
         impactedProducts  = "EXTRACT(jsonPayload.impactedProducts)"
         impactedLocations = "EXTRACT(jsonPayload.impactedLocations)"
         startTime         = "EXTRACT(jsonPayload.startTime)"
+        endTime           = "EXTRACT(jsonPayload.endTime)"
       }
     }
   }
@@ -67,10 +70,12 @@ resource "google_monitoring_alert_policy" "incident" {
     content   = <<EOT
 ### $${log.extracted_label.title}
 
-**State:** $${log.extracted_label.state}
+**State:** $${log.extracted_label.state} ($${log.extracted_label.detailedState})
+**Relevance:** $${log.extracted_label.relevance}
 **Products:** $${log.extracted_label.impactedProducts}
 **Locations:** $${log.extracted_label.impactedLocations}
 **Started:** $${log.extracted_label.startTime}
+**Ended:** $${log.extracted_label.endTime}
 
 $${log.extracted_label.description}
 
@@ -78,9 +83,9 @@ $${log.extracted_label.description}
 **What this means:** Google reports an incident affecting a product or location that project ${var.project_id} uses. It may or may not be degrading our services.
 
 **What to do:**
-1. Open the Service Health dashboard (link below) for impact details and Google's next update.
+1. Open the Service Health dashboard for impact details and Google's next update: https://console.cloud.google.com/servicehealth/incidents?project=${var.project_id}
 2. Check dashboards and error rates for our services that run on the affected products and locations.
-3. If our services are degraded, declare an incident and link the GCP incident. Otherwise, watch for the RESOLVED update.
+3. If our services are degraded, declare an incident and link the GCP incident. Otherwise, watch for the CLOSED update.
 EOT
 
     links {

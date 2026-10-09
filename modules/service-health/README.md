@@ -18,7 +18,7 @@ want covered.
 # (https://github.com/hashicorp/terraform-provider-google/issues/11346),
 # so create them in the console and look them up.
 data "google_monitoring_notification_channel" "statuspage" {
-  display_name = "Slack statuspage"
+  display_name = "Slack Statuspage"
 }
 
 module "service-health" {
@@ -42,6 +42,15 @@ module "service-health" {
 The notification rate limit applies to the whole policy, not per incident: with
 the default `300s`, an update to a second incident within five minutes of the
 first notification is dropped.
+
+Service Health only logs updates made after the API is enabled. An incident
+that was already open at rollout first shows up with state `CLOSED`, when its
+final update lands. Incidents that start later notify on `ACTIVE` and on each
+update.
+
+Each notification opens a Cloud Monitoring alert that stays open until
+`auto_close`, independent of the incident's state. Slack's "Alert open" status
+refers to that alert, not to the Google incident.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
