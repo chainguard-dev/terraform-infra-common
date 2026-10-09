@@ -130,6 +130,11 @@ variable "alert_links" {
   }))
   default     = []
   description = "Links to troubleshooting resources in the alert documentation."
+
+  validation {
+    condition     = length(var.alert_links) <= 3
+    error_message = "Cloud Monitoring allows at most 3 documentation links per alert policy."
+  }
 }
 
 variable "uptime_alert_duration" {
