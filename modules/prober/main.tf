@@ -3,6 +3,18 @@ Copyright 2022 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0
 */
 
+terraform {
+  required_providers {
+    google = { source = "hashicorp/google" }
+    random = { source = "hashicorp/random" }
+    // Required transitively by the regional-go-service child module; declared
+    // here so provider configurations attach at the root module.
+    google-beta = { source = "hashicorp/google-beta" }
+    ko          = { source = "ko-build/ko" }
+    cosign      = { source = "chainguard-dev/cosign" }
+  }
+}
+
 // Create a shared secret to have the uptime check pass to the
 // Cloud Run app as an "Authorization" header to keep ~anyone
 // from being able to use our prober endpoints to indirectly

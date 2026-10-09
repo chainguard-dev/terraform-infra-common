@@ -121,6 +121,11 @@ variable "alert_description" {
   type        = string
   default     = "An uptime check has failed."
   description = "Alert documentation. Use this to link to playbooks or give additional context."
+
+  validation {
+    condition     = length(var.alert_description) <= 8192
+    error_message = "alert_description may not exceed 8192 characters; Cloud Monitoring rejects longer alert documentation."
+  }
 }
 
 variable "alert_links" {
@@ -134,6 +139,16 @@ variable "alert_links" {
   validation {
     condition     = length(var.alert_links) <= 3
     error_message = "Cloud Monitoring allows at most 3 documentation links per alert policy."
+  }
+
+  validation {
+    condition     = alltrue([for l in var.alert_links : length(l.display_name) >= 1 && length(l.display_name) <= 63])
+    error_message = "Each alert_links display_name must be 1 to 63 characters."
+  }
+
+  validation {
+    condition     = alltrue([for l in var.alert_links : length(l.url) <= 2083])
+    error_message = "Each alert_links url may not exceed 2083 characters."
   }
 }
 
