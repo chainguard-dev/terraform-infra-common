@@ -77,7 +77,7 @@ run "null_enable_dlq_bucket_still_binds" {
 }
 
 # The alerting module's per-team DLQ alert matches dead-letter topics on their
-# squad label. The team label is transitional while the alert accepts either.
+# transitional team label until it switches to squad.
 run "dead_letter_topic_carries_squad" {
   command = plan
   assert {

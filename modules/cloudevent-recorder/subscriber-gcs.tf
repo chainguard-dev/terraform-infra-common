@@ -25,8 +25,7 @@ resource "google_pubsub_topic" "dead-letter" {
 
   name = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
   // The alerting module's per-team DLQ alert matches dead-letter topics on
-  // the squad label from merged_labels. The team label is transitional: remove
-  // it once the alert reads squad everywhere.
+  // the team label. Keep team until that alert switches to squad.
   labels = merge({ team = var.team }, local.merged_labels)
 
   message_storage_policy {

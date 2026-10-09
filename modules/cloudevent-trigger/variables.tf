@@ -146,7 +146,7 @@ variable "ack_deadline_seconds" {
 
 
 variable "team" {
-  description = "Sets the squad label on the dead-letter topic, which the alerting module's per-team DLQ alert matches, and the transitional team label. Cost attribution comes from Resource Manager tags, not labels."
+  description = "Sets the squad label and the transitional team label on the dead-letter topic. The alerting module's per-team DLQ alert matches on team, so team stays until that alert switches to squad. Cost attribution comes from Resource Manager tags, not labels."
   type        = string
 
 }
