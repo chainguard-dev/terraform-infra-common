@@ -112,12 +112,12 @@ No modules.
 | <a name="input_location"></a> [location](#input\_location) | BigQuery dataset location | `string` | `"US"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Base name for the BigQuery resources | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channel IDs for alerts | `list(string)` | `[]` | no |
-| <a name="input_product"></a> [product](#input\_product) | Product label for resources | `string` | `null` | no |
+| <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID where resources will be created | `string` | n/a | yes |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the log sink dataset, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_retention_days"></a> [retention\_days](#input\_retention\_days) | The number of days to retain data in BigQuery. Partitions older than this will be automatically deleted. Only applies when use\_partitioned\_tables is true. | `number` | `30` | no |
 | <a name="input_sinks"></a> [sinks](#input\_sinks) | Map of log sinks to create. Each key is the sink name suffix, and the value is an object with:<br/>- log\_filter: Cloud Logging filter expression to route logs<br/>- description: Sink description (optional)<br/><br/>Note: Tables are auto-created by Cloud Logging based on log names.<br/>See: https://cloud.google.com/logging/docs/export/bigquery | <pre>map(object({<br/>    log_filter  = string<br/>    description = optional(string, "")<br/>  }))</pre> | n/a | yes |
-| <a name="input_team"></a> [team](#input\_team) | Team label for resources | `string` | `null` | no |
+| <a name="input_team"></a> [team](#input\_team) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_use_partitioned_tables"></a> [use\_partitioned\_tables](#input\_use\_partitioned\_tables) | Whether to use partitioned tables in log sink destinations. Must be true for partition expiration to work. | `bool` | `true` | no |
 
 ## Outputs

@@ -37,6 +37,10 @@ module "postgres" {
 }
 ```
 
+## Upgrade note: `team` and `product` labels
+
+The module no longer sets `team` or `product` user labels on the Cloud SQL instance, which supports [Resource Manager tags](https://docs.cloud.google.com/resource-manager/docs/tags/tags-supported-services); attribute it with tags instead. The `team` and `product` inputs are still accepted so existing callers keep planning, but they have no effect. On the first apply after upgrading, Terraform removes the previously applied labels from the instance in place.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -86,7 +90,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Cloud SQL instance name (lowercase letters, numbers, and hyphens; up to 98 characters). | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | Self‑link or name of the VPC network used for private IP connectivity. | `string` | n/a | yes |
 | <a name="input_primary_zone"></a> [primary\_zone](#input\_primary\_zone) | Optional zone for the primary instance. | `string` | `null` | no |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project"></a> [project](#input\_project) | GCP project ID hosting the Cloud SQL instance. | `string` | n/a | yes |
 | <a name="input_psc_allowed_consumer_projects"></a> [psc\_allowed\_consumer\_projects](#input\_psc\_allowed\_consumer\_projects) | List of project IDs allowed to connect to this Cloud SQL instance via PSC. Only used when psc\_enabled is true. | `list(string)` | `[]` | no |
 | <a name="input_psc_enabled"></a> [psc\_enabled](#input\_psc\_enabled) | Enable Private Service Connect (PSC) for cross-project access to the Cloud SQL instance. | `bool` | `false` | no |

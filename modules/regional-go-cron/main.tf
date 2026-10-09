@@ -16,6 +16,10 @@ locals {
   squad_label   = { squad = var.team, team = var.team }
   product_label = var.product != "unknown" ? { product = var.product } : {}
   merged_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+  // The job keeps transitional team and product labels for ownership routing
+  // until the catalog reads squad. Its alert policies support tags, so they
+  // carry only squad.
+  alert_labels = merge(local.default_labels, { squad = var.team }, var.labels)
 
   // Collect any METRICS_PORT overrides declared in container env vars,
   // mirroring the same logic used in regional-service.
@@ -410,7 +414,7 @@ resource "google_monitoring_alert_policy" "success" {
   severity     = "ERROR"
   project      = var.project_id
 
-  user_labels = local.merged_labels
+  user_labels = local.alert_labels
 
   dynamic "documentation" {
     for_each = var.success_alert_documentation == "" ? [] : [var.success_alert_documentation]
@@ -460,7 +464,7 @@ resource "google_monitoring_alert_policy" "failed" {
   severity     = "ERROR"
   project      = var.project_id
 
-  user_labels = local.merged_labels
+  user_labels = local.alert_labels
 
   dynamic "documentation" {
     for_each = var.failed_execution_alert_documentation == "" ? [] : [var.failed_execution_alert_documentation]

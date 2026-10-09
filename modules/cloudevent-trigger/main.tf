@@ -68,15 +68,20 @@ locals {
   default_labels = {
     basename(abspath(path.module)) = var.name
     terraform-module               = basename(abspath(path.module))
-    team                           = var.team
-    product                        = var.product
   }
 }
 
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.suffix.result}"
 
-  labels = local.default_labels
+  // The alerting module's per-team DLQ alert matches dead-letter topics on
+  // the squad label. The team label is transitional: remove it once the alert
+  // reads squad everywhere.
+  labels = merge(
+    local.default_labels,
+    { team = var.team },
+    var.team == "" ? {} : { squad = var.team },
+  )
 
   message_storage_policy {
     allowed_persistence_regions = [var.private-service.region]

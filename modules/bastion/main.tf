@@ -23,14 +23,9 @@ locals {
 
   squad_label = {
     squad = var.team
-    team  = var.team
   }
 
-  product_label = var.product != "" ? {
-    product = var.product
-  } : {}
-
-  merged_labels = merge(local.default_labels, local.squad_label, local.product_label)
+  merged_labels = merge(local.default_labels, local.squad_label)
 
   // Split patch time HH:MM into components
   patch_hour   = tonumber(split(":", var.patch_time_utc)[0])

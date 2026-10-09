@@ -225,9 +225,9 @@ variable "deletion_protection" {
 }
 
 variable "product" {
-  description = "Product label to apply to the service."
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
-  default     = "unknown"
+  default     = null
 }
 
 variable "enable_private_path_for_google_cloud_services" {

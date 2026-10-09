@@ -75,3 +75,32 @@ run "null_enable_dlq_bucket_still_binds" {
     error_message = "a null enable_dlq_bucket creates the bucket, so it must also bind the tag"
   }
 }
+
+# The alerting module's per-team DLQ alert matches dead-letter topics on their
+# squad label. The team label is transitional while the alert accepts either.
+run "dead_letter_topic_carries_squad" {
+  command = plan
+  assert {
+    condition     = google_pubsub_topic.dead-letter.labels["squad"] == "fixture"
+    error_message = "the dead-letter topic must carry squad = var.team for DLQ alert routing"
+  }
+  assert {
+    condition     = google_pubsub_topic.dead-letter.labels["team"] == "fixture"
+    error_message = "the dead-letter topic keeps the transitional team label"
+  }
+  assert {
+    condition     = !contains(keys(google_pubsub_topic.dead-letter.labels), "product")
+    error_message = "the dead-letter topic must not carry a product label"
+  }
+}
+
+run "dead_letter_topic_without_team_has_no_squad" {
+  command = plan
+  variables {
+    team = ""
+  }
+  assert {
+    condition     = !contains(keys(google_pubsub_topic.dead-letter.labels), "squad")
+    error_message = "an empty team must not produce a squad label"
+  }
+}

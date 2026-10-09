@@ -52,13 +52,13 @@ variable "resource_manager_tags" {
 }
 
 variable "team" {
-  description = "Team label for the status bucket, for cost attribution."
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
   default     = null
 }
 
 variable "product" {
-  description = "Product label for the status bucket, for cost attribution."
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
   default     = null
 }

@@ -96,3 +96,14 @@ run "resource_manager_tags_reject_malformed_ids" {
 
   expect_failures = [var.resource_manager_tags]
 }
+
+# The incident.io catalog and alert filters read squad. The team label is
+# transitional and goes once those consumers are verified.
+run "service_carries_squad_for_routing" {
+  command = plan
+
+  assert {
+    condition     = google_cloud_run_v2_service.this["us-central1"].labels["squad"] == "fixture"
+    error_message = "the service must carry squad = var.team for the catalog and alert filters"
+  }
+}

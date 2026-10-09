@@ -92,7 +92,7 @@ No modules.
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the secret. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the secret. | `string` | n/a | yes |
 | <a name="input_notification-channels"></a> [notification-channels](#input\_notification-channels) | The channels to notify if the configuration data is improperly accessed. | `list(string)` | n/a | yes |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_replication_locations"></a> [replication\_locations](#input\_replication\_locations) | List of GCP regions for user\_managed replication. When null (default), uses automatic replication. | `list(string)` | `null` | no |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the backing secret, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |

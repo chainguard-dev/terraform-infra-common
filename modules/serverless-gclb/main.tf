@@ -12,11 +12,6 @@ resource "google_compute_global_address" "this" {
   project    = var.project_id
   name       = var.name
   ip_version = "IPV4"
-
-  labels = merge(
-    var.team == "" ? {} : { team = var.team },
-    var.product == "" ? {} : { product = var.product }
-  )
 }
 
 // Create the IPv6 address for our LB to serve on.
@@ -25,11 +20,6 @@ resource "google_compute_global_address" "this-v6" {
   project    = var.project_id
   name       = "${var.name}-v6"
   ip_version = "IPV6"
-
-  labels = merge(
-    var.team == "" ? {} : { team = var.team },
-    var.product == "" ? {} : { product = var.product }
-  )
 }
 
 // Create A records for each of our public service hostnames.

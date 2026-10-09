@@ -63,6 +63,10 @@ resource "google_pubsub_subscription_iam_member" "pull_event_subscriber" {
 }
 ```
 
+## Upgrade note: `team` and `product` labels
+
+The dead-letter topic no longer carries a `product` label; Pub/Sub supports [Resource Manager tags](https://docs.cloud.google.com/resource-manager/docs/tags/tags-supported-services), so attribute it with tags instead. It carries a `squad` label, which the `alerting` module's per-team dead-letter alert matches, and a transitional `team` label that is removed once the alert reads `squad` everywhere. `product` is still accepted so existing callers keep planning, but it has no effect. On the first apply after upgrading, Terraform removes the topic's `product` label in place.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -117,11 +121,11 @@ No modules.
 | <a name="input_maximum_backoff"></a> [maximum\_backoff](#input\_maximum\_backoff) | The maximum delay between consecutive deliveries of a given message. | `number` | `600` | no |
 | <a name="input_minimum_backoff"></a> [minimum\_backoff](#input\_minimum\_backoff) | The minimum delay between consecutive deliveries of a given message. | `number` | `10` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_raw_filter"></a> [raw\_filter](#input\_raw\_filter) | Raw PubSub filter to apply, ignores other variables. https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax | `string` | `""` | no |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to this module's taggable resources, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
-| <a name="input_team"></a> [team](#input\_team) | team label to apply to the service. | `string` | n/a | yes |
+| <a name="input_team"></a> [team](#input\_team) | Sets the squad label on the dead-letter topic, which the alerting module's per-team DLQ alert matches, and the transitional team label. Cost attribution comes from Resource Manager tags, not labels. | `string` | n/a | yes |
 
 ## Outputs
 

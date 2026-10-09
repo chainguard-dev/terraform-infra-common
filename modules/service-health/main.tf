@@ -104,8 +104,6 @@ EOT
 
   notification_channels = local.notification_channels
 
-  user_labels = var.team == null ? {} : { team = var.team }
-
   lifecycle {
     precondition {
       condition     = length(local.notification_channels) > 0

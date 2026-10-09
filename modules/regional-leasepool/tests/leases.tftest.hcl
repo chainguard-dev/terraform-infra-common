@@ -48,27 +48,19 @@ run "require_regions" {
   expect_failures = [var.regions]
 }
 
-run "default_product_omitted" {
+run "team_and_product_are_not_labels" {
   command = plan
+  variables { product = "containers" }
   assert {
-    condition     = alltrue([for b in google_storage_bucket.leases : !contains(keys(b.labels), "product")])
-    error_message = "The unknown product must not create a label."
-  }
-}
-
-run "explicit_product" {
-  command = plan
-  variables { product = "compute" }
-  assert {
-    condition     = alltrue([for b in google_storage_bucket.leases : b.labels["product"] == "compute"])
-    error_message = "An explicit product must be labeled."
+    condition     = alltrue([for b in google_storage_bucket.leases : !contains(keys(b.labels), "team") && !contains(keys(b.labels), "product")])
+    error_message = "Buckets support tags, so team and product must not become labels."
   }
 }
 
 run "caller_labels_override_defaults" {
   command = plan
   variables {
-    product = "compute"
+    product = "containers"
     labels  = { team = "custom", product = "override", terraform-module = "custom-module" }
   }
   assert {

@@ -13,13 +13,8 @@ locals {
 
   squad_label = {
     squad = var.team
-    team  = var.team
   }
-  product_label = var.product != "" ? {
-    product = var.product
-  } : {}
-
-  merged_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
 
   // Flatten dedicated_topics into per-region-per-type entries for for_each,
   // keyed "<region>-<type>" to match the ingress env and output lookups.

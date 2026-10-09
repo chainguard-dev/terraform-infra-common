@@ -146,15 +146,15 @@ variable "ack_deadline_seconds" {
 
 
 variable "team" {
-  description = "team label to apply to the service."
+  description = "Sets the squad label on the dead-letter topic, which the alerting module's per-team DLQ alert matches, and the transitional team label. Cost attribution comes from Resource Manager tags, not labels."
   type        = string
 
 }
 
 variable "product" {
-  description = "Product label to apply to the service."
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
-  default     = "unknown"
+  default     = null
 }
 
 variable "enable_dlq_bucket" {

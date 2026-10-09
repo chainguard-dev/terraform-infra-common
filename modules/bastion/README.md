@@ -160,7 +160,7 @@ No modules.
 | <a name="input_network"></a> [network](#input\_network) | VPC network self-link or name the bastion joins. | `string` | n/a | yes |
 | <a name="input_patch_day"></a> [patch\_day](#input\_patch\_day) | Day of week (in UTC) when OS Config patching runs. | `string` | `"MONDAY"` | no |
 | <a name="input_patch_time_utc"></a> [patch\_time\_utc](#input\_patch\_time\_utc) | Time of day in HH:MM (UTC) when patching runs. | `string` | `"03:00"` | no |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project in which to deploy the bastion host. | `string` | n/a | yes |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the bastion instance, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_startup_script"></a> [startup\_script](#input\_startup\_script) | additional startup script snippet to execute on bastion. | `string` | `""` | no |

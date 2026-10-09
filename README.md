@@ -32,7 +32,7 @@ provider "google" {
 
 Many modules add a `terraform-module` label and a label named after the module. Modules differ in which other labels they apply and whether they accept a `labels` map. Check the module's variables and resources before relying on a specific label.
 
-When a module requires a `team` input, provide the owning team. Some modules also add a `squad` label with that value for compatibility. The `product` input and its default also vary by module.
+Modules no longer set `team` or `product` labels on resources that support [Resource Manager tags](https://docs.cloud.google.com/resource-manager/docs/tags/tags-supported-services); attribute those resources with tags instead. Alert routing and the incident.io catalog read the operational `squad` label, which modules set only where a consumer reads it, such as dead-letter topics and Cloud Run services and jobs. Billing never reads `squad`. Cloud Run services and jobs keep their `team` and `product` labels, and dead-letter topics keep `team`, only as transitional labels that are removed once the consumers are verified. Where a module still accepts `team` and `product` only so existing callers keep planning, its variable description says the input is unused. Upgrading removes previously applied `team` and `product` labels from those resources on the next apply.
 
 ## Submitting Changes
 

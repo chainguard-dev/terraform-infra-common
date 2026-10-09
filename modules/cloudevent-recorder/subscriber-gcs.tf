@@ -23,8 +23,11 @@ resource "google_project_service_identity" "pubsub" {
 resource "google_pubsub_topic" "dead-letter" {
   for_each = var.method == "gcs" ? local.regional-types : {}
 
-  name   = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
-  labels = local.merged_labels
+  name = "${var.name}-dlq-${substr(md5(each.key), 0, 6)}"
+  // The alerting module's per-team DLQ alert matches dead-letter topics on
+  // the squad label from merged_labels. The team label is transitional: remove
+  // it once the alert reads squad everywhere.
+  labels = merge({ team = var.team }, local.merged_labels)
 
   message_storage_policy {
     allowed_persistence_regions = [each.value.region]

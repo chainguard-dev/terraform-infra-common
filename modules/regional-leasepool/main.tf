@@ -36,9 +36,8 @@ resource "google_storage_bucket" "leases" {
   labels = merge({
     terraform-module = "regional-leasepool"
     name             = var.name
-    team             = var.team
     squad            = var.team
-  }, var.product != "unknown" ? { product = var.product } : {}, var.labels)
+  }, var.labels)
 }
 
 resource "google_storage_bucket_iam_member" "participant" {

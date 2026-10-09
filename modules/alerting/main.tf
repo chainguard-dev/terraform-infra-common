@@ -13,11 +13,14 @@ locals {
 }
 
 locals {
-  squad_log_filter               = var.team == "" ? "" : "labels.squad=\"${var.team}\""
-  squad_proto_log_filter         = var.team == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${var.team}\""
-  name                           = var.team == "" ? "global" : var.team
-  squad_metric_filter            = var.team == "" ? "" : "metric.labels.team=\"${var.team}\""
-  squad_metric_user_label_filter = var.team == "" ? "" : "metadata.user_labels.\"team\"=\"${var.team}\""
+  squad_log_filter       = var.team == "" ? "" : "labels.squad=\"${var.team}\""
+  squad_proto_log_filter = var.team == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${var.team}\""
+  name                   = var.team == "" ? "global" : var.team
+  squad_metric_filter    = var.team == "" ? "" : "metric.labels.team=\"${var.team}\""
+  // DLQ topics created before the squad label shipped carry only team, so the
+  // filter accepts either until every topic has been applied. Drop the team
+  // branch then.
+  squad_metric_user_label_filter = var.team == "" ? "" : "(metadata.user_labels.\"squad\"=\"${var.team}\" OR metadata.user_labels.\"team\"=\"${var.team}\")"
   http_error_all_excluded_services = distinct(concat(
     var.http_error_exclude_services,
     keys(var.http_error_method_status_exclusions),
@@ -503,7 +506,7 @@ resource "google_monitoring_alert_policy" "nonzero-exitcode-job" {
         "revision_name" = "EXTRACT(labels.\"run.googleapis.com/execution_name\")"
         "job_name"      = "EXTRACT(resource.labels.job_name)"
         "location"      = "EXTRACT(resource.labels.location)"
-        "team"          = "EXTRACT(protoPayload.response.metadata.labels.team)"
+        "team"          = "EXTRACT(protoPayload.response.metadata.labels.squad)"
         "exit_code"     = "EXTRACT(protoPayload.status.code)"
       }
     }
@@ -945,8 +948,8 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
 
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
-    subject = "$${metadata.user_labels.team}: PubSub DLQ: $${resource.label.topic_id}"
-    content = "$${metadata.user_labels.team}: PubSub DLQ: $${resource.label.topic_id}"
+    subject = "$${metadata.user_labels.squad}: PubSub DLQ: $${resource.label.topic_id}"
+    content = "$${metadata.user_labels.squad}: PubSub DLQ: $${resource.label.topic_id}"
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack

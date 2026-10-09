@@ -106,7 +106,7 @@ variable "enable_api" {
 }
 
 variable "team" {
-  description = "Team label for the alert policy."
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
   default     = null
 }

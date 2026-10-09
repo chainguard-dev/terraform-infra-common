@@ -54,13 +54,13 @@ variable "use_partitioned_tables" {
 }
 
 variable "team" {
-  description = "Team label for resources"
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
   default     = null
 }
 
 variable "product" {
-  description = "Product label for resources"
+  description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string
   default     = null
 }

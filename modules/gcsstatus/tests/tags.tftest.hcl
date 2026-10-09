@@ -46,19 +46,19 @@ run "labels_default_to_empty" {
   command = plan
   assert {
     condition     = length(google_storage_bucket.status.labels) == 0
-    error_message = "a caller passing no team, product, or labels must get an unlabelled bucket"
+    error_message = "a caller passing no labels must get an unlabelled bucket"
   }
 }
 
-run "labels_merge_team_product_and_extra" {
+run "team_and_product_are_not_labels" {
   command = plan
   variables {
     team    = "containers"
-    product = "images"
+    product = "containers"
     labels  = { component = "watermarks" }
   }
   assert {
-    condition     = google_storage_bucket.status.labels == tomap({ team = "containers", product = "images", component = "watermarks" })
-    error_message = "team, product, and extra labels must all reach the bucket"
+    condition     = google_storage_bucket.status.labels == tomap({ component = "watermarks" })
+    error_message = "buckets support tags, so team and product must not become labels; extra labels still reach the bucket"
   }
 }

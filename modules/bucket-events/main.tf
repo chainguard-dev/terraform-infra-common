@@ -15,14 +15,9 @@ locals {
 
   squad_label = {
     squad = var.team
-    team  = var.team
   }
 
-  product_label = var.product != "" ? {
-    product = var.product
-  } : {}
-
-  merged_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+  merged_labels = merge(local.default_labels, local.squad_label, var.labels)
 }
 
 resource "random_string" "service-suffix" {
@@ -117,8 +112,11 @@ module "authorize-delivery" {
 }
 
 resource "google_pubsub_topic" "dead-letter" {
-  name   = "${var.name}-dlq-${random_string.delivery-suffix.result}"
-  labels = local.merged_labels
+  name = "${var.name}-dlq-${random_string.delivery-suffix.result}"
+  // The alerting module's per-team DLQ alert matches dead-letter topics on
+  // the squad label from merged_labels. The team label is transitional: remove
+  // it once the alert reads squad everywhere.
+  labels = merge({ team = var.team }, local.merged_labels)
 
   message_storage_policy {
     allowed_persistence_regions = [local.region]

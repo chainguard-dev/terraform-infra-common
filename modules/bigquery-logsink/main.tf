@@ -14,8 +14,6 @@ locals {
 
   merged_labels = merge(
     local.default_labels,
-    var.team != null ? { team = var.team } : {},
-    var.product != null ? { product = var.product } : {},
     var.labels
   )
 }

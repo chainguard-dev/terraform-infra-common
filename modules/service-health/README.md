@@ -90,7 +90,7 @@ No modules.
 | <a name="input_products"></a> [products](#input\_products) | Only alert on incidents impacting at least one of these products, matched as a substring of the event's impacted products (e.g. "Cloud Run", "Google Kubernetes Engine"). Empty alerts on every product. | `list(string)` | `[]` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project whose Personalized Service Health events are alerted on. Service Health is project-scoped: only incidents relevant to this project are reported. | `string` | n/a | yes |
 | <a name="input_severity"></a> [severity](#input\_severity) | Severity of the alert policy: CRITICAL, ERROR, or WARNING. | `string` | `"WARNING"` | no |
-| <a name="input_team"></a> [team](#input\_team) | Team label for the alert policy. | `string` | `null` | no |
+| <a name="input_team"></a> [team](#input\_team) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 
 ## Outputs
 

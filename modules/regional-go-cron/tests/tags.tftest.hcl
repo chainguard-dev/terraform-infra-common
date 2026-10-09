@@ -64,3 +64,28 @@ run "resource_manager_tags_bind_every_region_tag_pair" {
     error_message = "Cloud Run tag binding must use the numeric project number"
   }
 }
+
+# The incident.io catalog and alert filters read squad. The team label is
+# transitional and goes once those consumers are verified.
+run "job_and_alerts_carry_squad_for_routing" {
+  command = plan
+
+  variables {
+    failed_execution_alert = true
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job.this["us-central1"].labels["squad"] == "fixture"
+    error_message = "the job must carry squad = var.team for the catalog and alert filters"
+  }
+
+  assert {
+    condition     = google_monitoring_alert_policy.failed["us-central1"].user_labels["squad"] == "fixture"
+    error_message = "alert policies must carry squad = var.team"
+  }
+
+  assert {
+    condition     = !contains(keys(google_monitoring_alert_policy.failed["us-central1"].user_labels), "team")
+    error_message = "alert policies support tags, so they must not carry a team label"
+  }
+}

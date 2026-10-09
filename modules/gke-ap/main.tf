@@ -40,11 +40,7 @@ locals {
 
   squad_label = {
     "squad" : var.team
-    "team" : var.team
   }
-  product_label = var.product != "" ? {
-    product = var.product
-  } : {}
 }
 
 resource "google_container_cluster" "this" {
@@ -149,7 +145,7 @@ resource "google_container_cluster" "this" {
     delete = "30m"
   }
 
-  resource_labels = merge(local.default_labels, local.squad_label, local.product_label)
+  resource_labels = merge(local.default_labels, local.squad_label)
 
   lifecycle {
     # https://github.com/hashicorp/terraform-provider-google/issues/6901
