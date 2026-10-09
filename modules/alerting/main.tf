@@ -541,10 +541,10 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
          /
          sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, service_name)
@@ -595,10 +595,10 @@ resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
          /
          sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, service_name)
@@ -649,10 +649,10 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
          /
          sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[1m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, service_name)
@@ -707,10 +707,10 @@ resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, job)
-           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}", grpc_code!~"${join("|", var.grpc_non_error_codes)}"${local.promql_squad_filter}}[1m]))
+           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}", grpc_code!~"${join("|", var.grpc_non_error_codes)}"${local.promql_squad_filter}}[2m]))
          /
          sum by (team, job)
-           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[1m]))
+           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, job)

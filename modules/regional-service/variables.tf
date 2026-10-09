@@ -296,6 +296,16 @@ variable "otel_collector_image" {
   description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub. The bundled scrape config enables native histogram scraping by default, which needs opentelemetry-collector-contrib v0.142.0 or later; older collectors reject the config at startup."
 }
 
+variable "scrape_interval" {
+  type        = string
+  default     = "30s"
+  description = "How often the otel sidecar scrapes the metrics targets, as a Prometheus duration. PromQL rate() and increase() windows over these metrics should span at least four intervals."
+  validation {
+    condition     = can(regex("^[1-9][0-9]*(s|m)$", var.scrape_interval))
+    error_message = "scrape_interval must be a whole number of seconds or minutes, such as \"10s\" or \"1m\"."
+  }
+}
+
 variable "scrape_native_histograms" {
   type        = bool
   default     = true

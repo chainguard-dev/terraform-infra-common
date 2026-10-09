@@ -1,7 +1,8 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# Plan-only guard on the go_*/process_* relabel rules rendered into the otel sidecar config.
+# Plan-only guards on the otel sidecar config: the scrape interval and the
+# go_*/process_* relabel rules.
 
 mock_provider "google-beta" {}
 
@@ -117,4 +118,36 @@ run "keep_list_rejects_other_prefixes" {
   }
 
   expect_failures = [var.keep_go_metrics]
+}
+
+run "services_scrape_every_30_seconds" {
+  command = plan
+
+  assert {
+    condition     = strcontains(one([for e in google_cloud_run_v2_service.this["us-central1"].template[0].containers[1].env : e.value if e.name == "OTEL_CONFIG"]), "        scrape_interval: 30s\n")
+    error_message = "regional-service must render a 30s scrape interval into the otel config"
+  }
+}
+
+run "scrape_interval_override_is_rendered" {
+  command = plan
+
+  variables {
+    scrape_interval = "10s"
+  }
+
+  assert {
+    condition     = strcontains(one([for e in google_cloud_run_v2_service.this["us-central1"].template[0].containers[1].env : e.value if e.name == "OTEL_CONFIG"]), "        scrape_interval: 10s\n")
+    error_message = "regional-service must render an overridden scrape interval into the otel config"
+  }
+}
+
+run "scrape_interval_rejects_unitless_values" {
+  command = plan
+
+  variables {
+    scrape_interval = "30"
+  }
+
+  expect_failures = [var.scrape_interval]
 }

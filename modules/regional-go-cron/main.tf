@@ -44,6 +44,11 @@ locals {
     "",
   ]) : ""
 
+  // Shorter than regional-service's default: an execution exports nothing
+  // recorded after its last scrape, and jobs size their end-of-run hold for
+  // that final scrape to this interval.
+  scrape_interval = "10s"
+
   // Cloud Run caps total CPU across all containers in a task at 8 vCPU
   // (8000m) and gives a container with no cpu limit 1 vCPU. Normalize each
   // application container's cpu limit to millicpu ("2" -> 2000, "1.5" ->
@@ -291,7 +296,8 @@ resource "google_cloud_run_v2_job" "this" {
           args  = ["--config=env:OTEL_CONFIG"]
           env {
             name = "OTEL_CONFIG"
-            value = replace(replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
+            value = replace(replace(replace(replace(replace(replace(file("${path.module}/otel-config/config.yaml"),
+              "REPLACE_ME_SCRAPE_INTERVAL", local.scrape_interval),
               "REPLACE_ME_TEAM", var.team),
               "REPLACE_ME_PROJECT_ID", var.project_id),
               "REPLACE_ME_NAME", var.name),
