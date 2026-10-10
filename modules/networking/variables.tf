@@ -26,6 +26,27 @@ variable "netnum_offset" {
   description = "cidrsubnet netnum offset for the subnet. See https://developer.hashicorp.com/terraform/language/functions/cidrsubnet for more details"
 }
 
+variable "region_netnums" {
+  type        = map(number)
+  default     = {}
+  description = "cidrsubnet netnums for specific regions' subnets, in place of netnum_offset plus the region's position in regions. A network adding a region names its netnum here to skip ranges it must not overlap, such as another network's it shares routes with, without renumbering the subnets it already has."
+
+  validation {
+    condition     = alltrue([for r in keys(var.region_netnums) : contains(var.regions, r)])
+    error_message = "Every region in region_netnums must be in regions."
+  }
+  validation {
+    condition     = alltrue([for n in values(var.region_netnums) : n >= 0 && n <= 255 && floor(n) == n])
+    error_message = "Every region_netnums value must be an integer between 0 and 255."
+  }
+  validation {
+    condition = length(distinct([
+      for i, r in var.regions : lookup(var.region_netnums, r, var.netnum_offset + i)
+    ])) == length(var.regions)
+    error_message = "Two regions' subnets would share a netnum; give region_netnums values clear of netnum_offset plus each other region's position."
+  }
+}
+
 variable "labels" {
   description = "Labels to apply to the networking resources."
   type        = map(string)

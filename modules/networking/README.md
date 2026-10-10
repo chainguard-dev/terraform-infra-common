@@ -68,6 +68,7 @@ No modules.
 | <a name="input_netnum_offset"></a> [netnum\_offset](#input\_netnum\_offset) | cidrsubnet netnum offset for the subnet. See https://developer.hashicorp.com/terraform/language/functions/cidrsubnet for more details | `number` | `0` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
+| <a name="input_region_netnums"></a> [region\_netnums](#input\_region\_netnums) | cidrsubnet netnums for specific regions' subnets, in place of netnum\_offset plus the region's position in regions. A network adding a region names its netnum here to skip ranges it must not overlap, such as another network's it shares routes with, without renumbering the subnets it already has. | `map(number)` | `{}` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | The list of regions in which to provision subnets suitable for use with Cloud Run direct VPC egress. | `list(string)` | n/a | yes |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 
