@@ -120,6 +120,12 @@ variable "alert_on_dead_letter" {
   default     = false
 }
 
+variable "dead_letter_alert_documentation" {
+  description = "Markdown documentation attached to the dead-letter alert (e.g. what to check and a Logs Explorer link). Empty (default) attaches none."
+  type        = string
+  default     = ""
+}
+
 variable "notification_channels" {
   description = "List of notification channels to alert."
   type        = list(string)

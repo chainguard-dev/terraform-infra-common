@@ -259,6 +259,14 @@ resource "google_monitoring_alert_policy" "dead-letter" {
 
   enabled = "true"
 
+  dynamic "documentation" {
+    for_each = var.dead_letter_alert_documentation == "" ? [] : [var.dead_letter_alert_documentation]
+    content {
+      content   = documentation.value
+      mime_type = "text/markdown"
+    }
+  }
+
   notification_channels = var.notification_channels
 }
 
