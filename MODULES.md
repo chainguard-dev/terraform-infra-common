@@ -64,6 +64,12 @@ Forward Google Cloud Storage bucket events to a CloudEvent broker via Pub/Sub, c
 
 Use this when GCS object changes (create, delete, archive) should trigger downstream event processing.
 
+### [`gcp-incident-events`](./modules/gcp-incident-events/)
+
+Forward Cloud Monitoring incident notifications from a Pub/Sub notification channel's topic to a CloudEvent broker, one event per incident open or close.
+
+Use this when alerts should trigger downstream event processing as they fire, instead of being read later from BigQuery or the Alerts API.
+
 ## GitHub Integration
 
 ### [`github-events`](./modules/github-events/)

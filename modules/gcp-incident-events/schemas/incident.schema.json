@@ -1,0 +1,161 @@
+[
+ {
+  "fields": [
+   {
+    "name": "incident_id",
+    "type": "STRING"
+   },
+   {
+    "name": "renotify",
+    "type": "BOOLEAN"
+   },
+   {
+    "name": "scoping_project_id",
+    "type": "STRING"
+   },
+   {
+    "name": "scoping_project_number",
+    "type": "INTEGER"
+   },
+   {
+    "name": "url",
+    "type": "STRING"
+   },
+   {
+    "name": "severity",
+    "type": "STRING"
+   },
+   {
+    "name": "started_at",
+    "type": "INTEGER"
+   },
+   {
+    "name": "ended_at",
+    "type": "INTEGER"
+   },
+   {
+    "name": "state",
+    "type": "STRING"
+   },
+   {
+    "name": "resource_id",
+    "type": "STRING"
+   },
+   {
+    "name": "resource_name",
+    "type": "STRING"
+   },
+   {
+    "name": "resource_display_name",
+    "type": "STRING"
+   },
+   {
+    "name": "resource_type_display_name",
+    "type": "STRING"
+   },
+   {
+    "fields": [
+     {
+      "name": "type",
+      "type": "STRING"
+     },
+     {
+      "name": "labels",
+      "type": "JSON"
+     }
+    ],
+    "name": "resource",
+    "type": "RECORD"
+   },
+   {
+    "fields": [
+     {
+      "name": "type",
+      "type": "STRING"
+     },
+     {
+      "name": "displayName",
+      "type": "STRING"
+     },
+     {
+      "name": "labels",
+      "type": "JSON"
+     }
+    ],
+    "name": "metric",
+    "type": "RECORD"
+   },
+   {
+    "name": "metadata",
+    "type": "JSON"
+   },
+   {
+    "name": "policy_name",
+    "type": "STRING"
+   },
+   {
+    "name": "policy_user_labels",
+    "type": "JSON"
+   },
+   {
+    "name": "condition_name",
+    "type": "STRING"
+   },
+   {
+    "name": "threshold_value",
+    "type": "STRING"
+   },
+   {
+    "name": "observed_value",
+    "type": "STRING"
+   },
+   {
+    "name": "condition",
+    "type": "JSON"
+   },
+   {
+    "fields": [
+     {
+      "name": "content",
+      "type": "STRING"
+     },
+     {
+      "name": "mime_type",
+      "type": "STRING"
+     },
+     {
+      "name": "subject",
+      "type": "STRING"
+     },
+     {
+      "fields": [
+       {
+        "name": "displayName",
+        "type": "STRING"
+       },
+       {
+        "name": "url",
+        "type": "STRING"
+       }
+      ],
+      "mode": "REPEATED",
+      "name": "links",
+      "type": "RECORD"
+     }
+    ],
+    "name": "documentation",
+    "type": "RECORD"
+   },
+   {
+    "name": "summary",
+    "type": "STRING"
+   }
+  ],
+  "name": "incident",
+  "type": "RECORD"
+ },
+ {
+  "name": "version",
+  "type": "STRING"
+ }
+]
