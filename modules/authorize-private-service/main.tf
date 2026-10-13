@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+  }
+}
+
 resource "google_cloud_run_v2_service_iam_member" "authorize-calls" {
   project  = var.project_id
   location = var.region

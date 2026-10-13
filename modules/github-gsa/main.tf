@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+  }
+}
+
 // Create the actual service account.
 resource "google_service_account" "this" {
   project    = var.project_id

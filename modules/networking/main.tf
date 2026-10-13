@@ -1,3 +1,18 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.9.0"
+    }
+  }
+}
+
 // Create a global network in which to place our resources.
 // checkov:skip=CKV2_GCP_18: firewalls are owned by consumers of this network (e.g. the gke module), not this base module.
 resource "google_compute_network" "this" {

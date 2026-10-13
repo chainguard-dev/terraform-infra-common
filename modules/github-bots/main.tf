@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+  }
+}
+
 resource "google_service_account" "sa" {
   count        = var.service_account_email == "" ? 1 : 0
   account_id   = "bot-${var.name}"

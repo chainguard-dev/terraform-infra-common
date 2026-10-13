@@ -1,3 +1,22 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = ">= 2.1.0"
+    }
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.51.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.9.0"
+    }
+  }
+}
+
 /*
 Copyright 2026 Chainguard, Inc.
 SPDX-License-Identifier: Apache-2.0

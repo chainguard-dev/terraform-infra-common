@@ -1,7 +1,15 @@
 terraform {
+  required_version = ">= 1.9"
+
   required_providers {
-    ko     = { source = "ko-build/ko" }
-    cosign = { source = "chainguard-dev/cosign" }
+    ko = {
+      source  = "ko-build/ko"
+      version = ">= 0.0.21"
+    }
+    cosign = {
+      source  = "chainguard-dev/cosign"
+      version = ">= 0.0.19"
+    }
     // Required transitively by the regional-service child module; declared
     // here so provider configurations (including test mocks) attach at the
     // root module.

@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+  }
+}
+
 resource "google_iam_workload_identity_pool" "this" {
   project                   = var.project_id
   workload_identity_pool_id = var.name

@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+  }
+}
+
 // Create the GCP secret to hold the configuration data.
 resource "google_secret_manager_secret" "this" {
   secret_id = var.name

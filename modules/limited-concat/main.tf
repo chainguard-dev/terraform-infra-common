@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 locals {
   # NB: substr returns the entire string if length is greater than the length of the string.
   prefix = substr(var.prefix, 0, (var.limit - length(var.suffix)))

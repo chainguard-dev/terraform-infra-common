@@ -1,7 +1,13 @@
 terraform {
+  required_version = ">= 1.9"
+
   required_providers {
     ko     = { source = "ko-build/ko" }
     cosign = { source = "chainguard-dev/cosign" }
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
   }
 }
 
