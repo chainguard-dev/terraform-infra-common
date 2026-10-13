@@ -110,7 +110,7 @@ No resources.
 | <a name="input_sections"></a> [sections](#input\_sections) | Sections to include in the dashboard | <pre>object({<br/>    http   = optional(bool, true)  // Include HTTP section<br/>    grpc   = optional(bool, true)  // Include GRPC section<br/>    github = optional(bool, false) // Include GitHub API section<br/>  })</pre> | <pre>{<br/>  "github": false,<br/>  "grpc": true,<br/>  "http": true<br/>}</pre> | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | Name of the service(s) to monitor | `string` | n/a | yes |
 | <a name="input_split_triggers"></a> [split\_triggers](#input\_split\_triggers) | Opt-in flag to split into per-trigger dashboards. Helpful when hitting widget limits | `bool` | `false` | no |
-| <a name="input_triggers"></a> [triggers](#input\_triggers) | A mapping from a descriptive name to a subscription name prefix, an alert threshold, and list of notification channels. | <pre>map(object({<br/>    subscription_prefix   = string<br/>    alert_threshold       = optional(number, 50000)<br/>    notification_channels = optional(list(string), [])<br/>  }))</pre> | n/a | yes |
+| <a name="input_triggers"></a> [triggers](#input\_triggers) | A mapping from a descriptive name to a subscription name prefix, an alert threshold, and list of notification channels. | <pre>map(object({<br/>    subscription_prefix   = string<br/>    alert_threshold       = optional(number, 50000)<br/>    notification_channels = optional(list(string), [])<br/>    alert_documentation   = optional(string, "")<br/>  }))</pre> | n/a | yes |
 
 ## Outputs
 

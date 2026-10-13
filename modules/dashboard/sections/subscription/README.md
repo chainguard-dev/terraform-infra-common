@@ -30,6 +30,7 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_alert_documentation"></a> [alert\_documentation](#input\_alert\_documentation) | Markdown documentation for the unacked-messages alert. Omitted when empty. | `string` | `""` | no |
 | <a name="input_alert_threshold"></a> [alert\_threshold](#input\_alert\_threshold) | n/a | `number` | `50000` | no |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | n/a | `list(string)` | n/a | yes |

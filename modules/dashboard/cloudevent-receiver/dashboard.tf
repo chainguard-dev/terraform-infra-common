@@ -7,6 +7,7 @@ module "subscription" {
   subscription_prefix   = each.value.subscription_prefix
   alert_threshold       = each.value.alert_threshold
   notification_channels = each.value.notification_channels
+  alert_documentation   = each.value.alert_documentation
 }
 
 module "errgrp" {

@@ -15,6 +15,7 @@ variable "triggers" {
     subscription_prefix   = string
     alert_threshold       = optional(number, 50000)
     notification_channels = optional(list(string), [])
+    alert_documentation   = optional(string, "")
   }))
 }
 

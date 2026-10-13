@@ -11,6 +11,11 @@ variable "alert_threshold" {
   type    = number
   default = 50000
 }
+variable "alert_documentation" {
+  description = "Markdown documentation for the unacked-messages alert. Omitted when empty."
+  type        = string
+  default     = ""
+}
 
 
 module "width" { source = "../width" }
@@ -46,6 +51,14 @@ resource "google_monitoring_alert_policy" "pubsub_unacked_messages" {
     display_name = "${var.title}: Unacked messages above ${var.alert_threshold}"
   }
   display_name = "${var.title}: Unacked messages above ${var.alert_threshold}"
+
+  dynamic "documentation" {
+    for_each = var.alert_documentation == "" ? [] : [1]
+    content {
+      content   = var.alert_documentation
+      mime_type = "text/markdown"
+    }
+  }
 
   enabled = "true"
 
