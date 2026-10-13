@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 locals {
   base_job_name = trimsuffix(var.job_name, "-cron")
   job_name      = "${local.base_job_name}-cron"

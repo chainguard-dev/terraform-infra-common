@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 // percent is an opinionated version of xy-ratio that assumes
 // the numerator uses the same metric as the denominator
 // with additional filtering.

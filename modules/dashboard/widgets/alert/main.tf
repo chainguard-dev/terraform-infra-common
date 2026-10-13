@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 variable "title" { type = string }
 variable "alert_name" { type = string }
 

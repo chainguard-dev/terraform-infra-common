@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 module "subscription" {
   for_each = var.triggers
 

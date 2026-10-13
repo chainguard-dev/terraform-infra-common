@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 module "errgrp" {
   source       = "../sections/errgrp"
   title        = "Service Error Reporting"

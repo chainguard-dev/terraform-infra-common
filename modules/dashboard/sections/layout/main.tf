@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.9"
+}
+
 variable "sections" {
   type = any
 }

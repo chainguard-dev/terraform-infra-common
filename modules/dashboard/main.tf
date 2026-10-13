@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 7.21.0"
+    }
+  }
+}
+
 variable "object" {
   type        = any
   description = "Object to encode into JSON"
