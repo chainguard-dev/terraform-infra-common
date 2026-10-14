@@ -70,7 +70,7 @@ variable "labels" {
 variable "product" {
   description = "Product label to apply to the service."
   type        = string
-  default     = "unknown"
+  default     = ""
 }
 variable "observability_role" {
   type        = string

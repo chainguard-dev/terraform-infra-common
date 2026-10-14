@@ -30,7 +30,7 @@ locals {
     terraform-module               = basename(abspath(path.module))
   }
   squad_label   = { squad = var.team, team = var.team }
-  product_label = var.product != "unknown" ? { product = var.product } : {}
+  product_label = contains(["", "unknown"], var.product == null ? "" : var.product) ? {} : { product = var.product }
   merged_labels = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
   // The job keeps transitional team and product labels for ownership routing
   // until the catalog reads squad. Its alert policies support tags, so they

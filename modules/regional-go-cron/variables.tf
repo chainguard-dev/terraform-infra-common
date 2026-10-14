@@ -145,7 +145,7 @@ variable "team" {
 variable "product" {
   description = "Product label to apply to resources."
   type        = string
-  default     = "unknown"
+  default     = ""
 }
 
 variable "volumes" {

@@ -169,7 +169,7 @@ No modules.
 | <a name="input_network"></a> [network](#input\_network) | The VPC network (id or self link) the instance's PSC endpoints are created in. The network must already carry a gcp-memorystore service connection policy for the instance's region (see the README's prerequisites); GCP allows one per (network, region, service class), so the policy is caller-owned, not per-instance. | `string` | n/a | yes |
 | <a name="input_node_type"></a> [node\_type](#input\_node\_type) | The machine type of each node. | `string` | `"STANDARD_SMALL"` | no |
 | <a name="input_persistence_config"></a> [persistence\_config](#input\_persistence\_config) | Configuration of the persistence functionality. | <pre>object({<br/>    mode                = string<br/>    rdb_snapshot_period = optional(string)<br/>    aof_append_fsync    = optional(string)<br/>  })</pre> | <pre>{<br/>  "mode": "DISABLED"<br/>}</pre> | no |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The ID of the project in which the resource belongs. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The GCP region to deploy resources to. | `string` | n/a | yes |
 | <a name="input_replica_count"></a> [replica\_count](#input\_replica\_count) | The number of replica nodes per shard. | `number` | `1` | no |

@@ -214,7 +214,7 @@ variable "deletion_protection" {
 variable "product" {
   description = "Product label to apply to the service."
   type        = string
-  default     = "unknown"
+  default     = ""
 }
 
 variable "load_balancing" {

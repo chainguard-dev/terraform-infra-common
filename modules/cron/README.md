@@ -232,7 +232,7 @@ No requirements.
 | <a name="input_otel_resources"></a> [otel\_resources](#input\_otel\_resources) | The resource clause for the otel sidecar container, passed to regional-go-cron. When null, the sidecar gets 250m CPU and 512Mi memory, with its CPU raised as needed to bring the task to the 1 vCPU total that Cloud Run jobs require. | <pre>object({<br/>    limits = optional(object(<br/>      {<br/>        cpu    = string<br/>        memory = string<br/>      }<br/>    ), null)<br/>  })</pre> | `null` | no |
 | <a name="input_parallelism"></a> [parallelism](#input\_parallelism) | The number of parallel jobs to run. Must be <= task\_count | `number` | `1` | no |
 | <a name="input_paused"></a> [paused](#input\_paused) | Whether the cron scheduler is paused or not. | `bool` | `false` | no |
-| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `"unknown"` | no |
+| <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the cron job. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region to run the job. | `string` | `"us-east4"` | no |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Forwarded to regional-go-cron. Resource Manager tags to bind to the job, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
