@@ -133,15 +133,25 @@ resource "null_resource" "exec" {
     ], var.exec_wait ? ["--wait"] : ["--async"]))
   }
 
-  // Re-run the exec provisioner whenever the container images change, or —
-  // when the caller names its own signal — whenever that changes instead.
-  // exec_include_image_refs retains image changes alongside that custom signal.
+  // Re-run the exec provisioner whenever the container images or the job's own
+  // settings change, or - when the caller names its own signal - whenever that
+  // changes instead. exec_include_image_refs retains image changes alongside
+  // that custom signal.
   // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
   // so these values are stable at apply time (unlike job_etag or job_generation,
   // which are server-side computed values that change mid-apply).
-  triggers = length(var.exec_triggers) > 0 && !var.exec_include_image_refs ? var.exec_triggers : merge(var.exec_triggers, {
-    image_refs = join(",", values(module.impl.image_refs))
-  })
+  triggers = (
+    length(var.exec_triggers) == 0 ? { image_refs = local.image_refs, job_config = local.job_config } :
+    var.exec_include_image_refs ? merge(var.exec_triggers, { image_refs = local.image_refs }) :
+    var.exec_triggers
+  )
+}
+
+locals {
+  image_refs = join(",", values(module.impl.image_refs))
+  // Without this, a paused job whose settings change but whose image does not
+  // never runs with the new settings.
+  job_config = sha256(jsonencode({ env = var.env, secret_env = var.secret_env, command = var.command, args = var.args, volumes = var.volumes, volume_mounts = var.volume_mounts }))
 }
 
 moved {

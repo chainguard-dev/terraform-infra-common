@@ -199,7 +199,7 @@ variable "exec" {
 }
 
 variable "exec_triggers" {
-  description = "Values whose change re-runs the exec'd job. Empty (the default) re-runs on every container image change, i.e. every build. Set it when the job's work is keyed to something narrower — a schema file's hash, a list of grantees — so a rebuild that changes none of it does not re-execute (and, with exec_wait, does not hold the apply)."
+  description = "Values whose change re-runs the exec'd job. Empty (the default) re-runs whenever a container image or the job's env, secret_env, command, args, volumes or volume_mounts change. Set it when the job's work is keyed to something narrower — a schema file's hash, a list of grantees — so a rebuild that changes none of it does not re-execute (and, with exec_wait, does not hold the apply)."
   type        = map(string)
   default     = {}
 }

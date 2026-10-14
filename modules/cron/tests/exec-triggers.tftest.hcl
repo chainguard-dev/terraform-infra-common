@@ -34,12 +34,45 @@ override_module {
   }
 }
 
-run "default_tracks_images" {
+run "default_tracks_images_and_job_config" {
   command = plan
 
   assert {
-    condition     = null_resource.exec[0].triggers == tomap({ "image_refs" = "example.invalid/application@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" })
-    error_message = "The planned execution triggers must retain the selected image and policy change signals."
+    condition = null_resource.exec[0].triggers == tomap({
+      "image_refs" = "example.invalid/application@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "job_config" = sha256(jsonencode({ args = [], command = [], env = {}, secret_env = {}, volume_mounts = [], volumes = [] }))
+    })
+    error_message = "The planned execution triggers must retain the selected image and job settings change signals."
+  }
+}
+
+run "default_job_config_tracks_env" {
+  command = plan
+
+  variables {
+    env = { GRANTEES = "a,b" }
+  }
+
+  assert {
+    condition     = null_resource.exec[0].triggers["job_config"] == sha256(jsonencode({ args = [], command = [], env = { GRANTEES = "a,b" }, secret_env = {}, volume_mounts = [], volumes = [] }))
+    error_message = "An env change must change the default execution triggers, even when the image does not."
+  }
+}
+
+run "default_job_config_tracks_volumes" {
+  command = plan
+
+  variables {
+    volumes = [{
+      name   = "config"
+      secret = { secret = "fixture-config", items = [{ version = "2", path = "config.yaml" }] }
+    }]
+    volume_mounts = [{ name = "config", mount_path = "/var/run/config" }]
+  }
+
+  assert {
+    condition     = null_resource.exec[0].triggers["job_config"] != sha256(jsonencode({ args = [], command = [], env = {}, secret_env = {}, volume_mounts = [], volumes = [] }))
+    error_message = "A config file mounted from a secret volume must change the default execution triggers, even when the image does not."
   }
 }
 
