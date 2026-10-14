@@ -118,7 +118,11 @@ module "authorize-delivery" {
 
   project_id = var.project_id
   region     = var.region
-  name       = var.name
+  // Take the name from module.this so the invoker grant waits for the
+  // service to exist. A module depends_on would also order it, but would
+  // defer the module's data read, and so the subscription's push endpoint,
+  // to apply time on every plan that changes the service.
+  name = module.this.names[var.region]
 
   service-account = google_service_account.delivery.email
 }
