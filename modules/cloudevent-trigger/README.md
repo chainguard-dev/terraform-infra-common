@@ -67,7 +67,6 @@ module "cloudevent-trigger" {
   // Only trigger on events with subject matching "foo/*"
   filter_prefix = { "subject": "foo/" }
 
-  depends_on = [module.bar-service]
   private-service = {
     region = each.key
     name   = module.bar-service.names[each.key]

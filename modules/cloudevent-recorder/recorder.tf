@@ -146,10 +146,9 @@ module "triggers" {
   broker     = var.broker[each.value.region]
   filter     = { "type" : each.value.type }
 
-  depends_on = [module.this]
   private-service = {
     region = each.value.region
-    name   = local.service_name
+    name   = module.this[0].names[each.value.region]
   }
 
   team = var.team
@@ -171,10 +170,9 @@ module "extra-triggers" {
   broker     = each.value.broker
   filter     = { "type" : each.value.type }
 
-  depends_on = [module.this]
   private-service = {
     region = each.value.region
-    name   = local.service_name
+    name   = module.this[0].names[each.value.region]
   }
 
   team    = var.team
