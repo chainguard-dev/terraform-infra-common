@@ -1,9 +1,9 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# The Monitoring API drops null keys, and the provider's diff suppression only
-# ignores keys missing from config, so a null left in the JSON shows the whole
-# dashboard as changed on every plan.
+# The Monitoring API drops null and zero-valued keys, and the provider's diff
+# suppression only ignores keys missing from config, so one left in the JSON
+# shows the whole dashboard as changed on every plan.
 
 mock_provider "google" {}
 
@@ -57,5 +57,40 @@ run "xy_ratio_leaves_an_unset_legend_null" {
   assert {
     condition     = output.widget.xyChart.dataSets[0].legendTemplate == null
     error_message = "an unset legend must be null, which the dashboard module strips, not an empty string"
+  }
+}
+
+run "zero_threshold_and_empty_labels_are_stripped" {
+  command = plan
+
+  variables {
+    object = {
+      displayName = "fixture-zeros"
+      labels      = {}
+      mosaicLayout = {
+        columns = 48
+        tiles = [{
+          widget = {
+            title = "w"
+            xyChart = {
+              thresholds = [
+                { value = 0, targetAxis = "Y1" },
+                { value = 10, targetAxis = "Y1" },
+              ]
+            }
+          }
+        }]
+      }
+    }
+  }
+
+  assert {
+    condition     = !strcontains(output.json, "\"labels\":{}")
+    error_message = "empty labels must not reach the dashboard JSON"
+  }
+
+  assert {
+    condition     = strcontains(output.json, "\"thresholds\":[{\"targetAxis\":\"Y1\"},{\"targetAxis\":\"Y1\",\"value\":10}]")
+    error_message = "a zero threshold value must be stripped and a nonzero one kept"
   }
 }

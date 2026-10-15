@@ -15,7 +15,7 @@ variable "object" {
 }
 
 locals {
-  json = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(
+  json = replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(
     jsonencode(var.object),
     "\"collapsed\":false", ""),
     ",\"xPos\":0", ""),
@@ -31,7 +31,10 @@ locals {
     ",\"groupByFields\":null", ""),
     "\"groupByFields\":null,", ""),
     ",\"legendTemplate\":null", ""),
-  "\"legendTemplate\":null,", "")
+    "\"legendTemplate\":null,", ""),
+    // jsonencode sorts keys, so a threshold's value is its last key.
+    ",\"value\":0}", "}"),
+  ",\"labels\":{}", "")
 
   // GCP rejects any dashboard with more than 50 widgets, and this module is the
   // single choke point every dashboard in the repo renders through. Gather the
