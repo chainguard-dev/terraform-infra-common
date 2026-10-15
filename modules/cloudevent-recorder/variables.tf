@@ -70,6 +70,12 @@ variable "notification_channels" {
   type        = list(string)
 }
 
+variable "dts_alert_documentation" {
+  description = "Markdown documentation attached to every BQ DTS Success alert (e.g. what to check and a Logs Explorer link). Empty (default) attaches none."
+  type        = string
+  default     = ""
+}
+
 variable "types" {
   description = "A map from cloudevent types to the BigQuery schema associated with them, as well as an alert threshold and a list of notification channels (for subscription-level issues)."
 
@@ -89,8 +95,11 @@ variable "types" {
     retention_period_days = optional(number, null)
     alert_threshold       = optional(number, 50000)
     notification_channels = optional(list(string), [])
-    partition_field       = optional(string)
-    clustering            = optional(list(string), null)
+    // Markdown documentation for this type's unacked-messages alert. Empty
+    // (the default) attaches none.
+    alert_documentation = optional(string, "")
+    partition_field     = optional(string)
+    clustering          = optional(list(string), null)
     // Per-type override for the BigQuery table's deletion_protection
     // terraform attribute. When null (the default), the module-wide
     // var.deletion_protection applies. Intended for tables whose shapes

@@ -210,6 +210,7 @@ module "recorder-dashboard" {
         subscription_prefix   = "${var.name}-${random_id.trigger-suffix[type].hex}"
         alert_threshold       = schema.alert_threshold
         notification_channels = schema.notification_channels
+        alert_documentation   = schema.alert_documentation
       } if !contains(var.drop_shared_types, type)
     },
     // Dedicated-topic (extra) trigger per type routed off the shared broker.
@@ -218,6 +219,7 @@ module "recorder-dashboard" {
         subscription_prefix   = "${var.name}-${random_id.trigger-suffix[type].hex}-x"
         alert_threshold       = var.types[type].alert_threshold
         notification_channels = var.types[type].notification_channels
+        alert_documentation   = var.types[type].alert_documentation
       }
     },
   )
