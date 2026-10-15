@@ -220,25 +220,3 @@ resource "google_compute_global_forwarding_rule" "this-v6" {
   external_managed_backend_bucket_migration_testing_percentage = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_testing_percentage
   load_balancing_scheme                                        = var.forwarding_rule_load_balancing.load_balancing_scheme
 }
-
-// What identity is deploying this?
-data "google_client_openid_userinfo" "me" {}
-
-locals {
-  authorized-accounts = [
-    # CI robot
-    data.google_client_openid_userinfo.me.email,
-  ]
-  audited-resources = concat(
-    [for _, v in google_dns_record_set.public-service : v.id],
-    [for _, v in google_compute_managed_ssl_certificate.public-service : v.id],
-    [for _, v in google_compute_backend_service.public-services : v.id],
-    [for _, v in google_compute_region_network_endpoint_group.regional-backends : v.id],
-    [google_compute_url_map.public-service.id,
-      google_compute_target_https_proxy.public-service.id,
-      google_compute_global_forwarding_rule.this.id,
-    ],
-    var.enable_ipv6 ? [for _, v in google_dns_record_set.public-service-v6 : v.id] : [],
-    var.enable_ipv6 ? [google_compute_global_forwarding_rule.this-v6[0].id] : [],
-  )
-}
