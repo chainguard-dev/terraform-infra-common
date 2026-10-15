@@ -142,6 +142,14 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
     }
   }
 
+  dynamic "documentation" {
+    for_each = var.alert_documentation == "" ? [] : [var.alert_documentation]
+    content {
+      content   = documentation.value
+      mime_type = "text/markdown"
+    }
+  }
+
   notification_channels = var.notification-channels
 
   enabled = "true"

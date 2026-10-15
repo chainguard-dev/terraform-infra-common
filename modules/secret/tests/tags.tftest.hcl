@@ -42,3 +42,22 @@ run "resource_manager_tags_bind_global_secret" {
     error_message = "secret tag binding must use the numeric project number in the documented global full resource name"
   }
 }
+
+run "alert_documentation_defaults_to_none" {
+  command = plan
+  assert {
+    condition     = length(google_monitoring_alert_policy.anomalous-secret-access.documentation) == 0
+    error_message = "default alert_documentation must attach no documentation block"
+  }
+}
+
+run "alert_documentation_is_attached" {
+  command = plan
+  variables {
+    alert_documentation = "What to check."
+  }
+  assert {
+    condition     = google_monitoring_alert_policy.anomalous-secret-access.documentation[0].content == "What to check."
+    error_message = "alert_documentation must be attached to the abnormal-access alert"
+  }
+}

@@ -42,6 +42,12 @@ variable "notification-channels" {
   type        = list(string)
 }
 
+variable "alert_documentation" {
+  description = "Markdown documentation attached to the abnormal-access alert (e.g. what to check and a Logs Explorer link). Empty (default) attaches none."
+  type        = string
+  default     = ""
+}
+
 variable "create_placeholder_version" {
   description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."
   type        = bool
