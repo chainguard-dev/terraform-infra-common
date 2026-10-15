@@ -40,15 +40,16 @@ resource "google_artifact_registry_repository" "attestations" {
   # out-of-spec referrers responses. Those fallback indexes are worse than
   # clutter: as parent manifests they block deletion of the bundles they
   # reference (GOOGLE_MANIFEST_DANGLING_PARENT_IMAGE), wedging the
-  # statusmanager's delete-and-replace conflict resolution. older_than is the
-  # minimum so every tagged version is reaped on each cleanup run; Artifact
-  # Registry then deletes the orphaned children on the following run.
+  # statusmanager's delete-and-replace conflict resolution. With no older_than,
+  # every tagged version is reaped on each cleanup run; Artifact Registry then
+  # deletes the orphaned children on the following run. An older_than of "0s"
+  # would mean the same, but the API drops it and Terraform then plans a change
+  # on every run.
   cleanup_policies {
     id     = "delete-tagged"
     action = "DELETE"
     condition {
-      tag_state  = "TAGGED"
-      older_than = "0s"
+      tag_state = "TAGGED"
     }
   }
 }
