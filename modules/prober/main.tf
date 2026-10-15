@@ -198,6 +198,15 @@ resource "google_monitoring_uptime_check_config" "regional_uptime_check" {
     # We must create any replacement uptime checks before
     # we tear this check down.
     create_before_destroy = true
+
+    # The API returns empty configuration_name and revision_name labels on a
+    # cloud_run_revision check, which google >= 8 reads back as extra keys.
+    # Labels force replacement, so without this every apply recreates the
+    # check.
+    ignore_changes = [
+      monitored_resource[0].labels["configuration_name"],
+      monitored_resource[0].labels["revision_name"],
+    ]
   }
 }
 
