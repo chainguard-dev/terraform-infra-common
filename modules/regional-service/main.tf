@@ -545,9 +545,6 @@ resource "google_cloud_run_v2_service" "this" {
 // Get a project number for this project ID.
 data "google_project" "project" { project_id = var.project_id }
 
-// What identity is deploying this?
-data "google_client_openid_userinfo" "me" {}
-
 // When the service is behind a load balancer, then it is publicly exposed and responsible
 // for handling its own authentication. Callers that want a publicly-reachable service
 // gated by Cloud Run IAM (e.g. accessed via `gcloud run services proxy`) can opt out
