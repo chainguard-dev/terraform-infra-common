@@ -439,6 +439,17 @@ variable "resource_manager_tags" {
   }
 }
 
+variable "project_number" {
+  description = <<EOD
+Optional project number of project_id, used to build tag binding parents. When
+set, the module does not read the google_project data source. Pass it when a
+caller uses a module-level depends_on, which would otherwise defer the data
+source to apply and force every tag binding to be replaced.
+EOD
+  type        = string
+  default     = null
+}
+
 variable "iap_members" {
   description = <<EOD
 IAM members allowed to access the service through Identity-Aware Proxy, for

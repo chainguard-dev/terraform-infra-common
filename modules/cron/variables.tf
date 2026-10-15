@@ -370,6 +370,12 @@ variable "resource_manager_tags" {
   }
 }
 
+variable "project_number" {
+  description = "Forwarded to regional-go-cron. Optional project number used to build tag binding parents so the google_project data source is not read. Pass it when a caller uses a module-level depends_on."
+  type        = string
+  default     = null
+}
+
 variable "container_name" {
   description = "Optional application container name, honored only when the job is created. Null lets Cloud Run assign the name. Later changes are ignored; execution overrides must use the deployed name."
   type        = string

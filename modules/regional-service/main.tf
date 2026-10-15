@@ -543,7 +543,11 @@ resource "google_cloud_run_v2_service" "this" {
 }
 
 // Get a project number for this project ID.
-data "google_project" "project" { project_id = var.project_id }
+data "google_project" "project" {
+  count = var.project_number == null ? 1 : 0
+
+  project_id = var.project_id
+}
 
 // When the service is behind a load balancer, then it is publicly exposed and responsible
 // for handling its own authentication. Callers that want a publicly-reachable service

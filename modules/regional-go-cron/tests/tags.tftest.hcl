@@ -65,6 +65,24 @@ run "resource_manager_tags_bind_every_region_tag_pair" {
   }
 }
 
+run "project_number_skips_project_lookup" {
+  command = plan
+  variables {
+    project_number = "987654321"
+    resource_manager_tags = {
+      "tagKeys/123" = "tagValues/456"
+    }
+  }
+  assert {
+    condition     = length(data.google_project.resource_manager_tags) == 0
+    error_message = "project_number must skip the google_project data source"
+  }
+  assert {
+    condition     = google_tags_location_tag_binding.this["us-central1/tagKeys/123"].parent == "//run.googleapis.com/projects/987654321/locations/us-central1/jobs/fixture"
+    error_message = "tag binding parent must be known at plan time and use project_number"
+  }
+}
+
 # The incident.io catalog and alert filters read squad. The team label is
 # transitional and goes once those consumers are verified.
 run "job_and_alerts_carry_squad_for_routing" {

@@ -42,6 +42,7 @@ module "impl" {
   product         = var.product
 
   resource_manager_tags = var.resource_manager_tags
+  project_number        = var.project_number
 
   enable_observability_iam = var.enable_observability_iam
   egress                   = var.vpc_access != null ? var.vpc_access.egress : null

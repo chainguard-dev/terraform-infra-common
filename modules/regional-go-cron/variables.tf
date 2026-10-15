@@ -318,3 +318,9 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
+
+variable "project_number" {
+  description = "Optional project number of project_id, used to build tag binding parents. When set, the module does not read the google_project data source. Pass it when a caller uses a module-level depends_on, which would otherwise defer the data source to apply and force every tag binding to be replaced."
+  type        = string
+  default     = null
+}

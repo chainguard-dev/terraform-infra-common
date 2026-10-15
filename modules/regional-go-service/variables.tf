@@ -498,6 +498,12 @@ variable "resource_manager_tags" {
   }
 }
 
+variable "project_number" {
+  description = "Forwarded to regional-service. Optional project number used to build tag binding parents so the google_project data source is not read. Pass it when a caller uses a module-level depends_on."
+  type        = string
+  default     = null
+}
+
 variable "iap_members" {
   description = <<EOD
 IAM members allowed to access the service through Identity-Aware Proxy, for
