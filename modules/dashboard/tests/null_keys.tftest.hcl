@@ -40,3 +40,22 @@ run "null_legend_template_is_stripped" {
     error_message = "a set legendTemplate must be kept"
   }
 }
+
+run "xy_ratio_leaves_an_unset_legend_null" {
+  command = plan
+
+  module {
+    source = "./widgets/xy-ratio"
+  }
+
+  variables {
+    title              = "w"
+    numerator_filter   = ["metric.type=\"a\""]
+    denominator_filter = ["metric.type=\"b\""]
+  }
+
+  assert {
+    condition     = output.widget.xyChart.dataSets[0].legendTemplate == null
+    error_message = "an unset legend must be null, which the dashboard module strips, not an empty string"
+  }
+}

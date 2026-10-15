@@ -56,7 +56,7 @@ output "widget" {
         minAlignmentPeriod = var.alignment_period
         plotType           = var.plot_type
         targetAxis         = "Y1"
-        legendTemplate     = var.legend
+        legendTemplate     = var.legend != "" ? var.legend : null
         timeSeriesQuery = {
           // https://cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards#timeseriesfilterratio
           timeSeriesFilterRatio = {
