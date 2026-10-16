@@ -98,8 +98,13 @@ variable "types" {
     // Markdown documentation for this type's unacked-messages alert. Empty
     // (the default) attaches none.
     alert_documentation = optional(string, "")
-    partition_field     = optional(string)
-    clustering          = optional(list(string), null)
+    // Per-type overrides for this type's BQ DTS Success alert. When null
+    // (the default), var.notification_channels and var.dts_alert_documentation
+    // apply.
+    dts_notification_channels = optional(list(string), null)
+    dts_alert_documentation   = optional(string, null)
+    partition_field           = optional(string)
+    clustering                = optional(list(string), null)
     // Per-type override for the BigQuery table's deletion_protection
     // terraform attribute. When null (the default), the module-wide
     // var.deletion_protection applies. Intended for tables whose shapes

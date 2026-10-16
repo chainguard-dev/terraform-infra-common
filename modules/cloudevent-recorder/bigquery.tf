@@ -130,6 +130,12 @@ resource "google_bigquery_data_transfer_config" "import-job" {
   }
 }
 
+locals {
+  dts_alert_documentation = {
+    for type, cfg in var.types : type => cfg.dts_alert_documentation != null ? cfg.dts_alert_documentation : var.dts_alert_documentation
+  }
+}
+
 // Alert when no successful run in 30min, it should be successful every 15min
 resource "google_monitoring_alert_policy" "bq_dts" {
   for_each = var.types
@@ -179,12 +185,12 @@ resource "google_monitoring_alert_policy" "bq_dts" {
   project = var.project_id
 
   dynamic "documentation" {
-    for_each = var.dts_alert_documentation == "" ? [] : [var.dts_alert_documentation]
+    for_each = local.dts_alert_documentation[each.key] == "" ? [] : [local.dts_alert_documentation[each.key]]
     content {
       content   = documentation.value
       mime_type = "text/markdown"
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = each.value.dts_notification_channels != null ? each.value.dts_notification_channels : var.notification_channels
 }
