@@ -86,6 +86,11 @@ output "auth_enabled" {
   value       = var.auth_enabled
 }
 
+output "tag_binding_count" {
+  description = "Number of Resource Manager tag bindings on the Redis instance"
+  value       = length(google_tags_location_tag_binding.this)
+}
+
 output "server_ca_cert" {
   description = "The server CA certificate for the Redis instance"
   value       = google_redis_instance.default.server_ca_certs
