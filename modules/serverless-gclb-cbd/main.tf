@@ -109,6 +109,14 @@ resource "google_compute_backend_service" "public-services" {
   project = var.project_id
   name    = each.value.name
 
+  // The scheme must match the forwarding rule's. Set it explicitly: the
+  // provider default moved from EXTERNAL to EXTERNAL_MANAGED in google 8, and
+  // the API rejects that flip on a live backend without a staged migration.
+  load_balancing_scheme                         = each.value.load_balancing_scheme
+  external_managed_migration_state              = each.value.external_managed_migration_state
+  external_managed_migration_testing_percentage = each.value.external_managed_migration_testing_percentage
+  connection_draining_timeout_sec               = each.value.connection_draining_timeout_sec
+
   // Create a backend for each region hosting this cloud run service.
   dynamic "backend" {
     for_each = toset(var.serving_regions)
