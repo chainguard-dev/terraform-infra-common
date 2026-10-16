@@ -40,6 +40,11 @@ output "execution_policy" {
   }
 }
 
+output "tag_binding_parents" {
+  description = "Resource parent of each Cloud Run job tag binding, keyed by region/tag key."
+  value       = { for k, b in google_tags_location_tag_binding.this : k => b.parent }
+}
+
 output "containers" {
   description = "Rendered regional job container configuration, including environment and secret references."
   sensitive   = true

@@ -234,6 +234,7 @@ No requirements.
 | <a name="input_paused"></a> [paused](#input\_paused) | Whether the cron scheduler is paused or not. | `bool` | `false` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The project that will host the cron job. | `string` | n/a | yes |
+| <a name="input_project_number"></a> [project\_number](#input\_project\_number) | Forwarded to regional-go-cron. Optional project number used to build tag binding parents so the google_project data source is not read. Pass it when a caller uses a module-level depends_on. Must be known at plan time (for example the number of an existing project read from a `google_project` data source with no `depends_on`); leave it unset when the project is created in the same apply. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | The region to run the job. | `string` | `"us-east4"` | no |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Forwarded to regional-go-cron. Resource Manager tags to bind to the job, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_schedule"></a> [schedule](#input\_schedule) | The cron schedule on which to run the job. | `string` | n/a | yes |

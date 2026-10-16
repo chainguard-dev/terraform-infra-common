@@ -444,10 +444,18 @@ variable "project_number" {
 Optional project number of project_id, used to build tag binding parents. When
 set, the module does not read the google_project data source. Pass it when a
 caller uses a module-level depends_on, which would otherwise defer the data
-source to apply and force every tag binding to be replaced.
+source to apply and force every tag binding to be replaced. Must be known at
+plan time (for example the number of an existing project read from a
+`google_project` data source with no `depends_on`); leave it unset when the
+project is created in the same apply.
 EOD
   type        = string
   default     = null
+
+  validation {
+    condition     = var.project_number == null || can(regex("^[0-9]+$", var.project_number))
+    error_message = "project_number must be the numeric project number, not the project ID."
+  }
 }
 
 variable "iap_members" {

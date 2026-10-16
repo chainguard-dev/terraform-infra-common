@@ -499,7 +499,7 @@ variable "resource_manager_tags" {
 }
 
 variable "project_number" {
-  description = "Forwarded to regional-service. Optional project number used to build tag binding parents so the google_project data source is not read. Pass it when a caller uses a module-level depends_on."
+  description = "Forwarded to regional-service. Optional project number used to build tag binding parents so the google_project data source is not read. Pass it when a caller uses a module-level depends_on. Must be known at plan time (for example the number of an existing project read from a `google_project` data source with no `depends_on`); leave it unset when the project is created in the same apply."
   type        = string
   default     = null
 }

@@ -16,6 +16,11 @@ output "uris" {
   }
 }
 
+output "tag_binding_parents" {
+  description = "Resource parent of each Cloud Run service tag binding, keyed by region/tag key."
+  value       = { for k, b in google_tags_location_tag_binding.this : k => b.parent }
+}
+
 output "access_policy" {
   description = "Regional ingress, VPC egress, and invocation policy managed by this module; excludes out-of-band IAM grants."
   value = {
