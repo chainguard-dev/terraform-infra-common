@@ -145,6 +145,7 @@ No requirements.
 | <a name="input_private-service"></a> [private-service](#input\_private-service) | The private cloud run service that is subscribing to these events. | <pre>object({<br/>    name   = string<br/>    region = string<br/>  })</pre> | n/a | yes |
 | <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
+| <a name="input_project_number"></a> [project\_number](#input\_project\_number) | Optional project number of project\_id, used to build tag binding parents. When<br/>set, the module does not read the google\_project data source. Pass it when a<br/>caller uses a module-level depends\_on, which would otherwise defer the data<br/>source to apply and force every tag binding to be replaced. Must be known at<br/>plan time (for example the number of an existing project read from a<br/>`google_project` data source with no `depends_on`); leave it unset when the<br/>project is created in the same apply. | `string` | `null` | no |
 | <a name="input_raw_filter"></a> [raw\_filter](#input\_raw\_filter) | Raw PubSub filter to apply, ignores other variables. https://cloud.google.com/pubsub/docs/subscription-message-filter#filtering_syntax | `string` | `""` | no |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to this module's taggable resources, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |
 | <a name="input_team"></a> [team](#input\_team) | Sets the squad label and the transitional team label on the dead-letter topic. The alerting module's per-team DLQ alert matches on team, so team stays until that alert switches to squad. Cost attribution comes from Resource Manager tags, not labels. | `string` | n/a | yes |
@@ -155,4 +156,5 @@ No requirements.
 | ---- | ----------- |
 | <a name="output_dead-letter-broker"></a> [dead-letter-broker](#output\_dead-letter-broker) | The name of the dead-letter topic, which is used to store events that could not be delivered. |
 | <a name="output_dead-letter-gcs-bucket"></a> [dead-letter-gcs-bucket](#output\_dead-letter-gcs-bucket) | The name of the dead-letter GCS bucket, which is used to store events that could not be delivered. |
+| <a name="output_tag_binding_parents"></a> [tag\_binding\_parents](#output\_tag\_binding\_parents) | The parent of every Pub/Sub tag binding, keyed by binding and tag key. |
 <!-- END_TF_DOCS -->

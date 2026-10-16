@@ -61,7 +61,17 @@ resource "google_secret_manager_secret_version" "data" {
 }
 
 // Get a project number for this project ID.
-data "google_project" "project" { project_id = var.project_id }
+data "google_project" "project" {
+  count = length(var.resource_manager_tags) > 0 && var.project_number == null ? 1 : 0
+
+  project_id = var.project_id
+}
+
+locals {
+  project_number = var.project_number != null ? var.project_number : (
+    length(data.google_project.project) > 0 ? data.google_project.project[0].number : null
+  )
+}
 
 // What identity is deploying this?
 data "google_client_openid_userinfo" "me" {}
