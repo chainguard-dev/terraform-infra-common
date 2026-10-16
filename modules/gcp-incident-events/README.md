@@ -29,6 +29,8 @@ The event data is the notification body exactly as Cloud Monitoring published it
 | `policyname` | `incident.policy_name` |
 | `severity` | `incident.severity` |
 
+Cloud Monitoring capitalizes `severity` (for example `Warning` and `Error`), so trigger filters must match that case. It also sends repeat notifications for the same incident and state, each with a new Pub/Sub message ID. `id` stays the same when Pub/Sub redelivers one message, but repeats get new IDs, so consumers should dedupe on `(subject, state)`, not on `id`, and should not assume exactly one open and one close per incident.
+
 The `recorder-schemas` output holds a BigQuery schema for `cloudevent-recorder`. Cloud Monitoring adds fields to the notification over time, so set `ignore_unknown_values = true` on the recorder to keep loads from failing on a field the schema doesn't list yet.
 
 ```hcl
@@ -82,6 +84,16 @@ module "gcp-incident-events" {
 }
 ```
 
+## Alerts
+
+The module alerts `notification_channels` when incidents stop reaching the broker:
+
+- **Incident events dead-lettered:** a notification failed every delivery attempt and was moved to the dead-letter topic.
+- **Incident events delivery stuck:** the oldest unacknowledged notification on the push subscription is more than 10 minutes old.
+- **Incident events delivery failing:** pushes to the trampoline failed more than `max_delivery_attempts` times in 10 minutes, so more than one notification is failing, for example because the broker ingress is down.
+
+Don't include the pubsub notification channel that publishes to `topic` in `notification_channels`. These alerts fire when forwarding is broken, so a copy sent through that channel can't arrive.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -115,6 +127,9 @@ No requirements.
 | Name | Type |
 | ---- | ---- |
 | [google-beta_google_project_service_identity.pubsub](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
+| [google_monitoring_alert_policy.backlog](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.dead-letter](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
+| [google_monitoring_alert_policy.push-failures](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_pubsub_subscription.dead-letter-pull-sub](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription) | resource |
 | [google_pubsub_subscription_iam_binding.allow-pubsub-to-ack](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription_iam_binding) | resource |
@@ -140,7 +155,7 @@ No requirements.
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the incident event resources. | `map(string)` | `{}` | no |
 | <a name="input_max_delivery_attempts"></a> [max\_delivery\_attempts](#input\_max\_delivery\_attempts) | The maximum number of delivery attempts for any notification before it is dead-lettered. | `number` | `5` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
-| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | Notification channels for this module's alerts on dead-lettered, stuck and failing incident deliveries. Must not include a pubsub notification channel that publishes to topic: an alert that forwarding is broken can't be delivered through the forwarder it reports on. | `list(string)` | n/a | yes |
 | <a name="input_observability_role"></a> [observability\_role](#input\_observability\_role) | Fully-qualified id of a single role (e.g. from the observability-role module) to grant the service account in place of the three built-in observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent). Collapsing to one role keeps large projects under the 1,500-member IAM policy limit. | `string` | `null` | no |
 | <a name="input_product"></a> [product](#input\_product) | Product label to apply to the service. | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |

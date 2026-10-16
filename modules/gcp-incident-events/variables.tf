@@ -43,7 +43,7 @@ variable "max_delivery_attempts" {
 }
 
 variable "notification_channels" {
-  description = "List of notification channels to alert."
+  description = "Notification channels for this module's alerts on dead-lettered, stuck and failing incident deliveries. Must not include a pubsub notification channel that publishes to topic: an alert that forwarding is broken can't be delivered through the forwarder it reports on."
   type        = list(string)
 }
 
