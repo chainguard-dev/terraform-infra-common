@@ -11,7 +11,7 @@ terraform {
     }
     cosign = {
       source  = "chainguard-dev/cosign"
-      version = ">= 0.0.19"
+      version = ">= 0.0.20"
     }
     google = {
       source  = "hashicorp/google"

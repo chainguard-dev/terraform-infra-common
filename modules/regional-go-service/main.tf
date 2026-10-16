@@ -8,7 +8,7 @@ terraform {
     }
     cosign = {
       source  = "chainguard-dev/cosign"
-      version = ">= 0.0.19"
+      version = ">= 0.0.20"
     }
     // Required transitively by the regional-service child module; declared
     // here so provider configurations (including test mocks) attach at the
