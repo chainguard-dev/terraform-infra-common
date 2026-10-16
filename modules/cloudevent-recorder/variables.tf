@@ -239,7 +239,7 @@ variable "observability_role" {
 }
 
 variable "resource_manager_tags" {
-  description = "Resource Manager tags to bind to this module's taggable resources, as tagKeys/<id> => tagValues/<id>."
+  description = "Resource Manager tags to bind to this module's taggable resources, as tagKeys/<id> => tagValues/<id>. A multi-region location requires tag_bigquery = false."
   type        = map(string)
   default     = {}
   nullable    = false
@@ -255,7 +255,14 @@ variable "resource_manager_tags" {
   # Every BigQuery binding here tests this same input, so guard it once.
   # (Referencing var.location requires Terraform >= 1.9; see .terraform-version.)
   validation {
-    condition     = length(var.resource_manager_tags) == 0 || can(regex("-", var.location))
-    error_message = "resource_manager_tags cannot be applied to a multi-region BigQuery location (${var.location}) until hashicorp/terraform-provider-google#18254 is fixed. Use a single-region location, or leave resource_manager_tags empty."
+    condition     = length(var.resource_manager_tags) == 0 || !var.tag_bigquery || can(regex("-", var.location))
+    error_message = "resource_manager_tags cannot be applied to a multi-region BigQuery location (${var.location}) until hashicorp/terraform-provider-google#18254 is fixed. Use a single-region location, set tag_bigquery = false, or leave resource_manager_tags empty."
   }
+}
+
+variable "tag_bigquery" {
+  description = "Whether to bind resource_manager_tags to the BigQuery dataset and tables. Set to false to tag only the other resources, which is required when location is a multi-region."
+  type        = bool
+  default     = true
+  nullable    = false
 }
