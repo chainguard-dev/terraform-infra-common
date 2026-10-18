@@ -150,8 +150,14 @@ resource "google_pubsub_subscription" "dead-letter-pull-sub" {
   labels                     = local.merged_labels
   message_retention_duration = "86400s"
 
+  // Never expire this subscription. Pub/Sub deletes subscriptions with no
+  // subscriber activity after the expiration TTL, and nothing pulls from
+  // this subscription in steady state, so any finite TTL means it silently
+  // disappears about a day after creation. Messages published to a topic
+  // with no subscriptions are dropped, and a deleted subscription leaves its
+  // google_tags_tag_binding unreadable (403), which fails every plan.
   expiration_policy {
-    ttl = "86400s"
+    ttl = ""
   }
 
   enable_message_ordering = true
