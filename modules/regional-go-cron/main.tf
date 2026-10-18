@@ -289,6 +289,16 @@ resource "google_cloud_run_v2_job" "this" {
             }
           }
 
+          // Owner attribution, read by the agent executors to label model requests.
+          env {
+            name  = "CHAINGUARD_TEAM"
+            value = var.team
+          }
+          env {
+            name  = "CHAINGUARD_PRODUCT"
+            value = var.product == null ? "" : var.product
+          }
+
           // Regional env: select the value for this job's region.
           dynamic "env" {
             for_each = { for re in containers.value.regional-env : re.name => re.value[each.key] if contains(keys(re.value), each.key) }
