@@ -135,12 +135,21 @@ module "redis_auth_secret" {
   authorized-adders     = var.secret_version_adders
   notification-channels = var.notification_channels
 
+  alert_documentation = <<-EOT
+    Unexpected Secret Manager activity targeted the Redis AUTH credential for `${var.name}` in `${var.region}`. The caller or operation is outside the configured accessor/version-manager exclusions; this may indicate credential exposure or an unrecognized deployment identity.
+
+    Open [Logs Explorer](https://console.cloud.google.com/logs/query;query=${urlencode("protoPayload.serviceName=\"secretmanager.googleapis.com\"\n(protoPayload.request.name:\"/secrets/${var.name}-auth/\" OR protoPayload.request.parent:\"/secrets/${var.name}-auth\")")}?project=${var.project_id}) and check the principal, method, user agent, result and timestamp against recent Terraform runs and service deployments. Terraform refresh reads the AUTH secret with AccessSecretVersion; compare its principal with ci_service_accounts. Version-adder exclusions do not cover reads.
+
+    For expected activity, confirm the identity with the Redis service owner before correcting the accessor or version-manager configuration. For unexplained activity, escalate to Security and the owning service team, investigate the caller's IAM access, and coordinate credential rotation and client updates if exposure is confirmed. Do not retrieve or copy the AUTH value into logs or incident notes, or broaden exclusions just to silence the alert.
+  EOT
+
   # Additional viewer/editor service accounts will need to access the
   # secret to retrieve the auth string to establish a connection
   service-accounts = concat(
     [var.secret_accessor_sa_email],
     var.authorized_client_service_accounts,
     var.authorized_client_editor_service_accounts,
+    var.ci_service_accounts,
   )
 
   create_placeholder_version = false

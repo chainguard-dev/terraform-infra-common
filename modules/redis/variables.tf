@@ -231,6 +231,12 @@ variable "secret_version_adders" {
   default     = []
 }
 
+variable "ci_service_accounts" {
+  description = "CI service accounts that read the auth secret during terraform plan/apply: refreshing google_secret_manager_secret_version calls AccessSecretVersion to populate secret_data. These are added to the auth secret's service-accounts list so the anomaly alert excludes their access. The adder exclusion does not cover it — that one only matches Add/Enable/DestroySecretVersion."
+  type        = list(string)
+  default     = []
+}
+
 variable "product" {
   description = "Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan."
   type        = string

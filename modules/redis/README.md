@@ -91,6 +91,7 @@ limitations under the License.
 
 | Name | Version |
 | ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.79 |
 
 ## Providers
@@ -126,6 +127,7 @@ limitations under the License.
 | <a name="input_authorized_client_editor_service_accounts"></a> [authorized\_client\_editor\_service\_accounts](#input\_authorized\_client\_editor\_service\_accounts) | List of service account emails that should be granted Redis editor (read-write) access | `list(string)` | `[]` | no |
 | <a name="input_authorized_client_service_accounts"></a> [authorized\_client\_service\_accounts](#input\_authorized\_client\_service\_accounts) | List of service account emails that should be granted Redis viewer (read-only) access | `list(string)` | `[]` | no |
 | <a name="input_authorized_network"></a> [authorized\_network](#input\_authorized\_network) | The full name of the Google Compute Engine network to which the instance is connected. Must be in the format: projects/{project\_id}/global/networks/{network\_name} | `string` | `""` | no |
+| <a name="input_ci_service_accounts"></a> [ci\_service\_accounts](#input\_ci\_service\_accounts) | CI service accounts that read the auth secret during terraform plan/apply: refreshing google\_secret\_manager\_secret\_version calls AccessSecretVersion to populate secret\_data. These are added to the auth secret's service-accounts list so the anomaly alert excludes their access. The adder exclusion does not cover it — that one only matches Add/Enable/DestroySecretVersion. | `list(string)` | `[]` | no |
 | <a name="input_connect_mode"></a> [connect\_mode](#input\_connect\_mode) | The connection mode of the Redis instance. Valid values: DIRECT\_PEERING, PRIVATE\_SERVICE\_ACCESS. | `string` | `"PRIVATE_SERVICE_ACCESS"` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | The resource labels to represent user-provided metadata. | `map(string)` | `{}` | no |
 | <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | Maintenance policy for an instance. | <pre>object({<br/>    day = string<br/>    start_time = object({<br/>      hours   = number<br/>      minutes = number<br/>      seconds = number<br/>      nanos   = number<br/>    })<br/>  })</pre> | `null` | no |
@@ -168,5 +170,6 @@ limitations under the License.
 | <a name="output_redis_version"></a> [redis\_version](#output\_redis\_version) | The version of Redis software. |
 | <a name="output_region"></a> [region](#output\_region) | The region the instance lives in. |
 | <a name="output_server_ca_cert"></a> [server\_ca\_cert](#output\_server\_ca\_cert) | The server CA certificate for the Redis instance |
+| <a name="output_tag_binding_count"></a> [tag\_binding\_count](#output\_tag\_binding\_count) | Number of Resource Manager tag bindings on the Redis instance |
 | <a name="output_uri"></a> [uri](#output\_uri) | The connection URI to be used for accessing Redis. |
 <!-- END_TF_DOCS -->
