@@ -186,12 +186,6 @@ variable "maintenance_window_hour" {
   }
 }
 
-variable "maintenance_version" {
-  description = "Maintenance version to update the primary instance to, one of its available_maintenance_versions. Leave null when creating the instance: the Admin API rejects a maintenance version at creation. Changing it restarts the instance. A version older than the instance's current one is ignored, so later automatic maintenance is never held back."
-  type        = string
-  default     = null
-}
-
 # Advanced Configuration
 
 variable "database_flags" {

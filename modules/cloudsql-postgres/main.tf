@@ -31,7 +31,6 @@ resource "google_sql_database_instance" "this" {
   region  = var.region
 
   database_version    = var.database_version
-  maintenance_version = var.maintenance_version
   deletion_protection = var.deletion_protection
 
   # Optional CMEK. When null Cloud SQL uses Google-managed encryption.
