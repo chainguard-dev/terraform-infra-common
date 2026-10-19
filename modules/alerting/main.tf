@@ -29,8 +29,9 @@ locals {
   name                   = var.team == "" ? "global" : var.team
   squad_metric_filter    = var.team == "" ? "" : "metric.labels.team=\"${var.team}\""
   // Monitoring rejects OR across metadata.user_labels keys, and DLQ topics
-  // created before the squad label shipped carry only team, so match on team,
-  // which every DLQ topic still carries. Switch to squad once team is dropped.
+  // created before the squad label shipped carry only team, so match on team.
+  // Switch to squad once team is dropped. gcp-incident-events leaves team off
+  // its DLQ topic to stay out of this alert; keep it out after the switch.
   squad_metric_user_label_filter = var.team == "" ? "" : "metadata.user_labels.\"team\"=\"${var.team}\""
   http_error_all_excluded_services = distinct(concat(
     var.http_error_exclude_services,

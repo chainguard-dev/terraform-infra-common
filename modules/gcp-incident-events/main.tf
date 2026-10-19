@@ -129,9 +129,10 @@ module "authorize-delivery" {
 
 resource "google_pubsub_topic" "dead-letter" {
   name = "${var.name}-dlq-${random_string.delivery-suffix.result}"
-  // The alerting module's per-team DLQ alert matches dead-letter topics on
-  // the team label. Keep team until that alert switches to squad.
-  labels = merge({ team = var.team }, local.merged_labels)
+  // No team label: the alerting module's per-team DLQ alert matches on it and
+  // notifies the alerts topic this module reads. The dead-letter alert in
+  // alerts.tf covers this topic.
+  labels = local.merged_labels
 
   message_storage_policy {
     allowed_persistence_regions = [var.region]
