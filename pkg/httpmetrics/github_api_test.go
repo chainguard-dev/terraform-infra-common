@@ -184,6 +184,18 @@ func Test_bucketizeGitHubPath(t *testing.T) {
 		path:   "/repos/octocat/hello-world/git/trees/abc123def",
 		bucket: "/repos/{org}/{repo}/git/trees/{sha}",
 	}, {
+		path:   "/repos/octocat/hello-world/git/commits/abc123def",
+		bucket: "/repos/{org}/{repo}/git/commits/{sha}",
+	}, {
+		path:   "/repos/octocat/hello-world/git/blobs/abc123def",
+		bucket: "/repos/{org}/{repo}/git/blobs/{sha}",
+	}, {
+		path:   "/installation/repositories",
+		bucket: "/installation/repositories",
+	}, {
+		path:   "/rate_limit",
+		bucket: "/rate_limit",
+	}, {
 		path:   "/some/unknown/path",
 		bucket: "unknown_gh_path",
 	}}

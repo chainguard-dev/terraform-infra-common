@@ -232,6 +232,22 @@ var githubAPIPatterns = []pathPattern{{
 	// https://docs.github.com/en/rest/git/trees#get-a-tree (often recursive=1)
 	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/trees/[^/]+$`),
 	bucket:  "/repos/{org}/{repo}/git/trees/{sha}",
+}, {
+	// https://docs.github.com/en/rest/git/commits#get-a-commit-object
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/commits/[^/]+$`),
+	bucket:  "/repos/{org}/{repo}/git/commits/{sha}",
+}, {
+	// https://docs.github.com/en/rest/git/blobs#get-a-blob
+	pattern: regexp.MustCompile(`^/repos/[^/]+/[^/]+/git/blobs/[^/]+$`),
+	bucket:  "/repos/{org}/{repo}/git/blobs/{sha}",
+}, {
+	// https://docs.github.com/en/rest/apps/installations#list-repositories-accessible-to-the-app-installation
+	pattern: regexp.MustCompile(`^/installation/repositories$`),
+	bucket:  "/installation/repositories",
+}, {
+	// https://docs.github.com/en/rest/rate-limit/rate-limit#get-rate-limit-status-for-the-authenticated-user
+	pattern: regexp.MustCompile(`^/rate_limit$`),
+	bucket:  "/rate_limit",
 }}
 
 // GitHubPathBucket maps a GitHub REST API path to its bounded-cardinality
