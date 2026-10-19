@@ -69,8 +69,6 @@ locals {
 }
 
 module "cloudevent-trigger" {
-  depends_on = [module.service]
-
   for_each = var.regions
   source   = "../cloudevent-trigger"
 
@@ -85,7 +83,7 @@ module "cloudevent-trigger" {
 
   private-service = {
     region = each.key
-    name   = var.name
+    name   = module.service.names[each.key]
   }
 
   team = var.team

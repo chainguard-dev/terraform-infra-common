@@ -19,3 +19,8 @@ output "uptime_check_name" {
 output "alert_id" {
   value = var.enable_alert ? google_monitoring_alert_policy.uptime_alert[0].id : ""
 }
+
+output "names" {
+  description = "The prober service's name in each region, read off the services, so a trigger that names one is created after it."
+  value       = module.this.names
+}
