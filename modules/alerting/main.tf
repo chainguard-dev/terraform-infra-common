@@ -37,12 +37,17 @@ locals {
     keys(var.http_error_method_status_exclusions),
   ))
   http_error_exclude_filter = length(local.http_error_all_excluded_services) == 0 ? "" : "metric.labels.service_name != monitoring.regex.full_match(\"${join("|", local.http_error_all_excluded_services)}\")"
-  // Normalize the single-code and multi-code forms into one codes list per entry.
+  // Normalize the single and multi forms into one methods list and one codes list per entry.
   http_error_method_status_exclusions = {
     for k, v in var.http_error_method_status_exclusions : k => {
-      method = v.method
-      codes  = v.code != null ? [v.code] : v.codes
+      methods = v.method != null ? [v.method] : v.methods
+      codes   = v.code != null ? [v.code] : v.codes
     }
+  }
+  // One method keeps the literal comparison the module has always rendered, so
+  // a single-method policy's filter text does not change.
+  http_error_method_matches = {
+    for k, v in local.http_error_method_status_exclusions : k => length(v.methods) == 1 ? "\"${v.methods[0]}\"" : "monitoring.regex.full_match(\"${join("|", v.methods)}\")"
   }
 }
 
@@ -1298,8 +1303,8 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
   }
 
   // For each service with method+status exclusions, generate two conditions:
-  // 1. Non-METHOD errors for the service
-  // 2. METHOD errors excluding the specific CODE(s) for the service
+  // 1. Errors on methods other than the METHOD(s) for the service
+  // 2. METHOD(s) errors excluding the specific CODE(s) for the service
   dynamic "conditions" {
     for_each = local.http_error_method_status_exclusions
     content {
@@ -1320,7 +1325,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
           resource.type = "prometheus_target"
           metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
           metric.labels.service_name = monitoring.regex.full_match("${conditions.key}")
-          metric.labels.method != "${conditions.value.method}"
+          metric.labels.method != ${local.http_error_method_matches[conditions.key]}
           metric.labels.code != monitoring.regex.full_match("[23]..")
           ${local.squad_metric_filter}
         EOT
@@ -1334,7 +1339,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         threshold_value = var.http_error_threshold
       }
 
-      display_name = "${conditions.key} http error rate (non-${conditions.value.method})"
+      display_name = "${conditions.key} http error rate (non-${length(conditions.value.methods) == 1 ? conditions.value.methods[0] : "(${join("|", conditions.value.methods)})"})"
     }
   }
 
@@ -1346,10 +1351,13 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
           alignment_period     = "60s"
           cross_series_reducer = "REDUCE_MEAN"
           per_series_aligner   = "ALIGN_RATE"
-          group_by_fields = [
+          # REDUCE_MEAN divides by the number of series matched, so several
+          # methods in one group would dilute each other's error rate; each
+          # method keeps its own mean, as a single-method entry has.
+          group_by_fields = concat([
             "metric.label.\"team\"",
             "resource.label.\"job\"",
-          ]
+          ], length(conditions.value.methods) > 1 ? ["metric.label.\"method\""] : [])
         }
 
         comparison = "COMPARISON_GT"
@@ -1358,7 +1366,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
           resource.type = "prometheus_target"
           metric.type = "prometheus.googleapis.com/http_request_status_total/counter"
           metric.labels.service_name = monitoring.regex.full_match("${conditions.key}")
-          metric.labels.method = "${conditions.value.method}"
+          metric.labels.method = ${local.http_error_method_matches[conditions.key]}
           metric.labels.code != monitoring.regex.full_match("[23]..")
           metric.labels.code != monitoring.regex.full_match("${join("|", conditions.value.codes)}")
           ${local.squad_metric_filter}
@@ -1373,7 +1381,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         threshold_value = var.http_error_threshold
       }
 
-      display_name = "${conditions.key} http error rate (${conditions.value.method}, non-${join(",", conditions.value.codes)})"
+      display_name = "${conditions.key} http error rate (${join("|", conditions.value.methods)}, non-${join(",", conditions.value.codes)})"
     }
   }
 
@@ -1382,7 +1390,10 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
   documentation {
     // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
     subject = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: HTTP error rate above ${var.http_error_threshold}"
-    content = "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: HTTP error rate above ${var.http_error_threshold}"
+    content = join("\n\n", compact([
+      "$${metric.label.team}: Cloud Run service $${metric_or_resource.labels.job}: HTTP error rate above ${var.http_error_threshold}",
+      var.http_error_documentation,
+    ]))
   }
 
   notification_channels = length(var.notification_channels) != 0 ? var.notification_channels : local.slack

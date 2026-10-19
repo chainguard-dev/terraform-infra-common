@@ -157,11 +157,12 @@ variable "http_error_exclude_services" {
 }
 
 variable "http_error_method_status_exclusions" {
-  description = "Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination(s). Set `code` for a single status code or `codes` for several; exactly one of the two must be set."
+  description = "Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination(s). Set `method` for a single HTTP method or `methods` for several, and `code` for a single status code or `codes` for several; exactly one of each pair must be set."
   type = map(object({
-    method = string
-    code   = optional(string)
-    codes  = optional(list(string), [])
+    method  = optional(string)
+    methods = optional(list(string), [])
+    code    = optional(string)
+    codes   = optional(list(string), [])
   }))
   default = {}
 
@@ -170,6 +171,35 @@ variable "http_error_method_status_exclusions" {
       for k, v in var.http_error_method_status_exclusions : (v.code != null) != (length(v.codes) > 0)
     ])
     error_message = "Each exclusion must set exactly one of `code` or `codes`."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.http_error_method_status_exclusions : (v.method != null) != (length(v.methods) > 0)
+    ])
+    error_message = "Each exclusion must set exactly one of `method` or `methods`."
+  }
+
+  # Several methods render as one regular expression, where an empty or
+  # non-letter entry would match more series than the methods it names.
+  validation {
+    condition = alltrue([
+      for k, v in var.http_error_method_status_exclusions : alltrue([
+        for m in concat(v.method == null ? [] : [v.method], v.methods) : can(regex("^[A-Z]+$", m))
+      ])
+    ])
+    error_message = "Each HTTP method must be uppercase letters only, such as \"GET\"."
+  }
+}
+
+variable "http_error_documentation" {
+  description = "Markdown appended to the http error rate alert's documentation, below the summary line the module writes. Use it to say what the alert means for the team's services and how to troubleshoot it, with links to logs, dashboards or runbooks."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = length(var.http_error_documentation) <= 8000
+    error_message = "http_error_documentation may not exceed 8000 characters; Cloud Monitoring rejects alert documentation longer than 8192 characters, and the module prepends a summary line."
   }
 }
 

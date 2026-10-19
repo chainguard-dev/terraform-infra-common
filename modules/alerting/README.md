@@ -1,13 +1,16 @@
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_google"></a> [google](#provider\_google) | n/a |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 8.7.0 |
 
 ## Modules
 
@@ -63,8 +66,9 @@ No modules.
 | <a name="input_grpc_error_threshold"></a> [grpc\_error\_threshold](#input\_grpc\_error\_threshold) | threshold for grpc error. | `number` | `0.25` | no |
 | <a name="input_grpc_failure_rate_exclude_services"></a> [grpc\_failure\_rate\_exclude\_services](#input\_grpc\_failure\_rate\_exclude\_services) | List of service names to exclude from non-grpc failure rate alert | `list(string)` | `[]` | no |
 | <a name="input_grpc_non_error_codes"></a> [grpc\_non\_error\_codes](#input\_grpc\_non\_error\_codes) | List of grpc codes to not counted as error, case-sensitive. | `list(string)` | <pre>[<br/>  "OK",<br/>  "Aborted",<br/>  "AlreadyExists",<br/>  "Canceled",<br/>  "NotFound"<br/>]</pre> | no |
+| <a name="input_http_error_documentation"></a> [http\_error\_documentation](#input\_http\_error\_documentation) | Markdown appended to the http error rate alert's documentation, below the summary line the module writes. Use it to say what the alert means for the team's services and how to troubleshoot it, with links to logs, dashboards or runbooks. | `string` | `""` | no |
 | <a name="input_http_error_exclude_services"></a> [http\_error\_exclude\_services](#input\_http\_error\_exclude\_services) | List of service names to exclude from the http error rate alert. | `list(string)` | `[]` | no |
-| <a name="input_http_error_method_status_exclusions"></a> [http\_error\_method\_status\_exclusions](#input\_http\_error\_method\_status\_exclusions) | Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination(s). Set `code` for a single status code or `codes` for several; exactly one of the two must be set. | <pre>map(object({<br/>    method = string<br/>    code   = optional(string)<br/>    codes  = optional(list(string), [])<br/>  }))</pre> | `{}` | no |
+| <a name="input_http_error_method_status_exclusions"></a> [http\_error\_method\_status\_exclusions](#input\_http\_error\_method\_status\_exclusions) | Map of service names to method/status exclusions. Each entry excludes the service from the main http error condition and generates replacement conditions that exclude the specified method+code combination(s). Set `method` for a single HTTP method or `methods` for several, and `code` for a single status code or `codes` for several; exactly one of each pair must be set. | <pre>map(object({<br/>    method  = optional(string)<br/>    methods = optional(list(string), [])<br/>    code    = optional(string)<br/>    codes   = optional(list(string), [])<br/>  }))</pre> | `{}` | no |
 | <a name="input_http_error_threshold"></a> [http\_error\_threshold](#input\_http\_error\_threshold) | threshold for http error. | `number` | `0.25` | no |
 | <a name="input_job_exitcode_filter"></a> [job\_exitcode\_filter](#input\_job\_exitcode\_filter) | additional filter to apply to job exitcode alert policy | `string` | `""` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | `[]` | no |
