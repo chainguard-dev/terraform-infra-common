@@ -4,13 +4,13 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 7.21.0"
+      version = ">= 8.7.0"
     }
     google-beta = {
       source = "hashicorp/google-beta"
       # node_config.boot_disk (provisioned IOPS/throughput) arrived in
       # 6.48.0; node_config.flex_start in 6.32.0. max_run_duration is older.
-      version = ">= 6.48.0"
+      version = ">= 8.7.0"
     }
   }
 }

@@ -9,17 +9,17 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 7.34.0"
+      version = ">= 8.7.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.9.0"
+      version = ">= 3.9.1"
     }
     // Required transitively by the regional-go-service child module; declared
     // here so provider configurations attach at the root module.
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 7.34.0"
+      version = ">= 8.7.0"
     }
     ko     = { source = "ko-build/ko" }
     cosign = { source = "chainguard-dev/cosign" }

@@ -11,11 +11,11 @@ terraform {
     }
     cosign = {
       source  = "chainguard-dev/cosign"
-      version = ">= 0.0.20"
+      version = ">= 0.5.5"
     }
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 6.51.0"
+      version = ">= 6.69.1"
     }
   }
 }

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 7.21.0"
+      version = ">= 8.7.0"
     }
     // Required transitively by the regional-go-cron child module; declared here
     // so provider configurations attach at the root module.
@@ -13,7 +13,7 @@ terraform {
     cosign      = { source = "chainguard-dev/cosign" }
     null = {
       source  = "hashicorp/null"
-      version = ">= 3.3.0"
+      version = ">= 3.3.2"
     }
   }
 }

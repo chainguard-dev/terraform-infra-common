@@ -11,15 +11,15 @@ terraform {
     }
     cosign = {
       source  = "chainguard-dev/cosign"
-      version = ">= 0.0.20"
+      version = ">= 0.5.5"
     }
     google = {
       source  = "hashicorp/google"
-      version = ">= 7.21.0"
+      version = ">= 8.7.0"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 7.21.0"
+      version = ">= 8.7.0"
     }
   }
 }
