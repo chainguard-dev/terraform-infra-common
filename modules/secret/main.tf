@@ -56,8 +56,54 @@ locals {
 
   # Combine authorized-adder (singular) with authorized-adders (plural)
   all_authorized_adders = concat([var.authorized-adder], var.authorized-adders)
-  # Extract email portions from all authorized adders
-  authorized_adder_emails = [for adder in local.all_authorized_adders : strcontains(adder, ":") ? split(":", adder)[1] : adder]
+
+  # Audit logs name the identity that acted, never a group it acted through,
+  # and a domain never acts, so only user and service-account emails can match.
+  # A group's members match through var.group_members. The filter compares
+  # strings without regard to case, so lowercasing only removes duplicates.
+  user_email_pattern = "^(?:(?:user|serviceAccount):)?([^:]+@[^:]+)$"
+  version_management_emails = sort(distinct([for e in concat(
+    [for m in concat(local.all_authorized_adders, var.version_managers) : regex(local.user_email_pattern, m)[0] if can(regex(local.user_email_pattern, m))],
+    flatten(values(var.group_members)),
+  ) : lower(e)]))
+  payload_reader_emails = sort(distinct([for e in local.accessor_emails : lower(e)]))
+
+  version_management_methods = [
+    for method in ["AddSecretVersion", "EnableSecretVersion", "DisableSecretVersion", "DestroySecretVersion"] :
+    "google.cloud.secretmanager.v1.SecretManagerService.${method}"
+  ]
+
+  # Cloud Monitoring rejects a longer log-match filter, and only at apply.
+  max_alert_filter_length = 20000
+  alert_filter            = <<EOT
+      -- This looks at logs from both data_access and activity, so we don't filter on either here.
+      protoPayload.serviceName="secretmanager.googleapis.com"
+      (
+        protoPayload.request.name: ("projects/${var.project_id}/secrets/${var.name}/" OR "projects/${data.google_project.project.number}/secrets/${var.name}/") OR
+        protoPayload.request.parent=("projects/${var.project_id}/secrets/${var.name}" OR "projects/${data.google_project.project.number}/secrets/${var.name}")
+      )
+%{if length(local.payload_reader_emails) > 0~}
+      -- Ignore the identities that are intended to read this secret.
+      -(
+        protoPayload.authenticationInfo.principalEmail=(${join(" OR ", [for e in local.payload_reader_emails : "\"${e}\""])})
+        protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
+      )
+%{endif~}
+%{if length(local.version_management_emails) > 0~}
+      -- Ignore the identities that manage this secret's versions, including
+      -- the members of any group that does.
+      -(
+        protoPayload.authenticationInfo.principalEmail=(${join(" OR ", [for e in local.version_management_emails : "\"${e}\""])})
+        protoPayload.methodName=(${join(" OR ", [for m in local.version_management_methods : "\"${m}\""])})
+      )
+%{endif~}
+      -- Ignore benign secret actions. ListSecretVersions and GetSecretVersion
+      -- only return version metadata (not the secret payload), so we don't care
+      -- who calls them.
+      -(
+        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(ListSecretVersions|GetSecretVersion)"
+      )
+      EOT
 
   default_labels = {
     basename(abspath(path.module)) = var.name
@@ -85,6 +131,17 @@ resource "google_secret_manager_secret_iam_binding" "authorize-version-adder" {
   members   = local.all_authorized_adders
 }
 
+// Authorize the version managers to add, list, get, enable, disable, and
+// destroy versions and to view the secret, but not to read version payloads.
+resource "google_secret_manager_secret_iam_binding" "authorize-version-manager" {
+  for_each = toset(length(var.version_managers) > 0 ? ["roles/secretmanager.secretVersionManager", "roles/secretmanager.viewer"] : [])
+
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.this.secret_id
+  role      = each.key
+  members   = var.version_managers
+}
+
 // Get a project number for this project ID.
 data "google_project" "project" { project_id = var.project_id }
 
@@ -108,31 +165,7 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
     display_name = "Abnormal Secret Access: ${var.name}"
 
     condition_matched_log {
-      filter = <<EOT
-      -- This looks at logs from both data_access and activity, so we don't filter on either here.
-      protoPayload.serviceName="secretmanager.googleapis.com"
-      (
-        protoPayload.request.name: ("projects/${var.project_id}/secrets/${var.name}/" OR "projects/${data.google_project.project.number}/secrets/${var.name}/") OR
-        protoPayload.request.parent=("projects/${var.project_id}/secrets/${var.name}" OR "projects/${data.google_project.project.number}/secrets/${var.name}")
-      )
-
-      -- Ignore the identity that is intended to access this.
-      -(
-        protoPayload.authenticationInfo.principalEmail=~"${join("|", local.accessor_emails)}"
-        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
-      )
-      -- Ignore the identities that are authorized to manipulate secret versions.
-      -(
-        protoPayload.authenticationInfo.principalEmail=~"${join("|", local.authorized_adder_emails)}"
-        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(DestroySecretVersion|AddSecretVersion|EnableSecretVersion)"
-      )
-      -- Ignore benign secret actions. ListSecretVersions and GetSecretVersion
-      -- only return version metadata (not the secret payload), so we don't care
-      -- who calls them.
-      -(
-        protoPayload.methodName=~"google.cloud.secretmanager.v1.SecretManagerService.(ListSecretVersions|GetSecretVersion)"
-      )
-      EOT
+      filter = local.alert_filter
 
       label_extractors = {
         "email"       = "EXTRACT(protoPayload.authenticationInfo.principalEmail)"
@@ -154,4 +187,11 @@ resource "google_monitoring_alert_policy" "anomalous-secret-access" {
 
   enabled = "true"
   project = var.project_id
+
+  lifecycle {
+    precondition {
+      condition     = length(local.alert_filter) <= local.max_alert_filter_length
+      error_message = "The abnormal-access alert filter is ${length(local.alert_filter)} characters; Cloud Monitoring rejects more than ${local.max_alert_filter_length}. Trim group_members or split the managing group."
+    }
+  }
 }

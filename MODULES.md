@@ -140,7 +140,13 @@ Use this when you need to route logs to BigQuery for querying or long-term reten
 
 Create a Google Secret Manager secret with automatic access controls, version management, and unauthorized access alerting.
 
-Use this when you need to store a sensitive value (API key, token, certificate) in Secret Manager.
+Use this when you need to store a sensitive value (API key, token, certificate) in Secret Manager. Set `version_managers` to let a group rotate it, and `group_members` so the alert recognizes that group's members.
+
+### [`group-members`](./modules/group-members/)
+
+Resolve Google groups to their members' emails, including members of nested groups, through the Cloud Identity API.
+
+Use this when a log filter or alert must recognize a group's members, such as the `secret` module's `group_members` input. Audit logs name the member who acted, never the group.
 
 ### [`configmap`](./modules/configmap/)
 
