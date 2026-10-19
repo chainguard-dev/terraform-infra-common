@@ -170,6 +170,7 @@ No requirements.
 | <a name="output_access_policy"></a> [access\_policy](#output\_access\_policy) | Regional ingress, VPC egress, and invocation policy managed by this module; excludes out-of-band IAM grants. |
 | <a name="output_containers"></a> [containers](#output\_containers) | Rendered regional container configuration, including environment and secret references. |
 | <a name="output_locations"></a> [locations](#output\_locations) | n/a |
+| <a name="output_name"></a> [name](#output\_name) | The service name, which every region shares. Read off the services, so a resource that names the service is created after it. |
 | <a name="output_names"></a> [names](#output\_names) | n/a |
 | <a name="output_uris"></a> [uris](#output\_uris) | n/a |
 <!-- END_TF_DOCS -->

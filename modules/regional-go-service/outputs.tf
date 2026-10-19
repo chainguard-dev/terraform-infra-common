@@ -2,6 +2,11 @@ output "names" {
   value = module.this.names
 }
 
+output "name" {
+  description = "The service name, which every region shares. Read off the services, so a resource that names the service is created after it."
+  value       = module.this.name
+}
+
 output "locations" {
   value = module.this.locations
 }

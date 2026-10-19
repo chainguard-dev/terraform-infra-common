@@ -50,6 +50,10 @@ variables {
 run "forward_rendered_service_outputs" {
   command = plan
   assert {
+    condition     = output.name == "fixture"
+    error_message = "name must be the one service name every region shares."
+  }
+  assert {
     condition = (
       toset(keys(output.access_policy)) == toset(["us-central1", "us-west1"]) &&
       alltrue([for policy in output.access_policy : policy.public_invoker && policy.ingress == "INGRESS_TRAFFIC_ALL"]) &&

@@ -4,6 +4,11 @@ output "names" {
   }
 }
 
+output "name" {
+  description = "The service name, which every region shares. Read off the services, so a resource that names the service is created after it."
+  value       = one(distinct([for s in google_cloud_run_v2_service.this : s.name]))
+}
+
 output "locations" {
   value = {
     for k, v in google_cloud_run_v2_service.this : k => v.location
