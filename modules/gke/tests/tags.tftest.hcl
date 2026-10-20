@@ -34,6 +34,33 @@ run "resource_manager_tags_default_to_empty" {
   }
 }
 
+run "node_resource_manager_tags_default_to_empty" {
+  command = plan
+
+  variables {
+    pools = { p = {} }
+  }
+
+  assert {
+    condition     = google_container_node_pool.pools["p"].node_config[0].resource_manager_tags == null
+    error_message = "an empty node_resource_manager_tags must add no node pool tags"
+  }
+}
+
+run "node_resource_manager_tags_tag_node_pools" {
+  command = plan
+
+  variables {
+    pools                      = { p = {} }
+    node_resource_manager_tags = { "tagKeys/123" = "tagValues/456" }
+  }
+
+  assert {
+    condition     = google_container_node_pool.pools["p"].node_config[0].resource_manager_tags["tagKeys/123"] == "tagValues/456"
+    error_message = "node pools must carry the requested node tags"
+  }
+}
+
 run "resource_manager_tags_bind_cluster" {
   command = plan
 
