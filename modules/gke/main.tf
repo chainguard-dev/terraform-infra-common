@@ -417,6 +417,10 @@ resource "google_container_node_pool" "pools" {
     tags             = each.value.tags
     resource_labels  = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
 
+    # GKE applies these tags to each node VM. An empty map is null so
+    # callers that set none plan no change.
+    resource_manager_tags = length(var.node_resource_manager_tags) == 0 ? null : var.node_resource_manager_tags
+
     # Dynamic Workload Scheduler does not consume reservations.
     dynamic "reservation_affinity" {
       for_each = local.pool_models[each.key] == "flex-start" ? [1] : []
