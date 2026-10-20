@@ -393,6 +393,21 @@ variable "resource_manager_tags" {
   }
 }
 
+variable "node_resource_manager_tags" {
+  description = "Resource Manager tags GKE applies to the VM of every node in every pool, as tagKeys/<id> => tagValues/<id>. Distinct from resource_manager_tags, which binds to the cluster only. Empty (the default) sets none."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition = alltrue([
+      for key, value in var.node_resource_manager_tags :
+      can(regex("^tagKeys/[0-9]+$", key)) && can(regex("^tagValues/[0-9]+$", value))
+    ])
+    error_message = "node_resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
+  }
+}
+
 variable "node_pool_timeouts" {
   description = "How long Terraform waits for a node pool create, update, or delete before giving up. null (the default) emits no timeouts block, so the google provider's own 30 minute defaults apply and callers that leave this unset plan no change. Setting it plans a one-time in-place update on each pool that adds the block to state and makes no API call. Raise update and delete where a pool hosts pods a PodDisruptionBudget protects: GKE holds each node's drain for up to an hour on the surge strategy, and a pool on the blue-green strategy holds its blue pool through the whole node_pool_soak_duration, so a Terraform change that recreates nodes (machine type, disk size or type, image type) outlasts 30 minutes, the apply fails, and the GKE operation keeps running until the next apply reports it as already in progress. Duration strings such as \"4h\"; an attribute left null keeps the provider default."
   type = object({
