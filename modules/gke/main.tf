@@ -23,18 +23,23 @@ resource "google_service_account" "cluster_default" {
 }
 
 resource "google_project_iam_member" "cluster" {
-  for_each = merge({
-    # Read access to the project GCR
-    "gcr" = "roles/storage.objectViewer"
-    # Read access to the project ACR
-    "acr" = "roles/artifactregistry.reader"
-    # Log writer access
-    "log-writer" = "roles/logging.logWriter"
-    # Metrics writer access
-    "metrics-writer" = "roles/monitoring.metricWriter"
-    # Monitoring viewer access
-    "monitoring-viewer" = "roles/monitoring.viewer"
-  }, var.extra_roles)
+  for_each = merge(
+    # Read access to the project GCR. This is a project-level grant, so it
+    # covers every bucket in the project; callers whose images come only
+    # from Artifact Registry can drop it.
+    var.grant_project_storage_object_viewer ? { "gcr" = "roles/storage.objectViewer" } : {},
+    {
+      # Read access to the project ACR
+      "acr" = "roles/artifactregistry.reader"
+      # Log writer access
+      "log-writer" = "roles/logging.logWriter"
+      # Metrics writer access
+      "metrics-writer" = "roles/monitoring.metricWriter"
+      # Monitoring viewer access
+      "monitoring-viewer" = "roles/monitoring.viewer"
+    },
+    var.extra_roles,
+  )
 
   project = var.project
   role    = each.value

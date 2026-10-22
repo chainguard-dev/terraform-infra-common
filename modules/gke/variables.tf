@@ -223,6 +223,12 @@ variable "extra_roles" {
   description = "Extra roles to add to the cluster's default service account"
 }
 
+variable "grant_project_storage_object_viewer" {
+  type        = bool
+  default     = true
+  description = "Whether to grant the node service account roles/storage.objectViewer at the project level, which legacy GCR pulls need. The grant covers every bucket in the project. Set it false when images come only from Artifact Registry, which roles/artifactregistry.reader already covers."
+}
+
 variable "release_channel" {
   type        = string
   default     = "REGULAR"
