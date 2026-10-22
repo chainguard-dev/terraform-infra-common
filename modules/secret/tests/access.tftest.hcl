@@ -262,6 +262,14 @@ run "applies_with_version_managers_and_group_members" {
     condition     = google_secret_manager_secret_iam_binding.authorize-version-manager["roles/secretmanager.secretVersionManager"].role == "roles/secretmanager.secretVersionManager"
     error_message = "the version-manager binding must survive a mocked apply"
   }
+  assert {
+    condition     = output.authorized_secret_id == google_secret_manager_secret.this.id
+    error_message = "the authorized secret ID must identify the secret, not the IAM binding"
+  }
+  assert {
+    condition     = google_secret_manager_secret_iam_binding.authorize-service-access.members == toset(["serviceAccount:reader@fixture-project.iam.gserviceaccount.com"])
+    error_message = "the authorized secret output must preserve the configured payload readers"
+  }
 }
 
 run "version_manager_domain_is_rejected" {

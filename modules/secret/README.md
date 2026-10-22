@@ -154,5 +154,6 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_authorized_secret_id"></a> [authorized\_secret\_id](#output\_authorized\_secret\_id) | The ID of the secret after its accessor binding is applied. |
 | <a name="output_secret_id"></a> [secret\_id](#output\_secret\_id) | The ID of the secret. |
 <!-- END_TF_DOCS -->
