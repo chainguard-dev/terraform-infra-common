@@ -226,7 +226,7 @@ variable "extra_roles" {
 variable "grant_project_storage_object_viewer" {
   type        = bool
   default     = true
-  description = "Whether to grant the node service account roles/storage.objectViewer at the project level, which legacy GCR pulls need. The grant covers every bucket in the project. Set it false when images come only from Artifact Registry, which roles/artifactregistry.reader already covers."
+  description = "Whether to grant the node service account roles/storage.objectViewer at the project level. The grant covers every bucket in the project. Image pulls, including gcr.io hosts served by Artifact Registry, need only roles/artifactregistry.reader, which the module grants separately."
 }
 
 variable "release_channel" {
