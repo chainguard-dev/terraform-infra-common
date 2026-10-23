@@ -333,6 +333,10 @@ resource "google_container_node_pool" "pools" {
   location       = google_container_cluster.this.location
   node_locations = each.value.node_locations != null ? each.value.node_locations : var.zones
 
+  # The provider computes this when unset, so a null keeps the plan of
+  # every pool that does not set it.
+  max_pods_per_node = each.value.max_pods_per_node
+
   dynamic "network_config" {
     for_each = each.value.network_config != null ? [1] : []
     content {

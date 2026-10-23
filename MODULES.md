@@ -164,6 +164,8 @@ Use this when you need a standard GKE cluster with full control over node pool c
 
 Each pool takes an optional `upgrade_settings` (surge counts, or the blue-green strategy with a node-pool soak) for workloads that must not be evicted mid-run; pools that leave it unset keep GKE's default surge upgrade.
 
+Each pool also takes an optional `max_pods_per_node` to shrink the per-node pod CIDR GKE carves from the pod secondary range, so a range fits more nodes of a pool that runs few pods; pools that leave it unset keep GKE's default of 110.
+
 ### [`gke-ap`](./modules/gke-ap/)
 
 Deploy a GKE Autopilot cluster with automatic node provisioning and the same networking, monitoring, and identity capabilities as standard GKE.

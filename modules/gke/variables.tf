@@ -85,6 +85,17 @@ variable "pools" {
       create_pod_range     = optional(bool, true)
       pod_ipv4_cidr_block  = optional(string, null)
     }), null)
+    # Most pods GKE schedules on each node of the pool. Null (the default)
+    # leaves the cluster default, 110. GKE reserves each node a pod CIDR of
+    # at least twice this many addresses, rounded up to a power of two, out
+    # of the pod secondary range: 110 takes a /24, 64 a /25, 32 a /26, 16 a
+    # /27. A pool whose nodes run few pods can set a lower value so the
+    # same range fits more nodes. GKE accepts 8 to 512 on Standard clusters
+    # and only on VPC-native ones, which this module always creates
+    # (https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr).
+    # GKE cannot change it on an existing pool, so changing it recreates
+    # the pool.
+    max_pods_per_node = optional(number, null)
     guest_accelerator = optional(list(object({
       type  = string
       count = number
@@ -173,6 +184,11 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : (p.boot_disk_provisioned_iops == null && p.boot_disk_provisioned_throughput == null) || p.disk_type == "hyperdisk-balanced"])
     error_message = "boot_disk_provisioned_iops / boot_disk_provisioned_throughput are only valid with disk_type = \"hyperdisk-balanced\"."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : try(p.max_pods_per_node >= 8 && p.max_pods_per_node <= 512 && floor(p.max_pods_per_node) == p.max_pods_per_node, p.max_pods_per_node == null)])
+    error_message = "max_pods_per_node must be null or an integer from 8 to 512, GKE's bounds for a Standard node pool."
   }
 
   validation {
