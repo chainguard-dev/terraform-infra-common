@@ -78,6 +78,18 @@ locals {
     product = var.product
   } : {}
 
+  // Each pool's squad/team labels and node VM tags: the module-wide values
+  // unless the pool overrides them.
+  pool_squad_labels = {
+    for name, p in var.pools : name => p.team == null ? local.squad_label : {
+      "squad" = p.team
+      "team"  = p.team
+    }
+  }
+  pool_node_tags = {
+    for name, p in var.pools : name => p.node_resource_manager_tags == null ? var.node_resource_manager_tags : p.node_resource_manager_tags
+  }
+
   // Each pool's provisioning model, with the older spot boolean folded in.
   pool_models = {
     for name, p in var.pools : name => coalesce(p.provisioning_model, p.spot ? "spot" : "on-demand")
@@ -424,11 +436,11 @@ resource "google_container_node_pool" "pools" {
     max_run_duration = each.value.max_run_duration
     labels           = each.value.labels
     tags             = each.value.tags
-    resource_labels  = merge(local.default_labels, local.squad_label, local.product_label, var.labels)
+    resource_labels  = merge(local.default_labels, local.pool_squad_labels[each.key], local.product_label, var.labels)
 
     # GKE applies these tags to each node VM. An empty map is null so
     # callers that set none plan no change.
-    resource_manager_tags = length(var.node_resource_manager_tags) == 0 ? null : var.node_resource_manager_tags
+    resource_manager_tags = length(local.pool_node_tags[each.key]) == 0 ? null : local.pool_node_tags[each.key]
 
     # Dynamic Workload Scheduler does not consume reservations.
     dynamic "reservation_affinity" {

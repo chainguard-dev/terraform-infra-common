@@ -134,6 +134,15 @@ variable "pools" {
     # scale-up, and each failure costs a retry before another zone is used.
     # Flex-start pools always get ANY, which GKE requires.
     location_policy = optional(string, null)
+    # This pool's node VM Resource Manager tags, in place of
+    # var.node_resource_manager_tags. Null (the default) uses the module-wide
+    # map; {} sets none. GKE rolls the pool's nodes to change them, so a pool
+    # that cannot take a roll yet can keep its current tags here.
+    node_resource_manager_tags = optional(map(string), null)
+    # This pool's squad and team resource labels, in place of var.team. Null
+    # (the default) uses var.team. Like the tags, changing a pool's labels
+    # rolls its nodes.
+    team = optional(string, null)
     # Node upgrade strategy. Null (the default) emits no upgrade_settings block,
     # so the pool keeps GKE's default surge upgrade (maxSurge 1, maxUnavailable
     # 0) and existing callers plan no change. strategy is "SURGE" or
@@ -194,6 +203,16 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : p.location_policy == null || contains(["BALANCED", "ANY"], coalesce(p.location_policy, "BALANCED"))])
     error_message = "location_policy must be null, \"BALANCED\", or \"ANY\"."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for name, p in var.pools : [
+        for key, value in(p.node_resource_manager_tags == null ? {} : p.node_resource_manager_tags) :
+        can(regex("^tagKeys/[0-9]+$", key)) && can(regex("^tagValues/[0-9]+$", value))
+      ]
+    ]))
+    error_message = "A pool's node_resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 
   validation {
@@ -416,7 +435,7 @@ variable "resource_manager_tags" {
 }
 
 variable "node_resource_manager_tags" {
-  description = "Resource Manager tags GKE applies to the VM of every node in every pool, as tagKeys/<id> => tagValues/<id>. Distinct from resource_manager_tags, which binds to the cluster only. Empty (the default) sets none."
+  description = "Resource Manager tags GKE applies to the node VMs of each pool that sets no node_resource_manager_tags of its own, as tagKeys/<id> => tagValues/<id>. A pool's own map replaces this one, and {} sets none on that pool. Distinct from resource_manager_tags, which binds to the cluster only. Empty (the default) sets none."
   type        = map(string)
   default     = {}
   nullable    = false
