@@ -21,6 +21,16 @@ variable "collapsed" {
 variable "notification_channels" {
   type = list(string)
 }
+variable "charts" {
+  description = "The charts to include, laid out three to a row in the order of the default, which includes them all."
+  type        = list(string)
+  default     = ["cpu_utilization", "memory_utilization", "instance_count", "startup_latency", "sent_bytes", "received_bytes", "disk_usage"]
+
+  validation {
+    condition     = alltrue([for c in var.charts : contains(["cpu_utilization", "memory_utilization", "instance_count", "startup_latency", "sent_bytes", "received_bytes", "disk_usage"], c)])
+    error_message = "Allowed values for 'charts' are cpu_utilization, memory_utilization, instance_count, startup_latency, sent_bytes, received_bytes and disk_usage."
+  }
+}
 
 locals {
   filter = concat(var.filter, var.cloudrun_type == "job" ? [
@@ -108,61 +118,25 @@ locals {
   columns = 3
   unit    = module.width.size / local.columns
 
-  // https://www.terraform.io/language/functions/range
-  // N columns, unit width each  ([0, unit, 2 * unit, ...])
-  col = range(0, local.columns * local.unit, local.unit)
-
-  tiles = [
-    {
-      yPos   = 0,
-      xPos   = local.col[0],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.cpu_utilization.widget,
-    },
-    {
-      yPos   = 0,
-      xPos   = local.col[1],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.memory_utilization.widget,
-    },
-    {
-      yPos   = 0,
-      xPos   = local.col[2],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.instance_count.widget,
-    },
-    {
-      yPos   = local.unit,
-      xPos   = local.col[0],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.startup_latency.widget,
-    },
-    {
-      yPos   = local.unit,
-      xPos   = local.col[1],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.sent_bytes.widget,
-    },
-    {
-      yPos   = local.unit,
-      xPos   = local.col[2],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.received_bytes.widget,
-    },
-    {
-      yPos   = local.unit * 2,
-      xPos   = local.col[0],
-      height = local.unit,
-      width  = local.unit,
-      widget = module.disk_usage.widget,
-    },
+  // Every chart in layout order; var.charts picks which of them to include.
+  widgets = [
+    { name = "cpu_utilization", widget = module.cpu_utilization.widget },
+    { name = "memory_utilization", widget = module.memory_utilization.widget },
+    { name = "instance_count", widget = module.instance_count.widget },
+    { name = "startup_latency", widget = module.startup_latency.widget },
+    { name = "sent_bytes", widget = module.sent_bytes.widget },
+    { name = "received_bytes", widget = module.received_bytes.widget },
+    { name = "disk_usage", widget = module.disk_usage.widget },
   ]
+  included = [for w in local.widgets : w.widget if contains(var.charts, w.name)]
+
+  tiles = [for i, w in local.included : {
+    yPos   = local.unit * floor(i / local.columns)
+    xPos   = local.unit * (i % local.columns)
+    height = local.unit
+    width  = local.unit
+    widget = w
+  }]
 }
 
 module "collapsible" {

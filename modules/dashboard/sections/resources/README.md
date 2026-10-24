@@ -29,6 +29,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_charts"></a> [charts](#input\_charts) | The charts to include, laid out three to a row in the order of the default, which includes them all. | `list(string)` | <pre>[<br/>  "cpu_utilization",<br/>  "memory_utilization",<br/>  "instance_count",<br/>  "startup_latency",<br/>  "sent_bytes",<br/>  "received_bytes",<br/>  "disk_usage"<br/>]</pre> | no |
 | <a name="input_cloudrun_name"></a> [cloudrun\_name](#input\_cloudrun\_name) | n/a | `string` | n/a | yes |
 | <a name="input_cloudrun_type"></a> [cloudrun\_type](#input\_cloudrun\_type) | n/a | `string` | `"service"` | no |
 | <a name="input_collapsed"></a> [collapsed](#input\_collapsed) | n/a | `bool` | `false` | no |
