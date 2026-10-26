@@ -39,7 +39,7 @@ resource "google_sql_database_instance" "this" {
   settings {
     tier                  = var.tier
     availability_type     = var.enable_high_availability ? "REGIONAL" : "ZONAL"
-    disk_type             = "PD_SSD"
+    disk_type             = var.disk_type
     disk_size             = var.storage_gb
     disk_autoresize       = true
     disk_autoresize_limit = var.disk_autoresize_limit

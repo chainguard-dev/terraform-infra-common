@@ -77,6 +77,7 @@ No modules.
 | <a name="input_database_version"></a> [database\_version](#input\_database\_version) | Cloud SQL engine version. | `string` | `"POSTGRES_17"` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Cloud SQL API deletion protection flag. When true, prevents instance deletion via the API. | `bool` | `true` | no |
 | <a name="input_disk_autoresize_limit"></a> [disk\_autoresize\_limit](#input\_disk\_autoresize\_limit) | Upper GB limit for automatic storage growth. Set to 0 for unlimited. | `number` | `4096` | no |
+| <a name="input_disk_type"></a> [disk\_type](#input\_disk\_type) | Data disk type: PD\_SSD, PD\_HDD or HYPERDISK\_BALANCED. | `string` | `"PD_SSD"` | no |
 | <a name="input_edition"></a> [edition](#input\_edition) | Cloud SQL edition for the instance. Accepted values:<br/>      • "ENTERPRISE"<br/>      • "ENTERPRISE\_PLUS" | `string` | `null` | no |
 | <a name="input_enable_high_availability"></a> [enable\_high\_availability](#input\_enable\_high\_availability) | Enable regional high‑availability (REGIONAL availability\_type). | `bool` | `false` | no |
 | <a name="input_enable_point_in_time_recovery"></a> [enable\_point\_in\_time\_recovery](#input\_enable\_point\_in\_time\_recovery) | Enable point-in-time recovery (continuous WAL archiving). | `bool` | `true` | no |

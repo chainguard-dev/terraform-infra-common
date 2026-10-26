@@ -87,6 +87,13 @@ variable "tier" {
   default     = "db-perf-optimized-N-16" # 16 vCPUs, 128GB RAM
 }
 
+# C4A, C4 and N4 machine series require HYPERDISK_BALANCED.
+variable "disk_type" {
+  description = "Data disk type: PD_SSD, PD_HDD or HYPERDISK_BALANCED."
+  type        = string
+  default     = "PD_SSD"
+}
+
 variable "storage_gb" {
   description = "Initial SSD storage size in GB."
   type        = number
