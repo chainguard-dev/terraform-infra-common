@@ -18,3 +18,8 @@ output "dead-letter-gcs-bucket" {
   value       = var.enable_dlq_bucket == false ? null : google_storage_bucket.dlq_bucket[0].name
   description = "The name of the dead-letter GCS bucket, which is used to store events that could not be delivered."
 }
+
+output "service_account_email" {
+  value       = google_service_account.this.email
+  description = "The email of the delivery service account. Each push to the private service carries an OIDC token for it, so a broker ingress receiving this trigger's pushes records it as the events' ce-actor."
+}
