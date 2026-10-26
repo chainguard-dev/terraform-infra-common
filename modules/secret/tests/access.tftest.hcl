@@ -391,3 +391,37 @@ run "filter_over_the_monitoring_limit_is_rejected_at_plan" {
 
   expect_failures = [google_monitoring_alert_policy.anomalous-secret-access]
 }
+
+run "shared_monitoring_defaults_off" {
+  command = plan
+  assert {
+    condition     = length(google_logging_metric.anomalous_secret_access) == 0 && output.access_log_metric_name == null
+    error_message = "Existing secret callers must not acquire a new log metric."
+  }
+}
+
+run "shared_monitoring_preserves_access_exemptions" {
+  command = plan
+  variables {
+    access_log_metric_name = "fixture-secret-access"
+    service-account        = "runtime@fixture-project.iam.gserviceaccount.com"
+    authorized-adder       = "serviceAccount:rotation@fixture-project.iam.gserviceaccount.com"
+  }
+  assert {
+    condition = (
+      google_logging_metric.anomalous_secret_access[0].filter == google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter &&
+      strcontains(google_logging_metric.anomalous_secret_access[0].filter, "runtime@fixture-project.iam.gserviceaccount.com") &&
+      strcontains(google_logging_metric.anomalous_secret_access[0].filter, "rotation@fixture-project.iam.gserviceaccount.com")
+    )
+    error_message = "Shared monitoring must preserve the local alert's runtime and rotation identity exemptions."
+  }
+  assert {
+    condition = (
+      google_logging_metric.anomalous_secret_access[0].project == "fixture-project" &&
+      output.access_log_metric_name == "fixture-secret-access" &&
+      google_logging_metric.anomalous_secret_access[0].metric_descriptor[0].metric_kind == "DELTA" &&
+      google_logging_metric.anomalous_secret_access[0].metric_descriptor[0].value_type == "INT64"
+    )
+    error_message = "The source project must own the exported event counter."
+  }
+}

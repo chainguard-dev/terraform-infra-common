@@ -125,3 +125,9 @@ variable "resource_manager_tags" {
     error_message = "resource_manager_tags keys must be tagKeys/<numeric-id> and values must be tagValues/<numeric-id>."
   }
 }
+
+variable "access_log_metric_name" {
+  description = "Optional log counter name for monitoring this secret through a shared metrics scope. Null creates no metric. Uses the same unauthorized-access filter as the local alert."
+  type        = string
+  default     = null
+}

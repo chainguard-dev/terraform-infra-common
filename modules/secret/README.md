@@ -16,6 +16,14 @@ Admin Activity audit log, but reads appear only when the project enables Data
 Access audit logs (`DATA_READ`) for Secret Manager, so without them the alert
 can't see reads.
 
+Set `access_log_metric_name` to also count matching entries in a project-local
+log-based metric. A monitoring project that includes this project in its metrics
+scope can alert on that counter using its existing notification channels. The
+counter uses the same identity exemptions as the local alert and adds no identity
+labels. The caller owns the scope link and metric alert policy; this option alone
+does not route notifications. It defaults to null and requires the same audit-log
+configuration as the local alert.
+
 ```hcl
 module "my-secret" {
   source = "chainguard-dev/common/infra//modules/secret"
@@ -120,6 +128,7 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
+| [google_logging_metric.anomalous_secret_access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/logging_metric) | resource |
 | [google_monitoring_alert_policy.anomalous-secret-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy) | resource |
 | [google_secret_manager_secret.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-service-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
@@ -133,6 +142,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_access_log_metric_name"></a> [access\_log\_metric\_name](#input\_access\_log\_metric\_name) | Optional log counter name for monitoring this secret through a shared metrics scope. Null creates no metric. Uses the same unauthorized-access filter as the local alert. | `string` | `null` | no |
 | <a name="input_alert_documentation"></a> [alert\_documentation](#input\_alert\_documentation) | Markdown documentation attached to the abnormal-access alert (e.g. what to check and a Logs Explorer link). Empty (default) attaches none. | `string` | `""` | no |
 | <a name="input_authorized-adder"></a> [authorized-adder](#input\_authorized-adder) | A member-style representation of the identity authorized to add new secret values (e.g. group:oncall@my-corp.dev). | `string` | n/a | yes |
 | <a name="input_authorized-adders"></a> [authorized-adders](#input\_authorized-adders) | List of additional identities authorized to add new secret values (e.g. ["serviceAccount:sa@project.iam.gserviceaccount.com"]). Use this when multiple identities need version adder permissions. | `list(string)` | `[]` | no |
@@ -154,6 +164,7 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_access_log_metric_name"></a> [access\_log\_metric\_name](#output\_access\_log\_metric\_name) | Unauthorized-access log counter name, or null when disabled. Alert policies belong in the caller's monitoring project. |
 | <a name="output_authorized_secret_id"></a> [authorized\_secret\_id](#output\_authorized\_secret\_id) | The ID of the secret after its accessor binding is applied. |
 | <a name="output_secret_id"></a> [secret\_id](#output\_secret\_id) | The ID of the secret. |
 <!-- END_TF_DOCS -->
