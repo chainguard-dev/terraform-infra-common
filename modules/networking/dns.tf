@@ -8,6 +8,8 @@ resource "random_string" "suffix" {
 // we will operate our services that reroutes *.run.app to records
 // that we control.
 resource "google_dns_managed_zone" "cloud-run-internal" {
+  count = var.run_app_private_dns_enabled ? 1 : 0
+
   project     = var.project_id
   name        = "cloud-run-internal-${random_string.suffix.result}"
   dns_name    = "run.app."
@@ -25,13 +27,26 @@ resource "google_dns_managed_zone" "cloud-run-internal" {
 
 // Create a record for *.run.app that points to private.googleapis.com
 resource "google_dns_record_set" "cloud-run-cname" {
+  count = var.run_app_private_dns_enabled ? 1 : 0
+
   project      = var.project_id
   name         = "*.run.app."
-  managed_zone = google_dns_managed_zone.cloud-run-internal.name
+  managed_zone = google_dns_managed_zone.cloud-run-internal[0].name
   type         = "CNAME"
   ttl          = 60
 
   rrdatas = ["private.googleapis.com."]
+}
+
+// State from before count was added maps to [0], so existing networks plan no change.
+moved {
+  from = google_dns_managed_zone.cloud-run-internal
+  to   = google_dns_managed_zone.cloud-run-internal[0]
+}
+
+moved {
+  from = google_dns_record_set.cloud-run-cname
+  to   = google_dns_record_set.cloud-run-cname[0]
 }
 
 // Create a special DNS zone attached to the network in which

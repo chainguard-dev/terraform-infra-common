@@ -30,14 +30,18 @@ module "networking" {
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.9.1 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_google"></a> [google](#provider\_google) | n/a |
-| <a name="provider_random"></a> [random](#provider\_random) | n/a |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 8.7.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | >= 3.9.1 |
 
 ## Modules
 
@@ -70,6 +74,7 @@ No modules.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 | <a name="input_region_netnums"></a> [region\_netnums](#input\_region\_netnums) | cidrsubnet netnums for specific regions' subnets, in place of netnum\_offset plus the region's position in regions. A network adding a region names its netnum here to skip ranges it must not overlap, such as another network's it shares routes with, without renumbering the subnets it already has. | `map(number)` | `{}` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | The list of regions in which to provision subnets suitable for use with Cloud Run direct VPC egress. | `list(string)` | n/a | yes |
+| <a name="input_run_app_private_dns_enabled"></a> [run\_app\_private\_dns\_enabled](#input\_run\_app\_private\_dns\_enabled) | Whether to create a private run.app zone that resolves *.run.app to private.googleapis.com. Disable it on a network that reaches Cloud Run through a Private Service Connect endpoint instead; the private.googleapis.com zone is kept either way. | `bool` | `true` | no |
 | <a name="input_team"></a> [team](#input\_team) | Team label to apply to resources (replaces deprecated 'squad'). | `string` | n/a | yes |
 
 ## Outputs

@@ -1,7 +1,7 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 #
-# networking: how each region's Cloud Run subnet is numbered. Run from
+# networking: subnet numbering and the optional run.app private zone. Run from
 # modules/networking with
 #   terraform init -backend=false && terraform test
 
@@ -69,4 +69,47 @@ run "refuses_an_unknown_region" {
   }
 
   expect_failures = [var.region_netnums]
+}
+
+run "resolves_run_app_privately_by_default" {
+  command = plan
+
+  variables {
+    regions = ["us-central1"]
+  }
+
+  assert {
+    condition = (
+      length(google_dns_managed_zone.cloud-run-internal) == 1 &&
+      google_dns_managed_zone.cloud-run-internal[0].dns_name == "run.app." &&
+      length(google_dns_record_set.cloud-run-cname) == 1 &&
+      tolist(google_dns_record_set.cloud-run-cname[0].rrdatas) == tolist(["private.googleapis.com."])
+    )
+    error_message = "By default *.run.app resolves to private.googleapis.com."
+  }
+}
+
+run "run_app_private_dns_disabled" {
+  command = plan
+
+  variables {
+    regions                     = ["us-central1"]
+    run_app_private_dns_enabled = false
+  }
+
+  assert {
+    condition = (
+      length(google_dns_managed_zone.cloud-run-internal) == 0 &&
+      length(google_dns_record_set.cloud-run-cname) == 0
+    )
+    error_message = "With run_app_private_dns_enabled = false, no run.app zone or record is created."
+  }
+
+  assert {
+    condition = (
+      google_dns_managed_zone.private-google-apis.dns_name == "private.googleapis.com." &&
+      length(google_dns_record_set.private-googleapis-a-record.rrdatas) == 4
+    )
+    error_message = "The private.googleapis.com zone stays when run.app private DNS is off."
+  }
 }

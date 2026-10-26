@@ -69,3 +69,9 @@ variable "hosted_zone_logging_enabled" {
   type        = bool
   default     = false
 }
+
+variable "run_app_private_dns_enabled" {
+  description = "Whether to create a private run.app zone that resolves *.run.app to private.googleapis.com. Disable it on a network that reaches Cloud Run through a Private Service Connect endpoint instead; the private.googleapis.com zone is kept either way."
+  type        = bool
+  default     = true
+}
