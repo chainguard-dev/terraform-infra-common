@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -284,4 +285,116 @@ func TestRun_WithFailureBoundsStderr(t *testing.T) {
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &line))
 	assert.Len(t, line.StderrTail, stderrTailBytes)
 	assert.True(t, strings.HasSuffix(line.StderrTail, "END"), "the end of the caller's text must be what is kept, got %q", line.StderrTail)
+}
+
+func TestCommandRunnerProcess(_ *testing.T) {
+	if os.Getenv("GITEXEC_RUNNER_FIXTURE") != "1" {
+		return
+	}
+	_, _ = os.Stdout.WriteString("out\n")
+	_, _ = os.Stderr.WriteString("err\n")
+	switch os.Getenv("GITEXEC_RUNNER_OUTCOME") {
+	case "exit-one":
+		os.Exit(1)
+	case "signal":
+		p, err := os.FindProcess(os.Getpid())
+		if err != nil {
+			os.Exit(99)
+		}
+		_ = p.Kill()
+		os.Exit(99)
+	}
+	os.Exit(0)
+}
+
+func runnerFixture(ctx context.Context, outcome string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestCommandRunnerProcess$")
+	cmd.Env = append(os.Environ(), "GITEXEC_RUNNER_FIXTURE=1", "GITEXEC_RUNNER_OUTCOME="+outcome)
+	return cmd
+}
+
+func TestWithCommandRunner(t *testing.T) {
+	for _, mode := range []struct {
+		name    string
+		capture bool
+	}{{name: "run"}, {name: "output", capture: true}} {
+		for _, tc := range []struct {
+			name    string
+			outcome string
+			code    int
+		}{
+			{name: "success", outcome: "success", code: 0},
+			{name: "exit-one", outcome: "exit-one", code: 1},
+			{name: "signal", outcome: "signal", code: -1},
+		} {
+			t.Run(tc.name+"/"+mode.name, func(t *testing.T) {
+				ctx, logs := captureLogs(t)
+				cmd := runnerFixture(ctx, tc.outcome)
+				var combined bytes.Buffer
+				cmd.Stdout, cmd.Stderr = &combined, &combined
+				calls := 0
+				opts := []Option{WithCommandRunner(func(c *exec.Cmd) error {
+					calls++
+					if c != cmd || c.Stdout != c.Stderr {
+						t.Error("runner lost the original command or shared-writer identity")
+					}
+					return c.Run()
+				})}
+				var err error
+				if mode.capture {
+					var out []byte
+					out, err = Output(ctx, "runner-fixture", cmd, opts...)
+					assert.Equal(t, "out\nerr\n", string(out))
+				} else {
+					err = Run(ctx, "runner-fixture", cmd, opts...)
+				}
+				assert.Equal(t, tc.code, exitCodeFor(err))
+				assert.Equal(t, 1, calls)
+				assert.Equal(t, "out\nerr\n", combined.String())
+				assert.Equal(t, 1, strings.Count(logs.String(), `"msg":"git_operation"`))
+				var observation struct {
+					Code int `json:"exit_code"`
+				}
+				require.NoError(t, json.Unmarshal(logs.Bytes(), &observation))
+				assert.Equal(t, tc.code, observation.Code)
+			})
+		}
+	}
+}
+
+type runnerStatusError struct{ code int }
+
+func (e runnerStatusError) Error() string { return "validated target outcome" }
+func (e runnerStatusError) ExitCode() int { return e.code }
+
+func TestCommandRunnerFailureAttribution(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		run  func(*exec.Cmd) error
+		code int
+	}{
+		{name: "typed target", run: func(*exec.Cmd) error { return runnerStatusError{code: 7} }, code: 7},
+		{name: "target signal", run: func(*exec.Cmd) error { return runnerStatusError{code: -1} }, code: -1},
+		{name: "invalid status", run: func(*exec.Cmd) error { return runnerStatusError{code: 300} }, code: -1},
+		{name: "containment failure", run: func(*exec.Cmd) error { return errors.New("missing completion proof") }, code: -1},
+		{name: "start failure", run: func(cmd *exec.Cmd) error {
+			cmd.Path = "/does-not-exist/command"
+			return cmd.Run()
+		}, code: -1},
+		{name: "explicit nil", code: -1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, logs := captureLogs(t)
+			cmd := runnerFixture(ctx, "success")
+			err := Run(ctx, "runner-failure", cmd, WithCommandRunner(tc.run))
+			require.Error(t, err)
+			assert.Nil(t, cmd.Process, "a selected runner must not fall back to native execution")
+			assert.Equal(t, tc.code, exitCodeFor(err))
+			var observation struct {
+				Code int `json:"exit_code"`
+			}
+			require.NoError(t, json.Unmarshal(logs.Bytes(), &observation))
+			assert.Equal(t, tc.code, observation.Code)
+		})
+	}
 }
