@@ -21,7 +21,7 @@ import (
 // Keep it small: this lands in log storage on every failure.
 const stderrTailBytes = 512
 
-// Option customizes how a single observation is recorded.
+// Option configures command execution and its observation.
 type Option func(*options)
 
 type options struct {
@@ -31,6 +31,8 @@ type options struct {
 	loggedArgs   []string
 	noStderrTail bool
 	failure      func(err error) Failure
+	runner       func(*exec.Cmd) error
+	runnerSet    bool
 }
 
 // WithRepoURL sets the remote URL associated with the operation. It is parsed
@@ -102,6 +104,17 @@ func WithFailure(fn func(err error) Failure) Option {
 	return func(o *options) { o.failure = fn }
 }
 
+// WithCommandRunner replaces execution inside Run and Output without replacing
+// their stream capture or observation. The runner must join the command and all
+// output before returning. Supplying nil fails the operation instead of falling
+// back to uncontained execution. A target error may expose ExitCode() int; start
+// and containment errors must not expose an unrelated target's exit code.
+func WithCommandRunner(run func(*exec.Cmd) error) Option {
+	return func(o *options) {
+		o.runner, o.runnerSet = run, true
+	}
+}
+
 // CommandContext returns an *exec.Cmd configured to invoke "git" with the
 // given arguments. The first argument SHOULD be the git subcommand
 // (e.g. "clone", "fetch", "push"). Callers may further configure the returned
@@ -133,7 +146,12 @@ func Output(ctx context.Context, op string, cmd *exec.Cmd, opts ...Option) ([]by
 func Observe(ctx context.Context, op string, fn func() error, opts ...Option) error {
 	started := time.Now()
 	err := fn()
-	record(ctx, op, nil, started, exitCodeFor(err), nil, err, opts...)
+	exitCode := exitCodeFor(err)
+	var o options
+	for _, opt := range opts {
+		opt(&o)
+	}
+	record(ctx, op, nil, started, exitCode, nil, err, o)
 	return err
 }
 
@@ -174,9 +192,21 @@ func run(ctx context.Context, op string, cmd *exec.Cmd, captureStdout bool, opts
 		}
 	}
 
+	var execution options
+	for _, opt := range opts {
+		opt(&execution)
+	}
 	started := time.Now()
-	err := cmd.Run()
-	record(ctx, op, argsAfterProgram(cmd), started, exitCodeFor(err), stderrTail.Bytes(), err, opts...)
+	var err error
+	switch {
+	case !execution.runnerSet:
+		err = cmd.Run()
+	case execution.runner == nil:
+		err = errors.New("gitexec: command runner must not be nil")
+	default:
+		err = execution.runner(cmd)
+	}
+	record(ctx, op, argsAfterProgram(cmd), started, exitCodeFor(err), stderrTail.Bytes(), err, execution)
 
 	if captureStdout {
 		return stdoutBuf.Bytes(), err
@@ -184,12 +214,7 @@ func run(ctx context.Context, op string, cmd *exec.Cmd, captureStdout bool, opts
 	return nil, err
 }
 
-func record(ctx context.Context, op string, args []string, started time.Time, exitCode int, stderrTail []byte, err error, opts ...Option) {
-	o := options{}
-	for _, opt := range opts {
-		opt(&o)
-	}
-
+func record(ctx context.Context, op string, args []string, started time.Time, exitCode int, stderrTail []byte, err error, o options) {
 	if o.repoURL != "" {
 		o.repoHost, o.repoPath = repoFromArgs([]string{o.repoURL})
 	}
@@ -268,8 +293,14 @@ func exitCodeFor(err error) int {
 	if err == nil {
 		return 0
 	}
-	if exitErr, ok := errors.AsType[*exec.ExitError](err); ok {
-		return exitErr.ExitCode()
+	if native, ok := errors.AsType[*exec.ExitError](err); ok {
+		return native.ExitCode()
+	}
+	var exitErr interface{ ExitCode() int }
+	if errors.As(err, &exitErr) {
+		if code := exitErr.ExitCode(); code >= -1 && code <= 255 {
+			return code
+		}
 	}
 	return -1
 }
