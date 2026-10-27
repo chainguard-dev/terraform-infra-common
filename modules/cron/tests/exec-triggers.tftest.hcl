@@ -191,3 +191,81 @@ run "combined_rejects_null_map" {
 
   expect_failures = [var.exec_include_image_refs]
 }
+
+run "additional_preserves_defaults" {
+  command = plan
+  variables { exec_additional_triggers = { checkpoint = "one" } }
+  assert {
+    condition = null_resource.exec[0].triggers == tomap({
+      image_refs = "example.invalid/application@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      job_config = sha256(jsonencode({ args = [], command = [], env = {}, secret_env = {}, volume_mounts = [], volumes = [] }))
+      checkpoint = "one"
+    })
+    error_message = "An additive signal must retain both default image and job-setting signals."
+  }
+}
+
+run "additional_preserves_custom" {
+  command = plan
+  variables {
+    exec_triggers            = { policy = "policy-one" }
+    exec_additional_triggers = { checkpoint = "one" }
+  }
+  assert {
+    condition     = null_resource.exec[0].triggers == tomap({ policy = "policy-one", checkpoint = "one" })
+    error_message = "An additive signal must preserve a custom execution signal."
+  }
+}
+
+run "additional_preserves_custom_and_images" {
+  command = plan
+  variables {
+    exec_triggers            = { policy = "policy-one" }
+    exec_include_image_refs  = true
+    exec_additional_triggers = { checkpoint = "one" }
+  }
+  assert {
+    condition     = null_resource.exec[0].triggers == tomap({ policy = "policy-one", image_refs = "example.invalid/application@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", checkpoint = "one" })
+    error_message = "An additive signal must preserve the selected custom and image signals."
+  }
+}
+
+run "additional_signal_changes" {
+  command = plan
+  variables { exec_additional_triggers = { checkpoint = "two" } }
+  assert {
+    condition     = null_resource.exec[0].triggers["checkpoint"] == "two" && length(null_resource.exec[0].triggers) == 3
+    error_message = "Changing the additive signal must change the execution triggers."
+  }
+}
+
+run "additional_rejects_default_image_collision" {
+  command = plan
+  variables { exec_additional_triggers = { image_refs = "replacement" } }
+  expect_failures = [null_resource.exec]
+}
+
+run "additional_rejects_default_job_collision" {
+  command = plan
+  variables { exec_additional_triggers = { job_config = "replacement" } }
+  expect_failures = [null_resource.exec]
+}
+
+run "additional_rejects_custom_collision" {
+  command = plan
+  variables {
+    exec_triggers            = { policy = "policy-one" }
+    exec_additional_triggers = { policy = "replacement" }
+  }
+  expect_failures = [null_resource.exec]
+}
+
+run "additional_rejects_included_image_collision" {
+  command = plan
+  variables {
+    exec_triggers            = { policy = "policy-one" }
+    exec_include_image_refs  = true
+    exec_additional_triggers = { image_refs = "replacement" }
+  }
+  expect_failures = [null_resource.exec]
+}

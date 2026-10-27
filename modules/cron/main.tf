@@ -141,14 +141,22 @@ resource "null_resource" "exec" {
   // image_refs are computed by ko/cosign before the Cloud Run Job is updated,
   // so these values are stable at apply time (unlike job_etag or job_generation,
   // which are server-side computed values that change mid-apply).
-  triggers = (
-    length(var.exec_triggers) == 0 ? { image_refs = local.image_refs, job_config = local.job_config } :
-    var.exec_include_image_refs ? merge(var.exec_triggers, { image_refs = local.image_refs }) :
-    var.exec_triggers
-  )
+  triggers = merge(local.exec_base_triggers, var.exec_additional_triggers)
+
+  lifecycle {
+    precondition {
+      condition     = length(setintersection(toset(keys(local.exec_base_triggers)), toset(keys(var.exec_additional_triggers)))) == 0
+      error_message = "Additional execution triggers must not replace existing execution trigger keys."
+    }
+  }
 }
 
 locals {
+  exec_base_triggers = var.exec ? (
+    length(var.exec_triggers) == 0 ? { image_refs = local.image_refs, job_config = local.job_config } :
+    var.exec_include_image_refs ? merge(var.exec_triggers, { image_refs = local.image_refs }) :
+    var.exec_triggers
+  ) : {}
   image_refs = join(",", values(module.impl.image_refs))
   // Without this, a paused job whose settings change but whose image does not
   // never runs with the new settings.

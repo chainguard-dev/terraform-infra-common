@@ -204,6 +204,13 @@ variable "exec_triggers" {
   default     = {}
 }
 
+variable "exec_additional_triggers" {
+  description = "Extra execution change signals, preserving the selected default or custom triggers. Keys must not overlap the existing execution trigger keys."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+}
+
 variable "exec_include_image_refs" {
   description = "Retain container image changes alongside custom exec_triggers. False preserves the existing custom-trigger behavior. The image_refs key is reserved when enabled."
   type        = bool
