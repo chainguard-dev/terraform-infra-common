@@ -296,9 +296,6 @@ type TracerOption func(*tracerConfig)
 
 type tracerConfig struct {
 	skipGCPDetection bool
-	// otlpKeep decides which ended spans the OTLP exporters receive; nil
-	// means [hasGenAIAttribute].
-	otlpKeep func(trace.ReadOnlySpan) bool
 }
 
 func newTracerConfig(opts ...TracerOption) tracerConfig {
@@ -319,28 +316,6 @@ func newTracerConfig(opts ...TracerOption) tracerConfig {
 // exits without them, as it does off GCP.
 func NoGCPDetection() TracerOption {
 	return func(c *tracerConfig) { c.skipGCPDetection = true }
-}
-
-// WithOTLPSpanFilter sets the predicate that decides which ended spans the
-// OTLP exporters receive. A nil keep, like omitting the option, keeps only
-// spans with a gen_ai.* attribute. To keep every span, use
-// [WithOTLPExportAllSpans] or a keep that returns true.
-//
-// The filter applies to every OTLP entry, named ones included. The gcp
-// exporter is unaffected. OTEL_TRACE_SAMPLING_RATE applies only to the gcp
-// exporter, so a keep that accepts every span exports every recorded span.
-//
-// keep runs inside span.End on the goroutine that ends the span, so it must be
-// safe for concurrent use and must not block. It decides per span: rejecting a
-// parent while keeping its child leaves the child orphaned in the backend.
-func WithOTLPSpanFilter(keep func(trace.ReadOnlySpan) bool) TracerOption {
-	return func(c *tracerConfig) { c.otlpKeep = keep }
-}
-
-// WithOTLPExportAllSpans makes the OTLP exporters receive every recorded span;
-// see [WithOTLPSpanFilter].
-func WithOTLPExportAllSpans() TracerOption {
-	return WithOTLPSpanFilter(func(trace.ReadOnlySpan) bool { return true })
 }
 
 // SetupTracerWith is [SetupTracer] configured by opts.
@@ -381,7 +356,7 @@ func SetupTracerWith(ctx context.Context, opts ...TracerOption) func() {
 // (default 0.1) gates the GCP exporter via TraceID-deterministic ratio
 // sampling; OTLP exporters receive only spans carrying at least one
 // attribute under the gen_ai.* namespace, so evaluation backends see LLM
-// traces without infra noise, unless [WithOTLPSpanFilter] replaces that.
+// traces without infra noise.
 func tracerOptions(ctx context.Context, cfg tracerConfig) []trace.TracerProviderOption {
 	onGCP := !cfg.skipGCPDetection && probeGCP(ctx)
 
@@ -398,7 +373,7 @@ func tracerOptions(ctx context.Context, cfg tracerConfig) []trace.TracerProvider
 		case "gcp":
 			opts = append(opts, trace.WithSpanProcessor(newGCPProcessor(ctx)))
 		case "otlp":
-			sp, ok := newOTLPProcessor(ctx, name, cfg.otlpKeep)
+			sp, ok := newOTLPProcessor(ctx, name)
 			if ok {
 				opts = append(opts, trace.WithSpanProcessor(sp))
 			}
@@ -525,9 +500,10 @@ func newGCPProcessor(ctx context.Context) trace.SpanProcessor {
 }
 
 // newOTLPProcessor builds a BatchSpanProcessor around an OTLP/HTTP exporter,
-// filtered by keep (see [filterOTLP]); the default, [hasGenAIAttribute], keeps
-// eval-grade backends focused on LLM traces instead of infra noise (OIDC,
-// GitHub API, workqueue spans, …).
+// wrapped with llmSpanFilterProcessor so only spans carrying at least one
+// gen_ai.* attribute (OTel semantic conventions for generative-AI) reach the
+// backend. This keeps eval-grade backends focused on LLM traces instead of
+// infra noise (OIDC, GitHub API, workqueue spans, …).
 //
 // When name == "", the exporter reads the standard OTEL_EXPORTER_OTLP_TRACES_*
 // and OTEL_EXPORTER_OTLP_* env vars. When name is non-empty, endpoint and
@@ -535,7 +511,7 @@ func newGCPProcessor(ctx context.Context) trace.SpanProcessor {
 // _HEADERS; a missing endpoint logs a warning and the exporter is skipped,
 // since the bare SDK default (localhost:4318) would silently spam the loopback
 // and mask a misconfiguration.
-func newOTLPProcessor(ctx context.Context, name string, keep func(trace.ReadOnlySpan) bool) (trace.SpanProcessor, bool) {
+func newOTLPProcessor(ctx context.Context, name string) (trace.SpanProcessor, bool) {
 	opts, ok := otlpOptionsForName(ctx, name)
 	if !ok {
 		return nil, false
@@ -544,7 +520,7 @@ func newOTLPProcessor(ctx context.Context, name string, keep func(trace.ReadOnly
 	if err != nil {
 		clog.FatalContextf(ctx, "tracerOptions(); otlptracehttp.New(%q) = %v", name, err)
 	}
-	return filterOTLP(trace.NewBatchSpanProcessor(exporter), keep), true
+	return &llmSpanFilterProcessor{inner: trace.NewBatchSpanProcessor(exporter)}, true
 }
 
 func otlpOptionsForName(ctx context.Context, name string) ([]otlptracehttp.Option, bool) {
@@ -655,61 +631,44 @@ func (s *samplingSpanProcessor) ForceFlush(ctx context.Context) error {
 	return s.inner.ForceFlush(ctx)
 }
 
-// filterOTLP wraps inner so it only receives spans keep accepts; a nil keep
-// means [hasGenAIAttribute].
-func filterOTLP(inner trace.SpanProcessor, keep func(trace.ReadOnlySpan) bool) trace.SpanProcessor {
-	if keep == nil {
-		keep = hasGenAIAttribute
-	}
-	return &spanFilterProcessor{inner: inner, keep: keep}
-}
-
-// hasGenAIAttribute reports whether span carries at least one attribute under
-// the gen_ai.* namespace (OTel semantic conventions for generative-AI). It is
-// the default OTLP filter, so eval-grade backends see LLM traces without infra
-// noise (OIDC token exchanges, GitHub API calls, workqueue dispatches, …).
+// llmSpanFilterProcessor forwards only spans carrying at least one attribute
+// under the gen_ai.* namespace (OTel semantic conventions for generative-AI)
+// to the wrapped processor. It is used on the OTLP path so eval-grade
+// backends see LLM traces without infra noise (OIDC token exchanges, GitHub
+// API calls, workqueue dispatches, …).
 //
 // The predicate is attribute-prefix-based rather than span-name- or
 // tracer-name-based because gen_ai.* is the OTel standard namespace for LLM
 // telemetry: any compliant instrumentation emits these attributes, while span
 // and tracer names are free to change without breaking spec compliance.
-func hasGenAIAttribute(span trace.ReadOnlySpan) bool {
-	for _, attr := range span.Attributes() {
-		if strings.HasPrefix(string(attr.Key), "gen_ai.") {
-			return true
-		}
-	}
-	return false
-}
-
-// spanFilterProcessor forwards only the ended spans keep accepts to the
-// wrapped processor.
 //
 // OnStart is forwarded unconditionally so the inner processor (typically a
 // BatchSpanProcessor) observes the full span lifecycle. Shutdown and
 // ForceFlush are likewise forwarded unconditionally.
-type spanFilterProcessor struct {
+type llmSpanFilterProcessor struct {
 	inner trace.SpanProcessor
-	keep  func(trace.ReadOnlySpan) bool
 }
 
-var _ trace.SpanProcessor = (*spanFilterProcessor)(nil)
+var _ trace.SpanProcessor = (*llmSpanFilterProcessor)(nil)
 
-func (f *spanFilterProcessor) OnStart(ctx context.Context, span trace.ReadWriteSpan) {
+func (f *llmSpanFilterProcessor) OnStart(ctx context.Context, span trace.ReadWriteSpan) {
 	f.inner.OnStart(ctx, span)
 }
 
-func (f *spanFilterProcessor) OnEnd(span trace.ReadOnlySpan) {
-	if f.keep(span) {
-		f.inner.OnEnd(span)
+func (f *llmSpanFilterProcessor) OnEnd(span trace.ReadOnlySpan) {
+	for _, attr := range span.Attributes() {
+		if strings.HasPrefix(string(attr.Key), "gen_ai.") {
+			f.inner.OnEnd(span)
+			return
+		}
 	}
 }
 
-func (f *spanFilterProcessor) Shutdown(ctx context.Context) error {
+func (f *llmSpanFilterProcessor) Shutdown(ctx context.Context) error {
 	return f.inner.Shutdown(ctx)
 }
 
-func (f *spanFilterProcessor) ForceFlush(ctx context.Context) error {
+func (f *llmSpanFilterProcessor) ForceFlush(ctx context.Context) error {
 	return f.inner.ForceFlush(ctx)
 }
 

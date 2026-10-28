@@ -6,14 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 package httpmetrics
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"math/rand/v2"
-	"net/http"
-	"net/http/httptest"
-	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -196,7 +191,7 @@ func TestLLMSpanFilter_ForwardsOnlyGenAISpans(t *testing.T) {
 	inner := &countingProcessor{}
 	tp := trace.NewTracerProvider(
 		trace.WithSampler(trace.AlwaysSample()),
-		trace.WithSpanProcessor(&spanFilterProcessor{inner: inner, keep: hasGenAIAttribute}),
+		trace.WithSpanProcessor(&llmSpanFilterProcessor{inner: inner}),
 	)
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
@@ -231,84 +226,6 @@ func TestLLMSpanFilter_ForwardsOnlyGenAISpans(t *testing.T) {
 
 	if got, want := inner.count.Load(), int64(3); got != want {
 		t.Errorf("inner processor received %d spans; want %d (only gen_ai.* spans should forward)", got, want)
-	}
-}
-
-// TestOTLPSpanFilter exports through tracerOptions to an OTLP server and
-// checks which of three spans arrive.
-func TestOTLPSpanFilter(t *testing.T) {
-	tests := []struct {
-		name  string
-		entry string
-		opts  []TracerOption
-		want  []string
-	}{{
-		name:  "default keeps only gen_ai spans",
-		entry: "otlp",
-		want:  []string{"llm-span"},
-	}, {
-		name:  "nil filter keeps the default",
-		entry: "otlp",
-		opts:  []TracerOption{WithOTLPSpanFilter(nil)},
-		want:  []string{"llm-span"},
-	}, {
-		name:  "export all keeps every span",
-		entry: "otlp",
-		opts:  []TracerOption{WithOTLPExportAllSpans()},
-		want:  []string{"kept-span", "plain-span", "llm-span"},
-	}, {
-		name:  "custom predicate is honoured",
-		entry: "otlp",
-		opts:  []TracerOption{WithOTLPSpanFilter(func(s trace.ReadOnlySpan) bool { return s.Name() == "kept-span" })},
-		want:  []string{"kept-span"},
-	}, {
-		name:  "named entry uses the configured filter",
-		entry: "otlp/primary",
-		opts:  []TracerOption{WithOTLPSpanFilter(func(s trace.ReadOnlySpan) bool { return s.Name() == "kept-span" })},
-		want:  []string{"kept-span"},
-	}}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var (
-				mu     sync.Mutex
-				bodies bytes.Buffer
-			)
-			srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-				b, _ := io.ReadAll(r.Body)
-				mu.Lock()
-				bodies.Write(b)
-				mu.Unlock()
-			}))
-			t.Cleanup(srv.Close)
-			t.Setenv("OTEL_TRACES_EXPORTER", tt.entry)
-			t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", srv.URL+"/v1/traces")
-			t.Setenv("OTEL_EXPORTER_OTLP_TRACES_PRIMARY_ENDPOINT", srv.URL+"/v1/traces")
-
-			tp := trace.NewTracerProvider(tracerOptions(t.Context(), newTracerConfig(append(tt.opts, NoGCPDetection())...))...)
-			tr := tp.Tracer("test")
-			_, s1 := tr.Start(t.Context(), "kept-span")
-			s1.End()
-			_, s2 := tr.Start(t.Context(), "plain-span")
-			s2.End()
-			_, s3 := tr.Start(t.Context(), "llm-span")
-			s3.SetAttributes(attribute.String("gen_ai.request.model", "m"))
-			s3.End()
-			if err := tp.Shutdown(t.Context()); err != nil {
-				t.Fatal(err)
-			}
-
-			mu.Lock()
-			defer mu.Unlock()
-			var got []string
-			for _, name := range []string{"kept-span", "plain-span", "llm-span"} {
-				if bytes.Contains(bodies.Bytes(), []byte(name)) {
-					got = append(got, name)
-				}
-			}
-			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Errorf("spans exported (-want, +got):\n%s", diff)
-			}
-		})
 	}
 }
 
