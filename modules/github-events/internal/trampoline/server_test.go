@@ -685,6 +685,97 @@ func TestExtractHeadBranch(t *testing.T) {
 	}
 }
 
+func TestExtractLabel(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		eventType string
+		payload   string
+		want      string
+	}{{
+		name:      "pull_request labeled",
+		eventType: "pull_request",
+		payload:   `{"action":"labeled","label":{"name":"request-review"},"pull_request":{"number":1}}`,
+		want:      "request-review",
+	}, {
+		name:      "pull_request unlabeled",
+		eventType: "pull_request",
+		payload:   `{"action":"unlabeled","label":{"name":"request-review"},"pull_request":{"number":1}}`,
+		want:      "request-review",
+	}, {
+		name:      "issues labeled",
+		eventType: "issues",
+		payload:   `{"action":"labeled","label":{"name":"bug"},"issue":{"number":2}}`,
+		want:      "bug",
+	}, {
+		name:      "pull_request without label",
+		eventType: "pull_request",
+		payload:   `{"action":"opened","pull_request":{"number":1}}`,
+		want:      "",
+	}, {
+		name:      "label definition event ignored",
+		eventType: "label",
+		payload:   `{"action":"created","label":{"name":"bug"}}`,
+		want:      "",
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			var info PayloadInfo
+			if err := json.Unmarshal([]byte(tc.payload), &info); err != nil {
+				t.Fatalf("unmarshal payload: %v", err)
+			}
+			if got := extractLabel(tc.eventType, info); got != tc.want {
+				t.Errorf("extractLabel() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestLabelExtension(t *testing.T) {
+	client := &fakeClient{}
+	secret := []byte("hunter2")
+	impl := NewServer(client, ServerOptions{
+		Secrets:   [][]byte{secret},
+		WebhookID: []string{"1234"},
+	})
+	impl.clock = clockwork.NewFakeClock()
+
+	srv := httptest.NewServer(impl)
+	defer srv.Close()
+
+	payload := map[string]any{
+		"action": "labeled",
+		"label": map[string]any{
+			"name": "request-review",
+		},
+		"pull_request": map[string]any{
+			"number": 123,
+		},
+		"repository": map[string]any{
+			"full_name": "foo/bar",
+			"owner": map[string]any{
+				"login": "foo",
+			},
+			"name": "bar",
+		},
+		"organization": map[string]any{
+			"login": "foo",
+		},
+	}
+
+	resp, err := sendevent(t, srv.Client(), srv.URL, "pull_request", payload, secret)
+	if err != nil {
+		t.Fatalf("error sending event: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status: %v", resp.Status)
+	}
+	if len(client.events) != 1 {
+		t.Fatalf("events: got = %d, want = 1", len(client.events))
+	}
+	if got, want := client.events[0].Extensions()["label"], "request-review"; got != want {
+		t.Errorf("label extension: got = %v, want = %v", got, want)
+	}
+}
+
 func TestExtractIssueURL(t *testing.T) {
 	testCases := []struct {
 		name      string
