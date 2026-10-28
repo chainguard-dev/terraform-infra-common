@@ -52,9 +52,6 @@ type PayloadInfo struct {
 	Review struct {
 		ID int `json:"id,omitempty"`
 	} `json:"review"`
-	Label struct {
-		Name string `json:"name,omitempty"`
-	} `json:"label"`
 }
 
 // pullRequestInfo holds the pull_request fields the extractors use. Named (not
@@ -234,13 +231,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		event.SetExtension("headbranch", headBranch)
 	}
 
-	// Add label extension (the label added or removed) for labeled and
-	// unlabeled events, so consumers can subscribe to a single label rather
-	// than every label change.
-	if label := extractLabel(originalEventType, info); label != "" {
-		event.SetExtension("label", label)
-	}
-
 	// Add merged extension for merged pull requests
 	if merged := isPullRequestMerged(originalEventType, info); merged {
 		event.SetExtension("merged", true)
@@ -377,24 +367,6 @@ func extractHeadBranch(eventType string, info PayloadInfo) string {
 		if len(info.CheckSuite.PullRequests) > 0 {
 			return info.CheckSuite.PullRequests[0].Head.Ref
 		}
-	}
-	return ""
-}
-
-// extractLabel returns the name of the label a labeled or unlabeled
-// pull_request or issues event adds or removes, or "" otherwise. GitHub
-// delivers one event per label, so a consumer filtering on this attribute
-// receives exactly the changes to the label it names.
-//
-// Field source in the GitHub webhook payloads:
-//   - pull_request: label.name
-//     https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
-//   - issues: label.name
-//     https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
-func extractLabel(eventType string, info PayloadInfo) string {
-	switch eventType {
-	case "pull_request", "issues":
-		return info.Label.Name
 	}
 	return ""
 }
