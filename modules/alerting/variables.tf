@@ -138,6 +138,34 @@ variable "team" {
   type        = string
 }
 
+variable "name" {
+  description = "Suffix of the alert display names, the X in \"OOM Alert X\". Defaults to team, or to global when team is empty. Set it when two instances share a team, such as a product carved out of its team's alerts with service_name_regex, so their policies can be told apart."
+  type        = string
+  default     = ""
+}
+
+variable "service_name_regex" {
+  description = "RE2 regex of Cloud Run service and job names. When set, every alert covers only the services and jobs whose whole name matches it; the dead-letter alert matches it against the topic name before -dlq-, which is the trigger or workqueue name. Pair it with exclude_service_name_regex on the team's own instance to send a product's alerts to different channels than the rest of the team's."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regexall(var.service_name_regex, ""))
+    error_message = "service_name_regex must be a valid RE2 regular expression."
+  }
+}
+
+variable "exclude_service_name_regex" {
+  description = "RE2 regex of Cloud Run service and job names that every alert leaves out, matched like service_name_regex. Pair it with another instance whose service_name_regex is the same value and whose name differs, so those alerts move rather than disappear."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regexall(var.exclude_service_name_regex, ""))
+    error_message = "exclude_service_name_regex must be a valid RE2 regular expression."
+  }
+}
+
 variable "global_only_alerts" {
   description = "only enable global alerts. when true, only create alerts that are global."
   type        = bool
