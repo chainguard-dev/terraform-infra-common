@@ -10,7 +10,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
+	"strings"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -217,6 +219,94 @@ func TestHeartbeatLogsBreakdown(t *testing.T) {
 		if got := lines[0][key]; got != want {
 			t.Errorf("%s: got = %v, want = %v", key, got, want)
 		}
+	}
+}
+
+// fullContainer is a complete reading, for the two tests that log one
+// directly rather than through the sampler.
+func fullContainer() Container {
+	return Container{
+		Current:      new(uint64(15000000000)),
+		Limit:        new(uint64(17179869184)),
+		Peak:         new(uint64(15500000000)),
+		Anon:         new(uint64(800000000)),
+		Shmem:        new(uint64(14000000000)),
+		File:         new(uint64(14100000000)),
+		InactiveFile: new(uint64(100000000)),
+	}
+}
+
+// logText runs logHeartbeat against a text handler and returns the line.
+func logText(t *testing.T, c Container) string {
+	t.Helper()
+	var buf bytes.Buffer
+	logHeartbeat(clog.WithLogger(t.Context(), clog.New(slog.NewTextHandler(&buf, nil))), c)
+	return buf.String()
+}
+
+// TestHeartbeatLogsNumbersUnderATextHandler guards a divergence the JSON
+// assertions above cannot see. A *uint64 reaches the handler as a
+// pointer; the JSON handler marshals through it and prints the number,
+// while a text handler formats the pointer itself and prints its address.
+// TestHeartbeatLogsBreakdown passes either way, so it certifies an
+// unreadable line as correct.
+func TestHeartbeatLogsNumbersUnderATextHandler(t *testing.T) {
+	got := logText(t, fullContainer())
+	for _, want := range []string{
+		"cgroup_current_bytes=15000000000",
+		"cgroup_limit_bytes=17179869184",
+		"cgroup_peak_bytes=15500000000",
+		"cgroup_working_set_bytes=14900000000",
+		"cgroup_anon_bytes=800000000",
+		"cgroup_shmem_bytes=14000000000",
+		"cgroup_file_bytes=14100000000",
+		"cgroup_inactive_file_bytes=100000000",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in: %s", want, got)
+		}
+	}
+	if strings.Contains(got, "0x") {
+		t.Errorf("line carries a pointer address: %s", got)
+	}
+}
+
+// TestHeartbeatOmitsUnreadValues pins what a failed read leaves behind:
+// no value key, and the paired _error saying why. Dropping the key is the
+// point, because zero bytes charged to a cgroup is a reading and a logged
+// zero would read as one. The derived working set earns its own row
+// because it has no _error of its own — when its input is missing, the
+// input's error is the only record of the gap.
+func TestHeartbeatOmitsUnreadValues(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		breaks  func(*Container)
+		absent  []string
+		wantErr string
+	}{{
+		name:    "a failed read drops its own key",
+		breaks:  func(c *Container) { c.Peak, c.PeakErr = nil, errors.New("open memory.peak: no such file") },
+		absent:  []string{"cgroup_peak_bytes"},
+		wantErr: "cgroup_peak_error=",
+	}, {
+		name:    "a failed input drops the derived working set too",
+		breaks:  func(c *Container) { c.Current, c.CurrentErr = nil, errors.New("open memory.current: no such file") },
+		absent:  []string{"cgroup_current_bytes", "cgroup_working_set_bytes"},
+		wantErr: "cgroup_current_error=",
+	}} {
+		t.Run(tt.name, func(t *testing.T) {
+			c := fullContainer()
+			tt.breaks(&c)
+			got := logText(t, c)
+			for _, key := range tt.absent {
+				if strings.Contains(got, key) {
+					t.Errorf("unread value still logged %s: %s", key, got)
+				}
+			}
+			if !strings.Contains(got, tt.wantErr) {
+				t.Errorf("missing the paired error that explains the gap: %s", got)
+			}
+		})
 	}
 }
 

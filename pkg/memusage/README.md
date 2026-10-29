@@ -67,10 +67,10 @@ event, and these entries are the only record of what filled memory.
 | Field | Meaning |
 | --- | --- |
 | `cgroup_current_bytes`, `cgroup_limit_bytes`, `cgroup_peak_bytes` | `Current`, `Limit`, and `Peak` from `ReadContainer`. |
-| `cgroup_working_set_bytes` | `cgroup_current_bytes` minus `cgroup_inactive_file_bytes`; the value compared with the limit. |
+| `cgroup_working_set_bytes` | `cgroup_current_bytes` minus `cgroup_inactive_file_bytes`; the value compared with the limit. Falls back to `cgroup_current_bytes` when the inactive page cache is unreadable, and is absent when `cgroup_current_bytes` is. |
 | `cgroup_anon_bytes` | Anonymous memory of every process in the container: the Go heap and child processes such as `git`. |
 | `cgroup_shmem_bytes` | Files in tmpfs mounts, such as Cloud Run's `/tmp`. |
 | `cgroup_file_bytes` | Page cache, including `cgroup_shmem_bytes`. |
 | `cgroup_inactive_file_bytes` | Page cache the kernel reclaims first under pressure. |
-| `cgroup_*_error` | Why the matching value is null, or null when it was read. |
+| `cgroup_*_error` | Why the matching `_bytes` key is absent, or null when the value was read. A failed read omits its value rather than logging a zero or a null, because zero bytes charged to a cgroup is a reading rather than the absence of one. |
 | `go_heap_alloc_bytes`, `go_sys_bytes`, `goroutines` | The Go runtime's own view, for comparison with `cgroup_anon_bytes`. |

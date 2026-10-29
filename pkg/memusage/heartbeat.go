@@ -128,16 +128,38 @@ func (b *beat) sample(now time.Time, used, limit *uint64) bool {
 func logHeartbeat(ctx context.Context, c Container) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	clog.InfoContext(ctx, "memory heartbeat",
-		"cgroup_current_bytes", c.Current, "cgroup_current_error", c.CurrentErr,
-		"cgroup_limit_bytes", c.Limit, "cgroup_limit_error", c.LimitErr,
-		"cgroup_peak_bytes", c.Peak, "cgroup_peak_error", c.PeakErr,
-		"cgroup_working_set_bytes", workingSet(c),
-		"cgroup_anon_bytes", c.Anon, "cgroup_anon_error", c.AnonErr,
-		"cgroup_shmem_bytes", c.Shmem, "cgroup_shmem_error", c.ShmemErr,
-		"cgroup_file_bytes", c.File, "cgroup_file_error", c.FileErr,
-		"cgroup_inactive_file_bytes", c.InactiveFile, "cgroup_inactive_file_error", c.InactiveFileErr,
+	attrs := make([]any, 0, 26)
+	// A *uint64 reaches the handler as a pointer. The JSON handler marshals
+	// through it. A text handler formats the pointer itself and prints
+	// cgroup_current_bytes=0x14000106050 in place of a byte count. Cloud Run
+	// installs the JSON handler. Local runs, tests, and services that do not
+	// import clog/gcp are on a text handler.
+	//
+	// A nil read drops its key rather than logging a zero. Zero bytes
+	// charged to a cgroup is a reading, not the absence of one. The paired
+	// _error key says what happened.
+	bytes := func(key string, v *uint64) {
+		if v != nil {
+			attrs = append(attrs, key, *v)
+		}
+	}
+	bytes("cgroup_current_bytes", c.Current)
+	attrs = append(attrs, "cgroup_current_error", c.CurrentErr)
+	bytes("cgroup_limit_bytes", c.Limit)
+	attrs = append(attrs, "cgroup_limit_error", c.LimitErr)
+	bytes("cgroup_peak_bytes", c.Peak)
+	attrs = append(attrs, "cgroup_peak_error", c.PeakErr)
+	bytes("cgroup_working_set_bytes", workingSet(c))
+	bytes("cgroup_anon_bytes", c.Anon)
+	attrs = append(attrs, "cgroup_anon_error", c.AnonErr)
+	bytes("cgroup_shmem_bytes", c.Shmem)
+	attrs = append(attrs, "cgroup_shmem_error", c.ShmemErr)
+	bytes("cgroup_file_bytes", c.File)
+	attrs = append(attrs, "cgroup_file_error", c.FileErr)
+	bytes("cgroup_inactive_file_bytes", c.InactiveFile)
+	attrs = append(attrs, "cgroup_inactive_file_error", c.InactiveFileErr,
 		"go_heap_alloc_bytes", m.HeapAlloc,
 		"go_sys_bytes", m.Sys,
 		"goroutines", runtime.NumGoroutine())
+	clog.InfoContext(ctx, "memory heartbeat", attrs...)
 }

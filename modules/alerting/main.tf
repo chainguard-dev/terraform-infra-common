@@ -26,7 +26,7 @@ locals {
 locals {
   squad_log_filter       = var.team == "" ? "" : "labels.squad=\"${var.team}\""
   squad_proto_log_filter = var.team == "" ? "" : "protoPayload.response.metadata.labels.squad=\"${var.team}\""
-  name                   = var.team == "" ? "global" : var.team
+  name                   = var.name != "" ? var.name : (var.team == "" ? "global" : var.team)
   squad_metric_filter    = var.team == "" ? "" : "metric.labels.team=\"${var.team}\""
   // Monitoring rejects OR across metadata.user_labels keys, and DLQ topics
   // created before the squad label shipped carry only team, so match on team.
@@ -52,13 +52,39 @@ locals {
   }
 }
 
+// Each filter is empty unless a regex is set, and starts with its own line
+// break, so an instance that sets neither renders exactly the text it did
+// before these inputs existed. Logging's =~ matches anywhere in the value, so
+// the regexes are anchored there; monitoring.regex.full_match and PromQL
+// matchers anchor on their own. A Prometheus target's job resource label is
+// the Cloud Run service name, and a dead-letter topic is named
+// <trigger or workqueue>-dlq-<suffix>.
+locals {
+  service_log_filter = join("", [for f in compact([
+    var.service_name_regex == "" ? "" : "(resource.labels.service_name=~\"^(?:${var.service_name_regex})$\" OR resource.labels.job_name=~\"^(?:${var.service_name_regex})$\")",
+    var.exclude_service_name_regex == "" ? "" : "-resource.labels.service_name=~\"^(?:${var.exclude_service_name_regex})$\"\n-resource.labels.job_name=~\"^(?:${var.exclude_service_name_regex})$\"",
+  ]) : "\n${f}"])
+  service_metric_filter = join("", [for f in compact([
+    var.service_name_regex == "" ? "" : "resource.labels.job=monitoring.regex.full_match(\"${var.service_name_regex}\")",
+    var.exclude_service_name_regex == "" ? "" : "resource.labels.job!=monitoring.regex.full_match(\"${var.exclude_service_name_regex}\")",
+  ]) : "\n${f}"])
+  dlq_service_filter = join("", [for f in compact([
+    var.service_name_regex == "" ? "" : "metadata.system_labels.\"name\"=monitoring.regex.full_match(\"(?:${var.service_name_regex})-dlq-.*\")",
+    var.exclude_service_name_regex == "" ? "" : "metadata.system_labels.\"name\"!=monitoring.regex.full_match(\"(?:${var.exclude_service_name_regex})-dlq-.*\")",
+  ]) : "\n${f}"])
+  promql_service_filter = join("", compact([
+    var.service_name_regex == "" ? "" : ", job=~\"${var.service_name_regex}\"",
+    var.exclude_service_name_regex == "" ? "" : ", job!~\"${var.exclude_service_name_regex}\"",
+  ]))
+}
+
 locals {
   bad_rollout_filter = <<EOT
 resource.type="cloud_run_revision"
 severity=ERROR
 protoPayload.status.message:"Ready condition status changed to False"
 protoPayload.response.kind="Revision"
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 EOT
 }
 
@@ -118,7 +144,7 @@ resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 logName:"/logs/run.googleapis.com%2Fvarlog%2Fsystem" OR logName:"/logs/run.googleapis.com%2F%2Fvar%2Flog%2Fsystem"
 textPayload:"Consider increasing the memory limit" OR textPayload:"Out-of-memory event detected in container"
 ${var.oom_filter}
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 EOF
 }
 
@@ -179,7 +205,7 @@ severity=WARNING
 textPayload=~"^Container terminated on signal [^01]+\.$"
 ${var.signal_filter}
 -resource.labels.service_name:"-ing-vuln"
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 EOT
 }
 
@@ -240,7 +266,7 @@ severity<=ERROR
 textPayload=~"panic: .*" OR textPayload=~"runtime/panic"
 -textPayload=~"^[{]"
 ${var.panic_filter}
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 EOF
 }
 
@@ -297,7 +323,7 @@ locals {
   panic_stacktrace_filter = <<EOF
 resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 jsonPayload.stacktrace:"runtime.gopanic"
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 EOF
 }
 
@@ -356,7 +382,7 @@ resource.type="cloud_run_revision" OR resource.type="cloud_run_job"
 textPayload:"fatal error: "
 -textPayload:"caught signal: terminated"
 -textPayload=~"^[{]"
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 EOF
   # Exclude "caught signal: terminated" from watcher.go - this is expected behavior during graceful shutdown
   # Exclude text payloads that start with "{" (here and in panic_filter): a JSON log line
@@ -419,7 +445,7 @@ locals {
 resource.type="cloud_run_revision"
 textPayload:"Container called exit("
 -textPayload="Container called exit(0)."
-${local.squad_log_filter}
+${local.squad_log_filter}${local.service_log_filter}
 ${var.exitcode_filter}
 EOF
 }
@@ -480,7 +506,7 @@ resource.type="cloud_run_job"
 log_name="projects/${var.project_id}/logs/cloudaudit.googleapis.com%2Fsystem_event"
 protoPayload.response.spec.template.spec.maxRetries!="0"
 -protoPayload.status.code="0"
-${local.squad_proto_log_filter}
+${local.squad_proto_log_filter}${local.service_log_filter}
 ${var.job_exitcode_filter}
 EOF
 }
@@ -561,14 +587,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_non_eventing" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", code!="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
          /
          sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, service_name)
-          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[5m]))
         > 0.0001
       EOT
     }
@@ -615,14 +641,14 @@ resource "google_monitoring_alert_policy" "service_503_failure_rate_non_eventing
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code="503", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
          /
          sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, service_name)
-          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type!~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[5m]))
         > 0.0001
       EOT
     }
@@ -669,14 +695,14 @@ resource "google_monitoring_alert_policy" "service_failure_rate_eventing" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", code=~"5..", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
          /
          sum by (team, service_name)
-           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[2m]))
+           (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, service_name)
-          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}}[5m]))
+          (rate(http_request_status_total{service_name!~"${join("|", var.failure_rate_exclude_services)}", ce_type=~"dev.chainguard.*"${local.promql_squad_filter}${local.promql_service_filter}}[5m]))
         > 0.0001
       EOT
     }
@@ -727,14 +753,14 @@ resource "google_monitoring_alert_policy" "grpc_service_failure_rate" {
       // Second part ensures services has non-zero traffic over last 5 min.
       query = <<EOT
         (sum by (team, job)
-           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}", grpc_code!~"${join("|", var.grpc_non_error_codes)}"${local.promql_squad_filter}}[2m]))
+           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}", grpc_code!~"${join("|", var.grpc_non_error_codes)}"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
          /
          sum by (team, job)
-           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[2m]))
+           (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}${local.promql_service_filter}}[2m]))
         ) > ${var.failure_rate_ratio_threshold}
         and
         sum by (team, job)
-          (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}}[5m]))
+          (rate(grpc_server_handled_total{job!~"${join("|", var.grpc_failure_rate_exclude_services)}"${local.promql_squad_filter}${local.promql_service_filter}}[5m]))
         > 0.0001
       EOT
     }
@@ -801,6 +827,17 @@ resource "google_logging_metric" "cloud-run-scaling-failure" {
   }
 }
 
+locals {
+  scaling_failure_filter = <<EOT
+        resource.type="cloud_run_revision"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload:"The request was aborted because there was no available instance."
+        ${var.scaling_issue_filter}
+        ${local.squad_log_filter}${local.service_log_filter}
+      EOT
+}
+
 resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
   count = var.global_only_alerts ? 0 : 1
 
@@ -818,20 +855,39 @@ resource "google_monitoring_alert_policy" "cloud-run-scaling-failure" {
   display_name = "Cloud Run scaling issue ${local.name}"
   combiner     = "OR"
 
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name} had no instance available"
+
+    content = <<-EOT
+    Cloud Run aborted requests to $${metric_or_resource.labels.service_name} because no instance was free to serve them: the service was at its maximum instance count, or new instances were not starting fast enough for the load. The callers received 429 or 500 responses for those requests, so this is user-visible for a serving service and a backlog for an event-driven one.
+
+    **What to check**
+    1. How many requests were aborted and when: [Logs Explorer](https://console.cloud.google.com/logs/query;query=${urlencode(local.scaling_failure_filter)}?project=${var.project_id}).
+    2. The service's instance count against its limit, and its startup latency, on the Metrics tab of the service in the [Cloud Run console](https://console.cloud.google.com/run?project=${var.project_id}).
+    3. Whether a revision rolled out shortly before the alert: a slow or failing startup starves the service of instances under the same traffic.
+
+    Likely causes: a traffic spike above the service's max instances, a revision with a slow cold start, or a slow dependency holding requests open so every instance fills. Raise max instances or set a minimum in the service's Terraform, or roll back a slow revision; otherwise escalate to the owning team in the channel this alert posted to.
+    EOT
+
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.scaling_failure_filter)}?project=${var.project_id}"
+    }
+    links {
+      display_name = "Cloud Run services"
+      url          = "https://console.cloud.google.com/run?project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Cloud Run scaling issue ${local.name}"
 
     condition_matched_log {
-      filter = <<EOT
-        resource.type="cloud_run_revision"
-        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
-        severity=ERROR
-        textPayload:"The request was aborted because there was no available instance."
-        ${var.scaling_issue_filter}
-        ${local.squad_log_filter}
-      EOT
+      filter = local.scaling_failure_filter
 
       label_extractors = {
+        "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(labels.squad)"
@@ -882,6 +938,25 @@ resource "google_logging_metric" "cloud-run-failed-req" {
   }
 }
 
+locals {
+  failed_request_filter = <<EOT
+        resource.type="cloud_run_revision"
+        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
+        severity=ERROR
+        textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
+        ${var.failed_req_filter}
+        ${local.squad_log_filter}${local.service_log_filter}
+      EOT
+  // The service's own log lines around the failure, without the request log
+  // the alert matched on.
+  failed_request_app_logs_filter = <<EOT
+        resource.type="cloud_run_revision"
+        severity>=ERROR
+        NOT log_id("run.googleapis.com/requests")
+        ${local.squad_log_filter}${local.service_log_filter}
+      EOT
+}
+
 resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
   # In the absence of data, incident will auto-close after an hour
   alert_strategy {
@@ -897,20 +972,39 @@ resource "google_monitoring_alert_policy" "cloud-run-failed-req" {
 
   severity = "WARNING"
 
+  documentation {
+    // variables reference: https://cloud.google.com/monitoring/alerts/doc-variables#doc-vars
+    subject = "$${log.extracted_label.team}: Cloud Run $${metric_or_resource.labels.service_name} dropped a request mid-flight"
+
+    content = <<-EOT
+    Cloud Run could not relay a response from $${metric_or_resource.labels.service_name}: the container closed the connection or wrote a malformed response, which is what the request log records when an instance crashes, is killed for exceeding its memory limit, or hits the request timeout while still writing. The caller received a 5xx for that request.
+
+    **What to check**
+    1. The failed requests, their revision and when they clustered: [Logs Explorer](https://console.cloud.google.com/logs/query;query=${urlencode(local.failed_request_filter)}?project=${var.project_id}).
+    2. The service's own error logs at the same time, for a crash, panic or out-of-memory kill: [Logs Explorer](https://console.cloud.google.com/logs/query;query=${urlencode(local.failed_request_app_logs_filter)}?project=${var.project_id}).
+    3. Whether the OOM, Signal or Panic alert for this team fired for the same service, which names the cause directly.
+
+    Likely causes: a container crash under load, a memory limit too low for the request, or a handler still writing after the request timeout. Fix the crash, or raise the memory limit or timeout in the service's Terraform; otherwise escalate to the owning team in the channel this alert posted to.
+    EOT
+
+    links {
+      display_name = "Logs Explorer"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.failed_request_filter)}?project=${var.project_id}"
+    }
+    links {
+      display_name = "Service error logs"
+      url          = "https://console.cloud.google.com/logs/query;query=${urlencode(local.failed_request_app_logs_filter)}?project=${var.project_id}"
+    }
+  }
+
   conditions {
     display_name = "Cloud Run failed request ${local.name}"
 
     condition_matched_log {
-      filter = <<EOT
-        resource.type="cloud_run_revision"
-        logName="projects/${var.project_id}/logs/run.googleapis.com%2Frequests"
-        severity=ERROR
-        textPayload:"The request failed because either the HTTP response was malformed or connection to the instance had an error."
-        ${var.failed_req_filter}
-        ${local.squad_log_filter}
-      EOT
+      filter = local.failed_request_filter
 
       label_extractors = {
+        "service_name"  = "EXTRACT(resource.labels.service_name)"
         "revision_name" = "EXTRACT(resource.labels.revision_name)"
         "location"      = "EXTRACT(resource.labels.location)"
         "team"          = "EXTRACT(labels.squad)"
@@ -949,7 +1043,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead_letter_queue_messages" {
         resource.type="pubsub_topic"
         metadata.system_labels."name"=monitoring.regex.full_match(".*-dlq-.*")
         ${var.dlq_filter}
-        ${local.squad_metric_user_label_filter}
+        ${local.squad_metric_user_label_filter}${local.dlq_service_filter}
       EOT
 
       trigger {
@@ -1001,7 +1095,7 @@ resource "google_monitoring_alert_policy" "cloudrun_timeout" {
         severity=ERROR
         textPayload="The request has been terminated because it has reached the maximum request timeout. To change this limit, see https://cloud.google.com/run/docs/configuring/request-timeout"
         ${var.timeout_filter}
-        ${local.squad_log_filter}
+        ${local.squad_log_filter}${local.service_log_filter}
         -resource.labels.service_name:"-ing-vuln"
       EOT
 
@@ -1201,7 +1295,7 @@ protoPayload.methodName="/Services.UpdateService"
 protoPayload.resourceName:"namespaces/${var.project_id}/services/"
 -protoPayload.response.spec.traffic.latestRevision="true"
 -protoPayload.response.status.traffic.latestRevision="true"
-${local.squad_proto_log_filter}
+${local.squad_proto_log_filter}${local.service_log_filter}
 EOF
 }
 
@@ -1288,7 +1382,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
         metric.labels.service_name != monitoring.regex.full_match("prb-.*")
         metric.labels.code != monitoring.regex.full_match("[23]..")
         ${local.http_error_exclude_filter}
-        ${local.squad_metric_filter}
+        ${local.squad_metric_filter}${local.service_metric_filter}
       EOT
 
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
@@ -1328,7 +1422,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
           metric.labels.service_name = monitoring.regex.full_match("${conditions.key}")
           metric.labels.method != ${local.http_error_method_matches[conditions.key]}
           metric.labels.code != monitoring.regex.full_match("[23]..")
-          ${local.squad_metric_filter}
+          ${local.squad_metric_filter}${local.service_metric_filter}
         EOT
 
         evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
@@ -1370,7 +1464,7 @@ resource "google_monitoring_alert_policy" "http_error_rate" {
           metric.labels.method = ${local.http_error_method_matches[conditions.key]}
           metric.labels.code != monitoring.regex.full_match("[23]..")
           metric.labels.code != monitoring.regex.full_match("${join("|", conditions.value.codes)}")
-          ${local.squad_metric_filter}
+          ${local.squad_metric_filter}${local.service_metric_filter}
         EOT
 
         evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
@@ -1435,7 +1529,7 @@ resource "google_monitoring_alert_policy" "grpc_error_rate" {
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/grpc_server_handled_total/counter"
         metric.labels.grpc_code != monitoring.regex.full_match("${join("|", var.grpc_non_error_codes)}")
-        ${local.squad_metric_filter}
+        ${local.squad_metric_filter}${local.service_metric_filter}
       EOT
 
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
@@ -1519,7 +1613,7 @@ resource "google_monitoring_alert_policy" "workqueue_high_retry" {
       filter     = <<EOT
         resource.type = "prometheus_target"
         metric.type = "prometheus.googleapis.com/workqueue_max_attempts/gauge"
-        ${local.squad_metric_filter}
+        ${local.squad_metric_filter}${local.service_metric_filter}
       EOT
 
       trigger {
