@@ -319,6 +319,21 @@ variable "resource_manager_tags" {
   }
 }
 
+variable "resource_manager_tag_values" {
+  description = "Resource Manager tag values to bind to each Cloud Run job, as a label chosen by the caller => tagValues/<id>. Unlike resource_manager_tags, the values may be created in the same apply, because only the labels name the bindings. A label names one binding per region, so renaming a label replaces its bindings."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+
+  validation {
+    condition = alltrue([
+      for label, value in var.resource_manager_tag_values :
+      can(regex("^tagValues/[0-9]+$", value))
+    ])
+    error_message = "resource_manager_tag_values values must be tagValues/<numeric-id>."
+  }
+}
+
 variable "project_number" {
   description = "Optional project number of project_id, used to build tag binding parents. When set, the module does not read the google_project data source. Pass it when a caller uses a module-level depends_on, which would otherwise defer the data source to apply and force every tag binding to be replaced. Must be known at plan time (for example the number of an existing project read from a `google_project` data source with no `depends_on`); leave it unset when the project is created in the same apply."
   type        = string

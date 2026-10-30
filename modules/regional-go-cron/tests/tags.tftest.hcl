@@ -65,6 +65,34 @@ run "resource_manager_tags_bind_every_region_tag_pair" {
   }
 }
 
+# Tag values created in the same apply have IDs unknown at plan time. The
+# bindings must still plan, because they are keyed by label, not by ID.
+run "resource_manager_tag_values_accept_ids_unknown_at_plan" {
+  command = plan
+
+  module {
+    source = "./tests/unknown_tag_value_wrapper"
+  }
+
+  assert {
+    condition     = output.binding_parents["us-central1/execution-overrides"] == "//run.googleapis.com/projects/123456789/locations/us-central1/jobs/fixture"
+    error_message = "a binding keyed by label must plan when its tag value is unknown, and use the numeric project number"
+  }
+}
+
+run "resource_manager_tag_values_bind_every_region_label_pair" {
+  command = plan
+  variables {
+    resource_manager_tag_values = {
+      "execution-overrides" = "tagValues/456"
+    }
+  }
+  assert {
+    condition     = google_tags_location_tag_binding.this["us-central1/execution-overrides"].tag_value == "tagValues/456"
+    error_message = "a tag value label must bind its value on each region"
+  }
+}
+
 run "project_number_skips_project_lookup" {
   command = plan
   variables {
