@@ -140,22 +140,11 @@ resource "google_compute_service_attachment" "this" {
   nat_subnets           = var.psc_nat_subnets
   enable_proxy_protocol = false
 
-  # Make accept-list removal an actual revocation. Updates in place.
-  reconcile_connections = var.reconcile_connections
-
   dynamic "consumer_accept_lists" {
     for_each = var.consumer_accept_projects
     content {
       project_id_or_num = consumer_accept_lists.value
       connection_limit  = var.connection_limit
-    }
-  }
-
-  dynamic "consumer_accept_lists" {
-    for_each = var.consumer_accept_networks
-    content {
-      network_url      = consumer_accept_lists.value
-      connection_limit = var.connection_limit
     }
   }
 
@@ -183,62 +172,5 @@ resource "google_compute_service_attachment" "this" {
   # https://cloud.google.com/vpc/docs/about-accessing-vpc-hosted-services-endpoints
   lifecycle {
     replace_triggered_by = [google_compute_forwarding_rule.this.id]
-  }
-}
-
-# PSC traffic reaches the internal ALB from the attachment's NAT subnets, so
-# those ranges are the only clients the VIP needs to admit.
-data "google_compute_subnetwork" "psc_nat" {
-  for_each  = var.lb_firewall == null ? toset([]) : toset(var.psc_nat_subnets)
-  self_link = each.value
-}
-
-resource "google_compute_region_network_firewall_policy_rule" "lb_allow" {
-  count = var.lb_firewall == null ? 0 : 1
-
-  project         = coalesce(var.lb_firewall.project, var.project)
-  region          = var.region
-  firewall_policy = var.lb_firewall.policy
-  rule_name       = "${var.name}-lb-allow"
-  description     = "Admit PSC consumers (NAT subnets) to the ${var.name} internal ALB."
-  priority        = var.lb_firewall.priority
-  direction       = "INGRESS"
-  action          = "allow"
-
-  target_type             = "INTERNAL_MANAGED_LB"
-  target_forwarding_rules = [google_compute_forwarding_rule.this.self_link]
-
-  match {
-    src_ip_ranges = concat([for s in data.google_compute_subnetwork.psc_nat : s.ip_cidr_range], var.lb_firewall.allowed_source_ranges)
-
-    layer4_configs {
-      ip_protocol = "tcp"
-      ports       = [local.https ? "443" : "80"]
-    }
-  }
-}
-
-resource "google_compute_region_network_firewall_policy_rule" "lb_deny" {
-  count = var.lb_firewall == null ? 0 : 1
-
-  project         = coalesce(var.lb_firewall.project, var.project)
-  region          = var.region
-  firewall_policy = var.lb_firewall.policy
-  rule_name       = "${var.name}-lb-deny"
-  description     = "Close the ${var.name} internal ALB to every source but its PSC consumers."
-  priority        = var.lb_firewall.priority + 1
-  direction       = "INGRESS"
-  action          = "deny"
-  enable_logging  = true
-
-  target_type             = "INTERNAL_MANAGED_LB"
-  target_forwarding_rules = [google_compute_forwarding_rule.this.self_link]
-
-  match {
-    src_ip_ranges = ["0.0.0.0/0"]
-
-    layer4_configs {
-      ip_protocol = "all"
-    }
   }
 }

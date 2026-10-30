@@ -64,31 +64,11 @@ Because the producer uses `connection_preference = "ACCEPT_MANUAL"`, the consume
 project must appear in the producer's `consumer_accept_projects` list before the
 endpoint connection is accepted.
 
-## Keeping the service PSC-only
-
-The attachment is not the only way in. Two other paths reach the Cloud Run
-service, and the producer leaves both open unless the caller closes them:
-
-- **The internal ALB's address.** Envoy-based load balancers admit every
-  client in the network, peered networks, and hybrid links when no Cloud NGFW
-  rule targets them. Set `lb_firewall` to a regional network firewall policy
-  the caller owns and has associated with `network` in `region`; the producer
-  adds an allow for its PSC NAT subnets and a logged deny for every other
-  source, both aimed at its own forwarding rule.
-- **The service's `run.app` URL.** Cloud Run counts every VM, pod, and Google
-  service in the project as internal on that URL. Set
-  `default_uri_disabled = true` on the `regional-service` or
-  `regional-go-service` the producer fronts.
-
-To accept one consumer network rather than every network in a consumer
-project, set `consumer_accept_networks` instead of `consumer_accept_projects`.
-
 ## Notes
 
-- The internal ALB speaks plain HTTP on :80 unless `tls_certificates` is set,
-  which switches the frontend to HTTPS on :443 (see the producer README). TLS
-  to the `run.app` backend is terminated by the serverless NEG, and inbound
-  authorization is enforced via Cloud Run invoker IAM (configured separately).
+- The internal ALB speaks HTTP, not HTTPS: TLS to the `run.app` backend is
+  terminated by the serverless NEG, and inbound authorization is enforced via
+  Cloud Run invoker IAM (configured separately).
 - DNS for the consumer endpoint is intentionally out of scope; wire it up in the
   consumer stack using the `endpoint_ip` output.
 

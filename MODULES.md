@@ -8,7 +8,7 @@ Reusable Terraform modules for Cloud Run services, event-driven architectures, a
 
 Deploy a regionalized Cloud Run service from a pre-built container image, with multi-region support, region-specific environment variables, VPC integration, and optional OpenTelemetry telemetry.
 
-Use this when deploying a pre-built container as a Cloud Run service across one or more regions. Set `iap_members` to enable Google IAP with service-scoped user/group access and automatic invoker grants. Set `default_uri_disabled` to answer only through load balancers and domain mappings.
+Use this when deploying a pre-built container as a Cloud Run service across one or more regions. Set `iap_members` to enable Google IAP with service-scoped user/group access and automatic invoker grants.
 
 ### [`regional-go-service`](./modules/regional-go-service/)
 
@@ -188,7 +188,7 @@ Use this instead of `serverless-gclb` when URL map updates cause downtime or con
 
 ### [`private-service-connect`](./modules/private-service-connect/)
 
-Expose a regional internal Cloud Run service across VPCs or projects via Private Service Connect, with a producer submodule (internal ALB + service attachment, HTTP or HTTPS via Certificate Manager regional certificates, consumers accepted by project or by network, and optional Cloud NGFW rules closing the internal ALB to everything but PSC) and a consumer submodule (PSC endpoint).
+Expose a regional internal Cloud Run service across VPCs or projects via Private Service Connect, with a producer submodule (internal ALB + service attachment, HTTP or HTTPS via Certificate Manager regional certificates) and a consumer submodule (PSC endpoint).
 
 Use this when a service in one VPC needs private, non-public connectivity to a Cloud Run service in another VPC or project.
 
