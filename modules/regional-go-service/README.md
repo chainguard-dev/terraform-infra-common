@@ -96,6 +96,12 @@ For external users or projects outside a Google organization, configure the
 [Google OAuth setup](https://cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run)
 separately.
 
+To put a service behind IAP with no standing access, so that access comes only
+from parent policies such as a time-bound PAM grant, set `iap_enabled = true`
+and leave `iap_members` empty. The module still owns the service's
+`roles/iap.httpsResourceAccessor` binding, so it grants no member and removes
+any out-of-band grant on the service at the next apply.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -133,7 +139,8 @@ No requirements.
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Enable otel sidecar for metrics. Enabled by default, should only be disabled for exceptional cases. | `bool` | `true` | no |
 | <a name="input_enable_profiler"></a> [enable\_profiler](#input\_enable\_profiler) | Enable cloud profiler. | `bool` | `false` | no |
 | <a name="input_execution_environment"></a> [execution\_environment](#input\_execution\_environment) | The execution environment for the service | `string` | `"EXECUTION_ENVIRONMENT_GEN2"` | no |
-| <a name="input_iap_members"></a> [iap\_members](#input\_iap\_members) | IAM members allowed to access the service through Identity-Aware Proxy, for<br/>example user:alice@example.com or group:developers@example.com. A non-empty<br/>set enables IAP on every regional service, grants these members<br/>roles/iap.httpsResourceAccessor, grants the IAP service agent roles/run.invoker,<br/>and suppresses the public invoker grant regardless of require\_authenticated\_invocations.<br/>An empty set disables IAP and preserves the existing invocation policy.<br/>The module enables the project IAP API without disabling it on removal and<br/>creates its service agent. Google OAuth setup for external users or projects<br/>outside an organization must be configured separately. Inherited IAP access<br/>at the project or organization level still applies. | `set(string)` | `[]` | no |
+| <a name="input_iap_enabled"></a> [iap\_enabled](#input\_iap\_enabled) | Enable Identity-Aware Proxy on every regional service even when iap\_members is<br/>empty. IAP is also enabled whenever iap\_members is non-empty. With no members,<br/>the module still owns the service's roles/iap.httpsResourceAccessor binding,<br/>so no member holds standing IAP access to the service and any out-of-band<br/>grant on it is removed at the next apply; access then comes only from parent<br/>policies, for example a time-bound PAM grant. | `bool` | `false` | no |
+| <a name="input_iap_members"></a> [iap\_members](#input\_iap\_members) | IAM members allowed to access the service through Identity-Aware Proxy, for<br/>example user:alice@example.com or group:developers@example.com. A non-empty<br/>set enables IAP on every regional service, grants these members<br/>roles/iap.httpsResourceAccessor, grants the IAP service agent roles/run.invoker,<br/>and suppresses the public invoker grant regardless of require\_authenticated\_invocations.<br/>An empty set disables IAP and preserves the existing invocation policy,<br/>unless iap\_enabled is set.<br/>The module enables the project IAP API without disabling it on removal and<br/>creates its service agent. Google OAuth setup for external users or projects<br/>outside an organization must be configured separately. Inherited IAP access<br/>at the project or organization level still applies. | `set(string)` | `[]` | no |
 | <a name="input_ingress"></a> [ingress](#input\_ingress) | Which type of ingress traffic to accept for the service.<br/><br/>- INGRESS\_TRAFFIC\_ALL accepts all traffic, enabling the public .run.app URL for the service<br/>- INGRESS\_TRAFFIC\_INTERNAL\_LOAD\_BALANCER accepts traffic only from a load balancer<br/>- INGRESS\_TRAFFIC\_INTERNAL\_ONLY accepts internal traffic only | `string` | `"INGRESS_TRAFFIC_INTERNAL_ONLY"` | no |
 | <a name="input_keep_go_metrics"></a> [keep\_go\_metrics](#input\_keep\_go\_metrics) | Go runtime (go\_*) and process (process\_*) series to export from the metrics targets. The sidecar drops every go\_* and process\_* series by default; the names listed here are kept and the rest are still dropped. | `list(string)` | `[]` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the service. | `map(string)` | `{}` | no |

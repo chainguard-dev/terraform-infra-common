@@ -17,7 +17,7 @@ terraform {
 }
 
 locals {
-  iap_enabled = length(var.iap_members) > 0
+  iap_enabled = var.iap_enabled || length(var.iap_members) > 0
 }
 
 // The API is shared by services in this project. Removing one service's
@@ -50,7 +50,8 @@ resource "google_cloud_run_v2_service_iam_member" "iap-invoker" {
 }
 
 // Own this role's service-level membership so removing a member revokes its
-// direct grant. This does not override access inherited from parent policies.
+// direct grant, and with no members no one holds it on the service. This does
+// not override access inherited from parent policies.
 resource "google_iap_web_cloud_run_service_iam_binding" "access" {
   for_each = local.iap_enabled ? var.regions : {}
 

@@ -511,7 +511,8 @@ example user:alice@example.com or group:developers@example.com. A non-empty
 set enables IAP on every regional service, grants these members
 roles/iap.httpsResourceAccessor, grants the IAP service agent roles/run.invoker,
 and suppresses the public invoker grant regardless of require_authenticated_invocations.
-An empty set disables IAP and preserves the existing invocation policy.
+An empty set disables IAP and preserves the existing invocation policy,
+unless iap_enabled is set.
 The module enables the project IAP API without disabling it on removal and
 creates its service agent. Google OAuth setup for external users or projects
 outside an organization must be configured separately. Inherited IAP access
@@ -519,5 +520,19 @@ at the project or organization level still applies.
 EOD
   type        = set(string)
   default     = []
+  nullable    = false
+}
+
+variable "iap_enabled" {
+  description = <<EOD
+Enable Identity-Aware Proxy on every regional service even when iap_members is
+empty. IAP is also enabled whenever iap_members is non-empty. With no members,
+the module still owns the service's roles/iap.httpsResourceAccessor binding,
+so no member holds standing IAP access to the service and any out-of-band
+grant on it is removed at the next apply; access then comes only from parent
+policies, for example a time-bound PAM grant.
+EOD
+  type        = bool
+  default     = false
   nullable    = false
 }

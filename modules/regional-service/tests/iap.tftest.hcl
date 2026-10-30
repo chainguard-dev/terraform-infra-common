@@ -140,3 +140,47 @@ run "iap_also_works_with_authenticated_invocations" {
     error_message = "The existing authenticated invocation flag must not suppress IAP grants."
   }
 }
+
+run "enabled_without_members_grants_no_standing_access" {
+  command = plan
+  variables {
+    iap_enabled                       = true
+    require_authenticated_invocations = true
+  }
+  assert {
+    condition = (
+      google_cloud_run_v2_service.this["us-central1"].iap_enabled &&
+      length(google_project_service.iap) == 1 &&
+      length(google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated) == 0
+    )
+    error_message = "iap_enabled must enable IAP and keep the service private with no members."
+  }
+  assert {
+    condition = (
+      length(google_cloud_run_v2_service_iam_member.iap-invoker) == 1 &&
+      google_cloud_run_v2_service_iam_member.iap-invoker["us-central1"].member == "serviceAccount:service-123456789@gcp-sa-iap.iam.gserviceaccount.com"
+    )
+    error_message = "The IAP service agent must still be the service's invoker."
+  }
+  assert {
+    condition = (
+      length(google_iap_web_cloud_run_service_iam_binding.access) == 1 &&
+      length(google_iap_web_cloud_run_service_iam_binding.access["us-central1"].members) == 0
+    )
+    error_message = "With no members the module must still own the access binding, so no member holds standing IAP access."
+  }
+}
+
+run "enabled_without_members_suppresses_public_access" {
+  command = plan
+  variables {
+    iap_enabled = true
+  }
+  assert {
+    condition = (
+      google_cloud_run_v2_service.this["us-central1"].iap_enabled &&
+      length(google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated) == 0
+    )
+    error_message = "iap_enabled must suppress the public invoker grant even without require_authenticated_invocations."
+  }
+}

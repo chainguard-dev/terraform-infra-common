@@ -108,6 +108,7 @@ module "this" {
 
   require_authenticated_invocations = var.require_authenticated_invocations
   iap_members                       = var.iap_members
+  iap_enabled                       = var.iap_enabled
 
   slo = var.slo
 
