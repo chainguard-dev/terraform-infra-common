@@ -50,13 +50,16 @@ consumer until it does. See
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_google"></a> [google](#provider\_google) | n/a |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 8.7.0 |
 
 ## Modules
 
@@ -69,10 +72,13 @@ No modules.
 | [google_compute_forwarding_rule.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_forwarding_rule) | resource |
 | [google_compute_region_backend_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_backend_service) | resource |
 | [google_compute_region_network_endpoint_group.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_network_endpoint_group) | resource |
+| [google_compute_region_network_firewall_policy_rule.lb_allow](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_network_firewall_policy_rule) | resource |
+| [google_compute_region_network_firewall_policy_rule.lb_deny](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_network_firewall_policy_rule) | resource |
 | [google_compute_region_target_http_proxy.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_target_http_proxy) | resource |
 | [google_compute_region_target_https_proxy.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_target_https_proxy) | resource |
 | [google_compute_region_url_map.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_url_map) | resource |
 | [google_compute_service_attachment.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_service_attachment) | resource |
+| [google_compute_subnetwork.psc_nat](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 
 ## Inputs
 
@@ -80,15 +86,18 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_allow_global_access"></a> [allow\_global\_access](#input\_allow\_global\_access) | Allow clients in any region to reach the internal ALB forwarding rule. Required before a PSC consumer endpoint targeting this service attachment can set allow\_psc\_global\_access = true; without it the consumer apply fails with "the producer service does not support consumer global access". Leave false when all consumers are in the producer's region. | `bool` | `false` | no |
 | <a name="input_cloud_run_service_name"></a> [cloud\_run\_service\_name](#input\_cloud\_run\_service\_name) | Name of the existing regional internal Cloud Run service to front with the internal ALB. | `string` | n/a | yes |
-| <a name="input_connection_limit"></a> [connection\_limit](#input\_connection\_limit) | Per-consumer connection limit applied to each entry in consumer\_accept\_projects. | `number` | `10` | no |
-| <a name="input_consumer_accept_projects"></a> [consumer\_accept\_projects](#input\_consumer\_accept\_projects) | List of consumer project IDs or numbers explicitly accepted by the service attachment (ACCEPT\_MANUAL). | `list(string)` | n/a | yes |
+| <a name="input_connection_limit"></a> [connection\_limit](#input\_connection\_limit) | Per-consumer connection limit applied to each accept-list entry. | `number` | `10` | no |
+| <a name="input_consumer_accept_networks"></a> [consumer\_accept\_networks](#input\_consumer\_accept\_networks) | Consumer VPC networks accepted by the service attachment (ACCEPT\_MANUAL), as self-links or projects/<project>/global/networks/<name> paths. Endpoints in other networks of the same project stay PENDING. Set this or consumer\_accept\_projects, not both: Google rejects an accept list that mixes consumer types. | `list(string)` | `[]` | no |
+| <a name="input_consumer_accept_projects"></a> [consumer\_accept\_projects](#input\_consumer\_accept\_projects) | Consumer project IDs or numbers accepted by the service attachment (ACCEPT\_MANUAL). A project entry accepts endpoints from every VPC network in that project; use consumer\_accept\_networks to accept only specific networks. Set this or consumer\_accept\_networks, not both. | `list(string)` | `[]` | no |
 | <a name="input_enable_logging"></a> [enable\_logging](#input\_enable\_logging) | Enable access logging on the internal ALB backend service (L7 request logs -> Cloud Logging at full sampling; reaches the SIEM via the org all-load-balancer sink). Opt-in; default off so existing producers are unaffected. | `bool` | `false` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to resources that support them. | `map(string)` | `{}` | no |
+| <a name="input_lb_firewall"></a> [lb\_firewall](#input\_lb\_firewall) | Close the internal ALB's forwarding rule to everything but PSC consumers.<br/>Envoy-based load balancers admit every client in the network, peered<br/>networks, and hybrid links when no Cloud NGFW rule targets them, so<br/>without this the VIP is reachable from the whole producer VPC alongside<br/>the PSC path. When set, the module adds two rules to an existing regional<br/>network firewall policy that the caller owns and has associated with<br/>`network` in `region`: an allow from the PSC NAT subnets (plus<br/>allowed\_source\_ranges) on the frontend port at `priority`, and a logged<br/>deny for every other source at `priority + 1`. Both target only this<br/>forwarding rule, so producers sharing a network and policy coexist as<br/>long as their priorities differ. `project` is the policy's project,<br/>defaulting to `project`; set it to the host project when `network` is a<br/>Shared VPC. Null (the default) adds no rules. | <pre>object({<br/>    policy                = string<br/>    priority              = number<br/>    project               = optional(string)<br/>    allowed_source_ranges = optional(list(string), [])<br/>  })</pre> | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Resource name prefix for the producer-side resources. | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | Self-link of the VPC network hosting the internal ALB frontend. | `string` | n/a | yes |
 | <a name="input_project"></a> [project](#input\_project) | The project ID in which to create the producer-side PSC resources. | `string` | n/a | yes |
 | <a name="input_proxy_only_subnet"></a> [proxy\_only\_subnet](#input\_proxy\_only\_subnet) | Self-link of the caller-created REGIONAL\_MANAGED\_PROXY subnet for this region. The module does not create this subnet; it is referenced only to order the ALB forwarding rule after the proxy-only subnet exists. | `string` | n/a | yes |
 | <a name="input_psc_nat_subnets"></a> [psc\_nat\_subnets](#input\_psc\_nat\_subnets) | List of self-links of caller-created PRIVATE\_SERVICE\_CONNECT NAT subnets used by the service attachment. The module does not create these subnets. | `list(string)` | n/a | yes |
+| <a name="input_reconcile_connections"></a> [reconcile\_connections](#input\_reconcile\_connections) | Reconcile live connections against the accept list, so removing a consumer project or network revokes its existing ACCEPTED connections. With the API default (false), the list governs only new connections and a removed consumer stays connected. | `bool` | `true` | no |
 | <a name="input_region"></a> [region](#input\_region) | The region in which the Cloud Run service, internal ALB, and service attachment live. | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Self-link of the subnetwork in which the internal ALB VIP is allocated. | `string` | n/a | yes |
 | <a name="input_tls_certificates"></a> [tls\_certificates](#input\_tls\_certificates) | Certificate Manager regional certificate ids<br/>(projects/<project>/locations/<region>/certificates/<name>) for the<br/>frontend to serve. Empty (the default) keeps the plain-HTTP frontend on<br/>:80. Non-empty switches the frontend to a target HTTPS proxy on :443,<br/>which replaces the forwarding rule and so recreates the service<br/>attachment (closing every connected consumer endpoint for good: each<br/>consumer must then recreate its endpoint, see the README; the attachment<br/>name is unchanged). Certificates must already be ACTIVE:<br/>consumers dial the certificate's hostname and resolve it to their own<br/>PSC endpoint IP (a private DNS zone in the consumer VPC), so a regional<br/>Google-managed certificate with DNS authorization for a real domain<br/>verifies against public roots with no trust distribution. Attach it on<br/>the provision after the one that issued it. | `list(string)` | `[]` | no |

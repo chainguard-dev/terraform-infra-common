@@ -53,6 +53,8 @@ module "this" {
   ingress    = var.ingress
   egress     = var.egress
 
+  default_uri_disabled = var.default_uri_disabled
+
   manage_traffic = var.manage_traffic
 
   regional-egress    = var.regional-egress

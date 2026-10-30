@@ -425,3 +425,40 @@ run "shared_monitoring_preserves_access_exemptions" {
     error_message = "The source project must own the exported event counter."
   }
 }
+
+run "placeholder_read_is_exempt_only_for_its_version" {
+  command = plan
+  variables {
+    create_placeholder_version = true
+  }
+  override_resource {
+    target          = google_secret_manager_secret_version.placeholder
+    override_during = plan
+    values = {
+      version = "1"
+    }
+  }
+
+  # Terraform refreshes the placeholder by reading its payload as the applying
+  # identity, which is not one of the service's readers.
+  assert {
+    condition = can(regex(
+      "protoPayload\\.request\\.name=\\(\"projects/fixture-project/secrets/fixture/versions/1\" OR \"projects/123456789/secrets/fixture/versions/1\"\\)\\s+protoPayload\\.methodName=\"google\\.cloud\\.secretmanager\\.v1\\.SecretManagerService\\.AccessSecretVersion\"",
+      google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter,
+    ))
+    error_message = "reads of exactly the placeholder version must be exempt"
+  }
+  assert {
+    condition     = !strcontains(google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter, "versions/latest")
+    error_message = "the exemption must not cover versions/latest, which resolves to the real value once one is added"
+  }
+}
+
+run "no_placeholder_no_placeholder_exemption" {
+  command = plan
+
+  assert {
+    condition     = !strcontains(google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter, "/versions/")
+    error_message = "a secret without a placeholder must not exempt any version read"
+  }
+}

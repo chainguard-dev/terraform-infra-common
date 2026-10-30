@@ -26,6 +26,19 @@ EOD
   default     = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 }
 
+variable "default_uri_disabled" {
+  description = <<EOD
+Turn off the default run.app URL of the service in every region, so it answers
+only through load balancers and domain mappings. Cloud Run counts every VM,
+pod, and Google service in the project as internal on the run.app URL, so a
+service meant to answer only through its internal load balancer (for example a
+private-service-connect producer) needs this to keep those callers off the
+side door. The uris output still reports the URL, which no longer resolves.
+EOD
+  type        = bool
+  default     = false
+}
+
 variable "manage_traffic" {
   type        = bool
   description = <<EOD

@@ -91,25 +91,29 @@ any out-of-band grant on the service at the next apply.
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
+| <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | >= 8.7.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | n/a |
-| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | n/a |
+| ---- | ------- |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 8.7.0 |
+| <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | >= 8.7.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_slo"></a> [slo](#module\_slo) | ../slo | n/a |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google-beta_google_project_service_identity.iap](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_project_service_identity) | resource |
 | [google_cloud_run_v2_service.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service) | resource |
 | [google_cloud_run_v2_service_iam_member.iap-invoker](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam_member) | resource |
@@ -126,9 +130,10 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_containers"></a> [containers](#input\_containers) | The containers to run in the service.  Each container will be run in each region. | <pre>map(object({<br/>    image   = string<br/>    command = optional(list(string), [])<br/>    args    = optional(list(string), [])<br/>    ports = optional(list(object({<br/>      name           = optional(string, "http1")<br/>      container_port = number<br/>    })), [])<br/>    resources = optional(<br/>      object(<br/>        {<br/>          limits = optional(object(<br/>            {<br/>              cpu    = string<br/>              memory = string<br/>            }<br/>          ), null)<br/>          cpu_idle          = optional(bool)<br/>          startup_cpu_boost = optional(bool, true)<br/>        }<br/>      ),<br/>      {}<br/>    )<br/>    env = optional(list(object({<br/>      name  = string<br/>      value = optional(string)<br/>      value_source = optional(object({<br/>        secret_key_ref = object({<br/>          secret  = string<br/>          version = string<br/>        })<br/>      }), null)<br/>    })), [])<br/>    regional-env = optional(list(object({<br/>      name  = string<br/>      value = map(string)<br/>    })), [])<br/>    regional-cpu-idle = optional(map(bool), {})<br/>    volume_mounts = optional(list(object({<br/>      name       = string<br/>      mount_path = string<br/>    })), [])<br/>    startup_probe = optional(object({<br/>      initial_delay_seconds = optional(number)<br/>      // GCP Terraform provider defaults differ from Cloud Run defaults.<br/>      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe<br/>      period_seconds    = optional(number, 240)<br/>      timeout_seconds   = optional(number, 240)<br/>      failure_threshold = optional(number, 1)<br/>      http_get = optional(object({<br/>        path = string<br/>        port = optional(number)<br/>      }), null)<br/>      tcp_socket = optional(object({<br/>        port = optional(number)<br/>      }), null)<br/>      grpc = optional(object({<br/>        service = optional(string)<br/>        port    = optional(number)<br/>      }), null)<br/>    }))<br/>    liveness_probe = optional(object({<br/>      initial_delay_seconds = optional(number)<br/>      // GCP Terraform provider defaults differ from Cloud Run defaults.<br/>      // See https://cloud.google.com/run/docs/configuring/healthchecks#tcp-startup-probe<br/>      period_seconds    = optional(number, 240)<br/>      timeout_seconds   = optional(number, 240)<br/>      failure_threshold = optional(number, 1)<br/>      http_get = optional(object({<br/>        path = string<br/>        port = optional(number)<br/>      }), null)<br/>      tcp_socket = optional(object({<br/>        port = optional(number)<br/>      }), null)<br/>      grpc = optional(object({<br/>        service = optional(string)<br/>        port    = optional(number)<br/>      }), null)<br/>    }))<br/>  }))</pre> | n/a | yes |
 | <a name="input_custom_audiences"></a> [custom\_audiences](#input\_custom\_audiences) | Optional list of custom audiences accepted by the Cloud Run service's ID-token<br/>validation, in addition to the service's default *.run.app URL. Required for<br/>services reached by a non-run.app hostname or IP (e.g. behind an internal HTTP<br/>ALB / Private Service Connect) where callers cannot use the run.app URL as the<br/>token audience. Empty leaves custom audiences unset. | `list(string)` | `[]` | no |
+| <a name="input_default_uri_disabled"></a> [default\_uri\_disabled](#input\_default\_uri\_disabled) | Turn off the default run.app URL of the service in every region, so it answers<br/>only through load balancers and domain mappings. Cloud Run counts every VM,<br/>pod, and Google service in the project as internal on the run.app URL, so a<br/>service meant to answer only through its internal load balancer (for example a<br/>private-service-connect producer) needs this to keep those callers off the<br/>side door. The uris output still reports the URL, which no longer resolves. | `bool` | `false` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | Whether to enable delete protection for the service. | `bool` | `true` | no |
 | <a name="input_egress"></a> [egress](#input\_egress) | Which type of egress traffic to send through the VPC.<br/><br/>- ALL\_TRAFFIC sends all traffic through regional VPC network<br/>- PRIVATE\_RANGES\_ONLY sends only traffic to private IP addresses through regional VPC network | `string` | `"ALL_TRAFFIC"` | no |
 | <a name="input_enable_observability_iam"></a> [enable\_observability\_iam](#input\_enable\_observability\_iam) | Whether this module grants the service account the observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent) on the project. Set false when the caller manages these grants itself, e.g. a service account shared across multiple services, where per-service grants would create overlapping non-authoritative IAM members that revoke each other on destroy. | `bool` | `true` | no |
@@ -168,11 +173,12 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_access_policy"></a> [access\_policy](#output\_access\_policy) | Regional ingress, VPC egress, and invocation policy managed by this module; excludes out-of-band IAM grants. |
 | <a name="output_containers"></a> [containers](#output\_containers) | Rendered regional container configuration, including environment and secret references. |
 | <a name="output_locations"></a> [locations](#output\_locations) | n/a |
 | <a name="output_name"></a> [name](#output\_name) | The service name, which every region shares. Read off the services, so a resource that names the service is created after it. |
 | <a name="output_names"></a> [names](#output\_names) | n/a |
+| <a name="output_tag_binding_parents"></a> [tag\_binding\_parents](#output\_tag\_binding\_parents) | Resource parent of each Cloud Run service tag binding, keyed by region/tag key. |
 | <a name="output_uris"></a> [uris](#output\_uris) | n/a |
 <!-- END_TF_DOCS -->

@@ -57,23 +57,6 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     "attribute.pullrequesttargetanyworkflow" = "assertion.repository + '|' + (assertion.ref == 'refs/heads/main' ? 'true' : 'false')"
     "attribute.versiontags"                  = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
     "attribute.versiontagsanyworkflow"       = "assertion.repository + '|' + (assertion.ref.matches('^refs/tags/v[0-9]+([.][0-9]+([.][0-9]+)?)?$') ? 'true' : 'false')"
-
-    # Event-aware forms of exact, exactanyworkflow, pullrequesttarget and
-    # pullrequesttargetanyworkflow. A pull_request_target run carries its base
-    # branch in assertion.ref, so the keys above cannot tell it from a push to
-    # that branch, and neither can events such as workflow_run or
-    # issue_comment that a pull request can trigger on the default branch.
-    # These keys use event_name. The exact*event keys carry the bare ref only
-    # for push, workflow_dispatch and schedule; every other event carries
-    # "<event_name>:<ref>" (for example "pull_request_target:refs/heads/main"),
-    # so it never matches a branch binding and keeps the event and ref it ran
-    # with. A workflow that federates on another event binds that value
-    # explicitly. The prt*event keys are true only for a pull_request_target
-    # run against main; bind pull_request_target workflows through them.
-    "attribute.exactevent"            = "assertion.repository + '|' + (assertion.event_name in ['push', 'workflow_dispatch', 'schedule'] ? assertion.ref : assertion.event_name + ':' + assertion.ref) + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.exactanyworkflowevent" = "assertion.repository + '|' + (assertion.event_name in ['push', 'workflow_dispatch', 'schedule'] ? assertion.ref : assertion.event_name + ':' + assertion.ref)"
-    "attribute.prtevent"              = "assertion.repository + '|' + ((assertion.event_name == 'pull_request_target' && assertion.ref == 'refs/heads/main') ? 'true' : 'false') + '|' + assertion.workflow_ref.split('@')[0]"
-    "attribute.prtanyworkflowevent"   = "assertion.repository + '|' + ((assertion.event_name == 'pull_request_target' && assertion.ref == 'refs/heads/main') ? 'true' : 'false')"
   }
 
   attribute_condition = "assertion.repository_owner == '${var.github_org}'"
