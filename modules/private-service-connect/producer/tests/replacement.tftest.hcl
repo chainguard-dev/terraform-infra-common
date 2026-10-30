@@ -43,6 +43,23 @@ run "label_update_preserves_attachment" {
   }
 }
 
+# The provider updates reconcile_connections in place (Optional and Computed,
+# no ForceNew), so turning it off never closes consumers. The mock plans no
+# replacements, so this run checks the wiring; the in-place guarantee rests on
+# the provider schema.
+run "reconcile_connections_can_be_turned_off" {
+  command = apply
+
+  variables {
+    reconcile_connections = false
+  }
+
+  assert {
+    condition     = google_compute_service_attachment.this.reconcile_connections == false
+    error_message = "reconcile_connections must reach the service attachment."
+  }
+}
+
 # Explicit replacement exercises the lifecycle even though the mock provider
 # does not model Google's immutable fields. The name stays unchanged, as it
 # does when allow_global_access or the frontend protocol forces replacement.

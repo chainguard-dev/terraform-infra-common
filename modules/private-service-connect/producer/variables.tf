@@ -87,6 +87,12 @@ variable "enable_logging" {
   default     = false
 }
 
+variable "reconcile_connections" {
+  description = "Reconcile live connections against the accept list, so removing a consumer project or network revokes its existing ACCEPTED connections. With the API default (false), the list governs only new connections and a removed consumer stays connected."
+  type        = bool
+  default     = true
+}
+
 variable "tls_certificates" {
   description = <<-EOT
     Certificate Manager regional certificate ids

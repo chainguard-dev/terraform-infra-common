@@ -140,6 +140,9 @@ resource "google_compute_service_attachment" "this" {
   nat_subnets           = var.psc_nat_subnets
   enable_proxy_protocol = false
 
+  # Make accept-list removal an actual revocation. Updates in place.
+  reconcile_connections = var.reconcile_connections
+
   dynamic "consumer_accept_lists" {
     for_each = var.consumer_accept_projects
     content {
