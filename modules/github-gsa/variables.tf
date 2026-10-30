@@ -50,3 +50,26 @@ variable "notification_channels" {
   description = "The list of notification channels to alert when the service account is misused."
   type        = list(string)
 }
+
+variable "additional_federations" {
+  description = "Additional pinned refspec and workflow pairs allowed to federate with this identity. Named refspec selectors retain their existing provider attribute semantics."
+  type = list(object({
+    refspec      = string
+    workflow_ref = string
+  }))
+  default  = []
+  nullable = false
+
+  validation {
+    condition = alltrue([
+      for federation in var.additional_federations : try(
+        (contains(["pull_request", "pull_request_target", "version_tags"], federation.refspec) || startswith(federation.refspec, "refs/")) &&
+        length(regexall("\\*", federation.refspec)) == 0 &&
+        startswith(federation.workflow_ref, ".github/workflows/") &&
+        length(regexall("\\*", federation.workflow_ref)) == 0,
+        false
+      )
+    ])
+    error_message = "Additional federations require a concrete refs/ refspec or a named pull_request, pull_request_target, or version_tags selector, and a .github/workflows/ path; neither field may contain '*'."
+  }
+}

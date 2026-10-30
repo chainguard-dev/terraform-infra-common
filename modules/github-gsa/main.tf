@@ -111,14 +111,31 @@ locals {
 
 }
 
+locals {
+  additional_selector_attributes = {
+    pull_request        = "attribute.pullrequest"
+    pull_request_target = "attribute.pullrequesttarget"
+    version_tags        = "attribute.versiontags"
+  }
+
+  additional_members = [
+    for federation in var.additional_federations :
+    "principalSet://iam.googleapis.com/${var.wif-pool}/${lookup(local.additional_selector_attributes, federation.refspec, "attribute.exact")}/${join("|", [
+      var.repository,
+      contains(keys(local.additional_selector_attributes), federation.refspec) ? "true" : federation.refspec,
+      "${var.repository}/${federation.workflow_ref}",
+    ])}"
+  ]
+}
+
 // Create the IAM binding allowing workflows to impersonate the service account.
 resource "google_service_account_iam_binding" "allow-impersonation" {
   service_account_id = google_service_account.this.name
   role               = "roles/iam.workloadIdentityUser"
 
-  members = [
+  members = concat([
     "principalSet://iam.googleapis.com/${var.wif-pool}/${local.attribute-match}",
-  ]
+  ], local.additional_members)
 
   lifecycle {
     precondition {

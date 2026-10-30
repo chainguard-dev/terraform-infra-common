@@ -29,6 +29,20 @@ module "foo" {
 }
 ```
 
+The primary `refspec` and `workflow_ref` retain their existing selector and
+wildcard behavior. `additional_federations` defaults to an empty list and adds
+pinned pairs to the same authoritative IAM binding. Additional pairs reject `*`
+in either field. Concrete refs use `attribute.exact`; the existing named
+`pull_request`, `pull_request_target`, and `version_tags` selectors use their
+corresponding bounded provider attributes. For example:
+
+```hcl
+additional_federations = [{
+  refspec      = "refs/heads/main"
+  workflow_ref = ".github/workflows/another-workflow.yaml"
+}]
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -55,6 +69,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_additional_federations"></a> [additional\_federations](#input\_additional\_federations) | Additional pinned refspec and workflow pairs allowed to federate with this identity. Named refspec selectors retain their existing provider attribute semantics. | `list(object({ refspec = string, workflow_ref = string }))` | `[]` | no |
 | <a name="input_audit_refspec"></a> [audit\_refspec](#input\_audit\_refspec) | Deprecated: has no effect. It only fed a subject-regex matcher that no resource ever consumed; federation is matched via the provider's attribute mappings, which have no audited-wildcard form. Retained so existing callers do not break; do not set it expecting tightened scoping. | `string` | `""` | no |
 | <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | Deprecated: has no effect, for the same reason as audit\_refspec. | `string` | `""` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the service account. | `string` | n/a | yes |
