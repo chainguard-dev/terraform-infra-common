@@ -37,12 +37,29 @@ variable "cloud_run_service_name" {
 }
 
 variable "consumer_accept_projects" {
-  description = "List of consumer project IDs or numbers explicitly accepted by the service attachment (ACCEPT_MANUAL)."
+  description = "Consumer project IDs or numbers accepted by the service attachment (ACCEPT_MANUAL). A project entry accepts endpoints from every VPC network in that project; use consumer_accept_networks to accept only specific networks. Set this or consumer_accept_networks, not both."
   type        = list(string)
+  default     = []
+}
+
+variable "consumer_accept_networks" {
+  description = "Consumer VPC networks accepted by the service attachment (ACCEPT_MANUAL), as self-links or projects/<project>/global/networks/<name> paths. Endpoints in other networks of the same project stay PENDING. Set this or consumer_accept_projects, not both: Google rejects an accept list that mixes consumer types."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = length(var.consumer_accept_networks) == 0 || length(var.consumer_accept_projects) == 0
+    error_message = "Set consumer_accept_projects or consumer_accept_networks, not both: Google rejects an accept list that mixes consumer types."
+  }
+
+  validation {
+    condition     = alltrue([for n in var.consumer_accept_networks : can(regex("^(https://www\\.googleapis\\.com/compute/v1/)?projects/[^/]+/global/networks/[^/]+$", n))])
+    error_message = "Each consumer_accept_networks entry must be a network self-link or a projects/<project>/global/networks/<name> path."
+  }
 }
 
 variable "connection_limit" {
-  description = "Per-consumer connection limit applied to each entry in consumer_accept_projects."
+  description = "Per-consumer connection limit applied to each accept-list entry."
   type        = number
   default     = 10
 }
@@ -88,4 +105,34 @@ variable "tls_certificates" {
   EOT
   type        = list(string)
   default     = []
+}
+
+variable "lb_firewall" {
+  description = <<-EOT
+    Close the internal ALB's forwarding rule to everything but PSC consumers.
+    Envoy-based load balancers admit every client in the network, peered
+    networks, and hybrid links when no Cloud NGFW rule targets them, so
+    without this the VIP is reachable from the whole producer VPC alongside
+    the PSC path. When set, the module adds two rules to an existing regional
+    network firewall policy that the caller owns and has associated with
+    `network` in `region`: an allow from the PSC NAT subnets (plus
+    allowed_source_ranges) on the frontend port at `priority`, and a logged
+    deny for every other source at `priority + 1`. Both target only this
+    forwarding rule, so producers sharing a network and policy coexist as
+    long as their priorities differ. `project` is the policy's project,
+    defaulting to `project`; set it to the host project when `network` is a
+    Shared VPC. Null (the default) adds no rules.
+  EOT
+  type = object({
+    policy                = string
+    priority              = number
+    project               = optional(string)
+    allowed_source_ranges = optional(list(string), [])
+  })
+  default = null
+
+  validation {
+    condition     = var.lb_firewall == null || (var.lb_firewall.priority >= 0 && var.lb_firewall.priority < 2147483547 && floor(var.lb_firewall.priority) == var.lb_firewall.priority)
+    error_message = "lb_firewall.priority must be an integer from 0 to 2147483546, leaving priority + 1 for the deny rule below Google's reserved range."
+  }
 }

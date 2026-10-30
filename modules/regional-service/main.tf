@@ -181,6 +181,9 @@ resource "google_cloud_run_v2_service" "this" {
   launch_stage = var.launch_stage
   iap_enabled  = local.iap_enabled
 
+  // null (not false) when unset so existing callers see no diff.
+  default_uri_disabled = var.default_uri_disabled ? true : null
+
   depends_on = [google_project_service_identity.iap]
 
   // null (not []) when unset so existing callers see no diff.
