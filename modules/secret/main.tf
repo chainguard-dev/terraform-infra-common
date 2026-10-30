@@ -97,15 +97,6 @@ locals {
         protoPayload.methodName=(${join(" OR ", [for m in local.version_management_methods : "\"${m}\""])})
       )
 %{endif~}
-%{if var.create_placeholder_version~}
-      -- Terraform reads the placeholder version's payload on every refresh, as
-      -- whoever applies this module. Its value is the literal "placeholder",
-      -- so reading it, and only it, is never abnormal.
-      -(
-        protoPayload.request.name=("projects/${var.project_id}/secrets/${var.name}/versions/${google_secret_manager_secret_version.placeholder[0].version}" OR "projects/${data.google_project.project.number}/secrets/${var.name}/versions/${google_secret_manager_secret_version.placeholder[0].version}")
-        protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
-      )
-%{endif~}
       -- Ignore benign secret actions. ListSecretVersions and GetSecretVersion
       -- only return version metadata (not the secret payload), so we don't care
       -- who calls them.
