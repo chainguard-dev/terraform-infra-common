@@ -1,0 +1,240 @@
+#!/usr/bin/env bash
+
+# Copyright 2026 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Anything this script writes (the DER copy of the key) is for the operator's
+# eyes only.
+umask 077
+
+readonly prog=import-github-app-key
+# The algorithm GitHub App private keys use, as the KMS API and gcloud spell it.
+readonly algorithm=RSA_SIGN_PKCS1_2048_SHA256
+readonly gcloud_algorithm=rsa-sign-pkcs1-2048-sha256
+# How long to wait for KMS to activate the import job and to enable the
+# imported version. Import jobs take seconds to a few minutes to activate.
+readonly poll_seconds=5
+readonly poll_attempts=60
+
+usage() {
+  cat <<'EOF'
+Import a GitHub App private key into an import-only Cloud KMS key.
+
+Usage: import-github-app-key <private-key.pem> <key>
+
+  <private-key.pem>  The private key downloaded from the App's settings page.
+                     Deleted once the imported version is ENABLED; kept if
+                     anything fails, so the import can be retried.
+  <key>              The Cloud KMS key resource name, as Terraform's
+                     google_kms_crypto_key id:
+                     projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>
+
+The key must be an import-only ASYMMETRIC_SIGN key with algorithm
+RSA_SIGN_PKCS1_2048_SHA256. Each run imports a new key version, so rotating
+the App's key is another run with the new PEM.
+
+On success, prints the new key version number (the N that the stack's
+gcpkms://.../cryptoKeyVersions/N key URI needs) and the key's SHA256
+fingerprint, to compare with the one GitHub lists on the App's settings page.
+
+Requires gcloud, with the Python cryptography package installed for gcloud's
+Python, and openssl.
+EOF
+}
+
+die() {
+  echo "${prog}: $*" >&2
+  exit 1
+}
+
+log() {
+  echo "${prog}: $*" >&2
+}
+
+# Deletes a file holding key material. shred overwrites the file before
+# unlinking it where it is installed; on copy-on-write filesystems and SSDs
+# that is best effort, which is why the DER copy lives no longer than the run.
+# -f lets shred overwrite a PEM the operator has made read-only.
+wipe() {
+  if command -v shred >/dev/null 2>&1; then
+    shred -fu -- "$@"
+  else
+    rm -f -- "$@"
+  fi
+}
+
+# parse_key_name NAME sets project, location, ring and key from a KMS key
+# resource name, or fails.
+parse_key_name() {
+  local re='^projects/([^/]+)/locations/([^/]+)/keyRings/([^/]+)/cryptoKeys/([^/]+)$'
+  [[ "$1" =~ ${re} ]] || return 1
+  project=${BASH_REMATCH[1]}
+  location=${BASH_REMATCH[2]}
+  ring=${BASH_REMATCH[3]}
+  key=${BASH_REMATCH[4]}
+}
+
+# fingerprint prints the base64 SHA256 of a DER SubjectPublicKeyInfo read from
+# a PEM public key on stdin, the form GitHub lists as SHA256:<fingerprint>.
+fingerprint() {
+  openssl rsa -pubin -pubout -outform DER 2>/dev/null | openssl sha256 -binary | base64
+}
+
+case "${1:-}" in
+-h | --help)
+  usage
+  exit 0
+  ;;
+*) ;;
+esac
+if (($# != 2)); then
+  usage >&2
+  exit 2
+fi
+pem=$1
+key_name=$2
+
+parse_key_name "${key_name}" ||
+  die "${key_name} is not a key resource name; want projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>"
+kms_flags=(--project="${project}" --location="${location}" --keyring="${ring}")
+
+for tool in gcloud openssl; do
+  command -v "${tool}" >/dev/null 2>&1 || die "${tool} is not on PATH"
+done
+
+[[ -f "${pem}" && -r "${pem}" ]] || die "cannot read ${pem}"
+# Only the public half is ever printed as text; the empty passphrase makes an
+# encrypted key fail rather than prompt.
+public_pem=$(openssl rsa -in "${pem}" -passin pass: -pubout 2>/dev/null </dev/null) ||
+  die "${pem} is not an RSA private key"
+public_text=$(openssl rsa -pubin -noout -text <<<"${public_pem}" 2>/dev/null)
+[[ "${public_text}" == *"Public-Key: (2048 bit)"* ]] ||
+  die "${pem} is not a 2048-bit RSA key, which every GitHub App private key is"
+want_fingerprint=$(fingerprint <<<"${public_pem}")
+
+# gcloud wraps the key for import locally, which needs cryptography in the
+# Python that gcloud runs on.
+gcloud_python=$(gcloud info --format='value(basic.python_location)')
+"${gcloud_python}" -c 'import cryptography' >/dev/null 2>&1 ||
+  die "gcloud's Python lacks the cryptography package; install it with:
+  \"${gcloud_python}\" -m pip install --user cryptography"
+
+key_info=$(gcloud kms keys describe "${key}" "${kms_flags[@]}" \
+  --format='value[separator=","](purpose,importOnly,versionTemplate.algorithm,versionTemplate.protectionLevel)') ||
+  die "cannot describe ${key_name}"
+IFS=, read -r purpose import_only key_algorithm protection_level <<<"${key_info}"
+[[ "${purpose}" == ASYMMETRIC_SIGN ]] || die "${key_name} has purpose ${purpose:-unset}, want ASYMMETRIC_SIGN"
+[[ "${import_only}" == True ]] || die "${key_name} is not import_only"
+[[ "${key_algorithm}" == "${algorithm}" ]] || die "${key_name} has algorithm ${key_algorithm:-unset}, want ${algorithm}"
+case "${protection_level}" in
+SOFTWARE | HSM) ;;
+*) die "${key_name} has protection level ${protection_level:-unset}, want SOFTWARE or HSM" ;;
+esac
+
+work=$(mktemp -d "${TMPDIR:-/tmp}/${prog}.XXXXXX")
+der="${work}/key.der"
+# version_name is set once KMS has created a version from the PEM. A failure
+# after that point leaves a version that may yet hold the key, and a re-run
+# would import another one beside it.
+version_name=
+imported=false
+cleanup() {
+  local status=$?
+  [[ ! -e "${der}" ]] || wipe "${der}"
+  rm -rf -- "${work}"
+  if ((status == 0)) || [[ "${imported}" == true ]]; then
+    return 0
+  fi
+  if [[ -n "${version_name}" ]]; then
+    log "kept ${pem}; KMS already has ${version_name}. If it is ENABLED with public key SHA256:${want_fingerprint}, point the stack at it; re-running would import another version"
+  else
+    log "kept ${pem}; re-run to retry, or delete it if you are giving up"
+  fi
+}
+trap cleanup EXIT
+# Exit through the EXIT trap on these signals too, so the DER copy goes however
+# the run ends.
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Each run gets its own import job: a job cannot import once it expires, and
+# its name stays taken after that, so a fixed name would fail on the next
+# rotation.
+job="${key:0:36}-$(date -u +%Y%m%dt%H%M%Sz)-${RANDOM}"
+log "creating import job ${job}"
+gcloud kms import-jobs create "${job}" "${kms_flags[@]}" \
+  --import-method=rsa-oaep-4096-sha256-aes-256 \
+  --protection-level="$(tr '[:upper:]' '[:lower:]' <<<"${protection_level}")" \
+  --format='value(name)' >/dev/null
+
+log "waiting for import job ${job} to be ACTIVE"
+state=
+for ((i = 0; i < poll_attempts; i++)); do
+  state=$(gcloud kms import-jobs describe "${job}" "${kms_flags[@]}" --format='value(state)')
+  [[ "${state}" != ACTIVE ]] || break
+  sleep "${poll_seconds}"
+done
+[[ "${state}" == ACTIVE ]] || die "import job ${job} is ${state:-unknown}, not ACTIVE, after $((poll_seconds * poll_attempts))s"
+
+openssl pkcs8 -topk8 -nocrypt -inform PEM -outform DER -in "${pem}" -out "${der}" 2>/dev/null </dev/null ||
+  die "cannot convert ${pem} to PKCS#8 DER"
+
+log "importing into ${key_name}"
+created=$(CLOUDSDK_PYTHON_SITEPACKAGES=1 gcloud kms keys versions import \
+  --key="${key}" "${kms_flags[@]}" \
+  --import-job="${job}" \
+  --algorithm="${gcloud_algorithm}" \
+  --target-key-file="${der}" \
+  --format='value(name)') ||
+  die "import into ${key_name} failed"
+version_name=${created}
+wipe "${der}"
+version=${version_name##*/}
+[[ "${version}" =~ ^[0-9]+$ ]] || die "gcloud reported an unexpected key version name: ${version_name}"
+log "waiting for version ${version} to be ENABLED"
+
+for ((i = 0; i < poll_attempts; i++)); do
+  state=$(gcloud kms keys versions describe "${version}" --key="${key}" "${kms_flags[@]}" --format='value(state)')
+  case "${state}" in
+  ENABLED | IMPORT_FAILED) break ;;
+  *) sleep "${poll_seconds}" ;;
+  esac
+done
+if [[ "${state}" == IMPORT_FAILED ]]; then
+  reason=$(gcloud kms keys versions describe "${version}" --key="${key}" "${kms_flags[@]}" --format='value(importFailureReason)')
+  # A version that failed to import never holds the key, so re-running is
+  # how to retry.
+  version_name=
+  die "version ${version} failed to import: ${reason:-no reason given}"
+fi
+[[ "${state}" == ENABLED ]] || die "version ${version} is ${state:-unknown}, not ENABLED, after $((poll_seconds * poll_attempts))s"
+
+got_fingerprint=$(gcloud kms keys versions get-public-key "${version}" --key="${key}" "${kms_flags[@]}" | fingerprint)
+[[ "${got_fingerprint}" == "${want_fingerprint}" ]] ||
+  die "version ${version} holds public key SHA256:${got_fingerprint}, but ${pem} has SHA256:${want_fingerprint}"
+
+# KMS holds the key from here on, and a re-run would import another version,
+# so a PEM that cannot be deleted is left for the operator rather than failing
+# the run before it prints the version.
+imported=true
+if wipe "${pem}"; then
+  log "deleted ${pem}"
+else
+  log "imported, but could not delete ${pem}; delete it by hand"
+fi
+
+cat <<EOF
+key version: ${version}
+fingerprint: SHA256:${got_fingerprint}
+
+Check that the App's settings page lists this fingerprint, then point the
+stack's gcpkms:// key URI at
+  ${key_name}/cryptoKeyVersions/${version}
+When rotating, delete the old key on GitHub and disable the old key version
+once the services sign with version ${version}.
+EOF

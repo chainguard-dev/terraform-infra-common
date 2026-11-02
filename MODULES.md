@@ -96,6 +96,12 @@ Create a Google Service Account that GitHub Actions can assume via Workload Iden
 
 Use this when a specific GitHub Actions workflow needs to authenticate as a GCP service account.
 
+### [`github-app-signing-key`](./modules/github-app-signing-key/)
+
+Create an import-only Cloud KMS key that holds a GitHub App's private key, with signer access for one service account, and import the key GitHub generates with the script beside the module.
+
+Use this when a service authenticates as its own GitHub App and should sign the App's JWTs in Cloud KMS rather than hold the private key.
+
 ## External Integrations
 
 ### [`linear-events`](./modules/linear-events/)
