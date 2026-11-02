@@ -153,16 +153,13 @@ No modules.
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | GCE API deletion protection flag. When true, prevents instance deletion via the API. | `bool` | `true` | no |
 | <a name="input_dev_principals"></a> [dev\_principals](#input\_dev\_principals) | IAM principals (users, groups, or service accounts) granted OS Login & Cloud SQL access. | `list(string)` | n/a | yes |
 | <a name="input_enable_nat"></a> [enable\_nat](#input\_enable\_nat) | Whether to create a dedicated Cloud NAT router for outbound egress. Disable when VPC already has NAT. | `bool` | `true` | no |
-| <a name="input_enable_osconfig"></a> [enable\_osconfig](#input\_enable\_osconfig) | Whether to set enable-osconfig on the instance, which the OS Config agent needs to run the weekly patch deployment when the project's metadata does not set it. | `bool` | `false` | no |
 | <a name="input_extra_sa_roles"></a> [extra\_sa\_roles](#input\_extra\_sa\_roles) | Additional IAM roles to bind to the bastion's service account. | `list(string)` | `[]` | no |
 | <a name="input_install_sql_proxy"></a> [install\_sql\_proxy](#input\_install\_sql\_proxy) | Whether to install the Cloud SQL Auth Proxy binary and grant associated IAM permissions. | `bool` | `false` | no |
 | <a name="input_machine_type"></a> [machine\_type](#input\_machine\_type) | Compute Engine machine type for the bastion. | `string` | `"e2-micro"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name prefix for all resources (also used as network tag). | `string` | n/a | yes |
 | <a name="input_network"></a> [network](#input\_network) | VPC network self-link or name the bastion joins. | `string` | n/a | yes |
-| <a name="input_network_ip"></a> [network\_ip](#input\_network\_ip) | Internal IPv4 address for the bastion's network interface, such as a reserved static internal address. Null lets Compute Engine assign an ephemeral one. | `string` | `null` | no |
 | <a name="input_patch_day"></a> [patch\_day](#input\_patch\_day) | Day of week (in UTC) when OS Config patching runs. | `string` | `"MONDAY"` | no |
 | <a name="input_patch_time_utc"></a> [patch\_time\_utc](#input\_patch\_time\_utc) | Time of day in HH:MM (UTC) when patching runs. | `string` | `"03:00"` | no |
-| <a name="input_pre_startup_script"></a> [pre\_startup\_script](#input\_pre\_startup\_script) | Startup script snippet that runs first on every boot, before the module's own steps that need the network (package installs). Use it for settings that must not wait on those steps. | `string` | `""` | no |
 | <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project in which to deploy the bastion host. | `string` | n/a | yes |
 | <a name="input_resource_manager_tags"></a> [resource\_manager\_tags](#input\_resource\_manager\_tags) | Resource Manager tags to bind to the bastion instance, as tagKeys/<id> => tagValues/<id>. | `map(string)` | `{}` | no |

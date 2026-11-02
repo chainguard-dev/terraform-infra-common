@@ -30,7 +30,7 @@ locals {
 
 module "request_count" {
   source = "../../widgets/xy"
-  title  = "Incoming request count"
+  title  = "Request count"
   filter = concat(local.filter, [
     "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
     "resource.type=\"prometheus_target\"",
@@ -44,6 +44,20 @@ module "request_count" {
   primary_reduce = "REDUCE_SUM"
 }
 
+module "failure_rate" {
+  source = "../../widgets/percent"
+  title  = "Request failure rate"
+  legend = "Non-[${join("|", var.grpc_non_error_codes)}] responses / All responses"
+
+  common_filter = concat(local.filter, [
+    "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
+    "resource.type=\"prometheus_target\"",
+  ])
+  numerator_additional_filter = [
+    "metric.label.\"grpc_code\"!=monitoring.regex.full_match(\"${join("|", var.grpc_non_error_codes)}\")"
+  ]
+}
+
 module "incoming_latency" {
   source = "../../widgets/latency"
   title  = "Incoming request latency"
@@ -55,24 +69,6 @@ module "incoming_latency" {
     "metric.label.\"grpc_service\"",
     "metric.label.\"grpc_method\"",
   ]
-}
-
-// Each failing code is charted as its share of all requests, stacked so the
-// top of the stack is the overall failure rate.
-module "incoming_failure_rate" {
-  source    = "../../widgets/percent"
-  title     = "Incoming request failure rate"
-  legend    = "$${metric.labels.grpc_code}"
-  plot_type = "STACKED_AREA"
-
-  common_filter = concat(local.filter, [
-    "metric.type=\"prometheus.googleapis.com/grpc_server_handled_total/counter\"",
-    "resource.type=\"prometheus_target\"",
-  ])
-  numerator_additional_filter = [
-    "metric.label.\"grpc_code\"!=monitoring.regex.full_match(\"${join("|", var.grpc_non_error_codes)}\")"
-  ]
-  numerator_group_by_fields = ["metric.label.\"grpc_code\""]
 }
 
 module "outbound_request_count" {
@@ -104,50 +100,47 @@ module "outbound_latency" {
   ]
 }
 
-module "outbound_failure_rate" {
-  source    = "../../widgets/percent"
-  title     = "Outbound request failure rate"
-  legend    = "$${metric.labels.grpc_code}"
-  plot_type = "STACKED_AREA"
-
-  common_filter = concat(local.filter, [
-    "metric.type=\"prometheus.googleapis.com/grpc_client_handled_total/counter\"",
-    "resource.type=\"prometheus_target\"",
-  ])
-  numerator_additional_filter = [
-    "metric.label.\"grpc_code\"!=monitoring.regex.full_match(\"${join("|", var.grpc_non_error_codes)}\")"
-  ]
-  numerator_group_by_fields = ["metric.label.\"grpc_code\""]
-}
-
 locals {
-  // One row per direction: count, latency, failure rate.
-  columns = 3
+  columns = 2
   unit    = module.width.size / local.columns
-  // Keep the height of the old two-column grid; a square tile at a third of
-  // the width is too short to read charts with many series.
-  height = module.width.size / 2
 
   // https://www.terraform.io/language/functions/range
   // N columns, unit width each  ([0, unit, 2 * unit, ...])
   col = range(0, local.columns * local.unit, local.unit)
 
-  rows = [
-    [module.request_count.widget, module.incoming_latency.widget, module.incoming_failure_rate.widget],
-    [module.outbound_request_count.widget, module.outbound_latency.widget, module.outbound_failure_rate.widget],
+  tiles = [
+    {
+      yPos   = 0
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.request_count.widget,
+      }, {
+      yPos   = 0
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.incoming_latency.widget,
+      }, {
+      yPos   = local.unit
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.outbound_request_count.widget,
+      }, {
+      yPos   = local.unit
+      xPos   = local.col[1],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.outbound_latency.widget,
+      }, {
+      yPos   = local.unit * 2
+      xPos   = local.col[0],
+      height = local.unit,
+      width  = local.unit,
+      widget = module.failure_rate.widget,
+    },
   ]
-
-  tiles = flatten([
-    for y, row in local.rows : [
-      for x, widget in row : {
-        yPos   = y * local.height
-        xPos   = local.col[x]
-        height = local.height
-        width  = local.unit
-        widget = widget
-      }
-    ]
-  ])
 }
 
 module "collapsible" {

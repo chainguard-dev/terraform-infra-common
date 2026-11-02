@@ -47,17 +47,11 @@ type PayloadInfo struct {
 	} `json:"check_run"`
 	CheckSuite checkSuiteInfo `json:"check_suite"`
 	Comment    struct {
-		ID   int `json:"id,omitempty"`
-		User struct {
-			Type string `json:"type,omitempty"`
-		} `json:"user"`
+		ID int `json:"id,omitempty"`
 	} `json:"comment"`
 	Review struct {
 		ID int `json:"id,omitempty"`
 	} `json:"review"`
-	Sender struct {
-		Type string `json:"type,omitempty"`
-	} `json:"sender"`
 	Label struct {
 		Name string `json:"name,omitempty"`
 	} `json:"label"`
@@ -240,12 +234,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		event.SetExtension("headbranch", headBranch)
 	}
 
-	// Add actortype extension so consumers can skip events written by bots,
-	// for example a bot's own comments.
-	if actorType := extractActorType(info); actorType != "" {
-		event.SetExtension("actortype", actorType)
-	}
-
 	// Add label extension (the label added or removed) for labeled and
 	// unlabeled events, so consumers can subscribe to a single label rather
 	// than every label change.
@@ -391,16 +379,6 @@ func extractHeadBranch(eventType string, info PayloadInfo) string {
 		}
 	}
 	return ""
-}
-
-// extractActorType returns the account type GitHub reports for whoever wrote
-// the comment, or for whoever triggered the event when there is no comment
-// ("User", "Bot", and so on). It is empty when the payload names neither.
-func extractActorType(info PayloadInfo) string {
-	if t := info.Comment.User.Type; t != "" {
-		return t
-	}
-	return info.Sender.Type
 }
 
 // extractLabel returns the name of the label a labeled or unlabeled

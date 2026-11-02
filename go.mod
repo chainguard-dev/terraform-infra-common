@@ -7,7 +7,7 @@ require (
 	chainguard.dev/sdk v0.1.56
 	cloud.google.com/go/bigquery v1.83.0
 	cloud.google.com/go/compute/metadata v0.10.0
-	cloud.google.com/go/memorystore v1.6.0
+	cloud.google.com/go/memorystore v1.3.0
 	cloud.google.com/go/profiler v0.6.0
 	cloud.google.com/go/pubsub/v2 v2.7.0
 	cloud.google.com/go/storage v1.67.0
@@ -25,7 +25,7 @@ require (
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/mileusna/useragent v1.3.5
 	github.com/prometheus/client_golang v1.25.0
-	github.com/redis/go-redis/v9 v9.23.0
+	github.com/redis/go-redis/v9 v9.22.0
 	github.com/sethvargo/go-envconfig v1.4.3
 	github.com/shirou/gopsutil/v4 v4.26.8
 	github.com/snabb/httpreaderat v1.0.4
@@ -124,7 +124,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.45.0 // indirect
 	go.opentelemetry.io/otel/log v1.47.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
-	go.uber.org/atomic v1.12.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect

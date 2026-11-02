@@ -59,9 +59,6 @@ locals {
     SCRIPT
     ,
 
-    // Runs before anything that needs the network.
-    var.pre_startup_script,
-
     <<-AUDIT
       apt-get update -y
       apt-get install -y auditd
@@ -120,7 +117,6 @@ resource "google_compute_instance" "bastion" {
     network            = var.network
     subnetwork         = var.subnetwork
     subnetwork_project = var.project_id
-    network_ip         = var.network_ip
   }
 
   service_account {
@@ -134,14 +130,11 @@ resource "google_compute_instance" "bastion" {
     )
   }
 
-  metadata = merge(
-    {
-      enable-oslogin         = "TRUE"
-      block-project-ssh-keys = "TRUE"
-      enable-oslogin-2fa     = "TRUE"
-    },
-    var.enable_osconfig ? { enable-osconfig = "TRUE" } : {},
-  )
+  metadata = {
+    enable-oslogin         = "TRUE"
+    block-project-ssh-keys = "TRUE"
+    enable-oslogin-2fa     = "TRUE"
+  }
 
   metadata_startup_script = local.bastion_startup
 

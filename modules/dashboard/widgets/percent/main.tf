@@ -15,11 +15,6 @@ variable "group_by_fields" {
   type    = list(string)
   default = []
 }
-variable "numerator_group_by_fields" {
-  description = "Overrides group_by_fields for the numerator only, to split the ratio by labels the denominator sums over (for example, failures by status code over all requests). The denominator's group_by_fields must be a subset of these."
-  type        = list(string)
-  default     = null
-}
 variable "numerator_additional_filter" { type = list(string) }
 variable "common_filter" { type = list(string) }
 variable "plot_type" {
@@ -56,7 +51,7 @@ module "plot" {
   alignment_period            = var.alignment_period
   thresholds                  = var.thresholds
   numerator_align             = var.align
-  numerator_group_by_fields   = var.numerator_group_by_fields != null ? var.numerator_group_by_fields : var.group_by_fields
+  numerator_group_by_fields   = var.group_by_fields
   numerator_reduce            = var.reduce
   denominator_align           = var.align
   denominator_group_by_fields = var.group_by_fields

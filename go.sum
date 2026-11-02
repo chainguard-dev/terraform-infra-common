@@ -23,8 +23,8 @@ cloud.google.com/go/logging v1.19.0 h1:NCqhdVUg3wQ8Cobdf16FDSuTGi3+6+hdSBHrY5TsR
 cloud.google.com/go/logging v1.19.0/go.mod h1:i40NZCHC9Gqvod4yE+yQfDWwlgwW/SrshkkGibCHxcA=
 cloud.google.com/go/longrunning v1.2.0 h1:WjYH3YHBGCxGJP9M4dWGHBfXr/cFIjMkNgWcJj7/iMM=
 cloud.google.com/go/longrunning v1.2.0/go.mod h1:5KMQALFGOCtFoi2xSOA1u3H7WKlhmckgiyFw7+LGQp0=
-cloud.google.com/go/memorystore v1.6.0 h1:HsU8QRGcSU76i6vdHwF228t2fBXtsX9feA03CkGBmT0=
-cloud.google.com/go/memorystore v1.6.0/go.mod h1:j+vCWfcmjK15DOWwmRurekFBdQuJlTTKHgIpQla8WVw=
+cloud.google.com/go/memorystore v1.3.0 h1:HpDHpZKE9gem8pczxS5jSARFuX9oYCmFhEtOn5TYCVo=
+cloud.google.com/go/memorystore v1.3.0/go.mod h1:OwfFbFDuKq9ptNKeb2PKl/LvO9QhhDsjgqV9dv9OyNk=
 cloud.google.com/go/monitoring v1.30.0 h1:r/d+JUbyKmJ8b07iznuKfzVzrIXTWxHQ3lBRm3x2LlY=
 cloud.google.com/go/monitoring v1.30.0/go.mod h1:htlUR0QWVMrjFzZmN4LGnMAve9xB/eduwjmINxVZ8RM=
 cloud.google.com/go/profiler v0.6.0 h1:Vwxqgnp8CQwBNcKjO8luwLCh7qblEkcZCtMUvhU9Yik=
@@ -287,8 +287,8 @@ github.com/prometheus/otlptranslator v1.0.0 h1:s0LJW/iN9dkIH+EnhiD3BlkkP5QVIUVEo
 github.com/prometheus/otlptranslator v1.0.0/go.mod h1:vRYWnXvI6aWGpsdY/mOT/cbeVRBlPWtBNDb7kGR3uKM=
 github.com/prometheus/procfs v0.22.0 h1:6q9+/JL9IKAPbCmBrv9n5O5Ty3NKnciV5X7YGw0oics=
 github.com/prometheus/procfs v0.22.0/go.mod h1:CvmFr/GVhIjIvWJZW3tgkODBQMRIf0EyWMQLHCHab58=
-github.com/redis/go-redis/v9 v9.23.0 h1:/TTVdJa8BRNsybwwGGnmiYktHNlUXtbOQxlWpHBPL3s=
-github.com/redis/go-redis/v9 v9.23.0/go.mod h1:EWP2UUk+XDaI1s5nQB5mablZN6vccXlmBQTyfnF87D0=
+github.com/redis/go-redis/v9 v9.22.0 h1:laDvpYXTJtZLloinw1fA5Kqd6HAEH2XKxOkG/PDq2F0=
+github.com/redis/go-redis/v9 v9.22.0/go.mod h1:y2g0Wj8rQvuK0ELM+oxSudcLtC09JScs98I/X9gRWY4=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
@@ -361,8 +361,8 @@ go.opentelemetry.io/otel/trace v1.47.0 h1:JOjX/Oci8K94QHddo+bbfya/Ai/nf6/dt9ZfrF
 go.opentelemetry.io/otel/trace v1.47.0/go.mod h1:jNaSLa2PZEYFG6fRjJABAu+bw4FS08uDmPg28lTghu0=
 go.opentelemetry.io/proto/otlp v1.11.0 h1:5rrYs0Ykyj50sdU/JU0x8etU+LubXWb+gED6TbEdMIk=
 go.opentelemetry.io/proto/otlp v1.11.0/go.mod h1:SmVizdCOAm3XBtG1g1NnOdhW6jtddT72hLMhv8VwA8E=
-go.uber.org/atomic v1.12.0 h1:BvcXdFKuviU4fTL/f+SxdQ5qJX/Jix8pAkgdUcb3XOE=
-go.uber.org/atomic v1.12.0/go.mod h1:I6c4cg+6HCxRjfjSsYtApoFILnpc0CGUdGkXVqbYVNk=
+go.uber.org/atomic v1.11.0 h1:ZvwS0R+56ePWxUNi+Atn9dWONBPp/AUETXlHW0DxSjE=
+go.uber.org/atomic v1.11.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/multierr v1.11.0 h1:blXXJkSxSSfBVBlC76pxqeO+LN3aDfLQo+309xJstO0=
