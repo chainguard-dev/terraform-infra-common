@@ -28,6 +28,12 @@ variable "subnetwork" {
   type        = string
 }
 
+variable "network_ip" {
+  description = "Internal IPv4 address for the bastion's network interface, such as a reserved static internal address. Null lets Compute Engine assign an ephemeral one."
+  type        = string
+  default     = null
+}
+
 variable "dev_principals" {
   description = "IAM principals (users, groups, or service accounts) granted OS Login & Cloud SQL access."
   type        = list(string)
@@ -54,6 +60,12 @@ variable "enable_nat" {
   description = "Whether to create a dedicated Cloud NAT router for outbound egress. Disable when VPC already has NAT."
   type        = bool
   default     = true
+}
+
+variable "enable_osconfig" {
+  description = "Whether to set enable-osconfig on the instance, which the OS Config agent needs to run the weekly patch deployment when the project's metadata does not set it."
+  type        = bool
+  default     = false
 }
 
 variable "patch_day" {
@@ -90,6 +102,12 @@ variable "install_sql_proxy" {
 
 variable "startup_script" {
   description = "additional startup script snippet to execute on bastion."
+  type        = string
+  default     = ""
+}
+
+variable "pre_startup_script" {
+  description = "Startup script snippet that runs first on every boot, before the module's own steps that need the network (package installs). Use it for settings that must not wait on those steps."
   type        = string
   default     = ""
 }
