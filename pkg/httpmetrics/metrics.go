@@ -36,6 +36,7 @@ import (
 	prometheusexporter "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -104,6 +105,16 @@ func SetupMetrics(ctx context.Context) func() {
 
 	provider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(exporter),
+		// Prometheus normalizes the OTel name to the native transport histogram's
+		// name, but their conflicting HELP text breaks collection.
+		// Keep the native metric's dashboard contract and export OTel separately.
+		sdkmetric.WithView(sdkmetric.NewView(
+			sdkmetric.Instrument{
+				Name:  "http.client.request.duration",
+				Scope: instrumentation.Scope{Name: otelhttp.ScopeName},
+			},
+			sdkmetric.Stream{Name: "otel.http.client.request.duration"},
+		)),
 	)
 	otel.SetMeterProvider(provider)
 
