@@ -32,3 +32,13 @@ output "cluster_pod_ipv4_cidr_block" {
   description = "The cluster's pod secondary IPv4 CIDR range (ip_allocation_policy.cluster_ipv4_cidr_block)."
   value       = google_container_cluster.this.ip_allocation_policy[0].cluster_ipv4_cidr_block
 }
+
+output "logging_components" {
+  description = "The components the cluster's logging_config enables, read from the rendered cluster. Null when logging_components is unset and GKE's default applies."
+  value       = one(google_container_cluster.this.logging_config[*].enable_components)
+}
+
+output "monitoring_components" {
+  description = "The components the cluster's monitoring_config enables, read from the rendered cluster."
+  value       = one(google_container_cluster.this.monitoring_config[*].enable_components)
+}

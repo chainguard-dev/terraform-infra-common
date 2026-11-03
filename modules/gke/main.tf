@@ -290,8 +290,18 @@ resource "google_container_cluster" "this" {
     }
   }
 
+  # Null leaves logging_config out of the request, so GKE's default applies
+  # and a plan never shows drift from it. A list pins the components and makes
+  # any difference from the live cluster visible in the plan.
+  dynamic "logging_config" {
+    for_each = var.logging_components == null ? [] : [var.logging_components]
+    content {
+      enable_components = logging_config.value
+    }
+  }
+
   monitoring_config {
-    enable_components = ["SYSTEM_COMPONENTS", "APISERVER", "SCHEDULER", "CONTROLLER_MANAGER", "STORAGE", "POD"]
+    enable_components = var.monitoring_components
     managed_prometheus { enabled = true }
 
     dynamic "advanced_datapath_observability_config" {

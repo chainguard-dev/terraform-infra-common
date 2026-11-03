@@ -357,6 +357,26 @@ variable "resource_usage_export_config" {
   default = {}
 }
 
+variable "logging_components" {
+  type        = list(string)
+  default     = null
+  description = "GKE components whose logs reach Cloud Logging (logging_config.enable_components), for example [\"SYSTEM_COMPONENTS\", \"WORKLOADS\"]. Null (the default) sends no logging_config, so GKE's default applies and Terraform does not plan drift from it."
+
+  validation {
+    condition = var.logging_components == null ? true : alltrue([
+      for c in var.logging_components : contains(["SYSTEM_COMPONENTS", "WORKLOADS", "APISERVER", "SCHEDULER", "CONTROLLER_MANAGER", "KCP_CONNECTION", "KCP_SSHD", "KCP_HPA"], c)
+    ])
+    error_message = "logging_components takes the GKE API names: SYSTEM_COMPONENTS, WORKLOADS, APISERVER, SCHEDULER, CONTROLLER_MANAGER, KCP_CONNECTION, KCP_SSHD, KCP_HPA."
+  }
+}
+
+variable "monitoring_components" {
+  type        = list(string)
+  default     = ["SYSTEM_COMPONENTS", "APISERVER", "SCHEDULER", "CONTROLLER_MANAGER", "STORAGE", "POD"]
+  nullable    = false
+  description = "GKE components whose metrics reach Cloud Monitoring (monitoring_config.enable_components). Null takes the default. Managed Prometheus stays enabled either way."
+}
+
 variable "advanced_datapath_observability_config" {
   description = "Config for Advanced Datapath Monitoring."
   type = object({
