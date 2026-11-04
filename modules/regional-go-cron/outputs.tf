@@ -29,7 +29,10 @@ output "execution_policy" {
   description = "Regional job VPC egress, execution bounds, and scheduler cadence."
   value = {
     for region, job in google_cloud_run_v2_job.this : region => {
-      egress      = one(job.template[0].template[0].vpc_access[*].egress)
+      egress = one(job.template[0].template[0].vpc_access[*].egress)
+      # Null with direct VPC egress; the provider stores an unset connector as
+      # an empty string after apply, so fold that back to null.
+      connector   = try(coalesce(one(job.template[0].template[0].vpc_access[*].connector)), null)
       timeout     = job.template[0].template[0].timeout
       max_retries = job.template[0].template[0].max_retries
       task_count  = job.template[0].task_count
