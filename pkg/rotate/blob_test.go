@@ -294,3 +294,49 @@ func TestBufferWriteToBucket(t *testing.T) {
 		t.Errorf("got %v, want %v", got, longEventLine)
 	}
 }
+
+func TestBufferWriteToBucketLongLine(t *testing.T) {
+	ctx := t.Context()
+	longLine := `{"data":"` + strings.Repeat("x", 6<<20) + `"}`
+	input := `{"a":1}` + "\n" + longLine + "\n\n" + `{"c":3}` + "\r\n" + `{"b":2}`
+	want := `{"a":1}` + "\n" + longLine + "\n" + `{"c":3}` + "\n" + `{"b":2}` + "\n"
+
+	src := filepath.Join(t.TempDir(), "events.json")
+	if err := os.WriteFile(src, []byte(input), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	bucket := memblob.OpenBucket(nil)
+	defer bucket.Close()
+
+	const dstKey = "testkey-dst"
+	writer, err := bucket.NewWriter(ctx, dstKey, nil)
+	if err != nil {
+		t.Fatalf("failed to create writer: %v", err)
+	}
+
+	u := &uploader{}
+	if err := u.BufferWriteToBucket(writer, src); err != nil {
+		t.Fatalf("BufferWriteToBucket: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := bucket.ReadAll(ctx, dstKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Lines only; a diff of the 6 MiB line would flood the log.
+	gotLines := strings.Split(string(got), "\n")
+	wantLines := strings.Split(want, "\n")
+	if len(gotLines) != len(wantLines) {
+		t.Fatalf("line count: got = %d, want = %d", len(gotLines), len(wantLines))
+	}
+	for i := range wantLines {
+		if gotLines[i] != wantLines[i] {
+			t.Errorf("line %d: got %d bytes with prefix %.20q, want %d bytes with prefix %.20q",
+				i, len(gotLines[i]), gotLines[i], len(wantLines[i]), wantLines[i])
+		}
+	}
+}
