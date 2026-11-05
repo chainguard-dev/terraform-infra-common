@@ -454,6 +454,22 @@ run "placeholder_read_is_exempt_only_for_its_version" {
   }
 }
 
+# Services that read these secrets compare the payload against this exact
+# literal to tell a bootstrapped secret from a real one, and refuse to start or
+# authorize on it. Changing the literal silently turns that refusal off, so
+# change it only together with every service that checks for it.
+run "placeholder_payload_is_the_literal_services_refuse" {
+  command = plan
+  variables {
+    create_placeholder_version = true
+  }
+
+  assert {
+    condition     = nonsensitive(google_secret_manager_secret_version.placeholder[0].secret_data) == "placeholder"
+    error_message = "the placeholder payload must stay \"placeholder\": services refuse that literal as an unset secret, and would accept any other value as real"
+  }
+}
+
 run "no_placeholder_no_placeholder_exemption" {
   command = plan
 
