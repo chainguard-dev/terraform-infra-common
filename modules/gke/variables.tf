@@ -96,14 +96,6 @@ variable "pools" {
     # GKE cannot change it on an existing pool, so changing it recreates
     # the pool.
     max_pods_per_node = optional(number, null)
-    # Most processes one pod on the pool may hold, enforced by the kubelet
-    # on each pod's cgroup (podPidsLimit). Null (the default) emits no
-    # kubelet_config and leaves GKE's default, which bounds nothing a pod
-    # can hit. Set it on a pool that runs untrusted code so a fork bomb
-    # ends at its pod and not at the node's pid space; GKE accepts 1024 to
-    # 4194304. Changing it is a kubelet config update, which GKE applies
-    # by re-creating the pool's nodes under its upgrade settings.
-    pod_pids_limit = optional(number, null)
     guest_accelerator = optional(list(object({
       type  = string
       count = number
@@ -206,11 +198,6 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : try(p.max_pods_per_node >= 8 && p.max_pods_per_node <= 512 && floor(p.max_pods_per_node) == p.max_pods_per_node, p.max_pods_per_node == null)])
     error_message = "max_pods_per_node must be null or an integer from 8 to 512, GKE's bounds for a Standard node pool."
-  }
-
-  validation {
-    condition     = alltrue([for name, p in var.pools : try(p.pod_pids_limit >= 1024 && p.pod_pids_limit <= 4194304 && floor(p.pod_pids_limit) == p.pod_pids_limit, p.pod_pids_limit == null)])
-    error_message = "pod_pids_limit must be null or an integer from 1024 to 4194304, GKE's bounds for a pod pids limit."
   }
 
   validation {
