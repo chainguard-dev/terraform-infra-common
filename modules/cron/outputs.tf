@@ -7,6 +7,6 @@ output "id" {
 }
 
 output "invocation_grants" {
-  description = "Job invocation bindings managed by this module, keyed by region; excludes inherited and out-of-band IAM grants."
+  description = "Job invocation bindings managed by this module, keyed by region. Excludes inherited and out-of-band IAM grants."
   value       = module.impl.invocation_grants
 }

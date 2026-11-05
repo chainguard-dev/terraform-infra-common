@@ -21,7 +21,7 @@ output "job_ids" {
 }
 
 output "invocation_grants" {
-  description = "Job invocation bindings managed by this module, keyed by region; excludes inherited and out-of-band IAM grants."
+  description = "Job invocation bindings managed by this module, keyed by region. Excludes inherited and out-of-band IAM grants."
   value = {
     for region, grant in google_cloud_run_v2_job_iam_binding.authorize-calls : region => {
       project   = grant.project

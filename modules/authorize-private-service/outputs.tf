@@ -4,7 +4,7 @@ output "uri" {
 }
 
 output "invocation_grant" {
-  description = "Service invocation grant managed by this module; excludes inherited and out-of-band IAM grants."
+  description = "Service invocation grant managed by this module. Excludes inherited and out-of-band IAM grants."
   value = {
     project   = google_cloud_run_v2_service_iam_member.authorize-calls.project
     location  = google_cloud_run_v2_service_iam_member.authorize-calls.location
