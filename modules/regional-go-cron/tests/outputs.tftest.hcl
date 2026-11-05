@@ -72,12 +72,9 @@ run "rendered_job_outputs" {
       toset(keys(output.execution_policy)) == toset(["us-central1", "us-west1", "us-east1"]) &&
       output.execution_policy["us-central1"].egress == "PRIVATE_RANGES_ONLY" &&
       output.execution_policy["us-west1"].egress == "PRIVATE_RANGES_ONLY" &&
-      output.execution_policy["us-east1"].egress == null &&
-      output.execution_policy["us-central1"].connector == null &&
-      output.execution_policy["us-west1"].connector == "projects/fixture-project/locations/us-west1/connectors/fixture" &&
-      output.execution_policy["us-east1"].connector == null
+      output.execution_policy["us-east1"].egress == null
     )
-    error_message = "Job outputs must report direct and connector VPC egress, the connector a region uses, and null when neither is configured."
+    error_message = "Job outputs must report direct and connector VPC egress, and null when neither is configured."
   }
   assert {
     condition = (

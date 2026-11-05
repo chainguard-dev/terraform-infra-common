@@ -60,8 +60,7 @@ run "public_service_outputs" {
       toset(keys(output.access_policy)) == toset(["us-central1", "us-west1"]) &&
       alltrue([for policy in output.access_policy : policy.public_invoker && policy.ingress == "INGRESS_TRAFFIC_ALL"]) &&
       output.access_policy["us-central1"].egress == "PRIVATE_RANGES_ONLY" &&
-      output.access_policy["us-west1"].egress == "ALL_TRAFFIC" &&
-      alltrue([for policy in output.access_policy : policy.connector == null])
+      output.access_policy["us-west1"].egress == "ALL_TRAFFIC"
     )
     error_message = "Public ingress without an authentication requirement must report its public IAM grant, with egress overrides confined to their region."
   }
@@ -81,21 +80,6 @@ run "authenticated_service_outputs" {
   assert {
     condition     = alltrue([for policy in output.access_policy : !policy.public_invoker])
     error_message = "An authentication requirement must suppress the reported public IAM grant."
-  }
-}
-
-# A region routed through a Serverless VPC Access connector reports it;
-# the others, on direct VPC egress, report null.
-run "connector_egress_outputs" {
-  command = plan
-  variables {
-    regional-connector = {
-      us-west1 = "projects/fixture-project/locations/us-west1/connectors/fixture"
-    }
-  }
-  assert {
-    condition     = output.access_policy["us-west1"].connector == "projects/fixture-project/locations/us-west1/connectors/fixture" && output.access_policy["us-central1"].connector == null
-    error_message = "access_policy must report the connector a region egresses through, and null for direct VPC egress."
   }
 }
 

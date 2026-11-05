@@ -32,10 +32,6 @@ output "access_policy" {
     for region, service in google_cloud_run_v2_service.this : region => {
       ingress = service.ingress
       egress  = service.template[0].vpc_access[0].egress
-      # The Serverless VPC Access connector the region egresses through, null
-      # with direct VPC egress. The provider stores an unset connector as an
-      # empty string after apply, so fold that back to null.
-      connector = try(coalesce(service.template[0].vpc_access[0].connector), null)
 
       public_invoker = contains(keys(google_cloud_run_v2_service_iam_member.public-services-are-unauthenticated), region)
     }

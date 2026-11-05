@@ -8,7 +8,6 @@ package rotate
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -216,20 +215,24 @@ func (u *uploader) BufferWriteToBucket(writer *blob.Writer, src string) (err err
 		}
 	}()
 
-	// One event per line, of any length; bufio.Scanner fails past its buffer cap.
-	r := bufio.NewReader(f)
-	for {
-		raw, rerr := r.ReadString('\n')
-		if line := strings.TrimSpace(raw); len(line) > 0 {
-			if _, err := writer.Write([]byte(line + "\n")); err != nil {
-				return err
-			}
+	s := bufio.NewScanner(f)
+	// Increase the buffer size. Here we set it to 5MB, this is because the default buffer size is 64KB and some
+	// log files that come from broker events can contain very long lines.
+	buf := make([]byte, 0, 1024*1024*5) // Initial size of 0, max size of 5MB
+	s.Buffer(buf, cap(buf))
+
+	for s.Scan() {
+		line := strings.TrimSpace(s.Text())
+		if len(line) == 0 {
+			continue
 		}
-		if errors.Is(rerr, io.EOF) {
-			return nil
-		}
-		if rerr != nil {
-			return fmt.Errorf("reading %s: %w", src, rerr)
+		if _, err := writer.Write([]byte(line + "\n")); err != nil {
+			return err
 		}
 	}
+	if s.Err() != nil {
+		return fmt.Errorf("bufio scan error: %w", s.Err())
+	}
+
+	return nil
 }
