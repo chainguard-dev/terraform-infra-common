@@ -20,6 +20,20 @@ output "job_ids" {
   value       = { for k, v in google_cloud_run_v2_job.this : k => v.id }
 }
 
+output "invocation_grants" {
+  description = "Job invocation bindings managed by this module, keyed by region; excludes inherited and out-of-band IAM grants."
+  value = {
+    for region, grant in google_cloud_run_v2_job_iam_binding.authorize-calls : region => {
+      project   = grant.project
+      location  = grant.location
+      name      = grant.name
+      role      = grant.role
+      members   = grant.members
+      condition = grant.condition
+    }
+  }
+}
+
 output "image_refs" {
   description = "The signed image reference for each container, keyed by container name. Computed by ko/cosign before the Cloud Run Job is updated, so stable during apply."
   value       = { for k, v in cosign_sign.this : k => v.signed_ref }

@@ -43,5 +43,6 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_invocation_grant"></a> [invocation\_grant](#output\_invocation\_grant) | Service invocation grant managed by this module; excludes inherited and out-of-band IAM grants. |
 | <a name="output_uri"></a> [uri](#output\_uri) | The URI of the private Cloud Run service. |
 <!-- END_TF_DOCS -->
