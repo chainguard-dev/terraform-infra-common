@@ -4,21 +4,17 @@
 spec:
   authorities:
     - keyless:
-        # allow commits signed by users using GitHub or Google OIDC
-        identities:
-          - issuer: https://accounts.google.com
-          - issuer: https://github.com/login/oauth
-          - issuer: https://token.actions.githubusercontent.com
-            subject: https://github.com/chainguard-dev/terraform-infra-common/.github/workflows/digest-bot.yaml@refs/heads/main
-    - keyless:
         url: https://fulcio.sigstore.dev
         identities:
-          - subjectRegExp: .+@chainguard.dev$
-            issuer: https://accounts.google.com
+          # Exported commits are signed by the publish workflow. STS policy changes are
+          # made directly on the public repo (docs/open-source rule 5); web-UI edits
+          # there are signed by GitHub's web-flow key below.
           - subject: https://github.com/chainguard-dev/mono/.github/workflows/open-source-publish.yaml@refs/heads/main
             issuer: https://token.actions.githubusercontent.com
       ctlog:
         url: https://rekor.sigstore.dev
     - key:
-        # allow commits signed by GitHub, e.g. the UI
+        # GitHub's web-flow key. It signs web-UI edits on the public repo
+        # (how STS policy changes land) and commits a GitHub App creates through
+        # the API.
         kms: https://github.com/web-flow.gpg
