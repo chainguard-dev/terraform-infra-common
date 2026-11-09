@@ -20,12 +20,12 @@ variable "serving_regions" {
 
 variable "dns_zone" {
   type        = string
-  description = "The managed DNS zone in which to create record sets."
+  description = "The existing managed DNS zone in project_id for the frontend address records."
 }
 
 variable "public-services" {
   description = <<EOF
-A map from hostnames (managed by dns_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname (unless certificate_map is set), and a DNS record set will be created for each hostname pointing to the load balancer's global IP address.
+A map from hostnames to the regionalized Cloud Run services to which requests should be routed. DNS records point each hostname to the load balancer's global IP addresses. A managed SSL certificate is created for each hostname unless certificate_map is set.
 
 external_managed_migration_state: The migration state for the load balancer, [PREPARE, TEST_BY_PERCENTAGE, and TEST_ALL_TRAFFIC].
 external_managed_migration_testing_percentage: The percentage of traffic to route to new load balancer, [0, 100].
@@ -62,7 +62,7 @@ EOF
 
 variable "buckets" {
   description = <<EOF
-A map from hostnames (managed by dns_zone) to Cloud Storage buckets the hostname serves: content comes straight from the bucket through a backend bucket, and through Cloud CDN by default, rather than from a Cloud Run service. A managed SSL certificate and a DNS record are created for each hostname, as for public-services.
+A map from hostnames to Cloud Storage buckets. Content comes straight from the bucket through a backend bucket, and through Cloud CDN by default. Managed certificates and DNS records follow the same configuration as public-services.
 
 name: the name for the backend bucket, the certificate and the URL-map path matcher; unique across public-services and buckets.
 bucket_name: the Cloud Storage bucket to serve, which must already exist.

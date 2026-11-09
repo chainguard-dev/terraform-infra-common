@@ -1,0 +1,1 @@
+../../../../dns-certificates/variables.tf

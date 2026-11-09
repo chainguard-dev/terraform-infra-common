@@ -1,0 +1,1 @@
+../../../../dns-certificates/outputs.tf

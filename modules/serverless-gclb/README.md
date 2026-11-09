@@ -107,6 +107,30 @@ resource "google_storage_bucket_iam_member" "downloads_cdn_fill" {
 }
 ```
 
+## Composition
+
+This module allocates global frontend addresses and composes
+[`dns-certificates`][dns-certificates] with
+[`serverless-load-balancer`][serverless-load-balancer]. Existing callers keep
+the same inputs, resource names and hostname mappings. The module's `moved`
+blocks transfer resource state into the components without recreating resources.
+Keep those blocks when upgrading deployments from earlier versions.
+
+Callers with separate DNS ownership can compose the components directly. The
+DNS-and-certificate component accepts existing frontend addresses and a DNS zone.
+The caller can select a provider for each component. The load-balancing
+component accepts address and certificate references and retains
+the hostname-to-service and hostname-to-bucket interfaces, including IAP, CORS,
+security policies and migration settings. Module boundaries do not require
+separate states or a change in deployment authority.
+
+The generated Outputs section below describes the frontend and backend values.
+Backend identifiers let consumers attach backend-scoped IAM grants and test
+their configuration against module-managed resources.
+
+[dns-certificates]: ../dns-certificates/
+[serverless-load-balancer]: ../serverless-load-balancer/
+
 ## Migrating an existing proxy to a certificate map
 
 A target HTTPS proxy must always have at least one SSL certificate or a
@@ -188,48 +212,36 @@ The module no longer sets `team` or `product` labels on its global IPv4 and IPv6
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_google"></a> [google](#requirement\_google) | >= 7.34.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_google"></a> [google](#provider\_google) | >= 7.34.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 8.7.0 |
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_domain"></a> [domain](#module\_domain) | ../dns-certificates | n/a |
+| <a name="module_load_balancer"></a> [load\_balancer](#module\_load\_balancer) | ../serverless-load-balancer | n/a |
 
 ## Resources
 
 | Name | Type |
 | ---- | ---- |
-| [google_compute_backend_bucket.buckets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_bucket) | resource |
-| [google_compute_backend_service.public-services](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_backend_service) | resource |
 | [google_compute_global_address.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_address) | resource |
 | [google_compute_global_address.this-v6](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_address) | resource |
-| [google_compute_global_forwarding_rule.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_forwarding_rule) | resource |
-| [google_compute_global_forwarding_rule.this-v6](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_forwarding_rule) | resource |
-| [google_compute_managed_ssl_certificate.bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_managed_ssl_certificate) | resource |
-| [google_compute_managed_ssl_certificate.public-service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_managed_ssl_certificate) | resource |
-| [google_compute_region_network_endpoint_group.regional-backends](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_network_endpoint_group) | resource |
-| [google_compute_ssl_policy.ssl_policy](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_ssl_policy) | resource |
-| [google_compute_target_https_proxy.public-service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_target_https_proxy) | resource |
-| [google_compute_url_map.public-service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_url_map) | resource |
-| [google_dns_record_set.bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
-| [google_dns_record_set.bucket-v6](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
-| [google_dns_record_set.public-service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
-| [google_dns_record_set.public-service-v6](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
-| [google_client_openid_userinfo.me](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/client_openid_userinfo) | data source |
-| [google_storage_bucket.buckets](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/storage_bucket) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_buckets"></a> [buckets](#input\_buckets) | A map from hostnames (managed by dns\_zone) to Cloud Storage buckets the hostname serves: content comes straight from the bucket through a backend bucket, and through Cloud CDN by default, rather than from a Cloud Run service. A managed SSL certificate and a DNS record are created for each hostname, as for public-services.<br/><br/>name: the name for the backend bucket, the certificate and the URL-map path matcher; unique across public-services and buckets.<br/>bucket\_name: the Cloud Storage bucket to serve, which must already exist.<br/>enable\_cdn: front the bucket with Cloud CDN (the default).<br/>disabled: keep the hostname's records but route nothing to it.<br/>cdn\_policy: optional Cloud CDN policy for the backend bucket; omitted, Cloud CDN applies its defaults.<br/><br/>A bucket is public unless the caller arranges otherwise: its objects must be readable by allUsers. To serve a bucket to signed URLs only, the caller attaches Cloud CDN signed-URL keys to the backend bucket this module creates (output backend\_buckets) and grants Cloud CDN's fill service agent read on the storage bucket, having removed public read (allUsers, allAuthenticatedUsers) from its IAM and ACLs as Cloud CDN's signed-URL guidance requires. The module holds no key: a deployment may attach its keys outside Terraform so their values never enter state. | <pre>map(object({<br/>    name        = string<br/>    bucket_name = string<br/>    enable_cdn  = optional(bool, true)<br/>    disabled    = optional(bool, false)<br/>    cdn_policy = optional(object({<br/>      cache_mode                   = optional(string)<br/>      client_ttl                   = optional(number)<br/>      default_ttl                  = optional(number)<br/>      max_ttl                      = optional(number)<br/>      signed_url_cache_max_age_sec = optional(number)<br/>    }))<br/>  }))</pre> | `{}` | no |
+| <a name="input_buckets"></a> [buckets](#input\_buckets) | A map from hostnames to Cloud Storage buckets. Content comes straight from the bucket through a backend bucket, and through Cloud CDN by default. Managed certificates and DNS records follow the same configuration as public-services.<br/><br/>name: the name for the backend bucket, the certificate and the URL-map path matcher; unique across public-services and buckets.<br/>bucket\_name: the Cloud Storage bucket to serve, which must already exist.<br/>enable\_cdn: front the bucket with Cloud CDN (the default).<br/>disabled: keep the hostname's records but route nothing to it.<br/>cdn\_policy: optional Cloud CDN policy for the backend bucket; omitted, Cloud CDN applies its defaults.<br/><br/>A bucket is public unless the caller arranges otherwise: its objects must be readable by allUsers. To serve a bucket to signed URLs only, the caller attaches Cloud CDN signed-URL keys to the backend bucket this module creates (output backend\_buckets) and grants Cloud CDN's fill service agent read on the storage bucket, having removed public read (allUsers, allAuthenticatedUsers) from its IAM and ACLs as Cloud CDN's signed-URL guidance requires. The module holds no key: a deployment may attach its keys outside Terraform so their values never enter state. | <pre>map(object({<br/>    name        = string<br/>    bucket_name = string<br/>    enable_cdn  = optional(bool, true)<br/>    disabled    = optional(bool, false)<br/>    cdn_policy = optional(object({<br/>      cache_mode                   = optional(string)<br/>      client_ttl                   = optional(number)<br/>      default_ttl                  = optional(number)<br/>      max_ttl                      = optional(number)<br/>      signed_url_cache_max_age_sec = optional(number)<br/>    }))<br/>  }))</pre> | `{}` | no |
 | <a name="input_certificate_map"></a> [certificate\_map](#input\_certificate\_map) | Optional Certificate Manager certificate map id, formatted as "//certificatemanager.googleapis.com/projects/.../certificateMaps/...". When set, the HTTPS proxy serves TLS from this map and the module creates no per-hostname managed SSL certificates, escaping the 15-certificate-per-proxy limit (e.g. with a wildcard certificate). Create the map in an earlier apply than the one that sets this, so its id is known at plan time. When empty (the default), the module keeps its per-hostname managed-certificate behaviour. Migrating an existing proxy between the two modes is a two-apply operation, see retain\_managed\_certificates and the module README. | `string` | `""` | no |
-| <a name="input_dns_zone"></a> [dns\_zone](#input\_dns\_zone) | The managed DNS zone in which to create record sets. | `string` | n/a | yes |
+| <a name="input_dns_zone"></a> [dns\_zone](#input\_dns\_zone) | The existing managed DNS zone in project\_id for the frontend address records. | `string` | n/a | yes |
 | <a name="input_enable_ipv6"></a> [enable\_ipv6](#input\_enable\_ipv6) | Enable dualstack ipv6+ipv4 support on the edge/public loadbalancer end point. When false (default), ipv4-only is deployed. | `bool` | `false` | no |
 | <a name="input_forwarding_rule_load_balancing"></a> [forwarding\_rule\_load\_balancing](#input\_forwarding\_rule\_load\_balancing) | n/a | <pre>object({<br/>    external_managed_backend_bucket_migration_state              = optional(string, null)<br/>    external_managed_backend_bucket_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                                        = optional(string, "EXTERNAL")<br/>  })</pre> | `{}` | no |
 | <a name="input_iap"></a> [iap](#input\_iap) | IAP configuration for the load balancer. | <pre>object({<br/>    oauth2_client_id     = optional(string, null)<br/>    oauth2_client_secret = optional(string, null)<br/>    enabled              = bool<br/>  })</pre> | `null` | no |
@@ -237,11 +249,11 @@ No modules.
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The set of notification channels to which to send alerts. | `list(string)` | `[]` | no |
 | <a name="input_product"></a> [product](#input\_product) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | `null` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
-| <a name="input_public-services"></a> [public-services](#input\_public-services) | A map from hostnames (managed by dns\_zone), to the name of the regionalized cloud run service to which the hostname should be routed.  A managed SSL certificate will be created for each hostname (unless certificate\_map is set), and a DNS record set will be created for each hostname pointing to the load balancer's global IP address.<br/><br/>external\_managed\_migration\_state: The migration state for the load balancer, [PREPARE, TEST\_BY\_PERCENTAGE, and TEST\_ALL\_TRAFFIC].<br/>external\_managed\_migration\_testing\_percentage: The percentage of traffic to route to new load balancer, [0, 100].<br/>load\_balancing\_scheme: The backend service's load balancing scheme, EXTERNAL (classic) or EXTERNAL\_MANAGED (Envoy-based). Pair EXTERNAL\_MANAGED with forwarding\_rule\_load\_balancing.load\_balancing\_scheme.<br/>connection\_draining\_timeout\_sec: How long a backend being removed keeps serving in-flight connections.<br/>cors\_policy: When set, the URL map answers cross-origin browser requests for this hostname at the edge (preflights included), so the Cloud Run service needs no CORS handling of its own. Requires EXTERNAL\_MANAGED on both the service and the forwarding rule; the classic load balancer rejects a corsPolicy. allow\_methods and allow\_headers default to what a JSON API behind bearer-token auth needs; allow\_credentials stays false because a bearer token is a plain header, not a credential in the CORS sense. | <pre>map(object({<br/>    name                                          = string<br/>    disabled                                      = optional(bool, false)<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, "EXTERNAL")<br/>    connection_draining_timeout_sec               = optional(number, 300)<br/>    cors_policy = optional(object({<br/>      allow_origins        = optional(list(string), [])<br/>      allow_origin_regexes = optional(list(string), [])<br/>      allow_methods        = optional(list(string), ["GET", "HEAD", "POST", "OPTIONS"])<br/>      allow_headers        = optional(list(string), ["Authorization", "Content-Type"])<br/>      expose_headers       = optional(list(string), [])<br/>      max_age              = optional(number, 3600)<br/>      allow_credentials    = optional(bool, false)<br/>    }), null)<br/>  }))</pre> | n/a | yes |
-| <a name="input_regions"></a> [regions](#input\_regions) | The set of regions containing backends for the load balancer (regions must be added here before they can be added as serving regions). | `list` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
+| <a name="input_public-services"></a> [public-services](#input\_public-services) | A map from hostnames to the regionalized Cloud Run services to which requests should be routed. DNS records point each hostname to the load balancer's global IP addresses. A managed SSL certificate is created for each hostname unless certificate\_map is set.<br/><br/>external\_managed\_migration\_state: The migration state for the load balancer, [PREPARE, TEST\_BY\_PERCENTAGE, and TEST\_ALL\_TRAFFIC].<br/>external\_managed\_migration\_testing\_percentage: The percentage of traffic to route to new load balancer, [0, 100].<br/>load\_balancing\_scheme: The backend service's load balancing scheme, EXTERNAL (classic) or EXTERNAL\_MANAGED (Envoy-based). Pair EXTERNAL\_MANAGED with forwarding\_rule\_load\_balancing.load\_balancing\_scheme.<br/>connection\_draining\_timeout\_sec: How long a backend being removed keeps serving in-flight connections.<br/>cors\_policy: When set, the URL map answers cross-origin browser requests for this hostname at the edge (preflights included), so the Cloud Run service needs no CORS handling of its own. Requires EXTERNAL\_MANAGED on both the service and the forwarding rule; the classic load balancer rejects a corsPolicy. allow\_methods and allow\_headers default to what a JSON API behind bearer-token auth needs; allow\_credentials stays false because a bearer token is a plain header, not a credential in the CORS sense. | <pre>map(object({<br/>    name                                          = string<br/>    disabled                                      = optional(bool, false)<br/>    external_managed_migration_state              = optional(string, null)<br/>    external_managed_migration_testing_percentage = optional(number, null)<br/>    load_balancing_scheme                         = optional(string, "EXTERNAL")<br/>    connection_draining_timeout_sec               = optional(number, 300)<br/>    cors_policy = optional(object({<br/>      allow_origins        = optional(list(string), [])<br/>      allow_origin_regexes = optional(list(string), [])<br/>      allow_methods        = optional(list(string), ["GET", "HEAD", "POST", "OPTIONS"])<br/>      allow_headers        = optional(list(string), ["Authorization", "Content-Type"])<br/>      expose_headers       = optional(list(string), [])<br/>      max_age              = optional(number, 3600)<br/>      allow_credentials    = optional(bool, false)<br/>    }), null)<br/>  }))</pre> | n/a | yes |
+| <a name="input_regions"></a> [regions](#input\_regions) | The set of regions containing backends for the load balancer (regions must be added here before they can be added as serving regions). | `list(string)` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
 | <a name="input_retain_managed_certificates"></a> [retain\_managed\_certificates](#input\_retain\_managed\_certificates) | Only meaningful when certificate\_map is set. When true, the per-hostname managed SSL certificates are still created and stay attached to the HTTPS proxy alongside the certificate map, which is the legal intermediate state for migrating an existing proxy without a TLS gap. A target HTTPS proxy must always have >=1 SSL certificate or a certificate map, and the provider strips ssl\_certificates before attaching the map, so flipping straight from certs to map in one apply is rejected (Error 412). Instead set certificate\_map with this true in one apply (both attached), then set this back to false in a follow-up apply to drop the per-hostname certs. Roll back the same way in reverse, waiting for the recreated certs to be ACTIVE before removing the map. See the module README. Defaults to false, so greenfield proxies and existing callers are unaffected. | `bool` | `false` | no |
 | <a name="input_security-policy"></a> [security-policy](#input\_security-policy) | The security policy associated with the backend service. | `string` | `null` | no |
-| <a name="input_serving_regions"></a> [serving\_regions](#input\_serving\_regions) | The set of regions with backends suitable for serving traffic from the load balancer (regions must be removed from here before they can be removed from regions). | `list` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
+| <a name="input_serving_regions"></a> [serving\_regions](#input\_serving\_regions) | The set of regions with backends suitable for serving traffic from the load balancer (regions must be removed from here before they can be removed from regions). | `list(string)` | <pre>[<br/>  "us-central1"<br/>]</pre> | no |
 | <a name="input_team"></a> [team](#input\_team) | Unused: cost attribution comes from Resource Manager tags, not labels. Kept so existing callers still plan. | `string` | n/a | yes |
 
 ## Outputs
@@ -249,4 +261,7 @@ No modules.
 | Name | Description |
 | ---- | ----------- |
 | <a name="output_backend_buckets"></a> [backend\_buckets](#output\_backend\_buckets) | The backend buckets created for buckets, keyed by hostname: name and id. A caller serving a bucket to signed URLs only attaches its Cloud CDN signed-URL keys to the name, in Terraform or out of band so the key values never enter state, and grants Cloud CDN's fill service agent read on the storage bucket; the id is what the URL map routes the hostname's traffic through. |
+| <a name="output_backend_services"></a> [backend\_services](#output\_backend\_services) | Module-managed backend services keyed by hostname, with identifiers for backend-scoped IAM and security configuration for consumer tests. Excludes inherited and out-of-band access. |
+| <a name="output_frontend"></a> [frontend](#output\_frontend) | Global frontend IP addresses. ipv6\_address is null when IPv6 is disabled. |
+| <a name="output_resource_ids"></a> [resource\_ids](#output\_resource\_ids) | IDs of all frontend addresses, DNS records, certificates and load-balancing resources managed by this assembly. |
 <!-- END_TF_DOCS -->

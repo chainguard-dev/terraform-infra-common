@@ -1,3 +1,6 @@
+# Copyright 2026 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 terraform {
   required_version = ">= 1.9"
 
@@ -9,14 +12,12 @@ terraform {
   }
 }
 
-// Create the IPv4 address for our LB to serve on.
 resource "google_compute_global_address" "this" {
   project    = var.project_id
   name       = var.name
   ip_version = "IPV4"
 }
 
-// Create the IPv6 address for our LB to serve on.
 resource "google_compute_global_address" "this-v6" {
   count      = var.enable_ipv6 ? 1 : 0
   project    = var.project_id
@@ -24,366 +25,38 @@ resource "google_compute_global_address" "this-v6" {
   ip_version = "IPV6"
 }
 
-// Create A records for each of our public service hostnames.
-resource "google_dns_record_set" "public-service" {
-  for_each = var.public-services
+module "domain" {
+  source = "../dns-certificates"
 
-  project      = var.project_id
-  name         = "${each.key}."
-  managed_zone = var.dns_zone
-  type         = "A"
-  ttl          = 60
+  project_id   = var.project_id
+  dns_zone     = var.dns_zone
+  ipv4_address = google_compute_global_address.this.address
+  ipv6_address = one(google_compute_global_address.this-v6[*].address)
+  enable_ipv6  = var.enable_ipv6
 
-  rrdatas = [google_compute_global_address.this.address]
+  service_hostnames = var.public-services
+  bucket_hostnames  = var.buckets
+
+  manage_certificates = var.certificate_map == "" || var.retain_managed_certificates
 }
 
-// Create AAAA records for each of our public service hostnames.
-resource "google_dns_record_set" "public-service-v6" {
-  for_each = var.enable_ipv6 ? var.public-services : {}
+module "load_balancer" {
+  source = "../serverless-load-balancer"
 
-  project      = var.project_id
-  name         = "${each.key}."
-  managed_zone = var.dns_zone
-  type         = "AAAA"
-  ttl          = 60
+  project_id      = var.project_id
+  name            = var.name
+  ipv4_address    = google_compute_global_address.this.id
+  ipv6_address    = one(google_compute_global_address.this-v6[*].id)
+  enable_ipv6     = var.enable_ipv6
+  regions         = var.regions
+  serving_regions = var.serving_regions
+  public-services = var.public-services
+  buckets         = var.buckets
 
-  rrdatas = [google_compute_global_address.this-v6[0].address]
-}
+  iap                            = var.iap
+  security-policy                = var.security-policy
+  forwarding_rule_load_balancing = var.forwarding_rule_load_balancing
 
-// Per-hostname managed certs are provisioned when no certificate_map is set, or
-// while retain_managed_certificates keeps them attached during a map migration.
-// A target HTTPS proxy must always have either >=1 SSL certificate or a
-// certificate map, and the google provider updates ssl_certificates before
-// certificate_map, so flipping an existing proxy straight from certs to map in
-// one apply strips the certs before the map lands and GCP rejects it (Error
-// 412). retain_managed_certificates lets an existing proxy migrate in two steps.
-// See README "Migrating an existing proxy to a certificate map". Both operands
-// are input variables, so this stays known at plan time (for_each cannot depend
-// on a value that is unknown until apply).
-locals {
-  manage_per_host_certs = var.certificate_map == "" || var.retain_managed_certificates
-}
-
-// Provision a managed SSL certificate for each of our public services.
-resource "google_compute_managed_ssl_certificate" "public-service" {
-  for_each = local.manage_per_host_certs ? var.public-services : {}
-
-  name = each.value.name
-
-  managed {
-    domains = [google_dns_record_set.public-service[each.key].name]
-  }
-}
-
-// Buckets are hostnames routed to a Cloud Storage bucket the caller owns
-// instead of a backend service: the same records and certificates as a public
-// service, with the URL map pointing at a backend bucket. A bucket with
-// signed-URL keys is private, served to signed URLs only and read by Cloud
-// CDN's fill agent; one without is public.
-resource "google_dns_record_set" "bucket" {
-  for_each = var.buckets
-
-  project      = var.project_id
-  name         = "${each.key}."
-  managed_zone = var.dns_zone
-  type         = "A"
-  ttl          = 60
-
-  rrdatas = [google_compute_global_address.this.address]
-}
-
-resource "google_dns_record_set" "bucket-v6" {
-  for_each = var.enable_ipv6 ? var.buckets : {}
-
-  project      = var.project_id
-  name         = "${each.key}."
-  managed_zone = var.dns_zone
-  type         = "AAAA"
-  ttl          = 60
-
-  rrdatas = [google_compute_global_address.this-v6[0].address]
-}
-
-resource "google_compute_managed_ssl_certificate" "bucket" {
-  for_each = local.manage_per_host_certs ? var.buckets : {}
-
-  name = each.value.name
-
-  managed {
-    domains = [google_dns_record_set.bucket[each.key].name]
-  }
-}
-
-// The bucket must exist before a backend bucket can point at it; the data
-// source fails the plan with a clear message when it does not.
-data "google_storage_bucket" "buckets" {
-  for_each = local.buckets
-
-  name = each.value.bucket_name
-}
-
-// Create a backend bucket for each bucket, named after the load balancer as
-// the backend services are.
-resource "google_compute_backend_bucket" "buckets" {
-  for_each = local.buckets
-
-  project     = var.project_id
-  name        = "${var.name}-${each.value.name}"
-  bucket_name = data.google_storage_bucket.buckets[each.key].name
-  enable_cdn  = each.value.enable_cdn
-
-  dynamic "cdn_policy" {
-    for_each = each.value.cdn_policy == null ? [] : [each.value.cdn_policy]
-    content {
-      cache_mode                   = cdn_policy.value.cache_mode
-      client_ttl                   = cdn_policy.value.client_ttl
-      default_ttl                  = cdn_policy.value.default_ttl
-      max_ttl                      = cdn_policy.value.max_ttl
-      signed_url_cache_max_age_sec = cdn_policy.value.signed_url_cache_max_age_sec
-    }
-  }
-}
-
-locals {
-  // The buckets that route.
-  buckets = { for k, v in var.buckets : k => v if !v.disabled }
-}
-
-// Create the cross-product of public services and regions so we can for_each over it.
-locals {
-  regional-backends = merge([
-    for svcinfo in values(var.public-services) : merge([
-      for region in var.regions : {
-        "${svcinfo.name}-${region}" : {
-          name     = svcinfo.name
-          region   = region
-          disabled = svcinfo.disabled
-        }
-      }
-    ]...)
-  ]...)
-}
-
-// Create a network endpoint group for each service in each region.
-resource "google_compute_region_network_endpoint_group" "regional-backends" {
-  for_each = local.regional-backends
-
-  name                  = each.value.name
-  network_endpoint_type = "SERVERLESS"
-  region                = each.value.region
-  cloud_run {
-    service = each.value.name
-  }
-}
-
-// Create a backend service for each public service with a backend in each region.
-resource "google_compute_backend_service" "public-services" {
-  for_each = var.public-services
-
-  project = var.project_id
-  name    = each.value.name
-
-  // The scheme must match the forwarding rule's: EXTERNAL for the classic
-  // load balancer, EXTERNAL_MANAGED for the Envoy-based one (which is what
-  // advanced URL map actions such as cors_policy require). The provider
-  // updates an existing backend service in place when it changes; the
-  // migration fields exist for callers who want a traffic-shifted cutover
-  // rather than a flip.
-  load_balancing_scheme                         = each.value.load_balancing_scheme
-  external_managed_migration_state              = each.value.external_managed_migration_state
-  external_managed_migration_testing_percentage = each.value.external_managed_migration_testing_percentage
-  connection_draining_timeout_sec               = each.value.connection_draining_timeout_sec
-
-  // Create a backend for each region hosting this cloud run service.
-  dynamic "backend" {
-    for_each = toset(var.serving_regions)
-    content {
-      group = google_compute_region_network_endpoint_group.regional-backends["${each.value.name}-${backend.key}"]["id"]
-    }
-  }
-
-  dynamic "iap" {
-    for_each = var.iap[*]
-    content {
-      oauth2_client_id     = iap.value["oauth2_client_id"]
-      oauth2_client_secret = iap.value["oauth2_client_secret"]
-      enabled              = iap.value["enabled"]
-    }
-  }
-
-  security_policy = var.security-policy
-
-  lifecycle {
-    // A URL map may only reference backend services whose scheme matches its
-    // forwarding rule's, so catch a lone EXTERNAL_MANAGED service behind a
-    // classic forwarding rule (or vice versa) at plan time. The migration
-    // fields are the sanctioned way to hold the two apart temporarily.
-    precondition {
-      condition     = each.value.load_balancing_scheme == var.forwarding_rule_load_balancing.load_balancing_scheme || each.value.external_managed_migration_state != null
-      error_message = "public-services[\"${each.key}\"].load_balancing_scheme (${each.value.load_balancing_scheme}) must match forwarding_rule_load_balancing.load_balancing_scheme (${var.forwarding_rule_load_balancing.load_balancing_scheme}) unless external_managed_migration_state is set."
-    }
-  }
-}
-
-// Create a URL map that routes each hostname to the appropriate backend service.
-resource "google_compute_url_map" "public-service" {
-  project = var.project_id
-  name    = var.name
-
-  default_url_redirect {
-    host_redirect = "chainguard.dev"
-    strip_query   = true
-  }
-
-  // For each of the public services create a host rule.
-  dynamic "host_rule" {
-    for_each = { for k, v in var.public-services : k => v if !v.disabled }
-    content {
-      hosts        = [host_rule.key]
-      path_matcher = host_rule.value.name
-    }
-  }
-
-  // For each of the public services create a path matcher that routes to its
-  // backend service, carrying the service's CORS policy when it has one.
-  dynamic "path_matcher" {
-    for_each = { for k, v in var.public-services : k => v if !v.disabled }
-    content {
-      name            = path_matcher.value.name
-      default_service = google_compute_backend_service.public-services[path_matcher.key].id
-
-      // A CORS policy rides on the path matcher's default route action, which
-      // may sit alongside default_service as long as it names no weighted
-      // backends. The load balancer then answers preflight OPTIONS requests
-      // itself and stamps Access-Control-* headers on the backend's responses,
-      // so the service never sees a preflight. Emitted only when configured:
-      // classic (EXTERNAL) load balancers reject a corsPolicy outright, so
-      // existing callers see no change to their URL maps.
-      dynamic "default_route_action" {
-        for_each = path_matcher.value.cors_policy[*]
-        content {
-          cors_policy {
-            allow_origins        = default_route_action.value.allow_origins
-            allow_origin_regexes = default_route_action.value.allow_origin_regexes
-            allow_methods        = default_route_action.value.allow_methods
-            allow_headers        = default_route_action.value.allow_headers
-            expose_headers       = default_route_action.value.expose_headers
-            max_age              = default_route_action.value.max_age
-            allow_credentials    = default_route_action.value.allow_credentials
-          }
-        }
-      }
-    }
-  }
-
-  lifecycle {
-    // GCP only honours corsPolicy on the Envoy-based load balancer, and the
-    // backend service and forwarding rule schemes must agree, so fail at plan
-    // time rather than with an opaque API error at apply.
-    precondition {
-      condition = alltrue([
-        for host, svc in var.public-services :
-        svc.cors_policy == null || (svc.load_balancing_scheme == "EXTERNAL_MANAGED" && var.forwarding_rule_load_balancing.load_balancing_scheme == "EXTERNAL_MANAGED")
-      ])
-      error_message = "cors_policy requires the Envoy-based load balancer: set load_balancing_scheme = \"EXTERNAL_MANAGED\" on the public service and on forwarding_rule_load_balancing. The classic (EXTERNAL) load balancer rejects a corsPolicy in its URL map."
-    }
-  }
-
-  // For each bucket create a host rule and a path matcher that routes to its
-  // backend bucket.
-  dynamic "host_rule" {
-    for_each = local.buckets
-    content {
-      hosts        = [host_rule.key]
-      path_matcher = host_rule.value.name
-    }
-  }
-
-  dynamic "path_matcher" {
-    for_each = local.buckets
-    content {
-      name            = path_matcher.value.name
-      default_service = google_compute_backend_bucket.buckets[path_matcher.key].id
-    }
-  }
-}
-
-# SSL policy to control the features of SSL.
-resource "google_compute_ssl_policy" "ssl_policy" {
-  name                      = "${var.name}-ssl-policy"
-  profile                   = "MODERN"
-  min_tls_version           = "TLS_1_2"
-  post_quantum_key_exchange = "ENABLED"
-}
-
-// Create an HTTPS proxy for our URL map.
-resource "google_compute_target_https_proxy" "public-service" {
-  project = var.project_id
-  name    = var.name
-  url_map = google_compute_url_map.public-service.id
-
-  # The proxy serves TLS from the per-hostname certs, the certificate map, or
-  # both at once (the legal intermediate state while migrating between them; see
-  # the retain_managed_certificates variable). The map, when used, can hold a
-  # wildcard, sidestepping the 15-certificate-per-proxy cap.
-  ssl_certificates = local.manage_per_host_certs ? concat(
-    [for domain, cert in google_compute_managed_ssl_certificate.public-service : cert.id if !var.public-services[domain].disabled],
-    [for domain, cert in google_compute_managed_ssl_certificate.bucket : cert.id if !var.buckets[domain].disabled],
-  ) : null
-  certificate_map = var.certificate_map != "" ? var.certificate_map : null
-  ssl_policy      = google_compute_ssl_policy.ssl_policy.id
-}
-
-// Attach the HTTPS proxy to the global IP address via a forwarding rule.
-resource "google_compute_global_forwarding_rule" "this" {
-  project     = var.project_id
-  name        = var.name
-  ip_protocol = "TCP"
-  port_range  = 443
-  ip_address  = google_compute_global_address.this.id
-  target      = google_compute_target_https_proxy.public-service.id
-
-  external_managed_backend_bucket_migration_state              = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_state
-  external_managed_backend_bucket_migration_testing_percentage = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_testing_percentage
-  load_balancing_scheme                                        = var.forwarding_rule_load_balancing.load_balancing_scheme
-}
-
-resource "google_compute_global_forwarding_rule" "this-v6" {
-  count       = var.enable_ipv6 ? 1 : 0
-  project     = var.project_id
-  name        = "${var.name}-v6"
-  ip_protocol = "TCP"
-  port_range  = 443
-  ip_address  = google_compute_global_address.this-v6[0].id
-  target      = google_compute_target_https_proxy.public-service.id
-
-  external_managed_backend_bucket_migration_state              = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_state
-  external_managed_backend_bucket_migration_testing_percentage = var.forwarding_rule_load_balancing.external_managed_backend_bucket_migration_testing_percentage
-  load_balancing_scheme                                        = var.forwarding_rule_load_balancing.load_balancing_scheme
-}
-
-// What identity is deploying this?
-data "google_client_openid_userinfo" "me" {}
-
-locals {
-  authorized-accounts = [
-    # CI robot
-    data.google_client_openid_userinfo.me.email,
-  ]
-  audited-resources = concat(
-    [for _, v in google_dns_record_set.public-service : v.id],
-    [for _, v in google_dns_record_set.bucket : v.id],
-    [for _, v in google_compute_managed_ssl_certificate.public-service : v.id],
-    [for _, v in google_compute_managed_ssl_certificate.bucket : v.id],
-    [for _, v in google_compute_backend_bucket.buckets : v.id],
-    [for _, v in google_compute_backend_service.public-services : v.id],
-    [for _, v in google_compute_region_network_endpoint_group.regional-backends : v.id],
-    [google_compute_url_map.public-service.id,
-      google_compute_target_https_proxy.public-service.id,
-      google_compute_global_forwarding_rule.this.id,
-    ],
-    var.enable_ipv6 ? [for _, v in google_dns_record_set.public-service-v6 : v.id] : [],
-    var.enable_ipv6 ? [for _, v in google_dns_record_set.bucket-v6 : v.id] : [],
-    var.enable_ipv6 ? [google_compute_global_forwarding_rule.this-v6[0].id] : [],
-  )
+  ssl_certificates = module.domain.ssl_certificates
+  certificate_map  = var.certificate_map
 }

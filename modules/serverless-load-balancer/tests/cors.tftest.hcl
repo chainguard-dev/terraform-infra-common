@@ -1,15 +1,13 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
-#
-# Run in CI by .github/workflows/tf-module-tests.yaml.
 
 mock_provider "google" {}
 
 variables {
-  project_id = "fixture-project"
-  name       = "fixture"
-  dns_zone   = "fixture-zone"
-  team       = "fixture"
+  project_id       = "fixture-project"
+  name             = "fixture"
+  ipv4_address     = "192.0.2.10"
+  ssl_certificates = ["projects/fixture-project/global/sslCertificates/api"]
 }
 
 run "no_cors_policy_leaves_the_url_map_and_schemes_alone" {

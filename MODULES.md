@@ -186,6 +186,30 @@ Front multiple regional Cloud Run services — and, via `buckets`, hostnames ser
 
 Use this when Cloud Run services need a global load balancer with custom domains and TLS.
 
+### [`serverless-load-balancer`][serverless-load-balancer]
+
+Creates regional serverless NEGs, service and bucket backends, hostname routing,
+CORS, backend IAP, security-policy attachments, an HTTPS proxy, a TLS policy and
+forwarding rules. Accepts existing frontend addresses and certificate references.
+
+Use this when composing load balancing with separately managed DNS and
+certificates. `serverless-gclb` composes this module for existing callers.
+
+[serverless-load-balancer]: ./modules/serverless-load-balancer/
+
+### [`dns-certificates`][dns-certificates]
+
+Creates address records in an existing DNS zone and per-hostname managed SSL
+certificates for supplied frontend addresses. DNS and certificates can use
+different projects with one provider configuration. Returns certificate
+references for an HTTPS proxy.
+
+Use this with `serverless-load-balancer` when DNS and load balancing require
+explicit composition. `serverless-gclb` composes both modules and allocates their
+frontend addresses.
+
+[dns-certificates]: ./modules/dns-certificates/
+
 ### [`serverless-gclb-cbd`](./modules/serverless-gclb-cbd/)
 
 Same as serverless-gclb but with create-before-destroy lifecycle on the URL map to avoid resource conflicts during redeployment. Accepts an optional `certificate_map` input to serve TLS from a Certificate Manager map (for example a wildcard certificate) instead of per-hostname managed certificates, which avoids the 15-certificate-per-proxy limit.
