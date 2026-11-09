@@ -370,7 +370,7 @@ resource "google_container_node_pool" "pools" {
 
   node_config {
     service_account = google_service_account.cluster_default.email
-    image_type      = "COS_CONTAINERD"
+    image_type      = each.value.image_type
     machine_type    = each.value.machine_type
     workload_metadata_config {
       # Run the GKE metadata server on these nodes (required for workload identity)

@@ -55,9 +55,18 @@ variable "services_secondary_range_name" {
 
 variable "pools" {
   type = map(object({
-    min_node_count                    = optional(number, 1)
-    max_node_count                    = optional(number, 1)
-    machine_type                      = optional(string, "c3-standard-4")
+    min_node_count = optional(number, 1)
+    max_node_count = optional(number, 1)
+    machine_type   = optional(string, "c3-standard-4")
+    # Node image: "COS_CONTAINERD" (the default, Container-Optimized OS) or
+    # "UBUNTU_CONTAINERD". Both run containerd and both ship on x86 and Arm.
+    # They differ in the kernel: COS boots Google's kernel with a fixed LSM
+    # list (no Landlock) and a verified read-only root, Ubuntu boots
+    # Canonical's with its default LSM list (Landlock included) and a
+    # writable root. Set Ubuntu only for a pool whose workload needs a
+    # kernel feature COS leaves out. GKE Sandbox (gvisor) runs on COS only.
+    # Changing it recreates the pool's nodes under its upgrade settings.
+    image_type                        = optional(string, "COS_CONTAINERD")
     disk_type                         = optional(string, "pd-balanced")
     disk_size                         = optional(number, 100)
     ephemeral_storage_local_ssd_count = optional(number, 0)
@@ -182,6 +191,16 @@ variable "pools" {
       }), null)
     }), null)
   }))
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : contains(["COS_CONTAINERD", "UBUNTU_CONTAINERD"], p.image_type)])
+    error_message = "image_type must be \"COS_CONTAINERD\" or \"UBUNTU_CONTAINERD\"; the module supports only containerd node images."
+  }
+
+  validation {
+    condition     = alltrue([for name, p in var.pools : !(p.gvisor && p.image_type != "COS_CONTAINERD")])
+    error_message = "gvisor = true needs image_type = \"COS_CONTAINERD\": GKE Sandbox runs only on Container-Optimized OS nodes."
+  }
 
   validation {
     condition     = alltrue([for name, p in var.pools : p.provisioning_model == null || contains(["on-demand", "spot", "flex-start"], p.provisioning_model)])
