@@ -45,7 +45,7 @@ No modules.
 | <a name="input_github_org"></a> [github\_org](#input\_github\_org) | The GitHub organizantion to grant access to. Eg: 'chainguard-dev'. | `string` | n/a | yes |
 | <a name="input_github_org_id"></a> [github\_org\_id](#input\_github\_org\_id) | Numeric ID of github\_org (for example '123456789'). When set, the provider also requires assertion.repository\_owner\_id to match, so a different organization that later takes the github\_org name is rejected. Empty skips the check. | `string` | `""` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the provider pool. | `string` | n/a | yes |
-| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | The list of notification channels to alert when this policy fires. | `list(string)` | n/a | yes |
+| <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | Deprecated: has no effect. No resource reads it, and this module creates no alert policy. Retained so existing callers do not break. | `list(string)` | `[]` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
 
 ## Outputs

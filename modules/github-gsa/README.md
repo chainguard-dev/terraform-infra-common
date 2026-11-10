@@ -10,8 +10,6 @@ module "github-wif" {
 
   project_id = var.project_id
   name       = "my-wif-pool"
-
-  notification_channels = var.notification_channels
 }
 
 module "foo" {

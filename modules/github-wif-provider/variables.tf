@@ -8,8 +8,9 @@ variable "name" {
 }
 
 variable "notification_channels" {
-  description = "The list of notification channels to alert when this policy fires."
+  description = "Deprecated: has no effect. No resource reads it, and this module creates no alert policy. Retained so existing callers do not break."
   type        = list(string)
+  default     = []
 }
 
 variable "github_org" {
