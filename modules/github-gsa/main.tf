@@ -149,3 +149,56 @@ resource "google_service_account_iam_binding" "allow-impersonation" {
     }
   }
 }
+
+// Wildcard policy. These check blocks only warn: a failed check is
+// reported on plan and apply but never fails the run, so existing callers keep
+// planning with zero diff. They will be promoted to variable validations once
+// every remaining wildcard carries a justification.
+locals {
+  wildcard_in_use = var.refspec == "*" || var.workflow_ref == "*"
+
+  wildcard_policy_violations = compact([
+    local.wildcard_in_use && trimspace(var.wildcard_justification) == "" ? "unjustified-wildcard" : "",
+    var.refspec != "*" && strcontains(var.refspec, "*") ? "glob-refspec" : "",
+    var.workflow_ref != "*" && (strcontains(var.workflow_ref, "*") || strcontains(var.workflow_ref, "@")) ? "glob-or-ref-pinned-workflow_ref" : "",
+    anytrue([for f in var.additional_federations : strcontains(f.workflow_ref, "@")]) ? "ref-pinned-additional-workflow_ref" : "",
+    !local.wildcard_in_use && trimspace(var.wildcard_justification) != "" ? "stale-justification" : "",
+  ])
+}
+
+check "wildcard_justified" {
+  assert {
+    condition     = !local.wildcard_in_use || trimspace(var.wildcard_justification) != ""
+    error_message = "Service account '${var.name}' federates ${var.repository} with a wildcard (refspec = '${var.refspec}', workflow_ref = '${var.workflow_ref}') but has no wildcard_justification. This will become a hard error: set wildcard_justification to the reason and a tracking issue, or pin the binding to a concrete refspec and workflow_ref."
+  }
+}
+
+check "refspec_not_glob" {
+  assert {
+    condition     = var.refspec == "*" || !strcontains(var.refspec, "*")
+    error_message = "Service account '${var.name}' has refspec = '${var.refspec}'. The WIF provider matches attribute.exact literally, so a glob refspec never federates; it will be rejected. Use '*' with a wildcard_justification, or a concrete ref."
+  }
+}
+
+check "workflow_ref_not_glob_or_ref_pinned" {
+  assert {
+    condition     = var.workflow_ref == "*" || (!strcontains(var.workflow_ref, "*") && !strcontains(var.workflow_ref, "@"))
+    error_message = "Service account '${var.name}' has workflow_ref = '${var.workflow_ref}'. The WIF provider strips '@ref' from the token's workflow_ref (github-wif-provider attribute mappings), so an '@ref' suffix or a glob never matches; it will be rejected. Use a plain .github/workflows/ path and put the ref in refspec."
+  }
+}
+
+# additional_federations already rejects '*' in variable validation, so only
+# the '@ref' suffix needs a check here.
+check "additional_workflow_refs_not_ref_pinned" {
+  assert {
+    condition     = !anytrue([for f in var.additional_federations : strcontains(f.workflow_ref, "@")])
+    error_message = "Service account '${var.name}' has additional_federations workflow_ref(s) ${jsonencode([for f in var.additional_federations : f.workflow_ref if strcontains(f.workflow_ref, "@")])} with an '@ref' suffix. The WIF provider strips '@ref' from the token's workflow_ref, so these never match; it will be rejected. Use a plain .github/workflows/ path and put the ref in refspec."
+  }
+}
+
+check "wildcard_justification_not_stale" {
+  assert {
+    condition     = local.wildcard_in_use || trimspace(var.wildcard_justification) == ""
+    error_message = "Service account '${var.name}' sets wildcard_justification but uses neither refspec = '*' nor workflow_ref = '*'. Remove the justification now that the wildcard is gone."
+  }
+}

@@ -52,9 +52,17 @@ variable "disabled" {
   default     = false
 }
 
+variable "wildcard_justification" {
+  description = "Why this identity needs refspec = \"*\" or workflow_ref = \"*\", with a tracking issue (e.g. \"#123: dispatch-only provisioner; pinned callers in additional_federations\"). Required whenever either field is \"*\". Today a missing justification is a plan-time warning; it will become a hard validation error."
+  type        = string
+  default     = ""
+  nullable    = false
+}
+
 variable "notification_channels" {
-  description = "The list of notification channels to alert when the service account is misused."
+  description = "Deprecated: has no effect. No resource in this module reads it, and it never alerted on misuse. Retained so existing callers do not break."
   type        = list(string)
+  default     = []
 }
 
 variable "additional_federations" {
