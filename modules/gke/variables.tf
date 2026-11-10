@@ -55,18 +55,9 @@ variable "services_secondary_range_name" {
 
 variable "pools" {
   type = map(object({
-    min_node_count = optional(number, 1)
-    max_node_count = optional(number, 1)
-    machine_type   = optional(string, "c3-standard-4")
-    # Node image: "COS_CONTAINERD" (the default, Container-Optimized OS) or
-    # "UBUNTU_CONTAINERD". Both run containerd and both ship on x86 and Arm.
-    # They differ in the kernel: COS boots Google's kernel with a fixed LSM
-    # list (no Landlock) and a verified read-only root, Ubuntu boots
-    # Canonical's with its default LSM list (Landlock included) and a
-    # writable root. Set Ubuntu only for a pool whose workload needs a
-    # kernel feature COS leaves out. GKE Sandbox (gvisor) runs on COS only.
-    # Changing it recreates the pool's nodes under its upgrade settings.
-    image_type                        = optional(string, "COS_CONTAINERD")
+    min_node_count                    = optional(number, 1)
+    max_node_count                    = optional(number, 1)
+    machine_type                      = optional(string, "c3-standard-4")
     disk_type                         = optional(string, "pd-balanced")
     disk_size                         = optional(number, 100)
     ephemeral_storage_local_ssd_count = optional(number, 0)
@@ -105,14 +96,6 @@ variable "pools" {
     # GKE cannot change it on an existing pool, so changing it recreates
     # the pool.
     max_pods_per_node = optional(number, null)
-    # Most processes one pod on the pool may hold, enforced by the kubelet
-    # on each pod's cgroup (podPidsLimit). Null (the default) emits no
-    # kubelet_config and leaves GKE's default, which bounds nothing a pod
-    # can hit. Set it on a pool that runs untrusted code so a fork bomb
-    # ends at its pod and not at the node's pid space; GKE accepts 1024 to
-    # 4194304. Changing it is a kubelet config update, which GKE applies
-    # by re-creating the pool's nodes under its upgrade settings.
-    pod_pids_limit = optional(number, null)
     guest_accelerator = optional(list(object({
       type  = string
       count = number
@@ -193,16 +176,6 @@ variable "pools" {
   }))
 
   validation {
-    condition     = alltrue([for name, p in var.pools : contains(["COS_CONTAINERD", "UBUNTU_CONTAINERD"], p.image_type)])
-    error_message = "image_type must be \"COS_CONTAINERD\" or \"UBUNTU_CONTAINERD\"; the module supports only containerd node images."
-  }
-
-  validation {
-    condition     = alltrue([for name, p in var.pools : !(p.gvisor && p.image_type != "COS_CONTAINERD")])
-    error_message = "gvisor = true needs image_type = \"COS_CONTAINERD\": GKE Sandbox runs only on Container-Optimized OS nodes."
-  }
-
-  validation {
     condition     = alltrue([for name, p in var.pools : p.provisioning_model == null || contains(["on-demand", "spot", "flex-start"], p.provisioning_model)])
     error_message = "provisioning_model must be \"on-demand\", \"spot\", or \"flex-start\"."
   }
@@ -225,11 +198,6 @@ variable "pools" {
   validation {
     condition     = alltrue([for name, p in var.pools : try(p.max_pods_per_node >= 8 && p.max_pods_per_node <= 512 && floor(p.max_pods_per_node) == p.max_pods_per_node, p.max_pods_per_node == null)])
     error_message = "max_pods_per_node must be null or an integer from 8 to 512, GKE's bounds for a Standard node pool."
-  }
-
-  validation {
-    condition     = alltrue([for name, p in var.pools : try(p.pod_pids_limit >= 1024 && p.pod_pids_limit <= 4194304 && floor(p.pod_pids_limit) == p.pod_pids_limit, p.pod_pids_limit == null)])
-    error_message = "pod_pids_limit must be null or an integer from 1024 to 4194304, GKE's bounds for a pod pids limit."
   }
 
   validation {
