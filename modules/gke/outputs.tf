@@ -42,3 +42,8 @@ output "monitoring_components" {
   description = "The components the cluster's monitoring_config enables, read from the rendered cluster."
   value       = one(google_container_cluster.this.monitoring_config[*].enable_components)
 }
+
+output "node_service_account_roles" {
+  description = "The project roles granted to the node service account, keyed as in extra_roles (the module's own keys are gcr, acr, log-writer, metrics-writer and monitoring-viewer)."
+  value       = { for k, m in google_project_iam_member.cluster : k => m.role }
+}

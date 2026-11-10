@@ -63,3 +63,21 @@ run "storage_object_viewer_can_be_dropped" {
     error_message = "dropping the gcr grant must leave the other four default roles in place"
   }
 }
+
+run "roles_output_reports_the_grants" {
+  command = plan
+
+  variables {
+    grant_project_storage_object_viewer = false
+  }
+
+  assert {
+    condition = output.node_service_account_roles == {
+      "acr"               = "roles/artifactregistry.reader"
+      "log-writer"        = "roles/logging.logWriter"
+      "metrics-writer"    = "roles/monitoring.metricWriter"
+      "monitoring-viewer" = "roles/monitoring.viewer"
+    }
+    error_message = "node_service_account_roles must report exactly the roles granted to the node service account"
+  }
+}

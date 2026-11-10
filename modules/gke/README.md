@@ -85,5 +85,6 @@ No modules.
 | <a name="output_cluster_private_endpoint"></a> [cluster\_private\_endpoint](#output\_cluster\_private\_endpoint) | Private control-plane IP for clients on the cluster VPC. |
 | <a name="output_logging_components"></a> [logging\_components](#output\_logging\_components) | The components the cluster's logging\_config enables, read from the rendered cluster. Null when logging\_components is unset and GKE's default applies. |
 | <a name="output_monitoring_components"></a> [monitoring\_components](#output\_monitoring\_components) | The components the cluster's monitoring\_config enables, read from the rendered cluster. |
+| <a name="output_node_service_account_roles"></a> [node\_service\_account\_roles](#output\_node\_service\_account\_roles) | The project roles granted to the node service account, keyed as in extra\_roles (the module's own keys are gcr, acr, log-writer, metrics-writer and monitoring-viewer). |
 | <a name="output_service_account_email"></a> [service\_account\_email](#output\_service\_account\_email) | n/a |
 <!-- END_TF_DOCS -->
