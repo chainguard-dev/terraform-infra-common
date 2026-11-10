@@ -76,5 +76,11 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     "attribute.prtanyworkflowevent"   = "assertion.repository + '|' + ((assertion.event_name == 'pull_request_target' && assertion.ref == 'refs/heads/main') ? 'true' : 'false')"
   }
 
-  attribute_condition = "assertion.repository_owner == '${var.github_org}'"
+  # Empty inputs drop their clause, so the default stays byte-identical to the
+  # org-only condition and existing pools plan no change.
+  attribute_condition = join(" && ", compact([
+    "assertion.repository_owner == '${var.github_org}'",
+    var.github_org_id == "" ? "" : "assertion.repository_owner_id == '${var.github_org_id}'",
+    length(var.allowed_repositories) == 0 ? "" : "assertion.repository in ${jsonencode(sort(distinct(var.allowed_repositories)))}",
+  ]))
 }
