@@ -22,7 +22,18 @@ locals {
   # regex-over-subject matcher (refPart/workflowPart/principalSubject) was
   # never consumed by any resource and was removed: it misled readers into
   # believing refspec values were regex-matched against OIDC subjects.
-  exact = "attribute.exact/${join("|", [
+  #
+  # event_aware swaps the four attributes that cannot tell a
+  # pull_request_target run from a push to its base branch for the provider's
+  # event-aware forms. Those carry the bare ref only for push,
+  # workflow_dispatch and schedule, so a branch binding matches only those
+  # events, and the pull_request_target forms match only runs against main.
+  exact-attribute                            = var.event_aware ? "exactevent" : "exact"
+  exact-any-workflow-attribute               = var.event_aware ? "exactanyworkflowevent" : "exactanyworkflow"
+  pull-request-target-attribute              = var.event_aware ? "prtevent" : "pullrequesttarget"
+  pull-request-target-any-workflow-attribute = var.event_aware ? "prtanyworkflowevent" : "pullrequesttargetanyworkflow"
+
+  exact = "attribute.${local.exact-attribute}/${join("|", [
     var.repository,
     var.refspec,
     "${var.repository}/${var.workflow_ref}",
@@ -35,7 +46,7 @@ locals {
 
   exact-any-ref-any-workflow = "attribute.exactanyrefanyworkflow/${var.repository}"
 
-  exact-any-workflow = "attribute.exactanyworkflow/${join("|", [
+  exact-any-workflow = "attribute.${local.exact-any-workflow-attribute}/${join("|", [
     var.repository,
     var.refspec,
   ])}"
@@ -51,13 +62,13 @@ locals {
     "true",
   ])}"
 
-  pull-request-target = "attribute.pullrequesttarget/${join("|", [
+  pull-request-target = "attribute.${local.pull-request-target-attribute}/${join("|", [
     var.repository,
     "true",
     "${var.repository}/${var.workflow_ref}",
   ])}"
 
-  pull-request-target-any-workflow = "attribute.pullrequesttargetanyworkflow/${join("|", [
+  pull-request-target-any-workflow = "attribute.${local.pull-request-target-any-workflow-attribute}/${join("|", [
     var.repository,
     "true",
   ])}"
@@ -115,13 +126,21 @@ locals {
 locals {
   additional_selector_attributes = {
     pull_request        = "attribute.pullrequest"
-    pull_request_target = "attribute.pullrequesttarget"
+    pull_request_target = "attribute.${local.pull-request-target-attribute}"
     version_tags        = "attribute.versiontags"
   }
 
+  # also_pull_request_target adds a pull_request_target member for workflow_ref,
+  # for an identity that the same workflow uses both on main and on its pull
+  # requests.
+  federations = concat(var.additional_federations, var.also_pull_request_target ? [{
+    refspec      = "pull_request_target"
+    workflow_ref = var.workflow_ref
+  }] : [])
+
   additional_members = [
-    for federation in var.additional_federations :
-    "principalSet://iam.googleapis.com/${var.wif-pool}/${lookup(local.additional_selector_attributes, federation.refspec, "attribute.exact")}/${join("|", [
+    for federation in local.federations :
+    "principalSet://iam.googleapis.com/${var.wif-pool}/${lookup(local.additional_selector_attributes, federation.refspec, "attribute.${local.exact-attribute}")}/${join("|", [
       var.repository,
       contains(keys(local.additional_selector_attributes), federation.refspec) ? "true" : federation.refspec,
       "${var.repository}/${federation.workflow_ref}",
@@ -139,6 +158,10 @@ resource "google_service_account_iam_binding" "allow-impersonation" {
   ], local.additional_members)
 
   lifecycle {
+    precondition {
+      condition     = !var.also_pull_request_target || (var.refspec == "refs/heads/main" && var.workflow_ref != "*")
+      error_message = "also_pull_request_target needs refspec = \"refs/heads/main\" and a pinned workflow_ref, because a pull_request_target member matches only runs against main."
+    }
     precondition {
       condition     = var.audit_workflow_ref == "" || var.workflow_ref == "*"
       error_message = "audit_workflow_ref may only be specified when workflow_ref is '*'"

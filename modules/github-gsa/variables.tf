@@ -87,3 +87,17 @@ variable "additional_federations" {
     error_message = "Additional federations require a concrete refs/ refspec or a named pull_request, pull_request_target, or version_tags selector, and a .github/workflows/ path; neither field may contain '*'."
   }
 }
+
+variable "event_aware" {
+  description = "Match on the provider's event-aware attributes, so a branch refspec matches only push, workflow_dispatch and schedule runs, and 'pull_request_target' matches only pull_request_target runs against main. Also applies to additional_federations. The pool's provider must map exactevent, exactanyworkflowevent, prtevent and prtanyworkflowevent."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "also_pull_request_target" {
+  description = "Also accept pull_request_target runs, against main, of workflow_ref. For an identity that a workflow uses both on main and on its pull requests. Needs refspec 'refs/heads/main' and a pinned workflow_ref."
+  type        = bool
+  default     = false
+  nullable    = false
+}

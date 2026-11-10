@@ -39,6 +39,17 @@ additional_federations = [{
 }]
 ```
 
+A `pull_request_target` run carries its base branch in the `ref` claim, so a
+`refs/heads/main` binding also accepts pull request runs of the same workflow,
+and so do events such as `issue_comment` and `workflow_run`. Setting
+`event_aware = true` matches on the provider's event-aware attributes instead,
+here and in `additional_federations`: a branch refspec then accepts only
+`push`, `workflow_dispatch` and `schedule` runs, and `pull_request_target`
+accepts only `pull_request_target` runs against main. Leave it unset for a
+workflow that federates on any other event. An identity that one workflow uses
+both on main and on its pull requests keeps `refspec = "refs/heads/main"` and
+sets `also_pull_request_target = true`.
+
 ## Wildcards
 
 `refspec = "*"` lets any ref federate, and `workflow_ref = "*"` lets any
@@ -94,9 +105,11 @@ No modules.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_additional_federations"></a> [additional\_federations](#input\_additional\_federations) | Additional pinned refspec and workflow pairs allowed to federate with this identity. Named refspec selectors retain their existing provider attribute semantics. | <pre>list(object({<br/>    refspec      = string<br/>    workflow_ref = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_also_pull_request_target"></a> [also\_pull\_request\_target](#input\_also\_pull\_request\_target) | Also accept pull\_request\_target runs, against main, of workflow\_ref. For an identity that a workflow uses both on main and on its pull requests. Needs refspec 'refs/heads/main' and a pinned workflow\_ref. | `bool` | `false` | no |
 | <a name="input_audit_refspec"></a> [audit\_refspec](#input\_audit\_refspec) | Deprecated: has no effect. It only fed a subject-regex matcher that no resource ever consumed; federation is matched via the provider's attribute mappings, which have no audited-wildcard form. Retained so existing callers do not break; do not set it expecting tightened scoping. | `string` | `""` | no |
 | <a name="input_audit_workflow_ref"></a> [audit\_workflow\_ref](#input\_audit\_workflow\_ref) | Deprecated: has no effect, for the same reason as audit\_refspec. | `string` | `""` | no |
 | <a name="input_disabled"></a> [disabled](#input\_disabled) | Disable the service account, so that no workflow can mint a token for it. Retire an identity this way before deleting it, so an unknown caller fails reversibly. | `bool` | `false` | no |
+| <a name="input_event_aware"></a> [event\_aware](#input\_event\_aware) | Match on the provider's event-aware attributes, so a branch refspec matches only push, workflow\_dispatch and schedule runs, and 'pull\_request\_target' matches only pull\_request\_target runs against main. Also applies to additional\_federations. The pool's provider must map exactevent, exactanyworkflowevent, prtevent and prtanyworkflowevent. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the service account. | `string` | n/a | yes |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | Deprecated: has no effect. No resource in this module reads it, and it never alerted on misuse. Retained so existing callers do not break. | `list(string)` | `[]` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | n/a | `string` | n/a | yes |
