@@ -13,6 +13,7 @@ terraform {
 resource "google_service_account" "this" {
   project    = var.project_id
   account_id = var.name
+  disabled   = var.disabled
 }
 
 locals {

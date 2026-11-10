@@ -46,6 +46,12 @@ variable "audit_workflow_ref" {
   default     = ""
 }
 
+variable "disabled" {
+  description = "Disable the service account, so that no workflow can mint a token for it. Retire an identity this way before deleting it, so an unknown caller fails reversibly."
+  type        = bool
+  default     = false
+}
+
 variable "notification_channels" {
   description = "The list of notification channels to alert when the service account is misused."
   type        = list(string)
