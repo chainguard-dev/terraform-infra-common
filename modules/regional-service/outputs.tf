@@ -47,3 +47,12 @@ output "containers" {
   sensitive   = true
   value       = { for region, service in google_cloud_run_v2_service.this : region => service.template[0].containers }
 }
+
+output "tag_bindings" {
+  description = "Cloud Run tag binding parents, values and locations, keyed by region/tag key."
+  value = { for key, binding in google_tags_location_tag_binding.this : key => {
+    parent    = binding.parent
+    tag_value = binding.tag_value
+    location  = binding.location
+  } }
+}

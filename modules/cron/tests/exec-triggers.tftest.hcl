@@ -26,8 +26,9 @@ override_module {
   override_during = plan
   target          = module.impl
   outputs = {
-    job_name = "fixture-cron"
-    job_ids  = { "us-east4" = "fixture-job" }
+    job_name   = "fixture-cron"
+    job_ids    = { "us-east4" = "fixture-job" }
+    containers = {}
     image_refs = {
       this = "example.invalid/application@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     }
@@ -142,8 +143,9 @@ run "combined_image_change" {
     override_during = plan
     target          = module.impl
     outputs = {
-      job_name = "fixture-cron"
-      job_ids  = { "us-east4" = "fixture-job" }
+      job_name   = "fixture-cron"
+      job_ids    = { "us-east4" = "fixture-job" }
+      containers = {}
       image_refs = {
         this = "example.invalid/application@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       }

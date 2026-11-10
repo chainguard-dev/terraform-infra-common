@@ -184,5 +184,6 @@ any out-of-band grant on the service at the next apply.
 | <a name="output_locations"></a> [locations](#output\_locations) | n/a |
 | <a name="output_name"></a> [name](#output\_name) | The service name, which every region shares. Read off the services, so a resource that names the service is created after it. |
 | <a name="output_names"></a> [names](#output\_names) | n/a |
+| <a name="output_tag_bindings"></a> [tag\_bindings](#output\_tag\_bindings) | Cloud Run tag binding parents, values and locations, keyed by region/tag key. |
 | <a name="output_uris"></a> [uris](#output\_uris) | n/a |
 <!-- END_TF_DOCS -->

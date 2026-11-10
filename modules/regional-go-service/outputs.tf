@@ -25,3 +25,8 @@ output "containers" {
   sensitive   = true
   value       = module.this.containers
 }
+
+output "tag_bindings" {
+  description = "Cloud Run tag binding parents, values and locations, keyed by region/tag key."
+  value       = module.this.tag_bindings
+}

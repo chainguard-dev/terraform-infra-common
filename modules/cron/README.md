@@ -261,4 +261,6 @@ No requirements.
 | <a name="output_id"></a> [id](#output\_id) | n/a |
 | <a name="output_invocation_grants"></a> [invocation\_grants](#output\_invocation\_grants) | Job invocation bindings managed by this module, keyed by region. Excludes inherited and out-of-band IAM grants. |
 | <a name="output_name"></a> [name](#output\_name) | n/a |
+| <a name="output_product_env"></a> [product\_env](#output\_product\_env) | Rendered CHAINGUARD\_PRODUCT values from the job containers, keyed by region. |
+| <a name="output_tag_bindings"></a> [tag\_bindings](#output\_tag\_bindings) | Cloud Run tag binding parents, values and locations, keyed by region/tag key. |
 <!-- END_TF_DOCS -->

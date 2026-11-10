@@ -170,4 +170,5 @@ No requirements.
 | Name | Description |
 | ---- | ----------- |
 | <a name="output_recorder-schemas"></a> [recorder-schemas](#output\_recorder-schemas) | n/a |
+| <a name="output_tag_bindings"></a> [tag\_bindings](#output\_tag\_bindings) | Cloud Run tag binding parents, values and locations, keyed by region/tag key. |
 <!-- END_TF_DOCS -->
