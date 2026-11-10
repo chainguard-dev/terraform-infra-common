@@ -370,7 +370,7 @@ resource "google_container_node_pool" "pools" {
 
   node_config {
     service_account = google_service_account.cluster_default.email
-    image_type      = each.value.image_type
+    image_type      = "COS_CONTAINERD"
     machine_type    = each.value.machine_type
     workload_metadata_config {
       # Run the GKE metadata server on these nodes (required for workload identity)
@@ -383,19 +383,6 @@ resource "google_container_node_pool" "pools" {
 
     disk_type    = each.value.disk_type
     disk_size_gb = each.value.disk_size
-
-    # Emitted only when a pod pids limit is set, so pools that do not ask
-    # for one keep the plan they have. cpu_cfs_quota is written out at
-    # GKE's default rather than left to the provider: an omitted bool in
-    # this block has been sent as false, which would stop container CPU
-    # limits being enforced on the pool.
-    dynamic "kubelet_config" {
-      for_each = each.value.pod_pids_limit != null ? [1] : []
-      content {
-        pod_pids_limit = each.value.pod_pids_limit
-        cpu_cfs_quota  = true
-      }
-    }
 
     # Provisioned boot-disk performance rides the boot_disk block, which
     # the provider is migrating disk_type/disk_size_gb into as well; the
