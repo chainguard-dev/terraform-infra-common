@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.11"
 
   required_providers {
     google = {
@@ -51,10 +51,14 @@ resource "google_secret_manager_secret_iam_binding" "authorize-access" {
   members   = ["serviceAccount:${var.service-account}"]
 }
 
-// Load the specified data into the secret.
+// Load the specified data into the secret. The payload is write-only, so
+// refreshing this version reads its metadata and never its payload, and the
+// payload stays out of state. Keying the write-only version on the data's hash
+// adds a new version whenever the data changes.
 resource "google_secret_manager_secret_version" "data" {
-  secret      = google_secret_manager_secret.this.name
-  secret_data = var.data
+  secret                 = google_secret_manager_secret.this.name
+  secret_data_wo         = var.data
+  secret_data_wo_version = sha256(var.data)
   // Keep older versions of the secret, so that services can pin to specific versions,
   // but still roll back in the event of an issue.
   deletion_policy = "ABANDON"

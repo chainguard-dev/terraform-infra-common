@@ -58,6 +58,49 @@ module "foo-service" {
 }
 ```
 
+## Write-only payload
+
+The version is written through `secret_data_wo`, with `secret_data_wo_version`
+set to the SHA-256 of `data`. The provider reads a version's payload on
+refresh unless it was written that way, so Terraform plans need only
+`roles/secretmanager.viewer`, not `secretAccessor`, and the payload stays out
+of state. Changing `data` still adds a new version.
+
+### Runbook: upgrading from a release that used `secret_data`
+
+Both `secret_data` and `secret_data_wo_version` force replacement, and the
+provider can't import a version as write-only, so the first plan after the
+upgrade replaces `google_secret_manager_secret_version.data` in every
+instance: `-/+ must be replaced`, one to add and one to destroy per instance.
+
+1. Plan. The replaced version's `deletion_policy` is `ABANDON`, so the
+   "destroy" only forgets the old version; it stays enabled in Secret Manager.
+   The new version holds the same bytes. Expect nothing else to change, except
+   resources that pin `module.NAME.version` (Cloud Run services and jobs,
+   rolling to a new revision with identical config).
+2. Apply. Each secret gains one version, which becomes `latest`.
+3. Verify, without reading payloads:
+
+   ```shell
+   gcloud secrets versions list SECRET --project PROJECT --limit 2
+   gcloud secrets versions describe latest --secret SECRET --project PROJECT
+   ```
+
+   `latest` is the new version and the previous one is still `enabled`. Cloud
+   Run revisions that pin the version are ready:
+   `gcloud run services describe SERVICE --region REGION --format='value(status.conditions)'`.
+4. Later plans show no change to the version.
+5. Only then remove `secretAccessor` from the stage's plan identity. Until
+   every configmap instance in the stage has applied this release, its state
+   still holds a `secret_data` version, and refreshing that version calls
+   `AccessSecretVersion`. The provider logs a denied read and keeps the value
+   from state rather than failing the plan, but the call is still made.
+
+Rollback: pin the module to its previous release. Its plan replaces the
+version again with a `secret_data` copy of the same data, which is safe for
+the same reason. A reader that must stay on the old version can pin its
+number; the old version stays enabled until someone disables it.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

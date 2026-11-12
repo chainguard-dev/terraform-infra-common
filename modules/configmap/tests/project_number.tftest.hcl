@@ -1,7 +1,7 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Run in CI by .github/workflows/tf-module-tests.yaml.
+# Run in CI by .chainguard/ci/tf-module-tests.yaml.
 #
 # The mocked lookup number differs from the supplied one, so a leaked
 # google_project lookup changes the asserted parent.
