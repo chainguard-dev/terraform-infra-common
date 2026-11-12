@@ -59,6 +59,7 @@ module "this" {
 
   regional-egress    = var.regional-egress
   regional-connector = var.regional-connector
+  network_tags       = var.network_tags
 
   custom_audiences = var.custom_audiences
 

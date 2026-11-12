@@ -232,12 +232,11 @@ resource "google_cloud_run_v2_service" "this" {
         content {
           network    = each.value.network
           subnetwork = each.value.subnet
+          tags       = var.network_tags
         }
       }
       connector = lookup(var.regional-connector, each.key, null)
       egress    = lookup(var.regional-egress, each.key, var.egress)
-      // TODO(mattmoor): When direct VPC egress supports network tags
-      // for NAT egress, then we should incorporate those here.
     }
     service_account = var.service_account
     timeout         = "${var.request_timeout_seconds}s"

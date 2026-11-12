@@ -152,6 +152,7 @@ any out-of-band grant on the service at the next apply.
 | <a name="input_launch_stage"></a> [launch\_stage](#input\_launch\_stage) | The launch stage of the Cloud Run service (e.g. BETA to leverage features like disk volumes). | `string` | `"GA"` | no |
 | <a name="input_manage_traffic"></a> [manage\_traffic](#input\_manage\_traffic) | Whether Terraform owns the service's traffic split.<br/><br/>Cloud Run's traffic field is Optional+Computed, so leaving it undeclared (the<br/>default) lets an out-of-band `gcloud run services update-traffic` pin survive<br/>every subsequent apply: new revisions keep deploying but never serve. Setting<br/>this declares 100% to the latest ready revision, which reverts such a pin on<br/>the next apply and keeps it reverted. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | n/a | `string` | n/a | yes |
+| <a name="input_network_tags"></a> [network\_tags](#input\_network\_tags) | Forwarded to regional-service. Optional network tags on the service's direct<br/>VPC egress, for egress VPC firewall rules to target. Regions in<br/>regional-connector do not carry them. Null leaves the service untagged. | `list(string)` | `null` | no |
 | <a name="input_notification_channels"></a> [notification\_channels](#input\_notification\_channels) | List of notification channels to alert. | `list(string)` | n/a | yes |
 | <a name="input_observability_role"></a> [observability\_role](#input\_observability\_role) | Fully-qualified id of a single role (e.g. from the observability-role module) to grant the service account in place of the three built-in observability roles (monitoring.metricWriter, cloudtrace.agent, cloudprofiler.agent). Collapsing to one role keeps large projects under the 1,500-member IAM policy limit. | `string` | `null` | no |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | The otel collector image to use as a base. Must be on gcr.io or dockerhub. The bundled scrape config enables native histogram scraping by default, which needs opentelemetry-collector-contrib v0.142.0 or later; older collectors reject the config at startup. | `string` | `"chainguard/opentelemetry-collector-contrib:latest"` | no |
@@ -184,6 +185,7 @@ any out-of-band grant on the service at the next apply.
 | <a name="output_locations"></a> [locations](#output\_locations) | n/a |
 | <a name="output_name"></a> [name](#output\_name) | The service name, which every region shares. Read off the services, so a resource that names the service is created after it. |
 | <a name="output_names"></a> [names](#output\_names) | n/a |
+| <a name="output_network_tags"></a> [network\_tags](#output\_network\_tags) | Network tags on each region's direct VPC egress interface, keyed by region. An untagged region and a region in regional-connector report null. |
 | <a name="output_tag_bindings"></a> [tag\_bindings](#output\_tag\_bindings) | Cloud Run tag binding parents, values and locations, keyed by region/tag key. |
 | <a name="output_uris"></a> [uris](#output\_uris) | n/a |
 <!-- END_TF_DOCS -->

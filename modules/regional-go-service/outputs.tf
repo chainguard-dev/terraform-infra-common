@@ -20,6 +20,11 @@ output "access_policy" {
   value       = module.this.access_policy
 }
 
+output "network_tags" {
+  description = "Network tags on each region's direct VPC egress interface, keyed by region. An untagged region and a region in regional-connector report null."
+  value       = module.this.network_tags
+}
+
 output "containers" {
   description = "Rendered regional container configuration, including environment and secret references."
   sensitive   = true

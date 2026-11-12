@@ -42,6 +42,15 @@ output "access_policy" {
   }
 }
 
+output "network_tags" {
+  description = "Network tags on each region's direct VPC egress interface, keyed by region. An untagged region and a region in regional-connector report null."
+  value = {
+    # coalescelist fails on an empty or null list, so both report null.
+    for region, service in google_cloud_run_v2_service.this : region =>
+    try(coalescelist(service.template[0].vpc_access[0].network_interfaces[0].tags), null)
+  }
+}
+
 output "containers" {
   description = "Rendered regional container configuration, including environment and secret references."
   sensitive   = true

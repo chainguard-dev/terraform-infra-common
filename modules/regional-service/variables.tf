@@ -117,6 +117,27 @@ EOD
   }
 }
 
+variable "network_tags" {
+  type        = list(string)
+  description = <<EOD
+Optional network tags on the service's direct VPC egress, in every region that
+uses network_interfaces. Egress VPC firewall rules can target the service by
+these tags.
+
+A region present in regional-connector egresses through the connector, so these
+tags do not apply to its traffic. Null leaves the service untagged.
+EOD
+  default     = null
+
+  validation {
+    condition = alltrue([
+      for tag in coalesce(var.network_tags, []) :
+      can(regex("^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$", tag))
+    ])
+    error_message = "network_tags must be 1-63 characters of lowercase letters, digits and hyphens, starting with a letter and not ending with a hyphen (RFC 1035)."
+  }
+}
+
 variable "service_account" {
   type        = string
   description = "The service account as which to run the service."

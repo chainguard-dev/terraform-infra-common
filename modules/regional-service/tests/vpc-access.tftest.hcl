@@ -114,3 +114,82 @@ run "bare_connector_name_is_rejected" {
     var.regional-connector,
   ]
 }
+
+# Unset network_tags must render the tags argument as null, the same as omitting
+# it. Any other value would plan a new revision for every existing caller.
+run "network_tags_default_is_null" {
+  command = plan
+
+  assert {
+    condition     = google_cloud_run_v2_service.this["us-central1"].template[0].vpc_access[0].network_interfaces[0].tags == null
+    error_message = "network_tags left unset must leave the network_interfaces tags null"
+  }
+
+  assert {
+    condition     = alltrue([for tags in values(output.network_tags) : tags == null])
+    error_message = "the network_tags output must report null for untagged regions"
+  }
+}
+
+run "network_tags_render_on_direct_vpc_egress" {
+  command = plan
+
+  variables {
+    network_tags = ["fixture-egress"]
+  }
+
+  assert {
+    condition = alltrue([
+      for region in ["us-central1", "us-west1"] :
+      google_cloud_run_v2_service.this[region].template[0].vpc_access[0].network_interfaces[0].tags == tolist(["fixture-egress"])
+    ])
+    error_message = "every direct VPC egress region must carry network_tags"
+  }
+
+  assert {
+    condition = alltrue([
+      for region in ["us-central1", "us-west1"] : output.network_tags[region] == tolist(["fixture-egress"])
+    ])
+    error_message = "the network_tags output must report each region's rendered tags"
+  }
+}
+
+# A connector region has no network_interfaces to carry tags. The other regions
+# must still be tagged.
+run "network_tags_with_connector_tag_only_direct_regions" {
+  command = plan
+
+  variables {
+    network_tags = ["fixture-egress"]
+    regional-connector = {
+      "us-central1" = "projects/host-project/locations/us-central1/connectors/cr-egress-us-central1"
+    }
+  }
+
+  assert {
+    condition     = length(google_cloud_run_v2_service.this["us-central1"].template[0].vpc_access[0].network_interfaces) == 0
+    error_message = "a connector region must not render network_interfaces, tagged or not"
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_service.this["us-west1"].template[0].vpc_access[0].network_interfaces[0].tags == tolist(["fixture-egress"])
+    error_message = "a direct VPC egress region must keep network_tags when another region uses a connector"
+  }
+
+  assert {
+    condition     = output.network_tags["us-central1"] == null && output.network_tags["us-west1"] == tolist(["fixture-egress"])
+    error_message = "the network_tags output must report null for a connector region and the tags for the others"
+  }
+}
+
+run "invalid_network_tag_is_rejected" {
+  command = plan
+
+  variables {
+    network_tags = ["Fixture_Egress"]
+  }
+
+  expect_failures = [
+    var.network_tags,
+  ]
+}

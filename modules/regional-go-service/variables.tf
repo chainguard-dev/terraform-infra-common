@@ -99,6 +99,16 @@ EOD
   default     = {}
 }
 
+variable "network_tags" {
+  type        = list(string)
+  description = <<EOD
+Forwarded to regional-service. Optional network tags on the service's direct
+VPC egress, for egress VPC firewall rules to target. Regions in
+regional-connector do not carry them. Null leaves the service untagged.
+EOD
+  default     = null
+}
+
 variable "service_account" {
   type        = string
   description = "The service account as which to run the service."

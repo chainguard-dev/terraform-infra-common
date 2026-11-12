@@ -69,3 +69,21 @@ run "forward_rendered_service_outputs" {
     error_message = "The exported containers must contain each region's rendered environment."
   }
 }
+
+# regional-service's own tests pin how network_tags renders. This run pins that
+# regional-go-service forwards the input at all: without the forward, a caller's
+# services plan untagged and an egress firewall rule on the tag never matches.
+run "forward_network_tags" {
+  command = plan
+
+  variables {
+    network_tags = ["fixture-egress"]
+  }
+
+  assert {
+    condition = alltrue([
+      for region in ["us-central1", "us-west1"] : output.network_tags[region] == tolist(["fixture-egress"])
+    ])
+    error_message = "network_tags must reach every region's direct VPC egress interface."
+  }
+}
