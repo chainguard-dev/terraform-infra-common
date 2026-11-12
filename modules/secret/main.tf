@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.11"
 
   required_providers {
     google = {
@@ -35,17 +35,41 @@ resource "google_secret_manager_secret" "this" {
   }
 }
 
-// Create a placeholder GCP secret version to avoid bad reference on first deploy.
-resource "google_secret_manager_secret_version" "placeholder" {
-  count = var.create_placeholder_version ? 1 : 0
+// A placeholder written with secret_data makes every refresh read its
+// payload. Forget any such version without destroying it: the secret's latest
+// version may still be the placeholder.
+removed {
+  from = google_secret_manager_secret_version.placeholder
 
-  secret      = google_secret_manager_secret.this.id
-  secret_data = "placeholder"
+  lifecycle {
+    destroy = false
+  }
+}
 
-  # We don't prevent this version from being destroyed,
-  # since it is meant as a bootstrapping step when creating new
-  # secrets. Once populated with a legitimate value, this
-  # placeholder is no longer needed.
+locals {
+  // Services that read these secrets refuse this literal as an unset value.
+  placeholder_payload = "placeholder"
+}
+
+// Create a placeholder version so a new secret has a version for `latest` to
+// resolve to on first deploy. The payload is write-only, so refreshing this
+// version reads its metadata and never its payload.
+resource "google_secret_manager_secret_version" "bootstrap" {
+  count = var.bootstrap_placeholder_version ? 1 : 0
+
+  secret                 = google_secret_manager_secret.this.id
+  secret_data_wo         = local.placeholder_payload
+  secret_data_wo_version = "1"
+
+  // Dropping the variable or the module forgets the version instead of
+  // destroying it, in case it is still the latest.
+  deletion_policy = "ABANDON"
+
+  lifecycle {
+    // Let on-call disable the placeholder once a real value is added
+    // without the next apply re-enabling it.
+    ignore_changes = [enabled]
+  }
 }
 
 locals {
@@ -95,15 +119,6 @@ locals {
       -(
         protoPayload.authenticationInfo.principalEmail=(${join(" OR ", [for e in local.version_management_emails : "\"${e}\""])})
         protoPayload.methodName=(${join(" OR ", [for m in local.version_management_methods : "\"${m}\""])})
-      )
-%{endif~}
-%{if var.create_placeholder_version~}
-      -- Terraform reads the placeholder version's payload on every refresh, as
-      -- whoever applies this module. Its value is the literal "placeholder",
-      -- so reading it, and only it, is never abnormal.
-      -(
-        protoPayload.request.name=("projects/${var.project_id}/secrets/${var.name}/versions/${google_secret_manager_secret_version.placeholder[0].version}" OR "projects/${data.google_project.project.number}/secrets/${var.name}/versions/${google_secret_manager_secret_version.placeholder[0].version}")
-        protoPayload.methodName="google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion"
       )
 %{endif~}
       -- Ignore benign secret actions. ListSecretVersions and GetSecretVersion

@@ -75,15 +75,22 @@ variable "product" {
 }
 
 variable "provisioner" {
-  description = "The member-style identity of the account provisioning resources in this environment (e.g. serviceAccount:…). When set, it is granted access to the webhook secret so placeholder versions can be created."
+  description = "Deprecated and ignored. It exempted the provisioner from the webhook secret's abnormal-access alert while Terraform read the placeholder payload, which it no longer does."
   type        = string
   default     = ""
 }
 
 variable "create_placeholder_version" {
   type        = bool
-  description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."
+  description = "Deprecated and ignored: use bootstrap_placeholder_version for a new secret. See the secret module's README."
   default     = false
+}
+
+variable "bootstrap_placeholder_version" {
+  type        = bool
+  description = "Whether to create a write-only \"placeholder\" version so the new webhook secret's `latest` resolves on first deploy. Set it only when this module creates the secret: on an existing secret it adds a new version that becomes `latest`."
+  default     = false
+  nullable    = false
 }
 variable "observability_role" {
   type        = string

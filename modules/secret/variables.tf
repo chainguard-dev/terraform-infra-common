@@ -83,9 +83,16 @@ variable "alert_documentation" {
 }
 
 variable "create_placeholder_version" {
-  description = "Whether to create a placeholder secret version to avoid bad reference on first deploy."
+  description = "Deprecated and ignored: use bootstrap_placeholder_version for a new secret. The placeholder this used to create is left in Secret Manager and no longer tracked by Terraform."
   type        = bool
   default     = false
+}
+
+variable "bootstrap_placeholder_version" {
+  description = "Whether to create a write-only version holding the literal \"placeholder\", so that a new secret's `latest` resolves on first deploy. Set it only when the module creates the secret: on a secret that already exists it adds a new version, which becomes `latest` and replaces the real value for every reader."
+  type        = bool
+  default     = false
+  nullable    = false
 }
 
 variable "labels" {

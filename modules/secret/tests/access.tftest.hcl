@@ -426,31 +426,17 @@ run "shared_monitoring_preserves_access_exemptions" {
   }
 }
 
-run "placeholder_read_is_exempt_only_for_its_version" {
+# Terraform no longer reads any version payload, so the alert must not exempt
+# any version read, whether or not the module creates a placeholder.
+run "placeholder_read_is_not_exempt" {
   command = plan
   variables {
-    create_placeholder_version = true
-  }
-  override_resource {
-    target          = google_secret_manager_secret_version.placeholder
-    override_during = plan
-    values = {
-      version = "1"
-    }
+    bootstrap_placeholder_version = true
   }
 
-  # Terraform refreshes the placeholder by reading its payload as the applying
-  # identity, which is not one of the service's readers.
   assert {
-    condition = can(regex(
-      "protoPayload\\.request\\.name=\\(\"projects/fixture-project/secrets/fixture/versions/1\" OR \"projects/123456789/secrets/fixture/versions/1\"\\)\\s+protoPayload\\.methodName=\"google\\.cloud\\.secretmanager\\.v1\\.SecretManagerService\\.AccessSecretVersion\"",
-      google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter,
-    ))
-    error_message = "reads of exactly the placeholder version must be exempt"
-  }
-  assert {
-    condition     = !strcontains(google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter, "versions/latest")
-    error_message = "the exemption must not cover versions/latest, which resolves to the real value once one is added"
+    condition     = !strcontains(google_monitoring_alert_policy.anomalous-secret-access.conditions[0].condition_matched_log[0].filter, "/versions/")
+    error_message = "a placeholder that Terraform never reads must not exempt any version read"
   }
 }
 
@@ -461,12 +447,32 @@ run "placeholder_read_is_exempt_only_for_its_version" {
 run "placeholder_payload_is_the_literal_services_refuse" {
   command = plan
   variables {
+    bootstrap_placeholder_version = true
+  }
+
+  assert {
+    condition     = local.placeholder_payload == "placeholder"
+    error_message = "the placeholder payload must stay \"placeholder\": services refuse that literal as an unset secret, and would accept any other value as real"
+  }
+  assert {
+    condition     = google_secret_manager_secret_version.bootstrap[0].secret_data == null && google_secret_manager_secret_version.bootstrap[0].secret_data_wo_version == "1"
+    error_message = "the placeholder must be written through secret_data_wo, so that refreshing it never reads its payload"
+  }
+  assert {
+    condition     = google_secret_manager_secret_version.bootstrap[0].deletion_policy == "ABANDON"
+    error_message = "dropping the placeholder must forget it, not destroy it: it may still be latest"
+  }
+}
+
+run "deprecated_flag_creates_no_version" {
+  command = plan
+  variables {
     create_placeholder_version = true
   }
 
   assert {
-    condition     = nonsensitive(google_secret_manager_secret_version.placeholder[0].secret_data) == "placeholder"
-    error_message = "the placeholder payload must stay \"placeholder\": services refuse that literal as an unset secret, and would accept any other value as real"
+    condition     = length(google_secret_manager_secret_version.bootstrap) == 0
+    error_message = "create_placeholder_version must not add a version: on an existing secret it would become latest"
   }
 }
 

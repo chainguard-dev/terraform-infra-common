@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.11"
 
   required_providers {
     google = {
@@ -33,15 +33,10 @@ module "webhook-secret" {
   project_id = var.project_id
   name       = "${var.name}-webhook-secret"
 
-  service-accounts = compact([
-    google_service_account.service.email,
-    # Allow the provisioning account to access the secret
-    # values because we're creating a placeholder
-    var.provisioner,
-  ])
+  service-accounts = [google_service_account.service.email]
   authorized-adder = var.secret_version_adder
 
-  create_placeholder_version = var.create_placeholder_version
+  bootstrap_placeholder_version = var.bootstrap_placeholder_version
 
   notification-channels = var.notification_channels
 

@@ -106,12 +106,70 @@ module "foo-service" {
 }
 ```
 
+## Placeholder versions
+
+A Cloud Run service that mounts `latest` fails to deploy while the secret has
+no versions. For a secret this module creates, set
+`bootstrap_placeholder_version = true` to add a version holding the literal
+`placeholder`, which services refuse as an unset value. The payload is
+write-only (`secret_data_wo`), so refreshing the version reads only its
+metadata and Terraform never needs `roles/secretmanager.secretAccessor`, never
+stores the payload in state, and the abnormal-access alert exempts no version
+read. Set it only in the change that creates the secret: on a secret that
+already exists it adds a new version, which becomes `latest` and replaces the
+real value for every reader.
+
+`create_placeholder_version` is deprecated and ignored. The version it created
+used `secret_data`, so every plan called `AccessSecretVersion` on it. A
+`removed` block in this module forgets those versions without destroying them.
+
+### Runbook: upgrading a caller that set `create_placeholder_version`
+
+1. Delete the `create_placeholder_version = true` line. Don't replace it with
+   `bootstrap_placeholder_version = true`; that adds a new `latest`.
+2. Plan. For each secret the plan says
+   `google_secret_manager_secret_version.placeholder[0] will no longer be managed by Terraform, but will not be destroyed`,
+   and updates the alert filter (and `access_log_metric_name` metric, if set)
+   to drop the placeholder exemption. It must not create or destroy any
+   `google_secret_manager_secret_version`. The first plan may still refresh the
+   old placeholder; an identity without `secretAccessor` logs a permission
+   error for it, which the provider ignores.
+3. Apply. Afterwards, `terraform state list | grep secret_version` shows no
+   `placeholder` address.
+4. Confirm readers still resolve `latest` (metadata only, no payload read):
+
+   ```shell
+   gcloud secrets versions list SECRET --project PROJECT --filter='state=ENABLED' --limit 3
+   gcloud secrets versions describe latest --secret SECRET --project PROJECT
+   ```
+
+   `latest` must be the same version as before the apply. Nothing changes in
+   Secret Manager, so services need no restart.
+
+This release requires Terraform 1.11 or later, for write-only arguments.
+Callers on an older Terraform must stay on the previous release.
+
+Rollback: pin the module to its previous release with
+`create_placeholder_version` unset (or `false`) on every caller. The previous
+release then plans nothing for the placeholder and leaves the untracked
+version alone. Don't roll back with the flag still `true`: that release would
+create a new placeholder version, which becomes `latest`. Don't import the old
+version into it either: import reads the payload, and an identity without
+`secretAccessor` gets an empty value back, which again plans a new version.
+
+### Once a real value is added
+
+Prefer disabling the placeholder over destroying it: Terraform ignores
+`enabled` on it, but recreates a destroyed version, which becomes `latest`. To
+stop tracking it, set `bootstrap_placeholder_version = false`; its
+`deletion_policy` is `ABANDON`, so the version stays in Secret Manager.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
 
 ## Providers
@@ -134,7 +192,7 @@ No modules.
 | [google_secret_manager_secret_iam_binding.authorize-service-access](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-version-adder](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
 | [google_secret_manager_secret_iam_binding.authorize-version-manager](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_iam_binding) | resource |
-| [google_secret_manager_secret_version.placeholder](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [google_secret_manager_secret_version.bootstrap](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [google_tags_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding) | resource |
 | [google_project.project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
@@ -146,7 +204,8 @@ No modules.
 | <a name="input_alert_documentation"></a> [alert\_documentation](#input\_alert\_documentation) | Markdown documentation attached to the abnormal-access alert (e.g. what to check and a Logs Explorer link). Empty (default) attaches none. | `string` | `""` | no |
 | <a name="input_authorized-adder"></a> [authorized-adder](#input\_authorized-adder) | A member-style representation of the identity authorized to add new secret values (e.g. group:oncall@my-corp.dev). | `string` | n/a | yes |
 | <a name="input_authorized-adders"></a> [authorized-adders](#input\_authorized-adders) | List of additional identities authorized to add new secret values (e.g. ["serviceAccount:sa@project.iam.gserviceaccount.com"]). Use this when multiple identities need version adder permissions. | `list(string)` | `[]` | no |
-| <a name="input_create_placeholder_version"></a> [create\_placeholder\_version](#input\_create\_placeholder\_version) | Whether to create a placeholder secret version to avoid bad reference on first deploy. | `bool` | `false` | no |
+| <a name="input_bootstrap_placeholder_version"></a> [bootstrap\_placeholder\_version](#input\_bootstrap\_placeholder\_version) | Whether to create a write-only version holding the literal "placeholder", so that a new secret's `latest` resolves on first deploy. Set it only when the module creates the secret: on a secret that already exists it adds a new version, which becomes `latest` and replaces the real value for every reader. | `bool` | `false` | no |
+| <a name="input_create_placeholder_version"></a> [create\_placeholder\_version](#input\_create\_placeholder\_version) | Deprecated and ignored: use bootstrap\_placeholder\_version for a new secret. The placeholder this used to create is left in Secret Manager and no longer tracked by Terraform. | `bool` | `false` | no |
 | <a name="input_group_members"></a> [group\_members](#input\_group\_members) | Member emails of each group in authorized-adder, authorized-adders, and version\_managers, keyed by the group's email. Audit logs name the member who acted, never the group, so the abnormal-access alert recognizes a group's members only through this map. Resolve it from the groups (e.g. with the group-members module) so it follows membership changes. Grants no IAM. | `map(list(string))` | `{}` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | Labels to apply to the secret. | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name to give the secret. | `string` | n/a | yes |
