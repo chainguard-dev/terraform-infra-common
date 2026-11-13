@@ -57,7 +57,12 @@ variable "pools" {
   type = map(object({
     min_node_count = optional(number, 1)
     max_node_count = optional(number, 1)
-    machine_type   = optional(string, "c3-standard-4")
+    # Requires Linux cgroup v2 and GKE 1.34.1-gke.2541000+ on a new or
+    # replacement pool. Changes replace the selected pool. Adopt this module
+    # with the default false before enabling an existing pool; enabling during
+    # initial adoption requires an explicit -replace for that pool.
+    writable_cgroups = optional(bool, false)
+    machine_type     = optional(string, "c3-standard-4")
     # Node image: "COS_CONTAINERD" (the default, Container-Optimized OS) or
     # "UBUNTU_CONTAINERD". Both run containerd and both ship on x86 and Arm.
     # They differ in the kernel: COS boots Google's kernel with a fixed LSM

@@ -345,9 +345,19 @@ resource "google_container_cluster" "this" {
   depends_on = [google_service_account_iam_member.terraform_gke_impersonation]
 }
 
+resource "terraform_data" "writable_cgroups" {
+  for_each         = var.pools
+  triggers_replace = each.value.writable_cgroups
+}
+
 resource "google_container_node_pool" "pools" {
   for_each = var.pools
   provider = google-beta
+
+  lifecycle {
+    # GKE cannot update this setting in place; retain the selected pool's name.
+    replace_triggered_by = [terraform_data.writable_cgroups[each.key]]
+  }
 
   name           = each.key
   cluster        = google_container_cluster.this.name
@@ -369,6 +379,12 @@ resource "google_container_node_pool" "pools" {
   }
 
   node_config {
+    dynamic "containerd_config" {
+      for_each = each.value.writable_cgroups ? [true] : []
+      content {
+        writable_cgroups { enabled = true }
+      }
+    }
     service_account = google_service_account.cluster_default.email
     image_type      = each.value.image_type
     machine_type    = each.value.machine_type
