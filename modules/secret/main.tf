@@ -11,8 +11,9 @@ terraform {
 
 // Create the GCP secret to hold the configuration data.
 resource "google_secret_manager_secret" "this" {
-  secret_id = var.name
-  labels    = local.merged_labels
+  secret_id   = var.name
+  labels      = local.merged_labels
+  annotations = var.annotations
   replication {
     dynamic "auto" {
       for_each = var.replication_locations == null ? ["auto"] : []

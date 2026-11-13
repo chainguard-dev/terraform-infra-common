@@ -101,6 +101,13 @@ variable "labels" {
   default     = {}
 }
 
+variable "annotations" {
+  description = "Annotations to set on the secret: non-secret metadata that readers can fetch with secretmanager.secrets.get, without access to the payload. Keys and values together must stay under 16KiB."
+  type        = map(string)
+  default     = {}
+  nullable    = false
+}
+
 variable "replication_locations" {
   description = "List of GCP regions for user_managed replication. When null (default), uses automatic replication."
   type        = list(string)

@@ -15,7 +15,7 @@
  */
 
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.11"
 
   required_providers {
     google = {
@@ -35,6 +35,17 @@ locals {
     squad = var.team
   }
   merged_labels = merge(local.default_labels, local.squad_label, var.labels)
+
+  # Published on the AUTH secret (see "Connecting without getAuthString" in
+  # the README). The CA bundle carries every current server CA, so a client
+  # trusting it keeps connecting through a CA rotation; each PEM block ends in
+  # a newline so the blocks never run together. An empty value is
+  # left out rather than sent, since an instance without TLS has no CA.
+  connection_annotations = { for k, v in {
+    "redis-host"          = google_redis_instance.default.host
+    "redis-port"          = tostring(google_redis_instance.default.port)
+    "redis-server-ca-pem" = join("", [for c in google_redis_instance.default.server_ca_certs : "${trimspace(c.cert)}\n"])
+  } : k => v if v != "" }
 
   redis_configs = { for k, v in {
     "notify-keyspace-events" = var.notify_keyspace_events
@@ -138,7 +149,7 @@ module "redis_auth_secret" {
   alert_documentation = <<-EOT
     Unexpected Secret Manager activity targeted the Redis AUTH credential for `${var.name}` in `${var.region}`. The caller or operation is outside the configured accessor/version-manager exclusions; this may indicate credential exposure or an unrecognized deployment identity.
 
-    Open [Logs Explorer](https://console.cloud.google.com/logs/query;query=${urlencode("protoPayload.serviceName=\"secretmanager.googleapis.com\"\n(protoPayload.request.name:\"/secrets/${var.name}-auth/\" OR protoPayload.request.parent:\"/secrets/${var.name}-auth\")")}?project=${var.project_id}) and check the principal, method, user agent, result and timestamp against recent Terraform runs and service deployments. Terraform refresh reads the AUTH secret with AccessSecretVersion; compare its principal with ci_service_accounts. Version-adder exclusions do not cover reads.
+    Open [Logs Explorer](https://console.cloud.google.com/logs/query;query=${urlencode("protoPayload.serviceName=\"secretmanager.googleapis.com\"\n(protoPayload.request.name:\"/secrets/${var.name}-auth/\" OR protoPayload.request.parent:\"/secrets/${var.name}-auth\")")}?project=${var.project_id}) and check the principal, method, user agent, result and timestamp against recent Terraform runs and service deployments. Terraform no longer reads the AUTH payload, so an AccessSecretVersion from a CI identity is unexpected. Version-adder exclusions do not cover reads.
 
     For expected activity, confirm the identity with the Redis service owner before correcting the accessor or version-manager configuration. For unexplained activity, escalate to Security and the owning service team, investigate the caller's IAM access, and coordinate credential rotation and client updates if exposure is confirmed. Do not retrieve or copy the AUTH value into logs or incident notes, or broaden exclusions just to silence the alert.
   EOT
@@ -149,8 +160,12 @@ module "redis_auth_secret" {
     [var.secret_accessor_sa_email],
     var.authorized_client_service_accounts,
     var.authorized_client_editor_service_accounts,
-    var.ci_service_accounts,
   )
+
+  # Connection details, so a root that only connects to the instance can read
+  # them from the secret's metadata. A data "google_redis_instance" lookup
+  # also returns the AUTH string, which needs redis.instances.getAuthString.
+  annotations = local.connection_annotations
 
   create_placeholder_version = false
 
@@ -159,11 +174,31 @@ module "redis_auth_secret" {
   resource_manager_tags = var.resource_manager_tags
 }
 
-# Create the initial version of the secret with the auth string
-resource "google_secret_manager_secret_version" "auth_string" {
+# Store the AUTH string GCP generates. secret_data_wo is write-only: it never
+# enters state, and refreshing the version reads only its metadata, never its
+# payload, so plans need no secretAccessor. The string is still read from the
+# instance: the provider calls getAuthString on every refresh of an AUTH-enabled
+# google_redis_instance and keeps it in state (see "AUTH and plan identities"
+# in the README).
+resource "google_secret_manager_secret_version" "auth" {
   count  = var.auth_enabled ? 1 : 0
   secret = module.redis_auth_secret[0].secret_id
 
-  # Use the auth_string that GCP auto-generates
-  secret_data = google_redis_instance.default.auth_string
+  secret_data_wo = google_redis_instance.default.auth_string
+  # A replaced instance has a new AUTH string and a new create_time, so the
+  # change replaces this version with one holding the new string. The
+  # attribute is a string from provider 8.x (7.x had a number defaulting to 0).
+  secret_data_wo_version = google_redis_instance.default.create_time
+}
+
+# The previous version stored secret_data in state, and every refresh read its
+# payload. Forget it rather than destroy it: it holds the live AUTH string
+# until auth above adds a newer version, and workloads resolving "latest" move
+# to that one.
+removed {
+  from = google_secret_manager_secret_version.auth_string
+
+  lifecycle {
+    destroy = false
+  }
 }

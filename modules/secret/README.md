@@ -202,6 +202,7 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_access_log_metric_name"></a> [access\_log\_metric\_name](#input\_access\_log\_metric\_name) | Optional log counter name for monitoring this secret through a shared metrics scope. Null creates no metric. Uses the same unauthorized-access filter as the local alert. | `string` | `null` | no |
 | <a name="input_alert_documentation"></a> [alert\_documentation](#input\_alert\_documentation) | Markdown documentation attached to the abnormal-access alert (e.g. what to check and a Logs Explorer link). Empty (default) attaches none. | `string` | `""` | no |
+| <a name="input_annotations"></a> [annotations](#input\_annotations) | Annotations to set on the secret: non-secret metadata that readers can fetch with secretmanager.secrets.get, without access to the payload. Keys and values together must stay under 16KiB. | `map(string)` | `{}` | no |
 | <a name="input_authorized-adder"></a> [authorized-adder](#input\_authorized-adder) | A member-style representation of the identity authorized to add new secret values (e.g. group:oncall@my-corp.dev). | `string` | n/a | yes |
 | <a name="input_authorized-adders"></a> [authorized-adders](#input\_authorized-adders) | List of additional identities authorized to add new secret values (e.g. ["serviceAccount:sa@project.iam.gserviceaccount.com"]). Use this when multiple identities need version adder permissions. | `list(string)` | `[]` | no |
 | <a name="input_bootstrap_placeholder_version"></a> [bootstrap\_placeholder\_version](#input\_bootstrap\_placeholder\_version) | Whether to create a write-only version holding the literal "placeholder", so that a new secret's `latest` resolves on first deploy. Set it only when the module creates the secret: on a secret that already exists it adds a new version, which becomes `latest` and replaces the real value for every reader. | `bool` | `false` | no |
@@ -224,6 +225,8 @@ No modules.
 | Name | Description |
 | ---- | ----------- |
 | <a name="output_access_log_metric_name"></a> [access\_log\_metric\_name](#output\_access\_log\_metric\_name) | Unauthorized-access log counter name, or null when disabled. Alert policies belong in the caller's monitoring project. |
+| <a name="output_accessor_members"></a> [accessor\_members](#output\_accessor\_members) | The members granted roles/secretmanager.secretAccessor on the secret. |
+| <a name="output_annotations"></a> [annotations](#output\_annotations) | The annotations set on the secret. |
 | <a name="output_authorized_secret_id"></a> [authorized\_secret\_id](#output\_authorized\_secret\_id) | The ID of the secret after its accessor binding is applied. |
 | <a name="output_secret_id"></a> [secret\_id](#output\_secret\_id) | The ID of the secret. |
 <!-- END_TF_DOCS -->

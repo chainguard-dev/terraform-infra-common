@@ -64,13 +64,163 @@ module "redis" {
 
 ## Authentication Management
 
-This module automatically manages Redis authentication credentials, when `auth_enabled = true`, the module will:
-- Create a Redis instance with authentication enabled
-- Retrieve the GCP-generated auth string
-- Store the auth string in Secret Manager with Secret name automatically set to `{name}-auth` (e.g., "my-redis-instance-auth")
-- The Secret Manager secret is created in the same project as the Redis instance
-- Make the auth string available to authorized service accounts
+When `auth_enabled = true`, the module:
+- Creates a Redis instance with authentication enabled
+- Creates a Secret Manager secret named `{name}-auth` (e.g. "my-redis-instance-auth") in the instance's project
+- Stores the GCP-generated AUTH string as a version of that secret, and stores a new one when the instance is replaced
+- Grants `roles/secretmanager.secretAccessor` on the secret to `secret_accessor_sa_email` and the authorized client service accounts
 
+Workloads read the AUTH string from Secret Manager at runtime: a Cloud Run
+`secret_key_ref`, a GKE External Secret, or an application-side
+`AccessSecretVersion` call. Never pass it through Terraform outputs or plain
+environment variables.
+
+### AUTH and plan identities
+
+The secret version is written with `secret_data_wo`, a write-only argument:
+the AUTH string never enters that resource's state, and refreshing the version
+reads only its metadata. A plan of a root that uses this module therefore needs
+no `secretmanager.versions.access` (`roles/secretmanager.secretAccessor`).
+
+The instance itself is different. The Google provider calls
+`redis.instances.getAuthString` on every read of an AUTH-enabled
+`google_redis_instance`, resource or data source, and has no option to skip it;
+a plan identity without the permission fails to refresh. The AUTH string is
+therefore still in the state of the root that owns the instance (and of any
+root with a `data "google_redis_instance"` lookup). Treat those roots as reading
+a secret: their plan identity needs `redis.instances.getAuthString` and
+`roles/redis.viewer` (no `roles/redis.admin`), and their state bucket is as
+sensitive as the secret. Roots that only need the instance's host or port
+should take them from somewhere other than a `google_redis_instance` lookup.
+
+`ci_service_accounts` is unused and kept so existing callers still plan. CI
+identities no longer get accessor on the secret, so a CI identity reading the
+payload now trips the secret's anomaly alert, which is intended.
+
+### Connecting without getAuthString
+
+A root that only connects to an instance (it needs the address and CA, not the
+password) should not look it up with `data "google_redis_instance"`, because
+that read needs `getAuthString` and puts the AUTH string in the root's state.
+When `auth_enabled = true`, the module publishes the connection details as
+annotations on the `{name}-auth` secret:
+
+| Annotation | Value |
+| ---------- | ----- |
+| `redis-host` | the instance's IP address |
+| `redis-port` | its port |
+| `redis-server-ca-pem` | the concatenated PEM of every current server CA; absent when transit encryption is off |
+
+Read them with the secret data source, which fetches metadata only
+(`secretmanager.secrets.get`, in `roles/secretmanager.viewer`), never the
+payload:
+
+```hcl
+data "google_secret_manager_secret" "redis" {
+  project   = "my-project-id"
+  secret_id = "my-redis-instance-auth"
+}
+
+locals {
+  redis_addr = "${data.google_secret_manager_secret.redis.annotations["redis-host"]}:${data.google_secret_manager_secret.redis.annotations["redis-port"]}"
+  redis_ca   = lookup(data.google_secret_manager_secret.redis.annotations, "redis-server-ca-pem", "")
+}
+```
+
+The annotations are updated in the same apply that changes the instance (a
+replacement or a CA rotation); a consumer root picks the change up on its next
+apply, as it would with the instance data source.
+
+### Runbook: moving an existing instance onto the write-only version
+
+Earlier versions of this module stored the AUTH string in
+`google_secret_manager_secret_version.auth_string` with `secret_data`, so every
+plan read the payload. The module now carries a
+`removed { lifecycle { destroy = false } }` block for that resource. No state
+surgery is needed: the first apply of a root after it picks up this module
+version does the move.
+
+1. **Review the plan.** For each instance (`<addr>` is the module's address in
+   the root, for example `module.cache["us-central1"].module.redis`),
+   the plan must show exactly:
+   - `<addr>.google_secret_manager_secret_version.auth_string[0]` *will no
+     longer be managed by Terraform* (forget, not destroy);
+   - `<addr>.google_secret_manager_secret_version.auth[0]` *will be created*;
+   - `<addr>.module.redis_auth_secret[0].google_secret_manager_secret_iam_binding.authorize-service-access`
+     updated in place, dropping only the CI service accounts from `members`.
+
+   Stop if the plan destroys any secret version or replaces the instance.
+   This plan still refreshes the old version, so it reads the payload once,
+   with the identity that already has access. Plans after the apply do not.
+2. **Apply** through the normal provision workflow. Nothing to do by hand
+   before or after; the old version stays enabled with the same value, so
+   workloads keep connecting throughout.
+3. **Verify the secret.** The newest version is enabled and the old one is
+   still there:
+
+   ```bash
+   gcloud secrets versions list <name>-auth --project <project> --limit 3
+   ```
+
+   To confirm the stored value matches the instance without printing either
+   (needs `getAuthString` and accessor, so run it as an operator, not a CI identity):
+
+   ```bash
+   diff \
+     <(gcloud redis instances get-auth-string <name> --region <region> --project <project> --format='value(authString)' | tr -d '\n' | sha256sum) \
+     <(gcloud secrets versions access latest --secret <name>-auth --project <project> | sha256sum) \
+     && echo match
+   ```
+
+4. **Verify the workload.** Check the service's logs for Redis
+   authentication errors (`NOAUTH`, `WRONGPASS`) after its next restart or
+   rollout, and that its Redis-backed metrics (cache hit ratio, dashboards) are
+   unchanged. Cloud Run and External Secrets resolve `latest` at start or
+   refresh, so a value mismatch would show up then, not at apply.
+5. **Confirm plans no longer read the payload.** Re-run the stage's plan: it
+   should be a no-op, and Logs Explorer should show no `AccessSecretVersion`
+   on `<name>-auth` from CI identities.
+6. **Optional cleanup.** Once step 4 has held across a workload restart,
+   disable the forgotten version (keep it for rollback; destroy it later):
+
+   ```bash
+   gcloud secrets versions disable <old-version> --secret <name>-auth --project <project>
+   ```
+
+If the plan shows the old version being *destroyed* rather than forgotten
+(for example, a root pins this module at a copy without the `removed` block),
+do not apply it. Forget the old resource from state first, then re-plan:
+
+```bash
+terraform state rm '<addr>.google_secret_manager_secret_version.auth_string[0]'
+```
+
+**Missing or wrong version.** If the secret has no enabled version, or step 3
+reports a mismatch, add the current string out of band (as an
+operator, since it needs `getAuthString` and version-adder):
+
+```bash
+gcloud redis instances get-auth-string <name> --region <region> --project <project> --format='value(authString)' \
+  | tr -d '\n' \
+  | gcloud secrets versions add <name>-auth --project <project> --data-file=-
+```
+
+A version added out of band is not tracked by Terraform and does not cause a
+diff; workloads pick it up as `latest` at their next start or refresh. Never
+paste the value into a terminal, ticket or chat.
+
+**Rotation.** Memorystore issues a new AUTH string only when the instance is
+replaced or AUTH is turned off and on. Replacement changes the instance's
+`create_time`, which replaces `auth[0]` with the new string in the same apply.
+Toggling AUTH in place does not: follow it with the out-of-band step above.
+
+**Rollback.** Revert this module change. The revert must add
+`removed { from = google_secret_manager_secret_version.auth  lifecycle { destroy = false } }`
+to the module, so the apply forgets the write-only version instead of
+destroying the version workloads are reading; the restored `auth_string`
+resource then creates a new `secret_data` version with the same value. The
+revert also restores CI accessor on the secret, which plans need again once
+they read the payload.
 
 <!-- BEGIN_TF_DOCS -->
 Copyright 2025 Chainguard, Inc.
@@ -91,14 +241,14 @@ limitations under the License.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.79 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >= 8.7.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_google"></a> [google](#provider\_google) | >= 4.79 |
+| <a name="provider_google"></a> [google](#provider\_google) | >= 8.7.0 |
 
 ## Modules
 
@@ -114,7 +264,7 @@ limitations under the License.
 | [google_project_iam_member.redis_editor_sa](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.redis_api](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_redis_instance.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/redis_instance) | resource |
-| [google_secret_manager_secret_version.auth_string](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [google_secret_manager_secret_version.auth](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [google_tags_location_tag_binding.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_location_tag_binding) | resource |
 | [google_project.resource_manager_tags](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project) | data source |
 
@@ -127,7 +277,7 @@ limitations under the License.
 | <a name="input_authorized_client_editor_service_accounts"></a> [authorized\_client\_editor\_service\_accounts](#input\_authorized\_client\_editor\_service\_accounts) | List of service account emails that should be granted Redis editor (read-write) access | `list(string)` | `[]` | no |
 | <a name="input_authorized_client_service_accounts"></a> [authorized\_client\_service\_accounts](#input\_authorized\_client\_service\_accounts) | List of service account emails that should be granted Redis viewer (read-only) access | `list(string)` | `[]` | no |
 | <a name="input_authorized_network"></a> [authorized\_network](#input\_authorized\_network) | The full name of the Google Compute Engine network to which the instance is connected. Must be in the format: projects/{project\_id}/global/networks/{network\_name} | `string` | `""` | no |
-| <a name="input_ci_service_accounts"></a> [ci\_service\_accounts](#input\_ci\_service\_accounts) | CI service accounts that read the auth secret during terraform plan/apply: refreshing google\_secret\_manager\_secret\_version calls AccessSecretVersion to populate secret\_data. These are added to the auth secret's service-accounts list so the anomaly alert excludes their access. The adder exclusion does not cover it — that one only matches Add/Enable/DestroySecretVersion. | `list(string)` | `[]` | no |
+| <a name="input_ci_service_accounts"></a> [ci\_service\_accounts](#input\_ci\_service\_accounts) | Unused: the module writes the AUTH secret's version write-only, so refreshing it never reads the payload and CI identities need no access to it. Kept so existing callers still plan. | `list(string)` | `[]` | no |
 | <a name="input_connect_mode"></a> [connect\_mode](#input\_connect\_mode) | The connection mode of the Redis instance. Valid values: DIRECT\_PEERING, PRIVATE\_SERVICE\_ACCESS. | `string` | `"PRIVATE_SERVICE_ACCESS"` | no |
 | <a name="input_labels"></a> [labels](#input\_labels) | The resource labels to represent user-provided metadata. | `map(string)` | `{}` | no |
 | <a name="input_maintenance_policy"></a> [maintenance\_policy](#input\_maintenance\_policy) | Maintenance policy for an instance. | <pre>object({<br/>    day = string<br/>    start_time = object({<br/>      hours   = number<br/>      minutes = number<br/>      seconds = number<br/>      nanos   = number<br/>    })<br/>  })</pre> | `null` | no |

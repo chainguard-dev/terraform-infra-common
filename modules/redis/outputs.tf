@@ -78,7 +78,7 @@ output "auth_secret_id" {
   # not. Consumers that resolve the "latest" version (for example a Cloud Run
   # revision) must not read it until the current auth string is stored, or
   # they pin the replaced instance's password.
-  depends_on = [google_secret_manager_secret_version.auth_string]
+  depends_on = [google_secret_manager_secret_version.auth]
 }
 
 output "auth_enabled" {
