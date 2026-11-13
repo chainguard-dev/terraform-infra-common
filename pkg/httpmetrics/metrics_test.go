@@ -10,36 +10,70 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"go.opentelemetry.io/otel"
 )
 
+// stubHandlerLookups stops Handler from reaching the network for the rest of
+// the test. Handler fetches Google's OIDC discovery document to verify bearer
+// tokens, and its clog trace-context handler asks the metadata server for the
+// project ID unless GOOGLE_CLOUD_PROJECT is set. The stub makes the OIDC fetch
+// fail and sets GOOGLE_CLOUD_PROJECT. The tests send no bearer tokens, so
+// Handler records the caller as unknown with or without the OIDC document.
+func stubHandlerLookups(t *testing.T) {
+	t.Helper()
+	orig := providerOnce
+	providerOnce = func() (*oidc.Provider, error) { return nil, errors.New("no OIDC provider in tests") }
+	t.Cleanup(func() { providerOnce = orig })
+	t.Setenv("GOOGLE_CLOUD_PROJECT", fmt.Sprintf("project-%x", rand.Uint64()))
+}
+
 func TestServerMetrics(t *testing.T) {
-	handler := "test"
-	http.Handle("/", Handler(handler, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	stubHandlerLookups(t)
+	handler := fmt.Sprintf("test-%x", rand.Uint64())
+	mux := http.NewServeMux()
+	mux.Handle("/", Handler(handler, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})))
-	srv := httptest.NewServer(http.DefaultServeMux)
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
 
-	resp, err := srv.Client().Get(srv.URL + "/")
+	labels := prometheus.Labels{
+		"handler":                    handler,
+		"method":                     http.MethodGet,
+		"code":                       "200",
+		"service_name":               stubServiceName(t),
+		"revision_name":              stubRevisionName(t),
+		"ce_type":                    "",
+		"email":                      "unknown",
+		"user_agent_browser_name":    "",
+		"user_agent_browser_version": "",
+		"user_agent_os":              "",
+	}
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, srv.URL+"/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	// With an empty User-Agent, the client sends no User-Agent header.
+	req.Header.Set("User-Agent", "")
+	resp, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want OK, got %s", resp.Status)
 	}
 
-	// Sample a metric to make sure labels are being properly applied.
-	if got := testutil.ToFloat64(counter.MustCurryWith(prometheus.Labels{
-		"handler": handler,
-		"method":  "get",
-		"code":    "200",
-	})); got != 1 {
+	if got := testutil.ToFloat64(counter.With(labels)); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
 }
@@ -87,6 +121,7 @@ func (w *unwrappingResponseWriter) Unwrap() http.ResponseWriter {
 }
 
 func TestHandlerDoesNotAdvertiseUnsupportedFlush(t *testing.T) {
+	stubHandlerLookups(t)
 	var advertised bool
 	var flushErr error
 	h := Handler("non-flushing-test", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -108,6 +143,7 @@ func TestHandlerDoesNotAdvertiseUnsupportedFlush(t *testing.T) {
 }
 
 func TestHandlerPreservesFlusher(t *testing.T) {
+	stubHandlerLookups(t)
 	var advertised bool
 	var flushed bool
 	h := Handler("flushing-test", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -135,6 +171,7 @@ func TestHandlerPreservesFlusher(t *testing.T) {
 }
 
 func TestHandlerPreservesResponseControllerFlush(t *testing.T) {
+	stubHandlerLookups(t)
 	flushFailed := errors.New("flush failed")
 	for _, tc := range []struct {
 		name    string
@@ -187,6 +224,7 @@ func TestHandlerPreservesResponseControllerFlush(t *testing.T) {
 // the flush is unsupported, so a metrics wrapper that hides flush support from
 // http.ResponseController breaks every server-streaming endpoint behind it.
 func TestHandlerStreamingFlush(t *testing.T) {
+	stubHandlerLookups(t)
 	flushErr := make(chan error, 1)
 	release := make(chan struct{})
 

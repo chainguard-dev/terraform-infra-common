@@ -8,22 +8,27 @@ package httpmetrics
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 
+	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -313,9 +318,10 @@ func TestOTLPSpanFilter(t *testing.T) {
 }
 
 func TestTracerOptions_Matrix(t *testing.T) {
-	// Exercises the off-GCP path (no metadata server) to verify the exporter
-	// list drives the number of span processors without actually reaching
-	// Cloud Trace.
+	// The stubbed metadata probe reports that the process is off GCP. Each case
+	// checks how many span processors its exporter list installs, and no case
+	// reaches Cloud Trace.
+	stubProbeGCP(t)
 	tests := []struct {
 		name           string
 		env            map[string]string
@@ -354,9 +360,9 @@ func TestTracerOptions_Matrix(t *testing.T) {
 		{
 			name: "otlp named missing endpoint is skipped, not fatal",
 			env: map[string]string{
-				"OTEL_TRACES_EXPORTER":                       "otlp/primary,otlp/secondary",
-				"OTEL_EXPORTER_OTLP_TRACES_PRIMARY_ENDPOINT": "https://primary.example/v1/traces",
-				// SECONDARY endpoint deliberately unset.
+				"OTEL_TRACES_EXPORTER":                         "otlp/primary,otlp/secondary",
+				"OTEL_EXPORTER_OTLP_TRACES_PRIMARY_ENDPOINT":   "https://primary.example/v1/traces",
+				"OTEL_EXPORTER_OTLP_TRACES_SECONDARY_ENDPOINT": "",
 			},
 			wantProcessors: 1,
 		},
@@ -452,18 +458,66 @@ func TestParseZoneAttributes(t *testing.T) {
 	}
 }
 
-// TestBuildResource_PartialErrorIsNotFatal verifies that buildResource does not
-// call clog.FatalContextf when the GCP resource detector returns
-// ErrPartialResource. On Cloud Batch (GCE-backed), instance/region is
-// unavailable (Cloud Run-only metadata), so the detector always returns a
-// partial error — previously this caused a fatal crash; now it should warn and
-// continue.
+// TestBuildResource_PartialErrorIsNotFatal checks that when the GCP detector
+// returns ErrPartialResource, buildResource keeps the attributes that the
+// detector found and does not exit.
+//
+// The detector returns a partial resource on Cloud Batch. Cloud Batch runs jobs
+// on GCE with CLOUD_RUN_JOB set, so the detector reads Cloud Run Job metadata,
+// and the GCE metadata server returns 404 for instance/region. The test serves
+// the same responses from a local metadata server, and points the detector at
+// it through GCE_METADATA_HOST.
 func TestBuildResource_PartialErrorIsNotFatal(t *testing.T) {
-	// In a non-GCP test environment the GCP detector fails → ErrPartialResource.
-	// The function must return a non-nil resource rather than calling os.Exit.
+	project := fmt.Sprintf("project-%x", rand.Uint64())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/computeMetadata/v1/project/project-id":
+			fmt.Fprint(w, project)
+		case "/computeMetadata/v1/instance/zone":
+			fmt.Fprint(w, "projects/123/zones/us-central1-a")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	t.Setenv("GCE_METADATA_HOST", srv.Listener.Addr().String())
+	t.Setenv("OTEL_RESOURCE_ATTRIBUTES", "")
+	t.Setenv("OTEL_SERVICE_NAME", "")
+	// Each of these variables changes what the detector finds. The detector
+	// checks for bare metal, GKE, Cloud Functions and Cloud Run before Cloud Run
+	// Job, prefers K_SERVICE to CLOUD_RUN_JOB for a job's name, and reads a
+	// job's execution and task index from CLOUD_RUN_EXECUTION and
+	// CLOUD_RUN_TASK_INDEX.
+	for _, key := range []string{
+		"BMS_PROJECT_ID", "BMS_REGION", "BMS_INSTANCE_ID", "KUBERNETES_SERVICE_HOST",
+		"FUNCTION_TARGET", "K_CONFIGURATION", "K_SERVICE", "CLOUD_RUN_EXECUTION",
+		"CLOUD_RUN_TASK_INDEX",
+	} {
+		unsetenv(t, key)
+	}
+	job := fmt.Sprintf("job-%x", rand.Uint64())
+	t.Setenv("CLOUD_RUN_JOB", job)
+	svc := stubServiceName(t)
+
+	if _, err := gcp.NewDetector().Detect(t.Context()); !errors.Is(err, resource.ErrPartialResource) {
+		t.Fatalf("GCP detector: got error %v, want ErrPartialResource", err)
+	}
+
 	got := buildResource(t.Context(), true)
-	if got == nil {
-		t.Fatal("buildResource(ctx, onGCP=true) = nil, want non-nil resource")
+	want, err := resource.New(t.Context(), resource.WithTelemetrySDK(), resource.WithAttributes(
+		attribute.String("cloud.provider", "gcp"),
+		attribute.String("cloud.platform", "gcp_cloud_run"),
+		attribute.String("cloud.account.id", project),
+		attribute.String("faas.name", job),
+		attribute.String("cloud.availability_zone", "us-central1-a"),
+		attribute.String("cloud.region", "us-central1"),
+		attribute.String("service.name", svc),
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(toKVStrings(want.Attributes()), toKVStrings(got.Attributes())); diff != "" {
+		t.Errorf("buildResource(ctx, onGCP=true) attributes (-want, +got):\n%s", diff)
 	}
 }
 
@@ -519,13 +573,7 @@ func TestTracerOptions_NoGCPDetection(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var probes atomic.Int64
-			orig := probeGCP
-			probeGCP = func(context.Context) bool {
-				probes.Add(1)
-				return false
-			}
-			t.Cleanup(func() { probeGCP = orig })
+			probes := stubProbeGCP(t)
 			t.Setenv("OTEL_TRACES_EXPORTER", "otlp")
 			t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://localhost:4318")
 
@@ -546,15 +594,9 @@ func TestTracerOptions_NoGCPDetection(t *testing.T) {
 // option. It pins that nothing probes the metadata server and that the
 // installed propagator still carries trace context and baggage.
 func TestSetupTracerWith_NoGCPDetection(t *testing.T) {
-	var probes atomic.Int64
-	orig := probeGCP
-	probeGCP = func(context.Context) bool {
-		probes.Add(1)
-		return false
-	}
+	probes := stubProbeGCP(t)
 	origTP, origProp := otel.GetTracerProvider(), otel.GetTextMapPropagator()
 	t.Cleanup(func() {
-		probeGCP = orig
 		otel.SetTracerProvider(origTP)
 		otel.SetTextMapPropagator(origProp)
 	})
@@ -598,5 +640,164 @@ func TestSetupTracerWith_NoGCPDetection(t *testing.T) {
 	}
 	if got, want := baggage.FromContext(out).Member("k").Value(), member.Value(); got != want {
 		t.Errorf("baggage: got = %q, want = %q", got, want)
+	}
+}
+
+// stubProbeGCP replaces the metadata probe for the rest of the test. The stub
+// reports that the process is not on GCP and counts its calls, and
+// stubProbeGCP returns the counter.
+func stubProbeGCP(t *testing.T) *atomic.Int64 {
+	t.Helper()
+	var probes atomic.Int64
+	orig := probeGCP
+	probeGCP = func(context.Context) bool {
+		probes.Add(1)
+		return false
+	}
+	t.Cleanup(func() { probeGCP = orig })
+	return &probes
+}
+
+// stubServiceName sets the service name to a random value for the rest of the
+// test, and returns it. The package reads K_SERVICE and CLOUD_RUN_JOB once,
+// when it is initialized, so t.Setenv cannot change the name.
+func stubServiceName(t *testing.T) string {
+	t.Helper()
+	orig := serviceName
+	serviceName = fmt.Sprintf("svc-%x", rand.Uint64())
+	t.Cleanup(func() { serviceName = orig })
+	return serviceName
+}
+
+// stubRevisionName sets K_REVISION to a random value for the rest of the test,
+// and returns it.
+func stubRevisionName(t *testing.T) string {
+	t.Helper()
+	rev := fmt.Sprintf("rev-%x", rand.Uint64())
+	t.Setenv("K_REVISION", rev)
+	return rev
+}
+
+// unsetenv unsets key for the rest of the test. The GCP detector treats some
+// variables as present even when they are empty, so setting them to "" is not
+// enough.
+func unsetenv(t *testing.T, key string) {
+	t.Helper()
+	t.Setenv(key, "")
+	if err := os.Unsetenv(key); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// clearResourceEnv clears OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME,
+// which the SDK merges into every resource, so that a test sees only the
+// resource under test. It also sets OTEL_TRACES_EXPORTER to none, so the
+// test's tracer providers install no exporters.
+func clearResourceEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("OTEL_TRACES_EXPORTER", "none")
+	t.Setenv("OTEL_RESOURCE_ATTRIBUTES", "")
+	t.Setenv("OTEL_SERVICE_NAME", "")
+}
+
+// spanResource returns the resource of a span from a tracer provider built
+// with opts.
+func spanResource(t *testing.T, opts ...TracerOption) *resource.Resource {
+	t.Helper()
+	sr := tracetest.NewSpanRecorder()
+	tp := trace.NewTracerProvider(append(tracerOptions(t.Context(), newTracerConfig(opts...)), trace.WithSpanProcessor(sr))...)
+	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+	_, span := tp.Tracer("test").Start(t.Context(), "span")
+	span.End()
+	return sr.Ended()[0].Resource()
+}
+
+// TestResource checks that Resource returns the resource that a tracer
+// provider built with the same options puts on its spans, and how many times
+// Resource probes the metadata server.
+func TestResource(t *testing.T) {
+	passed := resource.NewSchemaless(attribute.String("service.name", fmt.Sprintf("passed-%x", rand.Uint64())))
+	for _, tt := range []struct {
+		name       string
+		opts       []TracerOption
+		wantProbes int64
+	}{{
+		name:       "default probes once",
+		wantProbes: 1,
+	}, {
+		name: "NoGCPDetection does not probe",
+		opts: []TracerOption{NoGCPDetection()},
+	}, {
+		name: "WithResource returns it without probing",
+		opts: []TracerOption{WithResource(passed)},
+	}} {
+		t.Run(tt.name, func(t *testing.T) {
+			clearResourceEnv(t)
+			probes := stubProbeGCP(t)
+			stubServiceName(t)
+
+			got := Resource(t.Context(), tt.opts...)
+			if got := probes.Load(); got != tt.wantProbes {
+				t.Errorf("metadata probes: got = %d, want = %d", got, tt.wantProbes)
+			}
+			if want := spanResource(t, tt.opts...); !got.Equal(want) {
+				t.Errorf("Resource() = %v, want the spans' resource %v", got, want)
+			}
+		})
+	}
+}
+
+// TestResourceServiceName checks that Resource takes service.name from
+// K_SERVICE or CLOUD_RUN_JOB, as the spans' resource does.
+func TestResourceServiceName(t *testing.T) {
+	clearResourceEnv(t)
+	stubProbeGCP(t)
+	want := stubServiceName(t)
+
+	if v, _ := Resource(t.Context()).Set().Value("service.name"); v.AsString() != want {
+		t.Errorf("Resource() service.name = %q, want %q", v.AsString(), want)
+	}
+}
+
+// TestTracerConfigOnGCP checks that the metadata probe decides whether the
+// process runs on GCP, even when WithResource passes a resource that says it
+// does, and that NoGCPDetection skips the probe. The stubbed probe reports
+// that the process is off GCP.
+func TestTracerConfigOnGCP(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		opts       []TracerOption
+		wantProbes int64
+	}{{
+		name:       "default probes",
+		wantProbes: 1,
+	}, {
+		name: "NoGCPDetection does not probe",
+		opts: []TracerOption{NoGCPDetection()},
+	}, {
+		name:       "WithResource still probes",
+		opts:       []TracerOption{WithResource(resource.NewSchemaless(attribute.String("cloud.provider", "gcp")))},
+		wantProbes: 1,
+	}} {
+		t.Run(tt.name, func(t *testing.T) {
+			probes := stubProbeGCP(t)
+			if newTracerConfig(tt.opts...).onGCP(t.Context()) {
+				t.Error("onGCP: got = true, want = false")
+			}
+			if got := probes.Load(); got != tt.wantProbes {
+				t.Errorf("metadata probes: got = %d, want = %d", got, tt.wantProbes)
+			}
+		})
+	}
+}
+
+// TestWithResource checks that the spans' resource is the resource passed to
+// WithResource.
+func TestWithResource(t *testing.T) {
+	clearResourceEnv(t)
+	stubProbeGCP(t)
+	want := resource.NewSchemaless(attribute.String("service.name", fmt.Sprintf("passed-%x", rand.Uint64())))
+	if got := spanResource(t, WithResource(want)); !got.Equal(want) {
+		t.Errorf("span resource = %v, want %v", got, want)
 	}
 }

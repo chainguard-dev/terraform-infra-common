@@ -310,6 +310,9 @@ type tracerConfig struct {
 	// otlpKeep decides which ended spans the OTLP exporters receive; nil
 	// means [hasGenAIAttribute].
 	otlpKeep func(trace.ReadOnlySpan) bool
+	// resource is the resource from [WithResource]. When it is nil, the tracer
+	// uses a resource that [buildResource] builds.
+	resource *resource.Resource
 }
 
 func newTracerConfig(opts ...TracerOption) tracerConfig {
@@ -318,6 +321,12 @@ func newTracerConfig(opts ...TracerOption) tracerConfig {
 		opt(&cfg)
 	}
 	return cfg
+}
+
+// onGCP reports whether the process runs on GCP. With [NoGCPDetection], it
+// reports false without probing the metadata server.
+func (c tracerConfig) onGCP(ctx context.Context) bool {
+	return !c.skipGCPDetection && probeGCP(ctx)
 }
 
 // NoGCPDetection skips the metadata-server probe that decides whether
@@ -352,6 +361,36 @@ func WithOTLPSpanFilter(keep func(trace.ReadOnlySpan) bool) TracerOption {
 // see [WithOTLPSpanFilter].
 func WithOTLPExportAllSpans() TracerOption {
 	return WithOTLPSpanFilter(func(trace.ReadOnlySpan) bool { return true })
+}
+
+// WithResource gives the tracer provider res as its resource, so
+// [SetupTracerWith] does not build one. The SDK still merges the
+// environment's resource (OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME)
+// with res, and an attribute in res takes precedence. The metrics SDK merges
+// the environment's resource in the same way. A process can therefore pass
+// res to its meter provider as well, and its spans and metrics then have the
+// same attributes. A nil res is the same as omitting the option.
+func WithResource(res *resource.Resource) TracerOption {
+	return func(c *tracerConfig) { c.resource = res }
+}
+
+// Resource returns the resource that [SetupTracerWith] uses with opts. If
+// opts include [WithResource], that is its resource. Otherwise Resource builds
+// one from the SDK's attributes, OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME,
+// and service.name from K_SERVICE or CLOUD_RUN_JOB. On GCP it also adds the
+// GCP detector's attributes.
+//
+// To build a resource, Resource probes the metadata server to decide whether
+// the process runs on GCP, unless opts include [NoGCPDetection].
+//
+// If some attributes cannot be found, Resource logs a warning and returns the
+// others. Any other error exits the process.
+func Resource(ctx context.Context, opts ...TracerOption) *resource.Resource {
+	cfg := newTracerConfig(opts...)
+	if cfg.resource != nil {
+		return cfg.resource
+	}
+	return buildResource(ctx, cfg.onGCP(ctx))
 }
 
 // SetupTracerWith is [SetupTracer] configured by opts.
@@ -394,10 +433,14 @@ func SetupTracerWith(ctx context.Context, opts ...TracerOption) func() {
 // attribute under the gen_ai.* namespace, so evaluation backends see LLM
 // traces without infra noise, unless [WithOTLPSpanFilter] replaces that.
 func tracerOptions(ctx context.Context, cfg tracerConfig) []trace.TracerProviderOption {
-	onGCP := !cfg.skipGCPDetection && probeGCP(ctx)
+	onGCP := cfg.onGCP(ctx)
 
+	res := cfg.resource
+	if res == nil {
+		res = buildResource(ctx, onGCP)
+	}
 	opts := []trace.TracerProviderOption{
-		trace.WithResource(buildResource(ctx, onGCP)),
+		trace.WithResource(res),
 		// Record everything at the provider; per-exporter processors apply
 		// their own sampling. ParentBased preserves upstream "not sampled"
 		// decisions so we don't fabricate spans for traces the caller dropped.
@@ -493,9 +536,9 @@ func buildResource(ctx context.Context, onGCP bool) *resource.Resource {
 	res, err := resource.New(ctx, resOpts...)
 	if err != nil {
 		if !errors.Is(err, resource.ErrPartialResource) {
-			clog.FatalContextf(ctx, "tracerOptions(); resource.New() = %v", err)
+			clog.FatalContextf(ctx, "httpmetrics: building the telemetry resource: %v", err)
 		}
-		clog.WarnContextf(ctx, "tracerOptions(); resource.New() partial resource (continuing): %v", err)
+		clog.WarnContextf(ctx, "httpmetrics: building the telemetry resource: partial resource (continuing): %v", err)
 	}
 	return res
 }

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -56,6 +57,17 @@ func recordAttrs(r slog.Record) map[string]any {
 }
 
 func TestTransport(t *testing.T) {
+	inFlight := prometheus.Labels{
+		"method":        http.MethodGet,
+		"host":          "other",
+		"service_name":  stubServiceName(t),
+		"revision_name": stubRevisionName(t),
+		"ce_type":       "testce",
+		"path":          "",
+	}
+	count := maps.Clone(inFlight)
+	count["code"] = "200"
+
 	var mux sync.Mutex
 	requestSeen := make(chan struct{})
 	s := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
@@ -90,14 +102,7 @@ func TestTransport(t *testing.T) {
 	// Wait for the request to enter the server handler.
 	// This ensures that the in-flight metric is incremented before we check it.
 	<-requestSeen
-	if got := testutil.ToFloat64(mReqInFlight.With(prometheus.Labels{
-		"method":        http.MethodGet,
-		"host":          "other",
-		"service_name":  "unknown",
-		"revision_name": "unknown",
-		"ce_type":       "testce",
-		"path":          "",
-	})); got != 1 {
+	if got := testutil.ToFloat64(mReqInFlight.With(inFlight)); got != 1 {
 		t.Errorf("want metric in-flight = 1, got %f", got)
 	}
 
@@ -109,30 +114,16 @@ func TestTransport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got := testutil.ToFloat64(mReqCount.With(prometheus.Labels{
-		"method":        http.MethodGet,
-		"code":          "200",
-		"host":          "other",
-		"service_name":  "unknown",
-		"revision_name": "unknown",
-		"ce_type":       "testce",
-		"path":          "",
-	})); got != 1 {
+	if got := testutil.ToFloat64(mReqCount.With(count)); got != 1 {
 		t.Errorf("want metric count = 1, got %f", got)
 	}
-	if got := testutil.ToFloat64(mReqInFlight.With(prometheus.Labels{
-		"method":        http.MethodGet,
-		"host":          "other",
-		"service_name":  "unknown",
-		"revision_name": "unknown",
-		"ce_type":       "testce",
-		"path":          "",
-	})); got != 0 {
+	if got := testutil.ToFloat64(mReqInFlight.With(inFlight)); got != 0 {
 		t.Errorf("want metric in-flight = 0, got %f", got)
 	}
 }
 
 func TestTransport_SkipBucketize(t *testing.T) {
+	svc, rev := stubServiceName(t), stubRevisionName(t)
 	s := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		t.Log("got request")
 	}))
@@ -151,8 +142,8 @@ func TestTransport_SkipBucketize(t *testing.T) {
 		"method":        http.MethodGet,
 		"code":          "200",
 		"host":          "unbucketized",
-		"service_name":  "unknown",
-		"revision_name": "unknown",
+		"service_name":  svc,
+		"revision_name": rev,
 		"ce_type":       "",
 		"path":          "",
 	})); got != 1 {
