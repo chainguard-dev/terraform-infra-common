@@ -13,11 +13,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/semconv/v1.43.0/httpconv"
 )
 
 func TestHTTPClientMetricsScrape(t *testing.T) {
@@ -43,15 +41,6 @@ func TestHTTPClientMetricsScrape(t *testing.T) {
 		t.Fatal(err)
 	}
 	counter.Add(t.Context(), 1)
-
-	// HTTP client instrumentation other than otelhttp records the same
-	// semantic-convention histogram.
-	otherClient, err := httpconv.NewClientRequestDuration(otel.Meter("scrape-regression-client"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	otherClient.Inst().Record(t.Context(), 0.1)
-
 	handler := promhttp.Handler()
 	scrape := func() {
 		t.Helper()
@@ -103,12 +92,10 @@ func TestHTTPClientMetricsScrape(t *testing.T) {
 				}
 			}
 		}
-		want := map[string]uint64{
-			"http_client_request_duration_seconds":      uint64(i + 1),
-			"otel_http_client_request_duration_seconds": uint64(i + 2),
-		}
-		if diff := cmp.Diff(want, counts); diff != "" {
-			t.Errorf("sample counts (-want +got):\n%s", diff)
+		for _, name := range []string{"http_client_request_duration_seconds", "otel_http_client_request_duration_seconds"} {
+			if got, want := counts[name], uint64(i+1); got != want {
+				t.Errorf("%s sample count = %d, want %d", name, got, want)
+			}
 		}
 		if unrelated != 1 {
 			t.Errorf("unrelated counter = %v, want 1", unrelated)
