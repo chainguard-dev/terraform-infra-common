@@ -21,6 +21,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"github.com/chainguard-dev/terraform-infra-common/pkg/httpmetrics/otelview"
 	"github.com/chainguard-dev/terraform-infra-common/pkg/memusage"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/felixge/httpsnoop"
@@ -36,7 +37,6 @@ import (
 	prometheusexporter "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/instrumentation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -105,16 +105,7 @@ func SetupMetrics(ctx context.Context) func() {
 
 	provider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(exporter),
-		// Prometheus normalizes the OTel name to the native transport histogram's
-		// name, but their conflicting HELP text breaks collection.
-		// Keep the native metric's dashboard contract and export OTel separately.
-		sdkmetric.WithView(sdkmetric.NewView(
-			sdkmetric.Instrument{
-				Name:  "http.client.request.duration",
-				Scope: instrumentation.Scope{Name: otelhttp.ScopeName},
-			},
-			sdkmetric.Stream{Name: "otel.http.client.request.duration"},
-		)),
+		sdkmetric.WithView(otelview.ClientRequestDuration),
 	)
 	otel.SetMeterProvider(provider)
 
