@@ -227,6 +227,6 @@ No modules.
 | <a name="output_access_log_metric_name"></a> [access\_log\_metric\_name](#output\_access\_log\_metric\_name) | Unauthorized-access log counter name, or null when disabled. Alert policies belong in the caller's monitoring project. |
 | <a name="output_accessor_members"></a> [accessor\_members](#output\_accessor\_members) | The members granted roles/secretmanager.secretAccessor on the secret. |
 | <a name="output_annotations"></a> [annotations](#output\_annotations) | The annotations set on the secret. |
-| <a name="output_authorized_secret_id"></a> [authorized\_secret\_id](#output\_authorized\_secret\_id) | The ID of the secret after its accessor binding is applied. |
+| <a name="output_authorized_secret_id"></a> [authorized\_secret\_id](#output\_authorized\_secret\_id) | The ID of the secret after its accessor binding is applied and, with bootstrap\_placeholder\_version, after the placeholder version exists, so a service that reads `latest` can deploy against it. |
 | <a name="output_secret_id"></a> [secret\_id](#output\_secret\_id) | The ID of the secret. |
 <!-- END_TF_DOCS -->

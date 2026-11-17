@@ -4,8 +4,9 @@ output "secret_id" {
 }
 
 output "authorized_secret_id" {
-  description = "The ID of the secret after its accessor binding is applied."
+  description = "The ID of the secret after its accessor binding is applied and, with bootstrap_placeholder_version, after the placeholder version exists, so a service that reads `latest` can deploy against it."
   value       = google_secret_manager_secret_iam_binding.authorize-service-access.secret_id
+  depends_on  = [google_secret_manager_secret_version.bootstrap]
 }
 
 output "annotations" {
