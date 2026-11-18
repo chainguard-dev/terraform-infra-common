@@ -81,6 +81,19 @@ output "auth_secret_id" {
   depends_on = [google_secret_manager_secret_version.auth]
 }
 
+output "authorized_auth_secret_id" {
+  description = "The ID of the Redis AUTH secret once its accessor binding is applied and the current AUTH string is stored, for consumers that must not start before they can read it"
+  # authorized_secret_id is read from the secret's accessor IAM binding, so a
+  # consumer referencing this output is created only after that grant exists.
+  # secret_id carries the same value without that ordering. Terraform tests
+  # cannot observe ordering, so nothing else pins this.
+  value = var.auth_enabled ? module.redis_auth_secret[0].authorized_secret_id : null
+
+  # As for auth_secret_id: a consumer must not read "latest" before the
+  # current AUTH string is stored.
+  depends_on = [google_secret_manager_secret_version.auth]
+}
+
 output "auth_enabled" {
   description = "Whether AUTH is enabled for the Redis instance"
   value       = var.auth_enabled

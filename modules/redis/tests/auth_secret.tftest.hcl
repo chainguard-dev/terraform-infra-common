@@ -33,6 +33,11 @@ run "auth_disabled_stores_nothing" {
     condition     = length(google_secret_manager_secret_version.auth) == 0
     error_message = "an instance without AUTH must not store a version"
   }
+
+  assert {
+    condition     = output.authorized_auth_secret_id == null
+    error_message = "an instance without AUTH has no authorized AUTH secret"
+  }
 }
 
 run "auth_version_is_write_only_and_tracks_the_instance" {
@@ -53,6 +58,13 @@ run "auth_version_is_write_only_and_tracks_the_instance" {
   assert {
     condition     = google_secret_manager_secret_version.auth[0].secret_data_wo_version == google_redis_instance.default.create_time
     error_message = "the AUTH version must be replaced when the instance is"
+  }
+
+  # Consumers granted in the same apply order themselves on this output; it
+  # must name the same secret as auth_secret_id.
+  assert {
+    condition     = output.authorized_auth_secret_id == output.auth_secret_id
+    error_message = "authorized_auth_secret_id must name the AUTH secret"
   }
 }
 

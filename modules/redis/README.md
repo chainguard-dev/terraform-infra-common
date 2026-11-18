@@ -309,6 +309,7 @@ limitations under the License.
 | ---- | ----------- |
 | <a name="output_auth_enabled"></a> [auth\_enabled](#output\_auth\_enabled) | Whether AUTH is enabled for the Redis instance |
 | <a name="output_auth_secret_id"></a> [auth\_secret\_id](#output\_auth\_secret\_id) | The ID of the Secret Manager secret containing the Redis AUTH string |
+| <a name="output_authorized_auth_secret_id"></a> [authorized\_auth\_secret\_id](#output\_authorized\_auth\_secret\_id) | The ID of the Redis AUTH secret once its accessor binding is applied and the current AUTH string is stored, for consumers that must not start before they can read it |
 | <a name="output_connection_name"></a> [connection\_name](#output\_connection\_name) | The connection name of the instance to be used in connection strings. |
 | <a name="output_current_location_id"></a> [current\_location\_id](#output\_current\_location\_id) | The zone where the instance is currently located. |
 | <a name="output_host"></a> [host](#output\_host) | The IP address of the instance. |
