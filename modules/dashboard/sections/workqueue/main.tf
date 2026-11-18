@@ -90,20 +90,25 @@ module "work-in-progress" {
 // Queued (dispatchable now) and waiting (deferred by a not-before) are
 // disjoint counts of the same backlog, so stacking them on one chart
 // reads as total pending work, and a shift between the two bands
-// distinguishes backoff from queue growth.
+// distinguishes backoff from queue growth. The queued band is split by
+// priority class to show how much of the backlog is expedited work.
+//
+// Every dispatcher replica reports the whole backlog, so the reducer
+// dedups replicas; priority_class stays in the grouping so it collapses
+// only those copies, never one class into another.
 module "work-queued" {
   source = "../../widgets/xy"
-  title  = "Amount of work pending (queued vs not-before)"
+  title  = "Amount of work pending (queued by priority class vs not-before)"
   filter = concat(local.gmp_filter, [
     "resource.type=\"prometheus_target\"",
-    "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys/gauge\"",
+    "metric.type=\"prometheus.googleapis.com/workqueue_queued_keys_by_priority_class/gauge\"",
     local.dsp_filter,
   ])
-  group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\""]
+  group_by_fields = ["metric.label.\"service_name\"", "metric.label.\"queue_name\"", "metric.label.\"priority_class\""]
   plot_type       = "STACKED_AREA"
   primary_align   = "ALIGN_MIN"
   primary_reduce  = "REDUCE_MIN"
-  legend          = "queued"
+  legend          = "queued $${metric.labels.priority_class}"
 
   datasets = [{
     filter = concat(local.gmp_filter, [
