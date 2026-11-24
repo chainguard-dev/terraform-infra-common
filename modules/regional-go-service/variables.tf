@@ -384,9 +384,10 @@ variable "enable_otel_sidecar" {
 }
 
 variable "otel_collector_image" {
-  type        = string
-  default     = "chainguard/opentelemetry-collector-contrib:latest"
-  description = "The otel collector image to use as a base. Must be on gcr.io or dockerhub. The bundled scrape config enables native histogram scraping by default, which needs opentelemetry-collector-contrib v0.142.0 or later; older collectors reject the config at startup."
+  type = string
+  // digestabot keeps this digest current and needs the tag to look it up.
+  default     = "chainguard/opentelemetry-collector-contrib:latest@sha256:81fe61fca7834fb5e162aed4f883c52b9db99ed3ef8f2cb3ca068423b8793ab2"
+  description = "The otel collector sidecar image. Cloud Run pulls it directly, so it must be in Artifact Registry (including gcr.io), or public on Docker Hub or GHCR; a cgr.dev image needs an Artifact Registry remote repository. Pin it by digest, since Cloud Run resolves a tag on every deploy. The bundled scrape config enables native histogram scraping by default, which needs opentelemetry-collector-contrib v0.142.0 or later; older collectors reject the config at startup."
 }
 
 variable "scrape_interval" {
