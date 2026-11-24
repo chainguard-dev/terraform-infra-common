@@ -16,4 +16,8 @@ variable "limit" {
     condition     = var.limit >= length(var.suffix)
     error_message = "limit cannot be less than the length of suffix."
   }
+  validation {
+    condition     = floor(var.limit) == var.limit
+    error_message = "limit must be a whole number of characters, but got ${var.limit}."
+  }
 }
