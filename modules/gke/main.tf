@@ -113,7 +113,7 @@ resource "google_container_cluster" "this" {
   remove_default_node_pool = true
   initial_node_count       = 1
 
-  resource_labels = var.labels
+  resource_labels = merge(var.labels, var.cluster_labels)
 
   # Use Dataplane V2 (eBPF based networking)
   datapath_provider = "ADVANCED_DATAPATH"

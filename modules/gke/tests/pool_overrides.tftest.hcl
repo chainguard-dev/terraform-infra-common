@@ -100,6 +100,26 @@ run "team_override_changes_only_that_pool" {
   }
 }
 
+run "cluster_labels_reach_only_the_cluster" {
+  command = plan
+
+  variables {
+    labels         = { team = "x" }
+    cluster_labels = { service = "svc" }
+    pools          = { p = {} }
+  }
+
+  assert {
+    condition     = google_container_cluster.this.resource_labels["service"] == "svc"
+    error_message = "cluster_labels must merge into the cluster's resource_labels"
+  }
+
+  assert {
+    condition     = !contains(keys(google_container_node_pool.pools["p"].node_config[0].resource_labels), "service")
+    error_message = "cluster_labels must never reach node pool resource_labels"
+  }
+}
+
 run "refuses_malformed_pool_tags" {
   command = plan
 

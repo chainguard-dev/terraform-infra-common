@@ -384,6 +384,12 @@ variable "labels" {
   default     = {}
 }
 
+variable "cluster_labels" {
+  description = "Labels set only on the cluster's resource_labels; never passed to node pools."
+  type        = map(string)
+  default     = {}
+}
+
 variable "resource_usage_export_config" {
   description = "Config for exporting resource usage."
   type = object({
