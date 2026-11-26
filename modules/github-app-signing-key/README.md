@@ -25,18 +25,18 @@ Give the service the key URI only once a version has been imported, for example 
 
 ## Import the App's key
 
-Generate a private key on the App's settings page in GitHub, then import it with the [`import-github-app-key`](./import-github-app-key) script in this module's directory, passing the module's `key_id` output:
+Generate a private key in GitHub with **New key**, under **Credentials** → **Key pairs** in the App's settings (`https://github.com/organizations/<org>/settings/apps/<app-slug>/key_pairs` for an organization's App). The **Client secrets** tab beside it holds OAuth client secrets, which are not the App's private key. Then import the key with the [`import-github-app-key`](./import-github-app-key) script in this module's directory, passing the module's `key_id` output:
 
 ```sh
 ./import-github-app-key <downloaded>.pem \
   projects/<project>/locations/global/keyRings/<key_ring_name>/cryptoKeys/<key_name>
 ```
 
-The script needs `gcloud`, with the Python `cryptography` package installed for the Python that `gcloud` runs on, and `openssl`. Run it with no arguments for its usage. It checks that the key is import-only with the right algorithm, imports the PEM through a new import job, waits for the version to be enabled, and checks that the version's public key matches the PEM. It then deletes the PEM and prints the number of the key version it created, which goes at the end of the key URI, and the key's SHA256 fingerprint, which GitHub lists on the App's settings page.
+The script needs `gcloud`, with the Python `cryptography` package installed for the Python that `gcloud` runs on, and `openssl`. Run it with no arguments for its usage. It checks that the key is import-only with the right algorithm, imports the PEM through a new import job, waits for the version to be enabled, and checks that the version's public key matches the PEM. It then deletes the PEM and prints the number of the key version it created, which goes at the end of the key URI, and the key's SHA256 fingerprint, which GitHub lists on the App's **Key pairs** tab.
 
 Terraform downloads the whole repository for a registry module, so after `terraform init` the script is also at `.terraform/modules/<module name>/modules/github-app-signing-key/import-github-app-key` in the root module's directory.
 
-Rotating the App's key is another run of the script with the new key, which creates a new version. Point the key URI at the new version, and once the service signs with it, delete the old key on GitHub and disable the old version.
+Rotating the App's key is another run of the script with the new key, which creates a new version. Point the key URI at the new version, and once the service signs with it, delete the old key on the App's **Key pairs** tab and disable the old version.
 
 ## Keys and key rings outlive Terraform
 

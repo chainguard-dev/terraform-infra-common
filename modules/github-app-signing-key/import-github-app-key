@@ -26,7 +26,8 @@ Import a GitHub App private key into an import-only Cloud KMS key.
 
 Usage: import-github-app-key <private-key.pem> <key>
 
-  <private-key.pem>  The private key downloaded from the App's settings page.
+  <private-key.pem>  The private key downloaded with New key, under
+                     Credentials > Key pairs in the App's settings.
                      Deleted once the imported version is ENABLED; kept if
                      anything fails, so the import can be retried.
   <key>              The Cloud KMS key resource name, as Terraform's
@@ -39,7 +40,7 @@ the App's key is another run with the new PEM.
 
 On success, prints the new key version number (the N that the stack's
 gcpkms://.../cryptoKeyVersions/N key URI needs) and the key's SHA256
-fingerprint, to compare with the one GitHub lists on the App's settings page.
+fingerprint, to compare with the one GitHub lists on the App's Key pairs tab.
 
 Requires gcloud, with the Python cryptography package installed for gcloud's
 Python, and openssl.
@@ -232,9 +233,9 @@ cat <<EOF
 key version: ${version}
 fingerprint: SHA256:${got_fingerprint}
 
-Check that the App's settings page lists this fingerprint, then point the
-stack's gcpkms:// key URI at
+Check that the App's Key pairs tab (under Credentials in its settings) lists
+this fingerprint, then point the stack's gcpkms:// key URI at
   ${key_name}/cryptoKeyVersions/${version}
-When rotating, delete the old key on GitHub and disable the old key version
-once the services sign with version ${version}.
+When rotating, delete the old key on the Key pairs tab and disable the old
+key version once the services sign with version ${version}.
 EOF
