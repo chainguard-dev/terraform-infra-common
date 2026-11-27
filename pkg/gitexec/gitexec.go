@@ -21,6 +21,11 @@ import (
 // Keep it small: this lands in log storage on every failure.
 const stderrTailBytes = 512
 
+// stopGracePeriod is the command's WaitDelay: how long a cancelled git
+// process group gets after SIGTERM before git is killed, and how long Run
+// waits for output once git has exited. A variable so tests can shorten it.
+var stopGracePeriod = 10 * time.Second
+
 // Option configures command execution and its observation.
 type Option func(*options)
 
@@ -119,8 +124,36 @@ func WithCommandRunner(run func(*exec.Cmd) error) Option {
 // given arguments. The first argument SHOULD be the git subcommand
 // (e.g. "clone", "fetch", "push"). Callers may further configure the returned
 // Cmd (Dir, Env, Stdout, Stderr) before passing it to Run or Output.
+//
+// When ctx ends, the command stops as a whole. On unix, git runs in its own
+// process group: the group gets SIGTERM, and after a grace period git is
+// killed and Run stops waiting for output. Run and Output then kill whatever
+// is left of the group. This covers helpers like git-remote-https, which
+// inherit git's stderr and would otherwise keep Run waiting after git is
+// gone.
+//
+// The grace period is the command's WaitDelay, so it also bounds the wait
+// after git exits on its own. A caller whose Stdout or Stderr writer can fall
+// more than that behind sets cmd.WaitDelay to 0: otherwise the pipes are
+// closed, output not yet copied is lost, and Run returns exec.ErrWaitDelay
+// even though git succeeded. A process git started that keeps stderr open,
+// such as an ssh ControlPersist master, makes Run return exec.ErrWaitDelay
+// the same way.
+//
+// Because git runs in its own process group, it is never in a terminal's
+// foreground group, so it cannot prompt: git, ssh or pinentry reading the
+// terminal for a credential, a passphrase or a host key stops on SIGTTIN, and
+// Run waits until ctx ends. A terminal's Ctrl-C does not reach git directly
+// either. A caller that needs to prompt sets cmd.SysProcAttr to nil, which
+// keeps git in the caller's group and Cancel signalling git alone.
+//
+// Each of SysProcAttr, Cancel and WaitDelay that a caller sets replaces only
+// that default. Run and Output still kill what is left of the group once the
+// context ends, as long as SysProcAttr starts git in a new group of its own.
 func CommandContext(ctx context.Context, args ...string) *exec.Cmd {
-	return exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
+	stopGroupOnCancel(cmd)
+	return cmd
 }
 
 // Run executes cmd, records one observation (log + metric), and returns
@@ -201,6 +234,9 @@ func run(ctx context.Context, op string, cmd *exec.Cmd, captureStdout bool, opts
 	switch {
 	case !execution.runnerSet:
 		err = cmd.Run()
+		if ctx.Err() != nil {
+			killGroup(cmd)
+		}
 	case execution.runner == nil:
 		err = errors.New("gitexec: command runner must not be nil")
 	default:
